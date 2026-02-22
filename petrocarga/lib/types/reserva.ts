@@ -58,6 +58,8 @@ export type Reserva = {
   // Auditoria
   criadoPor: UsuarioCriadoPor;
   criadoEm: string;
+  cidadeOrigem: string;
+  entradaCidade: string | null;
 };
 
 export type ReservaGet = {

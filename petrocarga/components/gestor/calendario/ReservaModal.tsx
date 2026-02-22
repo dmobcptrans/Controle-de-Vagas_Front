@@ -12,17 +12,17 @@ import { Vaga } from '@/lib/types/vaga';
 
 export type ModalState =
   | {
-      type: 'group';
-      data: { dateStr: string; logradouros: Record<string, Reserva[]> };
-    }
+    type: 'group';
+    data: { dateStr: string; logradouros: Record<string, Reserva[]> };
+  }
   | {
-      type: 'vagasLogradouro';
-      data: { logradouro: string; reservasDoLogradouro: Reserva[] };
-    }
+    type: 'vagasLogradouro';
+    data: { logradouro: string; reservasDoLogradouro: Reserva[] };
+  }
   | {
-      type: 'vaga';
-      data: { vagaId: string; vagaInfo: Vaga | null; reservas: Reserva[] };
-    }
+    type: 'vaga';
+    data: { vagaId: string; vagaInfo: Vaga | null; reservas: Reserva[] };
+  }
   | { type: 'reserva'; data: { reserva: Reserva; vagaInfo: Vaga | null } }
   | { type: null; data: null };
 
@@ -209,7 +209,8 @@ export const ReservaModal = ({
 
               {/* Origem */}
               <div className="space-y-1">
-                <p className="font-semibold text-base">Origem</p>
+                <p className="font-semibold text-base">Origem</p>{' '}
+                {modalState.data.reserva.cidadeOrigem}
                 <p>
                   {/* <strong>Nome:</strong> {' '} {modalState.data.reserva.origem} */}
                 </p>
@@ -219,7 +220,8 @@ export const ReservaModal = ({
 
               {/* Entrada */}
               <div className="space-y-1">
-                <p className="font-semibold text-base">Entrada</p>
+                <p className="font-semibold text-base">Entrada</p>{' '}
+                {modalState.data.reserva.entradaCidade}
                 <p>
                   {/* <strong>Nome:</strong> {''} {modalState.data.reserva.entrada} */}
                 </p>
