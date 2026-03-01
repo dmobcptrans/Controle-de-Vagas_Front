@@ -43,7 +43,8 @@ export default function ReservaComponent({
     selectedVehicleId,
     setSelectedVehicleId,
     vehicles,
-    fetchHorariosDisponiveis,
+    loadingHorarios,
+    horariosCarregados,
     handleConfirm,
     reset,
   } = reserva;
@@ -132,13 +133,6 @@ export default function ReservaComponent({
               setOrigin(origin);
               setEntryCity(entryCity);
               setSelectedVehicleId(vehicleId);
-
-              await fetchHorariosDisponiveis(
-                selectedDay,
-                selectedVaga,
-                vehicleId,
-              );
-
               setStep(3);
             }}
             onBack={() => setStep(1)}
@@ -147,18 +141,39 @@ export default function ReservaComponent({
 
         {/* STEP 3 - Seleção do horário inicial */}
         {step === 3 && selectedDay && (
-          <TimeSelection
-            times={availableTimes}
-            reserved={reservedTimesStart}
-            selected={startHour}
-            onSelect={(t) => {
-              setStartHour(t);
-              setEndHour(null);
-              setStep(4);
-            }}
-            onBack={() => setStep(2)}
-            color="blue"
-          />
+          loadingHorarios || !horariosCarregados ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
+              <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-gray-600">
+                Carregando horários disponíveis...
+              </p>
+            </div>
+          ) : availableTimes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
+              <p className="text-sm text-gray-600">
+                Nenhum horário disponível para o dia selecionado.
+              </p>
+              <button
+                onClick={() => setStep(2)}
+                className="px-3 py-2 bg-gray-200 rounded-lg text-sm"
+              >
+                Voltar
+              </button>
+            </div>
+          ) : (
+            <TimeSelection
+              times={availableTimes}
+              reserved={reservedTimesStart}
+              selected={startHour}
+              onSelect={(t) => {
+                setStartHour(t);
+                setEndHour(null);
+                setStep(4);
+              }}
+              onBack={() => setStep(2)}
+              color="blue"
+            />
+          )
         )}
 
         {/* STEP 4 - Seleção do horário final */}

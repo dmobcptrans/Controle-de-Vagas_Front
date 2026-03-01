@@ -50,6 +50,8 @@ export function useReserva(selectedVaga: Vaga | null) {
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
   const [vehicles, setVehicles] = useState<Veiculo[]>([]);
   const [loadingMotorista, setLoadingMotorista] = useState(true);
+  const [loadingHorarios, setLoadingHorarios] = useState(false);
+  const [horariosCarregados, setHorariosCarregados] = useState(false);
 
   // ================= RESET =================
   const reset = useCallback(() => {
@@ -155,48 +157,55 @@ export function useReserva(selectedVaga: Vaga | null) {
 
   const fetchHorariosDisponiveis = useCallback(
     async (day: Date, vaga: Vaga, vehicleId?: string): Promise<string[]> => {
-      const operacao = getOperacaoDia(day, vaga);
-      if (!operacao) return [];
+      setLoadingHorarios(true);
+      setHorariosCarregados(false);
 
-      let tipoVeiculo: Veiculo['tipo'] | undefined;
+      try {
+        const operacao = getOperacaoDia(day, vaga);
+        if (!operacao) return [];
 
-      if (!isAgente) {
-        const v = vehicles.find((x) => x.id === vehicleId);
-        if (!v) return [];
-        tipoVeiculo = v.tipo;
-      } else {
-        tipoVeiculo = reservaState.tipoVeiculoAgente;
+        let tipoVeiculo: Veiculo['tipo'] | undefined;
+
+        if (!isAgente) {
+          const v = vehicles.find((x) => x.id === vehicleId);
+          if (!v) return [];
+          tipoVeiculo = v.tipo;
+        } else {
+          tipoVeiculo = reservaState.tipoVeiculoAgente;
+        }
+
+        if (!tipoVeiculo) return [];
+
+        const dataFormatada = day.toISOString().split('T')[0];
+        const bloqueios = await fetchReservasBloqueios(
+          vaga.id,
+          dataFormatada,
+          tipoVeiculo,
+        );
+
+        const horariosOcupadosReais = bloqueios.flatMap((reserva: Reserva) =>
+          gerarHorariosOcupados(reserva),
+        );
+
+        const todosHorarios = gerarHorariosDia(operacao);
+
+        const horariosFiltradosHoje = removerHorariosPassadosDeHoje(
+          day,
+          todosHorarios,
+        );
+
+        setReservaState((prev) => ({
+          ...prev,
+          availableTimes: horariosFiltradosHoje,
+          reservedTimesStart: horariosOcupadosReais,
+          reservedTimesEnd: [],
+        }));
+
+        return horariosFiltradosHoje;
+      } finally {
+        setLoadingHorarios(false);
+        setHorariosCarregados(true);
       }
-
-      if (!tipoVeiculo) return [];
-
-      const dataFormatada = day.toISOString().split('T')[0];
-
-      const bloqueios = await fetchReservasBloqueios(
-        vaga.id,
-        dataFormatada,
-        tipoVeiculo,
-      );
-
-      const horariosOcupadosReais = bloqueios.flatMap((reserva: Reserva) =>
-        gerarHorariosOcupados(reserva),
-      );
-
-      const todosHorarios = gerarHorariosDia(operacao);
-
-      const horariosFiltradosHoje = removerHorariosPassadosDeHoje(
-        day,
-        todosHorarios,
-      );
-
-      setReservaState((prev) => ({
-        ...prev,
-        availableTimes: horariosFiltradosHoje,
-        reservedTimesStart: horariosOcupadosReais,
-        reservedTimesEnd: [],
-      }));
-
-      return horariosFiltradosHoje;
     },
     [vehicles, reservaState.tipoVeiculoAgente, isAgente],
   );
@@ -452,6 +461,8 @@ export function useReserva(selectedVaga: Vaga | null) {
     isAgente,
     vehicles,
     loadingMotorista,
+    loadingHorarios,
+    horariosCarregados,
     fetchDiasDisponiveis,
     availableDates,
     setStep,

@@ -7,6 +7,10 @@ import { getDisponibilidadeVagasByVagaId } from '@/lib/api/disponibilidadeVagasA
 import { ConfirmResult } from '@/lib/types/confirmResult';
 
 // ----------------- RESERVAS -----------------
+const disponibilidadeInFlight = new Map<
+  string,
+  Promise<Awaited<ReturnType<typeof getDisponibilidadeVagasByVagaId>>>
+>();
 
 export const fetchReservasBloqueios = async (
   vagaId: string,
@@ -30,12 +34,26 @@ export const fetchReservasBloqueios = async (
 // ----------------- DISPONIBILIDADE POR VAGAID -----------------
 
 export const fetchDisponibilidadeByVagaId = async (vagaId: string) => {
+  const inFlight = disponibilidadeInFlight.get(vagaId);
+  if (inFlight) {
+    return await inFlight;
+  }
+
+  const request = (async () => {
+    try {
+      const disponibilidades = await getDisponibilidadeVagasByVagaId(vagaId);
+      return disponibilidades;
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  })();
+
+  disponibilidadeInFlight.set(vagaId, request);
   try {
-    const disponibilidades = await getDisponibilidadeVagasByVagaId(vagaId);
-    return disponibilidades;
-  } catch (error) {
-    console.error(error);
-    return [];
+    return await request;
+  } finally {
+    disponibilidadeInFlight.delete(vagaId);
   }
 };
 // ----------------- CONFIRMAR RESERVA MOTORISTA -----------------
