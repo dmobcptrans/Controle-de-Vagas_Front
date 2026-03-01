@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { DayPicker } from 'react-day-picker';
+import { ptBR } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 
 interface DaySelectionProps {
@@ -48,6 +49,7 @@ export default function DaySelection({
 
         <DayPicker
           mode="single"
+          locale={ptBR}
           selected={selected}
           onDayClick={onSelect}
           className="mx-auto"
