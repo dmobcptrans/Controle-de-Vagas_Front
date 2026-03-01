@@ -1,46 +1,59 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Denuncia } from '@/lib/types/denuncias';
-import { getDenuncias } from '@/lib/api/denunciaApi';
-import { Loader2 } from 'lucide-react';
+import { useDenuncias } from '@/components/hooks/useDenuncias';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import DenunciaLista from '@/components/gestor/denuncia/DenunciaLista';
-import toast from 'react-hot-toast';
+import { Button } from '@/components/ui/button';
 
 export default function DenunciasAgente() {
-  const [denuncias, setDenuncias] = useState<Denuncia[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { denuncias, loading, error, refetch } = useDenuncias();
 
-  const fetchDenuncias = async () => {
-    setLoading(true);
-    try {
-      const result = await getDenuncias();
-      setDenuncias(result ?? []);
-    } catch (err) {
-      toast.error('Erro ao carregar denúncias. Por favor, tente novamente.');
-      setDenuncias([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDenuncias();
-  }, []);
+  if (error) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center min-h-[60vh] p-4 md:p-6 text-center"
+        aria-busy="false"
+      >
+        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-red-100 flex items-center justify-center mb-4">
+          <AlertCircle className="w-8 h-8 md:w-10 md:h-10 text-red-600" />
+        </div>
+        <h3 className="text-lg md:text-xl font-semibold text-gray-700 mb-2">
+          Erro ao carregar denúncias
+        </h3>
+        <p className="text-gray-500 text-sm md:text-base max-w-md mx-auto mb-6">
+          {error}
+        </p>
+        <Button onClick={refetch} variant="outline">
+          Tentar novamente
+        </Button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
-        <p className="text-gray-600">Carregando denúncias...</p>
+      <div
+        className="p-4 md:p-6 flex flex-col items-center justify-center min-h-[60vh] gap-3"
+        aria-busy="true"
+      >
+        <Loader2 className="animate-spin w-6 h-6 md:w-8 md:h-8 text-blue-600" />
+        <p className="text-gray-600 text-sm md:text-base">
+          Carregando denúncias...
+        </p>
       </div>
     );
   }
 
   if (!denuncias.length) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <p className="text-gray-500 text-lg">
+      <div className="p-4 md:p-6 flex flex-col items-center justify-center py-12 md:py-16 text-center min-h-[60vh]">
+        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <AlertCircle className="w-8 h-8 md:w-10 md:h-10 text-gray-400" />
+        </div>
+        <h3 className="text-lg md:text-xl font-semibold text-gray-700 mb-2">
+          Nenhuma denúncia encontrada
+        </h3>
+        <p className="text-gray-500 text-sm md:text-base max-w-md mx-auto">
           Nenhuma denúncia encontrada no momento.
         </p>
       </div>
@@ -49,11 +62,10 @@ export default function DenunciasAgente() {
 
   return (
     <section className="min-h-screen bg-gray-50 py-8">
-      <div className="w-full max-w-2xl mx-auto px-4 flex flex-col gap-6">
-        <h1 className="text-2xl font-bold text-gray-800 text-center">
+      <div className="w-full max-w-2xl mx-auto px-4 md:px-6 lg:px-8 flex flex-col gap-6">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 text-center">
           Denúncias
         </h1>
-
         <DenunciaLista denuncias={denuncias} />
       </div>
     </section>
