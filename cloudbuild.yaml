@@ -1,0 +1,22 @@
+steps:
+  # ==== Build da imagem com Docker ====
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "us-central1-docker.pkg.dev/$PROJECT_ID/front-repo/petrocarga-image-front:$COMMIT_SHA",
+        "-t",
+        "us-central1-docker.pkg.dev/$PROJECT_ID/front-repo/petrocarga-image-front:latest",
+        "-f",
+        "petrocarga/Dockerfile",
+        "petrocarga",
+      ]
+
+# ==== Enviar imagem para o Artifact Registry ====
+images:
+  - "us-central1-docker.pkg.dev/$PROJECT_ID/front-repo/petrocarga-image-front:$COMMIT_SHA"
+  - "us-central1-docker.pkg.dev/$PROJECT_ID/front-repo/petrocarga-image-front:latest"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
