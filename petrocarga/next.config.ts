@@ -13,44 +13,72 @@ const withPWA = withPWAInit({
   fallbacks: {
     document: '/offline', // Sua página de fallback
   },
-  workboxOptions: {
-    runtimeCaching: [
-      {
-        // --- Cache para as PÁGINAS (HTML) ---
-        // Isso evita cair na tela offline ao dar F5 em páginas já visitadas
-        urlPattern: ({ request }) => request.destination === 'document',
-        handler: 'NetworkFirst', // Tenta sempre o mais novo, se falhar usa o cache da página
-        options: {
-          cacheName: 'pages-cache',
-          expiration: {
-            maxEntries: 20,
-            maxAgeSeconds: 24 * 60 * 60, // 24 horas
-          },
+workboxOptions: {
+  runtimeCaching: [
+    // ---------------------------
+    // Cache para as PÁGINAS (HTML)
+    // ---------------------------
+    {
+      urlPattern: ({ request }) => request.destination === 'document',
+      handler: 'NetworkFirst', // mantém conteúdo atualizado
+      options: {
+        cacheName: 'pages-cache',
+        expiration: {
+          maxEntries: 20,
+          maxAgeSeconds: 24 * 60 * 60, // 24h
+        },
+        networkTimeoutSeconds: 5, // se rede lenta, usa cache após 5s
+      },
+    },
+
+    // --------------------------------------
+    // Cache para API de Reservas (JSON leve)
+    // --------------------------------------
+    {
+      urlPattern: ({ url }) => url.pathname.startsWith('/petrocarga/reservas'),
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'reservas-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 24 * 60 * 60, // 24h
+        },
+        networkTimeoutSeconds: 5, // fallback rápido em rede lenta
+      },
+    },
+
+    // ----------------------------
+    // Cache para tiles Mapbox (mapas)
+    // ----------------------------
+    {
+      urlPattern: ({ url }) => url.origin.includes('api.mapbox.com'),
+      handler: 'CacheFirst', // economiza dados, só baixa tiles novos
+      options: {
+        cacheName: 'mapbox-tiles-cache',
+        expiration: {
+          maxEntries: 500, // depende da área que o usuário visita
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 1 semana
         },
       },
-      {
-        // Cache para as Reservas do Usuário (API Java)
-        urlPattern: ({ url }) =>
-          url.pathname.startsWith('/petrocarga/reservas'),
-        handler: 'NetworkFirst', // Tenta rede, se falhar, usa cache
-        options: {
-          cacheName: 'reservas-cache',
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 24 * 60 * 60, // 24 horas
-          },
-          networkTimeoutSeconds: 10, // Se a rede demorar >10s, usa o cache
+    },
+
+    // ----------------------------
+    // Cache para arquivos estáticos (assets)
+    // ----------------------------
+    {
+      urlPattern: ({ request }) =>
+        request.destination === 'image' || request.destination === 'font',
+      handler: 'StaleWhileRevalidate', // mostra o que tem no cache e atualiza por trás
+      options: {
+        cacheName: 'assets-cache',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 7 * 24 * 60 * 60,
         },
       },
-      {
-        // Cache para arquivos estáticos (Assets)
-        urlPattern: ({ request }) =>
-          request.destination === 'image' || request.destination === 'font',
-        handler: 'StaleWhileRevalidate', // Mostra o que tem no cache e atualiza por trás
-        options: { cacheName: 'assets-cache' },
-      },
-    ],
-  },
+    },
+  ],
+},
 });
 
 const nextConfig: NextConfig = {
