@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import {
-  Mail,
   Lock,
   ArrowLeft,
   CheckCircle2,
@@ -12,12 +11,20 @@ import {
   KeyRound,
 } from 'lucide-react';
 import { redefinirSenhaComCodigo } from '@/lib/api/recuperacaoApi';
+import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
+import FeedbackSenha from '@/components/feedback/feedback-senha';
 
 export default function ResetarSenhaComCodigo() {
   // Estados principais
   const [email, setEmail] = useState('');
   const [codigo, setCodigo] = useState('');
-  const [novaSenha, setNovaSenha] = useState('');
+  const {
+    senha: novaSenha,
+    setSenha: setNovaSenha,
+    regras,
+    ehValida,
+    forca,
+  } = useValidacaoSenha();
   const [confirmarSenha, setConfirmarSenha] = useState('');
 
   // Estados de controle
@@ -58,7 +65,7 @@ export default function ResetarSenhaComCodigo() {
 
   const validarFormularioSenha = (): string | null => {
     if (!novaSenha) return 'Por favor, digite a nova senha.';
-    if (novaSenha.length < 6) return 'A senha deve ter no mínimo 6 caracteres.';
+    if (!ehValida) return 'A senha não atende aos requisitos mínimos.';
     if (novaSenha !== confirmarSenha) return 'As senhas não coincidem.';
     return null;
   };
@@ -350,9 +357,7 @@ export default function ResetarSenhaComCodigo() {
                     )}
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  Mínimo 6 caracteres
-                </p>
+                <FeedbackSenha regras={regras} forca={forca} senha={novaSenha} />
               </div>
 
               {/* Campo Confirmar Senha */}

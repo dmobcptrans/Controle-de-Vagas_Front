@@ -26,6 +26,8 @@ import { useActionState } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import FormItem from '@/components/form/form-item';
 import SelecaoCustomizada from '@/components/gestor/selecaoItem/selecao-customizada';
+import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
+import FeedbackSenha from '@/components/feedback/feedback-senha';
 
 export default function CadastroUsuario() {
   const [state, addMotoristaAction, pending] = useActionState(
@@ -34,11 +36,12 @@ export default function CadastroUsuario() {
   );
   const [exibirSenha, setExibirSenha] = useState(false);
   const [exibirConfirmarSenha, setExibirConfirmarSenha] = useState(false);
-  const [senha, setSenha] = useState('');
+  const { senha, setSenha, regras, ehValida, forca } = useValidacaoSenha();
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [senhasIguais, setSenhasIguais] = useState(true);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [camposPreenchidos, setCamposPreenchidos] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Validação das senhas
@@ -50,42 +53,176 @@ export default function CadastroUsuario() {
     }
   }, [senha, confirmarSenha]);
 
-  // Monitora o state para abrir o modal quando o cadastro for bem-sucedido
-useEffect(() => {
-  if (!state) return;
+  // Função para verificar se todos os campos obrigatórios estão preenchidos
+  const verificarCamposObrigatorios = () => {
+    if (!formRef.current) return false;
 
-  if (state.error) {
-    toast.error(state.message || 'Erro ao cadastrar motorista.');
-    return;
-  }
+    // Lista de IDs dos campos obrigatórios
+    const camposObrigatorios = [
+      'nome',
+      'cpf',
+      'telefone',
+      'numeroCnh',
+      'tipoCnh',
+      'dataValidadeCnh',
+      'email',
+      'senha',
+      'confirmarSenha',
+    ];
 
-  if (!state.error) {
-    toast.success(state.message || 'Cadastro realizado com sucesso!');
-
-    const emailInput = document.getElementById('email') as HTMLInputElement;
-
-    if (emailInput) {
-      setUserEmail(emailInput.value);
-      sessionStorage.setItem('abrirModalAtivacao', 'true');
-      sessionStorage.setItem('emailCadastro', emailInput.value);
+    // Verifica se todos os campos estão preenchidos
+    for (const campoId of camposObrigatorios) {
+      if (campoId === 'tipoCnh') {
+        // Para o select personalizado, verifica através do name
+        const selectElement = document.querySelector(
+          '[name="tipoCnh"]',
+        ) as HTMLSelectElement;
+        if (!selectElement || !selectElement.value) {
+          return false;
+        }
+      } else {
+        const campo = document.getElementById(campoId) as HTMLInputElement;
+        if (!campo || !campo.value || campo.value.trim() === '') {
+          return false;
+        }
+      }
     }
 
-    setShowSuccessModal(true);
+    return true;
+  };
 
+  // useEffect para monitorar mudanças nos campos e atualizar o estado
+  useEffect(() => {
+    const verificarCampos = () => {
+      setCamposPreenchidos(verificarCamposObrigatorios());
+    };
+
+    // Verifica inicialmente
+    setTimeout(verificarCampos, 100); // Pequeno delay para garantir que o DOM esteja pronto
+
+    // Adiciona event listeners para todos os campos obrigatórios
+    const camposIds = [
+      'nome',
+      'cpf',
+      'telefone',
+      'numeroCnh',
+      'dataValidadeCnh',
+      'email',
+      'senha',
+      'confirmarSenha',
+    ];
+
+    const handleChange = () => {
+      verificarCampos();
+    };
+
+    // WeakSet para rastrear elementos que já têm listeners
+    const elementsWithListeners = new WeakSet<Element>();
+
+    // Função para adicionar listeners após o DOM estar pronto
+    const adicionarListeners = () => {
+      camposIds.forEach((id) => {
+        const campo = document.getElementById(id);
+        if (campo) {
+          campo.addEventListener('input', handleChange);
+          campo.addEventListener('change', handleChange);
+        }
+      });
+
+      // Listener específico para o select personalizado
+      const selectTipoCnh = document.querySelector('[name="tipoCnh"]');
+      if (selectTipoCnh) {
+        selectTipoCnh.addEventListener('change', handleChange);
+        elementsWithListeners.add(selectTipoCnh);
+      }
+    };
+
+    adicionarListeners();
+
+    // Observer para detectar quando o select personalizado é carregado
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          const selectTipoCnh = document.querySelector('[name="tipoCnh"]');
+          if (selectTipoCnh && !elementsWithListeners.has(selectTipoCnh)) {
+            selectTipoCnh.addEventListener('change', handleChange);
+            elementsWithListeners.add(selectTipoCnh);
+          }
+        }
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    // Cleanup
+    return () => {
+      camposIds.forEach((id) => {
+        const campo = document.getElementById(id);
+        if (campo) {
+          campo.removeEventListener('input', handleChange);
+          campo.removeEventListener('change', handleChange);
+        }
+      });
+
+      const selectTipoCnh = document.querySelector('[name="tipoCnh"]');
+      if (selectTipoCnh) {
+        selectTipoCnh.removeEventListener('change', handleChange);
+      }
+
+      observer.disconnect();
+    };
+  }, []); // Executa apenas uma vez na montagem
+
+  // useEffect adicional para monitorar mudanças nos estados de senha
+  useEffect(() => {
     if (formRef.current) {
-      formRef.current.reset();
-      setSenha('');
-      setConfirmarSenha('');
+      setCamposPreenchidos(verificarCamposObrigatorios());
     }
-  }
-}, [state]);
+  }, [senha, confirmarSenha]);
 
+  // Monitora o state para abrir o modal quando o cadastro for bem-sucedido
+  useEffect(() => {
+    if (!state) return;
+
+    if (state.error) {
+      toast.error(state.message || 'Erro ao cadastrar motorista.');
+      return;
+    }
+
+    if (!state.error) {
+      toast.success(state.message || 'Cadastro realizado com sucesso!');
+
+      const emailInput = document.getElementById('email') as HTMLInputElement;
+
+      if (emailInput) {
+        setUserEmail(emailInput.value);
+        sessionStorage.setItem('abrirModalAtivacao', 'true');
+        sessionStorage.setItem('emailCadastro', emailInput.value);
+      }
+
+      setShowSuccessModal(true);
+
+      if (formRef.current) {
+        formRef.current.reset();
+        setSenha('');
+        setConfirmarSenha('');
+      }
+    }
+  }, [state]);
 
   // Função para lidar com o envio do formulário
   const handleSubmit = async (formData: FormData) => {
     if (!senhasIguais) {
       // Impede o envio se as senhas não forem iguais
       toast.error('As senhas não coincidem.');
+      return;
+    }
+
+    if (!ehValida) {
+      toast.error('A senha não atende aos requisitos mínimos.');
       return;
     }
 
@@ -338,6 +475,11 @@ useEffect(() => {
                           )}
                         </button>
                       </div>
+                      <FeedbackSenha
+                        regras={regras}
+                        forca={forca}
+                        senha={senha}
+                      />
                     </FormItem>
 
                     {/* Confirmar Senha */}
@@ -393,7 +535,9 @@ useEffect(() => {
             <CardFooter className="px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 pt-0">
               <Button
                 type="submit"
-                disabled={pending || !senhasIguais}
+                disabled={
+                  pending || !camposPreenchidos || !senhasIguais || !ehValida
+                }
                 className="w-full rounded-sm px-4 sm:px-6 md:px-10 py-2 sm:py-2.5 text-sm sm:text-base font-medium text-blue-800 bg-blue-200 hover:bg-blue-300 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 {pending ? 'Salvando...' : 'Salvar'}
