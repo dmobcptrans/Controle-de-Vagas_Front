@@ -95,7 +95,11 @@ export async function redefinirSenhaComCodigo(
   }
 }
 
-export async function ativarConta(cpf: string, codigo: string): Promise<void> {
+export async function ativarConta(
+  cpf: string,
+  codigo: string,
+  aceitarTermos: boolean,
+): Promise<void> {
   try {
     const cpfLimpo = cpf.replace(/\D/g, '');
 
@@ -103,11 +107,18 @@ export async function ativarConta(cpf: string, codigo: string): Promise<void> {
       throw new Error('CPF deve conter exatamente 11 dígitos');
     }
 
+    if (!aceitarTermos) {
+      throw new Error(
+        'É necessário aceitar os termos de uso e política de privacidade',
+      );
+    }
+
     const res = await clientApi('/petrocarga/auth/activate', {
       method: 'POST',
       json: {
         cpf: cpfLimpo,
         codigo: codigo.trim().toUpperCase(),
+        aceitarTermos: true,
       },
     });
 
