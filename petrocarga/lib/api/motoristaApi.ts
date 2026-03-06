@@ -19,7 +19,7 @@ export async function addMotorista(
       nome: formData.get('nome') as string,
       cpf: formData.get('cpf') as string,
       telefone: formData.get('telefone') as string,
-      email: formData.get('email') as string,
+      email: (formData.get('email') as string).toLowerCase(),
       senha: formData.get('senha') as string,
     },
     tipoCnh: (formData.get('tipoCnh') as string)?.toUpperCase(),
