@@ -8,36 +8,40 @@ import { clientApi } from '@/lib/clientApi';
 export function usePushSetup() {
   useEffect(() => {
     async function initPush() {
-      // 1️⃣ Permissão
+      // Permissão
 
       const permission = await Notification.requestPermission();
 
       if (permission !== 'granted') {
-        console.warn('⚠️ [Push] Permissão NÃO concedida. Abortando.');
+        console.warn('[Push] Permissão NÃO concedida. Abortando.');
         return;
       }
 
-      // 2️⃣ Messaging
+      // Messaging
 
       const messaging = await getMessagingInstance();
 
       if (!messaging) {
-        console.error('❌ [Push] Messaging não disponível.');
+        console.error('[Push] Messaging não disponível.');
         return;
       }
 
-      // 3️⃣ Token
+      // Token
+      const registration = await navigator.serviceWorker.register(
+        "/firebase-messaging-sw.js"
+      );
 
       const token = await getToken(messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+        serviceWorkerRegistration: registration,
       });
 
       if (!token) {
-        console.error('❌ [Push] Token FCM não retornado.');
+        console.error('[Push] Token FCM não retornado.');
         return;
       }
 
-      // 4️⃣ Backend
+      // Backend
 
       await clientApi('/petrocarga/notificacoes/pushToken', {
         method: 'POST',
@@ -47,7 +51,7 @@ export function usePushSetup() {
     }
 
     initPush().catch((err) => {
-      console.error('💥 [Push] Erro inesperado no setup:', err);
+      console.error('[Push] Erro inesperado no setup:', err);
     });
   }, []);
 }
