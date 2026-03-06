@@ -6,10 +6,12 @@ importScripts(
 );
 
 firebase.initializeApp({
-  apiKey: 'AIzaSyDi5Wou9dBT4z2z0IKa6Kcnckxp6PVs7c4',
-  projectId: 'petrocarga-project',
-  messagingSenderId: '476009259514',
-  appId: '1:476009259514:web:40ad673374875e8cb14443',
+  apiKey: "AIzaSyDjkIW9FSXzaz2DxaSh7xdwnccZSsya5dw",
+  authDomain: "fir-cptrans-project.firebaseapp.com",
+  projectId: "fir-cptrans-project",
+  storageBucket: "fir-cptrans-project.firebasestorage.app",
+  messagingSenderId: "663684137039",
+  appId: "1:663684137039:web:e724c72ca710c84939aa3a"
 });
 
 const messaging = firebase.messaging();
