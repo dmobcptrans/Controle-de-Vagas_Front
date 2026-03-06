@@ -16,7 +16,7 @@ export async function solicitarRecuperacaoSenha(
     const cpfLimpo = identificador.replace(/\D/g, '');
 
     const jsonBody = isEmail
-      ? { email: identificador.trim() }
+      ? { email: identificador.trim().toLowerCase() }
       : { cpf: cpfLimpo };
 
     if (!isEmail && cpfLimpo.length !== 11) {

@@ -456,7 +456,6 @@ function LoginContent() {
   >('indeterminado');
   const [aceitarTermos, setAceitarTermos] = useState(false);
   const [mostrarModalTermos, setMostrarModalTermos] = useState(false);
-  const [erroTermos, setErroTermos] = useState('');
 
   const { login, isAuthenticated, user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -532,8 +531,13 @@ function LoginContent() {
     setError('');
 
     try {
+      const loginProcessado =
+        tipoInput === 'email'
+          ? loginInput.trim().toLowerCase()
+          : loginInput.replace(/\D/g, '');
+
       const decodedUser = await login({
-        login: loginInput,
+        login: loginProcessado,
         senha,
       });
 
@@ -551,18 +555,21 @@ function LoginContent() {
         default:
           setError('Permissão desconhecida');
       }
-    } catch (err: any) {
-      setError(err.message || 'Erro ao fazer login. Tente novamente.');
+    } catch (err: unknown) {
+      setError(
+        (err as Error).message || 'Erro ao fazer login. Tente novamente.',
+      );
     } finally {
       setLoading(false);
     }
   }
 
   const handleAtivarConta = async () => {
+    // Limpar mensagens anteriores
     setModalError('');
     setModalSuccess('');
-    setErroTermos('');
 
+    // Validações
     if (!cpfAtivacao.trim()) {
       setModalError('Por favor, insira seu CPF');
       return;
@@ -574,7 +581,7 @@ function LoginContent() {
     }
 
     if (!aceitarTermos) {
-      setErroTermos(
+      setModalError(
         'Você precisa aceitar os termos de uso e política de privacidade',
       );
       return;
@@ -599,9 +606,9 @@ function LoginContent() {
         handleCloseModal();
         setAceitarTermos(false);
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setModalError(
-        err.message ||
+        (err as Error).message ||
           'Código inválido ou expirado. Verifique e tente novamente.',
       );
     } finally {
@@ -637,9 +644,10 @@ function LoginContent() {
       } else {
         setModalSuccess('Código reenviado com sucesso!');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setModalError(
-        err.message || 'Erro ao solicitar novo código. Tente novamente.',
+        (err as Error).message ||
+          'Erro ao solicitar novo código. Tente novamente.',
       );
     } finally {
       setReenviandoCodigo(false);
@@ -656,7 +664,6 @@ function LoginContent() {
     setCodigo('');
     setModalError('');
     setModalSuccess('');
-    setErroTermos('');
     setAceitarTermos(false);
     setMostrarModal(true);
 
@@ -671,7 +678,6 @@ function LoginContent() {
     setCodigo('');
     setModalSuccess('');
     setModalError('');
-    setErroTermos('');
     setAceitarTermos(false);
 
     const params = new URLSearchParams(searchParams.toString());
@@ -745,7 +751,7 @@ function LoginContent() {
         setLoginInput(apenasNumeros);
       }
     } else {
-      setLoginInput(value.toLowerCase());
+      setLoginInput(value);
     }
   };
 
@@ -925,13 +931,6 @@ function LoginContent() {
               </div>
             )}
 
-            {erroTermos && (
-              <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{erroTermos}</span>
-              </div>
-            )}
-
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 CPF
@@ -996,7 +995,6 @@ function LoginContent() {
                 checked={aceitarTermos}
                 onCheckedChange={(checked) => {
                   setAceitarTermos(checked as boolean);
-                  if (checked) setErroTermos('');
                 }}
                 disabled={modalLoading}
                 className="mt-1"
@@ -1034,15 +1032,7 @@ function LoginContent() {
             </Button>
             <Button
               type="button"
-              onClick={() => {
-                if (!aceitarTermos) {
-                  setErroTermos(
-                    'Você precisa aceitar os termos de uso e política de privacidade para continuar',
-                  );
-                  return;
-                }
-                handleAtivarConta();
-              }}
+              onClick={handleAtivarConta}
               disabled={modalLoading || !cpfAtivacao || !codigo}
               className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
             >
