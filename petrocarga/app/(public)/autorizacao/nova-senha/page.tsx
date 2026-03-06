@@ -34,7 +34,17 @@ export default function ResetarSenhaComCodigo() {
   const [mostrarModalSucesso, setMostrarModalSucesso] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
+  const [senhasIguais, setSenhasIguais] = useState(true);
   const [etapa, setEtapa] = useState<'codigo' | 'senha'>('codigo');
+
+  // Validação das senhas
+  useEffect(() => {
+    if (confirmarSenha === '') {
+      setSenhasIguais(true);
+    } else {
+      setSenhasIguais(novaSenha === confirmarSenha);
+    }
+  }, [novaSenha, confirmarSenha]);
 
   // Bloqueia scroll quando modal está aberto
   useEffect(() => {
@@ -357,7 +367,11 @@ export default function ResetarSenhaComCodigo() {
                     )}
                   </button>
                 </div>
-                <FeedbackSenha regras={regras} forca={forca} senha={novaSenha} />
+                <FeedbackSenha
+                  regras={regras}
+                  forca={forca}
+                  senha={novaSenha}
+                />
               </div>
 
               {/* Campo Confirmar Senha */}
@@ -393,6 +407,11 @@ export default function ResetarSenhaComCodigo() {
                     )}
                   </button>
                 </div>
+                {!senhasIguais && confirmarSenha !== '' && (
+                  <p className="text-red-500 text-xs mt-1">
+                    As senhas não coincidem
+                  </p>
+                )}
               </div>
 
               {/* Botões */}
