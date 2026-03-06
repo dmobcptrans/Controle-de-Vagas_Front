@@ -3,7 +3,6 @@ import type { NextConfig } from 'next';
 
 const withPWA = withPWAInit({
   dest: 'public',
-  customWorkerDest: 'worker',
 
   disable: process.env.NODE_ENV === 'development',
   dynamicStartUrl: true, // Essencial para lidar com estados de login

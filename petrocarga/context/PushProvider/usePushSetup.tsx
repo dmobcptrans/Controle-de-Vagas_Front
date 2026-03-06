@@ -8,8 +8,8 @@ import { clientApi } from '@/lib/clientApi';
 export function usePushSetup() {
   useEffect(() => {
     async function initPush() {
-      // Permissão
 
+      // Permissão
       const permission = await Notification.requestPermission();
 
       if (permission !== 'granted') {
@@ -17,8 +17,7 @@ export function usePushSetup() {
         return;
       }
 
-      // Messaging
-
+      // Firebase Messaging
       const messaging = await getMessagingInstance();
 
       if (!messaging) {
@@ -26,11 +25,14 @@ export function usePushSetup() {
         return;
       }
 
-      // Token
+      // Service Worker
       const registration = await navigator.serviceWorker.register(
-        "/firebase-messaging-sw.js"
+        '/firebase-messaging-sw.js'
       );
 
+      await navigator.serviceWorker.ready;
+
+      // Token
       const token = await getToken(messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
         serviceWorkerRegistration: registration,
@@ -41,12 +43,14 @@ export function usePushSetup() {
         return;
       }
 
-      // Backend
-
+      // Enviar para backend
       await clientApi('/petrocarga/notificacoes/pushToken', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, plataforma: 'WEB' }),
+        body: JSON.stringify({
+          token,
+          plataforma: 'WEB',
+        }),
       });
     }
 
