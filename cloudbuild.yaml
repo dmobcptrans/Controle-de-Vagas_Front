@@ -1,9 +1,10 @@
 steps:
   - name: "gcr.io/cloud-builders/docker"
-    dir: "petrocarga"
     args:
       [
         "build",
+        "-f",
+        "petrocarga/Dockerfile",
 
         "--build-arg",
         "NEXT_PUBLIC_API_URL=${_NEXT_PUBLIC_API_URL}",
@@ -25,7 +26,6 @@ steps:
         "NEXT_PUBLIC_FIREBASE_APP_ID=${_NEXT_PUBLIC_FIREBASE_APP_ID}",
         "--build-arg",
         "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=${_NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID}",
-
         "--build-arg",
         "NEXT_PUBLIC_FIREBASE_VAPID_KEY=${_NEXT_PUBLIC_FIREBASE_VAPID_KEY}",
 
