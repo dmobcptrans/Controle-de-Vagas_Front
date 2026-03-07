@@ -1,9 +1,15 @@
-# ---------- Etapa 1: Build ----------
-FROM node:20-alpine AS builder
-
+# ---------- dependencies ----------
+FROM node:20-alpine AS deps
 WORKDIR /app
 
-# ---------- Build Args ----------
+COPY petrocarga/package.json petrocarga/package-lock.json* ./
+RUN npm ci
+
+
+# ---------- build ----------
+FROM node:20-alpine AS builder
+WORKDIR /app
+
 ARG NEXT_PUBLIC_MAPBOX_TOKEN
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_FIREBASE_VAPID_KEY
@@ -15,7 +21,6 @@ ARG NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 ARG NEXT_PUBLIC_FIREBASE_APP_ID
 ARG NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 
-# ---------- ENV para build do Next ----------
 ENV NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_FIREBASE_VAPID_KEY=$NEXT_PUBLIC_FIREBASE_VAPID_KEY
@@ -27,33 +32,24 @@ ENV NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MESSAGING_SEN
 ENV NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
 ENV NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=$NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 
-# dependências
-COPY petrocarga/package*.json ./
-RUN npm install
-
-# código do projeto
+COPY --from=deps /app/node_modules ./node_modules
 COPY petrocarga/ .
 
 RUN npm run build
 
 
-# ---------- Etapa 2: Runtime ----------
+# ---------- runner ----------
 FROM node:20-alpine AS runner
-
 WORKDIR /app
+
 ENV NODE_ENV=production
-
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-
-# se existir
-COPY --from=builder /app/next.config.js ./next.config.js
-
-# Cloud Run usa porta dinâmica
 ENV PORT=3000
+
+# arquivos gerados pelo standalone
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
