@@ -29,10 +29,14 @@ ENV NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
 ENV NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=$NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 ENV NEXT_PUBLIC_FIREBASE_VAPID_KEY=$NEXT_PUBLIC_FIREBASE_VAPID_KEY
 
-COPY package.json package-lock.json* ./
+# copia apenas dependências primeiro (melhora cache)
+COPY petrocarga/package.json petrocarga/package-lock.json* ./
+
 RUN npm install
 
-COPY . .
+# copia o resto do projeto
+COPY petrocarga/ .
+
 RUN npm run build
 
 

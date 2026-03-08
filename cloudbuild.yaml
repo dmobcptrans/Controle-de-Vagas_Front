@@ -3,8 +3,6 @@ steps:
     args:
       [
         "build",
-        "-f",
-        "petrocarga/Dockerfile",
 
         "--build-arg",
         "NEXT_PUBLIC_API_URL=${_NEXT_PUBLIC_API_URL}",
