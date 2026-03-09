@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description:
     'O Petrocarga trás aos motoristas uma plataforma eficiente para gerenciamento de cargas e rotas',
 
+  manifest: '/manifest.webmanifest',
+
   appleWebApp: {
     capable: true,
     title: 'Petrocarga',
