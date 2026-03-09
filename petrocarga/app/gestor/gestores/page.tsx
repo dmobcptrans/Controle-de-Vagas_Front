@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useAuth } from '@/components/hooksGerais/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import { getGestores } from '@/lib/api/gestorApi';
 import { FiltrosGestor } from '@/lib/types/gestor';
 import {

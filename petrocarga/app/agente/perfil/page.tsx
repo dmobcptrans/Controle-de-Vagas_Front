@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/components/hooksGerais/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import {
   Card,
   CardDescription,

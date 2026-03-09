@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/components/hooksGerais/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import { PrivateNavbar } from '@/components/layout/PrivateNavbar';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/components/hooksGerais/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
 import { Loader2 } from 'lucide-react';
 import { Veiculo } from '@/lib/types/veiculo';

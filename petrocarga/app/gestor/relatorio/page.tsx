@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/components/hooksGerais/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import { RelatorioSumario, RelatorioKpis } from '@/lib/api/dashboardApi';
 import { DashboardSummary, DashboardKPIs } from '@/lib/types/dashboard';
 import { KPICard } from '@/components/dashboard/KPICard';

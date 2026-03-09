@@ -1,6 +1,6 @@
 'use client';
 
-import { useDenuncias } from '@/components/hooksGerais/useDenuncias';
+import { useDenuncias } from '@/components/hooks/useDenuncias';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import DenunciaLista from '@/components/gestor/denuncia/DenunciaLista';
 import { Button } from '@/components/ui/button';

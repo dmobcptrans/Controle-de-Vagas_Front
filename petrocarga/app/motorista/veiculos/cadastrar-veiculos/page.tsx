@@ -16,7 +16,7 @@ import Form from 'next/form';
 import FormItem from '@/components/form/form-item';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import { addVeiculo } from '@/lib/api/veiculoApi';
-import { useAuth } from '@/components/hooksGerais/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import Link from 'next/link';
 
 export default function CadastroVeiculo() {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/components/hooksGerais/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import { DIAS_SEMANA } from './reservaHelpers';
 import { Veiculo } from '@/lib/types/veiculo';
 import { Reserva } from '@/lib/types/reserva';

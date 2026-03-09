@@ -1,7 +1,7 @@
 'use client';
 
 import ReservaRapidaCard from '@/components/agente/cards/reservaRapida-card';
-import { useAuth } from '@/components/hooksGerais/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import { getReservasRapidas } from '@/lib/api/reservaApi';
 import { ReservaRapida } from '@/lib/types/reservaRapida';
 import { Loader2 } from 'lucide-react';

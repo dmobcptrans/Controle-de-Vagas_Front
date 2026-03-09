@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '@/components/hooksGerais/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import { getMotoristas } from '@/lib/api/motoristaApi';
 import {
   enviarNotificacaoParaUsuario,

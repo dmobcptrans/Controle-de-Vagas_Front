@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
 import Logo from '@/public/Logo.png';
-import { useAuth } from '@/components/hooksGerais/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import { NAVBAR_LINKS } from './config/navbarLinks';
 import { LogoutButton } from '@/components/logoutButton/logoutButton';
 

@@ -25,7 +25,7 @@ import { useActionState } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import FormItem from '@/components/form/form-item';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
-import useValidacaoSenha from '@/components/hooksGerais/useValidacaoSenha';
+import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
 import FeedbackSenha from '@/components/feedback/feedback-senha';
 
 export default function CadastroUsuario() {

@@ -11,7 +11,7 @@ import {
   KeyRound,
 } from 'lucide-react';
 import { redefinirSenhaComCodigo } from '@/lib/api/recuperacaoApi';
-import useValidacaoSenha from '@/components/hooksGerais/useValidacaoSenha';
+import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
 import FeedbackSenha from '@/components/feedback/feedback-senha';
 
 export default function ResetarSenhaComCodigo() {
