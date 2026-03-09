@@ -1,28 +1,19 @@
 'use client';
 
 import { clientApi } from '../clientApi';
+import type {
+  DisponibilidadeInput,
+  DisponibilidadeVagasBody,
+  DisponibilidadeCompleta,
+  DisponibilidadeResponse,
+} from '@/lib/types/disponibilidadeVagas';
 
-interface DisponibilidadeVaga {
-  id?: string;
-  vagaId: string;
-  inicio: string;
-  fim: string;
-}
-
-interface DisponibilidadeResponse {
-  error?: boolean;
-  message?: string;
-  valores?: DisponibilidadeVaga;
-  success?: boolean;
-}
-
-// ----------------------
-// POST DISPONIBILIDADE VAGAS
-// ----------------------
-export async function addDisponibilidadeVagas(formData: FormData) {
+export async function addDisponibilidadeVagas(
+  formData: FormData,
+): Promise<DisponibilidadeResponse<DisponibilidadeCompleta>> {
   const vagaIds = formData.getAll('vagaid') as string[];
 
-  const body = {
+  const body: DisponibilidadeVagasBody = {
     listaVagaId: vagaIds,
     inicio: new Date(formData.get('inicio') as string).toISOString(),
     fim: new Date(formData.get('fim') as string).toISOString(),
@@ -33,32 +24,46 @@ export async function addDisponibilidadeVagas(formData: FormData) {
       method: 'POST',
       json: body,
     });
-    return await res.json();
-  } catch (err) {
+
+    const data = await res.json();
+    return { success: true, data };
+  } catch (err: unknown) {
     console.error('Erro ao adicionar disponibilidade:', err);
-    throw err;
+    return {
+      error: true,
+      message:
+        err instanceof Error
+          ? err.message
+          : 'Erro desconhecido ao adicionar disponibilidade',
+    };
   }
 }
 
-// ----------------------
-// GET DISPONIBILIDADE VAGAS
-// ----------------------
-export async function getDisponibilidadeVagas() {
+export async function getDisponibilidadeVagas(): Promise<
+  DisponibilidadeResponse<DisponibilidadeCompleta[]>
+> {
   try {
     const res = await clientApi('/petrocarga/disponibilidade-vagas', {
       method: 'GET',
     });
-    return await res.json();
-  } catch (err) {
+
+    const data = await res.json();
+    return { success: true, data };
+  } catch (err: unknown) {
     console.error('Erro ao buscar disponibilidade:', err);
-    throw err;
+    return {
+      error: true,
+      message:
+        err instanceof Error
+          ? err.message
+          : 'Erro desconhecido ao buscar disponibilidades',
+    };
   }
 }
 
-// ----------------------
-// GET DISPONIBILIDADE VAGAS POR VAGAID
-
-export async function getDisponibilidadeVagasByVagaId(vagaId: string) {
+export async function getDisponibilidadeVagasByVagaId(
+  vagaId: string,
+): Promise<DisponibilidadeResponse<DisponibilidadeCompleta[]>> {
   try {
     const res = await clientApi(
       `/petrocarga/disponibilidade-vagas/vaga/${vagaId}`,
@@ -66,30 +71,35 @@ export async function getDisponibilidadeVagasByVagaId(vagaId: string) {
         method: 'GET',
       },
     );
-    return await res.json();
-  } catch (err) {
+
+    const data = await res.json();
+    return { success: true, data };
+  } catch (err: unknown) {
     console.error('Erro ao buscar disponibilidade por vagaId', err);
-    throw err;
+    return {
+      error: true,
+      message:
+        err instanceof Error
+          ? err.message
+          : 'Erro desconhecido ao buscar disponibilidades por vaga',
+    };
   }
 }
-// ----------------------
 
-// ----------------------
-// PATCH DISPONIBILIDADE VAGAS
-// ----------------------
 export async function editarDisponibilidadeVagas(
   id: string,
   vagaId: string,
   inicio: string,
   fim: string,
-): Promise<DisponibilidadeResponse> {
-  const body: DisponibilidadeVaga = { vagaId, inicio, fim };
+): Promise<DisponibilidadeResponse<DisponibilidadeInput>> {
+  const body: DisponibilidadeInput = { vagaId, inicio, fim };
 
   try {
-    const res = await clientApi(`/petrocarga/disponibilidade-vagas/${id}`, {
+    await clientApi(`/petrocarga/disponibilidade-vagas/${id}`, {
       method: 'PATCH',
       json: body,
     });
+
     return { success: true, valores: body };
   } catch (err: unknown) {
     console.error('Erro ao atualizar disponibilidade:', err);
@@ -102,21 +112,30 @@ export async function editarDisponibilidadeVagas(
   }
 }
 
-// ----------------------
-// DELETE DISPONIBILIDADE VAGAS
-// ----------------------
-export async function deleteDisponibilidadeVagas(disponibilidadeId: string) {
+export async function deleteDisponibilidadeVagas(
+  disponibilidadeId: string,
+): Promise<DisponibilidadeResponse> {
   if (!disponibilidadeId) {
-    throw new Error('ID da disponibilidade não enviado.');
+    return {
+      error: true,
+      message: 'ID da disponibilidade não enviado.',
+    };
   }
 
   try {
     await clientApi(`/petrocarga/disponibilidade-vagas/${disponibilidadeId}`, {
       method: 'DELETE',
     });
-    return true;
-  } catch (err) {
+
+    return { success: true };
+  } catch (err: unknown) {
     console.error('Erro ao deletar disponibilidade:', err);
-    throw err;
+    return {
+      error: true,
+      message:
+        err instanceof Error
+          ? err.message
+          : 'Erro desconhecido ao deletar disponibilidade',
+    };
   }
 }

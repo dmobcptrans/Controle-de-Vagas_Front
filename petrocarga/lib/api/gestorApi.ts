@@ -1,29 +1,21 @@
 'use client';
 
 import { clientApi } from '../clientApi';
-
-interface GestorPayload {
-  nome: string;
-  cpf: string;
-  telefone: string;
-  email: string;
-  senha?: string;
-}
-
-interface GestorResult {
-  error: boolean;
-  message?: string;
-  valores?: GestorPayload;
-  gestorId?: string;
-  gestor?: unknown;
-  gestores?: unknown[];
-}
+import type {
+  GestorInput,
+  GestorCompleto,
+  GestorResponse,
+  FiltrosGestor,
+} from '@/lib/types/gestor';
 
 // ----------------------
 // ADD GESTOR
 // ----------------------
-export async function addGestor(_: unknown, formData: FormData) {
-  const payload = {
+export async function addGestor(
+  _: unknown,
+  formData: FormData,
+): Promise<GestorResponse<GestorInput>> {
+  const payload: GestorInput = {
     nome: formData.get('nome') as string,
     cpf: formData.get('cpf') as string,
     telefone: formData.get('telefone') as string,
@@ -41,7 +33,9 @@ export async function addGestor(_: unknown, formData: FormData) {
     try {
       const data = await res.json();
       msg = data.message ?? msg;
-    } catch {}
+    } catch {
+      // Mantém a mensagem padrão
+    }
 
     return { error: true, message: msg, valores: payload };
   }
@@ -52,11 +46,12 @@ export async function addGestor(_: unknown, formData: FormData) {
 // ----------------------
 // DELETE GESTOR
 // ----------------------
-export async function deleteGestor(gestorId: string): Promise<GestorResult> {
+export async function deleteGestor(gestorId: string): Promise<GestorResponse> {
   try {
     await clientApi(`/petrocarga/gestores/${gestorId}`, { method: 'DELETE' });
     return { error: false, message: 'Gestor deletado com sucesso!' };
   } catch (err: unknown) {
+    console.error('Erro ao deletar gestor:', err);
     return {
       error: true,
       message: err instanceof Error ? err.message : 'Erro ao deletar gestor',
@@ -69,10 +64,11 @@ export async function deleteGestor(gestorId: string): Promise<GestorResult> {
 // ----------------------
 export async function atualizarGestor(
   formData: FormData,
-): Promise<GestorResult> {
+): Promise<GestorResponse<GestorInput>> {
   const usuarioId = formData.get('id') as string;
 
-  const payload: GestorPayload = {
+  const payload: GestorInput = {
+    id: usuarioId,
     nome: formData.get('nome') as string,
     cpf: formData.get('cpf') as string,
     telefone: formData.get('telefone') as string,
@@ -87,6 +83,7 @@ export async function atualizarGestor(
     });
     return { error: false, message: 'Gestor atualizado com sucesso!' };
   } catch (err: unknown) {
+    console.error('Erro ao atualizar gestor:', err);
     return {
       error: true,
       message: err instanceof Error ? err.message : 'Erro ao atualizar gestor',
@@ -98,12 +95,9 @@ export async function atualizarGestor(
 // ----------------------
 // GET GESTORES COM FILTROS
 // ----------------------
-export async function getGestores(filtros?: {
-  nome?: string;
-  email?: string;
-  telefone?: string;
-  ativo?: boolean;
-}) {
+export async function getGestores(
+  filtros?: FiltrosGestor,
+): Promise<GestorResponse<GestorCompleto>> {
   // Construir query string com filtros
   const params = new URLSearchParams();
 
@@ -126,7 +120,9 @@ export async function getGestores(filtros?: {
     try {
       const err = await res.json();
       msg = err.message ?? msg;
-    } catch {}
+    } catch {
+      // Mantém a mensagem padrão
+    }
 
     return { error: true, message: msg };
   }
@@ -138,7 +134,9 @@ export async function getGestores(filtros?: {
 // ----------------------
 // GET GESTOR BY USER ID
 // ----------------------
-export async function getGestorByUserId(userId: string) {
+export async function getGestorByUserId(
+  userId: string,
+): Promise<GestorResponse<GestorCompleto>> {
   const res = await clientApi(`/petrocarga/gestores/${userId}`);
 
   if (!res.ok) {
@@ -147,7 +145,9 @@ export async function getGestorByUserId(userId: string) {
     try {
       const err = await res.json();
       msg = err.message ?? msg;
-    } catch {}
+    } catch {
+      // Mantém a mensagem padrão
+    }
 
     return { error: true, message: msg };
   }

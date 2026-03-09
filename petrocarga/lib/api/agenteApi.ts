@@ -1,31 +1,18 @@
 'use client';
 
 import { clientApi } from '../clientApi';
+import type {
+  AgenteInput,
+  AgenteCompleto,
+  AgenteResponse,
+  FiltrosAgente,
+} from '@/lib/types/agente';
 
-interface Agente {
-  id?: string;
-  nome: string;
-  cpf: string;
-  telefone: string;
-  email: string;
-  matricula: string;
-  senha?: string;
-}
-
-export interface AgenteResponse {
-  error?: boolean;
-  message?: string;
-  valores?: Agente;
-  agenteId?: string;
-  agente?: Agente;
-  agentes?: Agente[];
-}
-
-// ----------------------
-// ADD AGENTE
-// ----------------------
-export async function addAgente(_: unknown, formData: FormData) {
-  const payload = {
+export async function addAgente(
+  _: unknown,
+  formData: FormData,
+): Promise<AgenteResponse<AgenteInput>> {
+  const payload: AgenteInput = {
     nome: formData.get('nome') as string,
     cpf: formData.get('cpf') as string,
     telefone: formData.get('telefone') as string,
@@ -44,7 +31,9 @@ export async function addAgente(_: unknown, formData: FormData) {
     try {
       const data = await res.json();
       msg = data.message ?? msg;
-    } catch {}
+    } catch {
+      // Mantém a mensagem padrão
+    }
 
     return { error: true, message: msg, valores: payload };
   }
@@ -52,9 +41,6 @@ export async function addAgente(_: unknown, formData: FormData) {
   return { error: false, message: 'Agente cadastrado com sucesso!' };
 }
 
-// ----------------------
-// DELETE AGENTE
-// ----------------------
 export async function deleteAgente(agenteId: string): Promise<AgenteResponse> {
   try {
     await clientApi(`/petrocarga/agentes/${agenteId}`, { method: 'DELETE' });
@@ -68,15 +54,13 @@ export async function deleteAgente(agenteId: string): Promise<AgenteResponse> {
   }
 }
 
-// ----------------------
-// ATUALIZAR AGENTE
-// ----------------------
 export async function atualizarAgente(
   formData: FormData,
-): Promise<AgenteResponse> {
+): Promise<AgenteResponse<AgenteInput>> {
   const usuarioid = formData.get('id') as string;
 
-  const payload: Agente = {
+  const payload: AgenteInput = {
+    id: usuarioid,
     nome: formData.get('nome') as string,
     cpf: formData.get('cpf') as string,
     telefone: formData.get('telefone') as string,
@@ -101,10 +85,9 @@ export async function atualizarAgente(
   }
 }
 
-// ----------------------
-// GET AGENTE BY USER ID
-// ----------------------
-export async function getAgenteByUserId(userId: string) {
+export async function getAgenteByUserId(
+  userId: string,
+): Promise<AgenteResponse<AgenteCompleto>> {
   const res = await clientApi(`/petrocarga/agentes/${userId}`);
 
   if (!res.ok) {
@@ -113,7 +96,9 @@ export async function getAgenteByUserId(userId: string) {
     try {
       const err = await res.json();
       msg = err.message ?? msg;
-    } catch {}
+    } catch {
+      // Mantém a mensagem padrão
+    }
 
     return { error: true, message: msg };
   }
@@ -122,17 +107,9 @@ export async function getAgenteByUserId(userId: string) {
   return { error: false, agenteId: data.id, agente: data };
 }
 
-// ----------------------
-// GET AGENTES COM FILTROS
-// ----------------------
-export async function getAgentes(filtros?: {
-  nome?: string;
-  matricula?: string;
-  telefone?: string;
-  ativo?: boolean;
-  email?: string;
-}) {
-  // Construir query string com filtros
+export async function getAgentes(
+  filtros?: FiltrosAgente,
+): Promise<AgenteResponse<AgenteCompleto>> {
   const params = new URLSearchParams();
 
   if (filtros?.nome) params.append('nome', filtros.nome);
@@ -155,7 +132,9 @@ export async function getAgentes(filtros?: {
     try {
       const err = await res.json();
       msg = err.message ?? msg;
-    } catch {}
+    } catch {
+      // Mantém a mensagem padrão
+    }
 
     return { error: true, message: msg };
   }
