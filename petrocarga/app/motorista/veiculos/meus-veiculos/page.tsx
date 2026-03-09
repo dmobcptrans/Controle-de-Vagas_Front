@@ -23,7 +23,7 @@ export default function VeiculosPage() {
       try {
         const result = await getVeiculosUsuario(user.id);
         setVeiculos(result.veiculos);
-      } catch (err) {
+      } catch {
         setError('Erro ao buscar seus veículos. Tente novamente mais tarde.');
       } finally {
         setLoading(false);

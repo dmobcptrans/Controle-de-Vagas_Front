@@ -50,7 +50,7 @@ export default function AgentesPage() {
         } else {
           setAgentes(result.agentes || []);
         }
-      } catch (err) {
+      } catch {
         setError(
           'Erro ao buscar os agentes cadastrados. Tente novamente mais tarde.',
         );

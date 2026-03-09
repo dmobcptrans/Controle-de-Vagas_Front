@@ -103,7 +103,7 @@ export default function NotificacoesPage() {
       await deleteSelectedNotifications(selectedIds);
       setSelectedIds([]);
       setShowDeleteModal(false);
-    } catch (err) {
+    } catch {
       toast.error('Erro ao remover notificações. Por favor, tente novamente.');
     }
   };
@@ -113,7 +113,7 @@ export default function NotificacoesPage() {
       await markSelectedAsRead(selectedIds);
       setSelectedIds([]);
       setShowMarkReadModal(false);
-    } catch (err) {
+    } catch {
       toast.error(
         'Erro ao marcar notificações como lidas. Por favor, tente novamente.',
       );

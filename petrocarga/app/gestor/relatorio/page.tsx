@@ -105,7 +105,7 @@ export default function RelatoriosPage() {
             'Não foi possível carregar os dados do dashboard. Verifique se o serviço está disponível.',
           );
         }
-      } catch (err) {
+      } catch {
         setError('Erro interno ao processar os dados');
       } finally {
         setLoading(false);

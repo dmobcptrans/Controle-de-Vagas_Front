@@ -49,7 +49,7 @@ export default function EditarMotoristaPage() {
             setMotorista(m);
           }
         }
-      } catch (err) {
+      } catch {
         setError('Erro ao buscar perfil do motorista.');
       } finally {
         setLoading(false);

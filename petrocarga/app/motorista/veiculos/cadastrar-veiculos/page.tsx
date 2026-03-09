@@ -42,7 +42,7 @@ export default function CadastroVeiculo() {
         } else {
           toast.success(result?.message || 'Veículo cadastrado com sucesso!');
         }
-      } catch (err) {
+      } catch {
         toast.error('Erro inesperado ao cadastrar veículo.');
       }
     });

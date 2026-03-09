@@ -51,7 +51,7 @@ export default function EditarVeiculoPage() {
             setVeiculo(v);
           }
         }
-      } catch (err) {
+      } catch {
         toast.error('Erro ao carregar os dados do veículo. Tente novamente.');
         setError('Erro ao buscar veículo.');
       } finally {

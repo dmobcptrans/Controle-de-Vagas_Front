@@ -41,7 +41,7 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
       await deleteVaga(vaga.id);
       setModalAberto(false);
       router.back();
-    } catch (err) {
+    } catch {
       toast.error('Erro ao excluir vaga. Tente novamente.');
     }
   };

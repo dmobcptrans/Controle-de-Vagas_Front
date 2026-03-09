@@ -50,7 +50,7 @@ export default function GestoresPage() {
         } else {
           setGestores(result.gestores || []);
         }
-      } catch (err) {
+      } catch {
         setError(
           'Erro ao buscar os gestores cadastrados. Tente novamente mais tarde.',
         );

@@ -19,7 +19,7 @@ export default function GestorCard({ gestor }: GestorCardProps) {
     try {
       await deleteGestor(gestor.id);
       router.back();
-    } catch (err) {
+    } catch {
       toast.error('Erro ao excluir gestor. Tente novamente.');
     }
   };

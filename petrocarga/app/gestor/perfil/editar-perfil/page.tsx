@@ -49,7 +49,7 @@ export default function EditarGestorPerfil() {
             setGestor(m);
           }
         }
-      } catch (err) {
+      } catch {
         setError('Erro ao buscar perfil do gestor.');
       } finally {
         setLoading(false);

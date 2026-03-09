@@ -60,7 +60,7 @@ export default function EnviarNotificacoesPage() {
         if (!motoristasRes.error) {
           setMotoristas(motoristasRes.motoristas || []);
         }
-      } catch (err) {
+      } catch {
         toast.error(
           'Erro ao carregar motoristas. Por favor, tente novamente mais tarde.',
         );
