@@ -1,5 +1,5 @@
 'use client';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooksGerais/useAuth';
 import { redirect } from 'next/navigation';
 import { useState } from 'react';
 

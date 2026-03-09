@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Logo from '@/public/Logo.png';
 import Image from 'next/image';
 import { LogoutButton } from '@/components/logoutButton/logoutButton';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { useNotifications } from '@/context/NotificationContext';
 import {
   DropdownMenu,

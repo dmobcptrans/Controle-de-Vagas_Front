@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { Gestor } from '@/lib/types/gestor';
 import { getGestorByUserId } from '@/lib/api/gestorApi';
 import { useRouter } from 'next/navigation';

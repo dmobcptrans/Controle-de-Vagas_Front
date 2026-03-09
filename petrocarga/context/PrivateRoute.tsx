@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { useRouter } from 'next/navigation';
 
 type Role = 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE';

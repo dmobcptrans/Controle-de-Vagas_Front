@@ -5,7 +5,7 @@ import { Motorista } from '@/lib/types/motorista';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { useEffect, useState } from 'react';
 import { getMotoristaByUserId } from '@/lib/api/motoristaApi';
 

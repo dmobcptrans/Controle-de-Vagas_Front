@@ -1,7 +1,7 @@
 'use client';
 
 import EditarAgente from '@/components/agente/editar/edicao-perfil';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { getAgenteByUserId } from '@/lib/api/agenteApi';
 import { Agente } from '@/lib/types/agente';
 import { ArrowLeft, Loader2 } from 'lucide-react';

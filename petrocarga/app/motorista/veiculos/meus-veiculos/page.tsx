@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
 import { Loader2 } from 'lucide-react';
 import { Veiculo } from '@/lib/types/veiculo';
 import VeiculoCard from '@/components/motorista/cards/veiculo-item';
-import toast from 'react-hot-toast';
 
 export default function VeiculosPage() {
   const { user } = useAuth();

@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { deleteMotorista, getMotoristaByUserId } from '@/lib/api/motoristaApi';
 import { Motorista } from '@/lib/types/motorista';
 import { cn } from '@/lib/utils';

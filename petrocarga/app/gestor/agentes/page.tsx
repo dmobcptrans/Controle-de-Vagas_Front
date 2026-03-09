@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { getAgentes } from '@/lib/api/agenteApi';
 import { FiltrosAgente } from '@/lib/types/agente';
 import {
@@ -84,7 +84,7 @@ export default function AgentesPage() {
       setPaginaAtual(1);
       fetchAgentes(mostrarAtivos);
     }
-  }, [mostrarAtivos]);
+  }, [fetchAgentes, loading, mostrarAtivos]);
 
   // Limpar filtros (mostrar todos)
   const mostrarTodos = () => {
@@ -283,9 +283,8 @@ export default function AgentesPage() {
                 <div className="text-sm text-gray-600">
                   {busca ? (
                     <>
-                      Resultados para "
+                      Resultados para
                       <span className="font-medium text-blue-600">{busca}</span>
-                      "
                       {mostrarAtivos !== null && (
                         <>
                           {' '}

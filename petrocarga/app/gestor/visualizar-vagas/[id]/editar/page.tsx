@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import EditarVaga from '@/components/gestor/editar/edicao-vaga';
 import { Vaga } from '@/lib/types/vaga';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { getVagaById } from '@/lib/api/vagaApi';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';

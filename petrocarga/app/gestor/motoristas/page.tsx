@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { getMotoristas } from '@/lib/api/motoristaApi';
 import { FiltrosMotorista } from '@/lib/types/motorista';
 import {
@@ -14,7 +14,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Check,
 } from 'lucide-react';
 import { Motorista } from '@/lib/types/motorista';
 import MotoristaCard from '@/components/gestor/cards/motoristas-card';
@@ -85,7 +84,7 @@ export default function MotoristasPage() {
       setPaginaAtual(1);
       fetchMotoristas(mostrarAtivos);
     }
-  }, [mostrarAtivos]);
+  }, [fetchMotoristas, loading, mostrarAtivos]);
 
   // Limpar filtros (mostrar todos)
   const mostrarTodos = () => {
@@ -285,9 +284,9 @@ export default function MotoristasPage() {
                 <div className="text-sm text-gray-600">
                   {busca ? (
                     <>
-                      Resultados para "
+                      Resultados para &quot;
                       <span className="font-medium text-blue-600">{busca}</span>
-                      "
+                      &quot;
                       {mostrarAtivos !== null && (
                         <>
                           {' '}

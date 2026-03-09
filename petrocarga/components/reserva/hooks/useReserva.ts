@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { DIAS_SEMANA } from './reservaHelpers';
 import { Veiculo } from '@/lib/types/veiculo';
 import { Reserva } from '@/lib/types/reserva';
@@ -363,8 +363,7 @@ export function useReserva(selectedVaga: Vaga | null) {
     setReservaState((prev) => ({ ...prev, origin }));
 
   const setEntryCity = (entryCity: string | null) =>
-  setReservaState((prev) => ({ ...prev, entryCity }));
-
+    setReservaState((prev) => ({ ...prev, entryCity }));
 
   const setSelectedVehicleId = (selectedVehicleId?: string) =>
     setReservaState((prev) => ({ ...prev, selectedVehicleId }));
@@ -423,8 +422,8 @@ export function useReserva(selectedVaga: Vaga | null) {
       formData.append('cidadeOrigem', origin);
 
       if (entryCity) {
-    formData.append('entradaCidade', entryCity);
-  }
+        formData.append('entradaCidade', entryCity);
+      }
     }
 
     formData.append('inicio', formatDateTime(selectedDay, startHour));
@@ -446,9 +445,7 @@ export function useReserva(selectedVaga: Vaga | null) {
     return {
       success: true,
       message: 'Reserva confirmada com sucesso!',
-      
     };
-    
   }, [user, selectedVaga, motoristaId, reservaState, isAgente, reset]);
 
   // ====================================================

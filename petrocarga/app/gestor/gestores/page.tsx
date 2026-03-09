@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { getGestores } from '@/lib/api/gestorApi';
 import { FiltrosGestor } from '@/lib/types/gestor';
 import {
@@ -84,7 +84,7 @@ export default function GestoresPage() {
       setPaginaAtual(1);
       fetchGestores(mostrarAtivos);
     }
-  }, [mostrarAtivos]);
+  }, [fetchGestores, loading, mostrarAtivos]);
 
   // Limpar filtros (mostrar todos)
   const mostrarTodos = () => {
@@ -281,9 +281,9 @@ export default function GestoresPage() {
                 <div className="text-sm text-gray-600">
                   {busca ? (
                     <>
-                      Resultados para "
+                      Resultados para &quot;
                       <span className="font-medium text-blue-600">{busca}</span>
-                      "
+                      &quot;
                       {mostrarAtivos !== null && (
                         <>
                           {' '}

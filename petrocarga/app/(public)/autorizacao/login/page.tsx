@@ -33,7 +33,7 @@ import {
   User,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import { ativarConta, reenviarCodigoAtivacao } from '@/lib/api/recuperacaoApi';
 
 function ModalTermos({
