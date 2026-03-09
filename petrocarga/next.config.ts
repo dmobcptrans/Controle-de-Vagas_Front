@@ -6,7 +6,7 @@ const withPWA = withPWAInit({
 
   disable: process.env.NODE_ENV === 'development',
   dynamicStartUrl: true, // Essencial para lidar com estados de login
-  dynamicStartUrlRedirect: '/login',
+  dynamicStartUrlRedirect: '/autorizacao/login',
   reloadOnOnline: true, // Recarrega automaticamente ao recuperar conexão
   cacheStartUrl: true,
   fallbacks: {

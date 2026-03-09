@@ -17,11 +17,11 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 const tipoImagem = {
-  DENUNCIA: '/image-firebase/imag-denuncia.png',
-  MOTORISTA: '/image-firebase/imag-motorista.png',
-  VAGA: '/image-firebase/imag-vaga.png',
-  RESERVA: '/image-firebase/imag-reserva.png',
-  VEICULO: '/image-firebase/imag-veiculo.png',
+  DENUNCIA: '/image-firebase/imag-denuncia.webp',
+  MOTORISTA: '/image-firebase/imag-motorista.webp',
+  VAGA: '/image-firebase/imag-vaga.webp',
+  RESERVA: '/image-firebase/imag-reserva.webp',
+  VEICULO: '/image-firebase/imag-veiculo.webp',
 };
 
 messaging.onBackgroundMessage((payload) => {

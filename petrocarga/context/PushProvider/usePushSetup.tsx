@@ -1,61 +1,98 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getToken } from 'firebase/messaging';
 import { getMessagingInstance } from '@/lib/firebase';
 import { clientApi } from '@/lib/clientApi';
 
-export function usePushSetup() {
+type PushStatus = 'idle' | 'prompted' | 'loading' | 'granted' | 'denied' | 'error';
+
+interface UsePushSetupReturn {
+  status: PushStatus;
+  showPrompt: boolean;
+  onAccept: () => void;
+  onDismiss: () => void;
+}
+
+const STORAGE_KEY = 'push_notification_dismissed';
+
+async function registerAndSendToken(): Promise<void> {
+  const permission = await Notification.requestPermission();
+
+  if (permission !== 'granted') {
+    throw new Error('permission_denied');
+  }
+
+  const messaging = await getMessagingInstance();
+  if (!messaging) {
+    throw new Error('messaging_unavailable');
+  }
+
+  const registration = await navigator.serviceWorker.register(
+    '/firebase-messaging-sw.js'
+  );
+  await navigator.serviceWorker.ready;
+
+  const token = await getToken(messaging, {
+    vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+    serviceWorkerRegistration: registration,
+  });
+
+  if (!token) {
+    throw new Error('token_not_returned');
+  }
+
+  await clientApi('/petrocarga/notificacoes/pushToken', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, plataforma: 'WEB' }),
+  });
+}
+
+export function usePushSetup(): UsePushSetupReturn {
+  const [status, setStatus] = useState<PushStatus>('idle');
+  const [showPrompt, setShowPrompt] = useState(false);
+
   useEffect(() => {
-    async function initPush() {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
 
-      // Permissão
-      const permission = await Notification.requestPermission();
-
-      if (permission !== 'granted') {
-        console.warn('[Push] Permissão NÃO concedida. Abortando.');
-        return;
-      }
-
-      // Firebase Messaging
-      const messaging = await getMessagingInstance();
-
-      if (!messaging) {
-        console.error('[Push] Messaging não disponível.');
-        return;
-      }
-
-      // Service Worker
-      const registration = await navigator.serviceWorker.register(
-        '/firebase-messaging-sw.js'
-      );
-
-      await navigator.serviceWorker.ready;
-
-      // Token
-      const token = await getToken(messaging, {
-        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-        serviceWorkerRegistration: registration,
-      });
-
-      if (!token) {
-        console.error('[Push] Token FCM não retornado.');
-        return;
-      }
-
-      // Enviar para backend
-      await clientApi('/petrocarga/notificacoes/pushToken', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          plataforma: 'WEB',
-        }),
-      });
+    if (Notification.permission === 'granted') {
+      setStatus('loading');
+      registerAndSendToken()
+        .then(() => setStatus('granted'))
+        .catch(() => setStatus('error'));
+      return;
     }
 
-    initPush().catch((err) => {
-      console.error('[Push] Erro inesperado no setup:', err);
-    });
+    if (
+      Notification.permission === 'denied' ||
+      sessionStorage.getItem(STORAGE_KEY) === 'true'
+    ) {
+      setStatus('denied');
+      return;
+    }
+
+    setStatus('prompted');
+    setShowPrompt(true);
   }, []);
+
+  function onAccept() {
+    setShowPrompt(false);
+    setStatus('loading');
+
+    registerAndSendToken()
+      .then(() => setStatus('granted'))
+      .catch((err: Error) => {
+        console.error('[Push] Erro:', err.message);
+        setStatus(err.message === 'permission_denied' ? 'denied' : 'error');
+      });
+  }
+
+  function onDismiss() {
+    setShowPrompt(false);
+    setStatus('denied');
+    sessionStorage.setItem(STORAGE_KEY, 'true');
+  }
+
+  return { status, showPrompt, onAccept, onDismiss };
 }
