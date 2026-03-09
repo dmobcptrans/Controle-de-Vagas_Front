@@ -5,9 +5,9 @@ import mapboxgl from 'mapbox-gl';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-import { useVagas } from './hooks/useVagas';
+import { useVagas } from '../hooks/map/useVagas';
 import { useMapbox } from '../hooks/map/useMapbox';
-import { addVagaMarkers } from './utils/markerUtils';
+import { addVagaMarkers } from '../utils/map/markerUtils';
 import { Vaga } from '@/lib/types/vaga';
 
 interface MapboxFeature {

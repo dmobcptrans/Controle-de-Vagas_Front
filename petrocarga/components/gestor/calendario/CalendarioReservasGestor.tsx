@@ -6,7 +6,7 @@ import ptBr from '@fullcalendar/core/locales/pt-br';
 import useReservas from '@/components/hooks/gestor/calendario/useReservas';
 import { ReservaModal } from './ReservaModal';
 import { useState, useMemo, useRef } from 'react';
-import { toDateKey, dayStartISO } from './utils/utils';
+import { toDateKey, dayStartISO } from '../../utils/gestor/calendario/utils';
 import type { EventClickArg, EventInput } from '@fullcalendar/core';
 import { getVagaById } from '@/lib/api/vagaApi';
 import type { Reserva } from '@/lib/types/reserva';
