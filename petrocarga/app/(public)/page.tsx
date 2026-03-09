@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { InstallPWAButton } from '@/components/pwa/InstallPWAButton';
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
@@ -49,7 +50,7 @@ export default function Home() {
             Sistema oficial da CPTrans para reserva e gestão de áreas destinadas
             à carga e descarga no município
           </p>
-          <div className="flex flex-col sm:flex-row justify-center">
+          <div className="flex flex-col items-center gap-3">
             <Link href="/autorizacao/login">
               <Button
                 size="lg"
@@ -58,6 +59,8 @@ export default function Home() {
                 Fazer Reserva
               </Button>
             </Link>
+
+            <InstallPWAButton />
           </div>
         </div>
       </section>
