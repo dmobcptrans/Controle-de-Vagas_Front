@@ -1,21 +1,13 @@
 'use client';
 
 import { clientApi } from '../clientApi';
-import type {
-  GestorInput,
-  GestorCompleto,
-  GestorResponse,
-  FiltrosGestor,
-} from '@/lib/types/gestor';
+import type { GestorInput, GestorResponse } from '@/lib/types/gestor';
 
 // ----------------------
 // ADD GESTOR
 // ----------------------
-export async function addGestor(
-  _: unknown,
-  formData: FormData,
-): Promise<GestorResponse<GestorInput>> {
-  const payload: GestorInput = {
+export async function addGestor(_: unknown, formData: FormData) {
+  const payload = {
     nome: formData.get('nome') as string,
     cpf: formData.get('cpf') as string,
     telefone: formData.get('telefone') as string,
@@ -33,9 +25,7 @@ export async function addGestor(
     try {
       const data = await res.json();
       msg = data.message ?? msg;
-    } catch {
-      // Mantém a mensagem padrão
-    }
+    } catch {}
 
     return { error: true, message: msg, valores: payload };
   }
@@ -51,7 +41,6 @@ export async function deleteGestor(gestorId: string): Promise<GestorResponse> {
     await clientApi(`/petrocarga/gestores/${gestorId}`, { method: 'DELETE' });
     return { error: false, message: 'Gestor deletado com sucesso!' };
   } catch (err: unknown) {
-    console.error('Erro ao deletar gestor:', err);
     return {
       error: true,
       message: err instanceof Error ? err.message : 'Erro ao deletar gestor',
@@ -64,11 +53,10 @@ export async function deleteGestor(gestorId: string): Promise<GestorResponse> {
 // ----------------------
 export async function atualizarGestor(
   formData: FormData,
-): Promise<GestorResponse<GestorInput>> {
+): Promise<GestorResponse> {
   const usuarioId = formData.get('id') as string;
 
   const payload: GestorInput = {
-    id: usuarioId,
     nome: formData.get('nome') as string,
     cpf: formData.get('cpf') as string,
     telefone: formData.get('telefone') as string,
@@ -83,7 +71,6 @@ export async function atualizarGestor(
     });
     return { error: false, message: 'Gestor atualizado com sucesso!' };
   } catch (err: unknown) {
-    console.error('Erro ao atualizar gestor:', err);
     return {
       error: true,
       message: err instanceof Error ? err.message : 'Erro ao atualizar gestor',
@@ -95,9 +82,12 @@ export async function atualizarGestor(
 // ----------------------
 // GET GESTORES COM FILTROS
 // ----------------------
-export async function getGestores(
-  filtros?: FiltrosGestor,
-): Promise<GestorResponse<GestorCompleto>> {
+export async function getGestores(filtros?: {
+  nome?: string;
+  email?: string;
+  telefone?: string;
+  ativo?: boolean;
+}) {
   // Construir query string com filtros
   const params = new URLSearchParams();
 
@@ -120,9 +110,7 @@ export async function getGestores(
     try {
       const err = await res.json();
       msg = err.message ?? msg;
-    } catch {
-      // Mantém a mensagem padrão
-    }
+    } catch {}
 
     return { error: true, message: msg };
   }
@@ -134,9 +122,7 @@ export async function getGestores(
 // ----------------------
 // GET GESTOR BY USER ID
 // ----------------------
-export async function getGestorByUserId(
-  userId: string,
-): Promise<GestorResponse<GestorCompleto>> {
+export async function getGestorByUserId(userId: string) {
   const res = await clientApi(`/petrocarga/gestores/${userId}`);
 
   if (!res.ok) {
@@ -145,9 +131,7 @@ export async function getGestorByUserId(
     try {
       const err = await res.json();
       msg = err.message ?? msg;
-    } catch {
-      // Mantém a mensagem padrão
-    }
+    } catch {}
 
     return { error: true, message: msg };
   }

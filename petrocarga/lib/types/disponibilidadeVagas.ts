@@ -1,43 +1,33 @@
 // types/disponibilidade.ts
 
-export interface Endereco {
-  id: string;
-  codigoPmp: string;
-  logradouro: string;
-  bairro: string;
-}
-
-export interface DisponibilidadeInput {
-  id?: string;
-  vagaId: string;
-  inicio: string;
-  fim: string;
-}
-
-export interface DisponibilidadeVagasBody {
-  listaVagaId: string[];
-  inicio: string;
-  fim: string;
-}
-
-export interface DisponibilidadeCompleta {
+export type Disponibilidade = {
   id: string;
   vagaId: string;
-  endereco: Endereco;
+  endereco: {
+    id: string;
+    codigoPmp: string;
+    logradouro: string;
+    bairro: string;
+  };
   referenciaEndereco: string;
   numeroEndereco: string;
   inicio: string;
   fim: string;
   criadoEm: string;
   criadoPorId: string;
-}
+};
 
-export interface DisponibilidadeResponse<
-  T = DisponibilidadeCompleta | DisponibilidadeInput,
-> {
+// Pick só os campos necessários para criar/editar
+export type DisponibilidadeVaga = Pick<
+  Disponibilidade,
+  'vagaId' | 'inicio' | 'fim'
+> & {
+  id?: string;
+};
+
+export type DisponibilidadeResponse = {
   error?: boolean;
   message?: string;
-  valores?: DisponibilidadeInput;
+  valores?: DisponibilidadeVaga;
   success?: boolean;
-  data?: T | T[];
-}
+};

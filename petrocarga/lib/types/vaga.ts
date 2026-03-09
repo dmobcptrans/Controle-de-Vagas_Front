@@ -51,7 +51,7 @@ export interface VagaPayload {
 }
 
 // Tipo principal da vaga (completo)
-export interface VagaCompleta {
+export interface Vaga {
   id: string;
   area: 'VERMELHA' | 'AMARELA' | 'AZUL' | 'BRANCA' | string;
   numeroEndereco: string;
@@ -66,7 +66,7 @@ export interface VagaCompleta {
 }
 
 // Resposta da API
-export interface VagaResponse<T = VagaCompleta | VagaPayload> {
+export interface VagaResponse<T = Vaga | VagaPayload> {
   error: boolean;
   message?: string;
   valores?: VagaPayload | null;
