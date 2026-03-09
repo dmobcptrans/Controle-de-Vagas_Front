@@ -181,7 +181,8 @@ export default function CadastroGestores() {
                         Formato inválido
                       </span>
                       <p className="text-sm mt-0.5">
-                        Digite um email válido no formato "exemplo@dominio.com"
+                        Digite um email válido no formato
+                        &quot;exemplo@dominio.com&quot;.
                       </p>
                     </div>
                   </div>

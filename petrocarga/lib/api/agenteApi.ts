@@ -2,24 +2,12 @@
 
 import { clientApi } from '../clientApi';
 
-interface Agente {
-  id?: string;
-  nome: string;
-  cpf: string;
-  telefone: string;
-  email: string;
-  matricula: string;
-  senha?: string;
-}
-
-export interface AgenteResponse {
-  error?: boolean;
-  message?: string;
-  valores?: Agente;
-  agenteId?: string;
-  agente?: Agente;
-  agentes?: Agente[];
-}
+import type {
+  Agente,
+  AgenteInput,
+  AgenteResponse,
+  FiltrosAgente,
+} from '@/lib/types/agente';
 
 // ----------------------
 // ADD AGENTE
@@ -76,7 +64,7 @@ export async function atualizarAgente(
 ): Promise<AgenteResponse> {
   const usuarioid = formData.get('id') as string;
 
-  const payload: Agente = {
+  const payload: AgenteInput = {
     nome: formData.get('nome') as string,
     cpf: formData.get('cpf') as string,
     telefone: formData.get('telefone') as string,

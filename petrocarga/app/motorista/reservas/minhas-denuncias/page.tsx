@@ -23,7 +23,7 @@ export default function MinhasDenuncias() {
       try {
         const result = await getDenunciasByUsuario(user.id);
         setDenuncias(result ?? []);
-      } catch (err) {
+      } catch {
         toast.error(
           'Erro ao carregar suas denúncias. Por favor, tente novamente mais tarde.',
         );

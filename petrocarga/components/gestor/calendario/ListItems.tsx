@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Reserva } from '@/lib/types/reserva';
 import { Vaga } from '@/lib/types/vaga';
 import { Veiculo } from '@/lib/types/veiculo';
-import { formatTime } from './utils/utils';
+import { formatTime } from '../../utils/gestor/calendario/utils';
 
 const STATUS_CONFIG = {
   ATIVA: {

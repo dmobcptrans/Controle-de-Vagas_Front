@@ -7,7 +7,7 @@ import DaySelection from '@/components/reserva/DaySelection';
 import TimeSelection from '@/components/reserva/TimeSelection';
 import OriginVehicleStep from '@/components/reserva/OriginVehicleStep';
 import Confirmation from '@/components/reserva/Confirmation';
-import { useReserva } from './hooks/useReserva';
+import { useReserva } from '../hooks/reserva/useReserva';
 import { Vaga } from '@/lib/types/vaga';
 import toast from 'react-hot-toast';
 
@@ -140,8 +140,9 @@ export default function ReservaComponent({
         )}
 
         {/* STEP 3 - Seleção do horário inicial */}
-        {step === 3 && selectedDay && (
-          loadingHorarios || !horariosCarregados ? (
+        {step === 3 &&
+          selectedDay &&
+          (loadingHorarios || !horariosCarregados ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
               <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
               <p className="text-sm text-gray-600">
@@ -173,8 +174,7 @@ export default function ReservaComponent({
               onBack={() => setStep(2)}
               color="blue"
             />
-          )
-        )}
+          ))}
 
         {/* STEP 4 - Seleção do horário final */}
         {step === 4 && startHour && (

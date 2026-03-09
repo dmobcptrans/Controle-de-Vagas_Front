@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { VeiculoAPI } from '@/lib/types/veiculo';
-import { useMapboxSuggestions } from '../map/hooks/useMapboxSuggestions';
+import { useMapboxSuggestions } from '../hooks/map/useMapboxSuggestions';
 
 interface OriginVehicleStepProps {
   vehicles: VeiculoAPI[];

@@ -42,7 +42,7 @@ export async function solicitarRecuperacaoSenha(
 export async function reenviarCodigoAtivacao(cpf: string): Promise<{
   valido: boolean;
   message: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }> {
   try {
     const cpfLimpo = cpf.replace(/\D/g, '');

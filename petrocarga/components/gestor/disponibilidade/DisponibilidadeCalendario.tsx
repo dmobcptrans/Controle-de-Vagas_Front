@@ -12,10 +12,10 @@ import type { DateClickArg } from '@fullcalendar/interaction';
 import { AdicionarModal } from './AdicionarModal';
 import { EditarModal } from './EditarModal';
 
-import { useDisponibilidadesData } from './hooks/useDisponibilidadesData';
-import { useDisponibilidadeActions } from './hooks/useDisponibilidadeActions';
-import { useVagas } from './hooks/useVagas';
-import { useCalendarEvents } from './hooks/useCalendarEvents';
+import { useDisponibilidadesData } from '../../hooks/gestor/disponibilidade/useDisponibilidadesData';
+import { useDisponibilidadeActions } from '../../hooks/gestor/disponibilidade/useDisponibilidadeActions';
+import { useVagas } from '../../hooks/gestor/disponibilidade/useVagas';
+import { useCalendarEvents } from '../../hooks/gestor/disponibilidade/useCalendarEvents';
 
 import type { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
 
