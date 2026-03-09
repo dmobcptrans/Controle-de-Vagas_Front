@@ -25,6 +25,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { PushNotificationToggle } from '@/components/notification/PushNotificationToggle';
 
 export default function PerfilMotorista() {
   const [motorista, setMotorista] = useState<Motorista | null>(null);
@@ -133,6 +134,9 @@ export default function PerfilMotorista() {
         </CardHeader>
 
         <div className="px-4 sm:px-6 pb-6 space-y-6">
+          <section>
+            <PushNotificationToggle />
+          </section>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-lg">
               <UserIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
