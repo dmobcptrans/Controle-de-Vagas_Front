@@ -18,15 +18,14 @@ import {
   CheckCircle,
   Mail,
   X,
-  AlertCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Form from 'next/form';
 import { useActionState } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import FormItem from '@/components/form/form-item';
-import SelecaoCustomizada from '@/components/gestor/selecaoItem/selecao-customizada';
-import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
+import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
+import useValidacaoSenha from '@/components/hooksGerais/useValidacaoSenha';
 import FeedbackSenha from '@/components/feedback/feedback-senha';
 
 export default function CadastroUsuario() {
@@ -211,7 +210,7 @@ export default function CadastroUsuario() {
         setConfirmarSenha('');
       }
     }
-  }, [state]);
+  }, [setSenha, state]);
 
   // Função para lidar com o envio do formulário
   const handleSubmit = async (formData: FormData) => {

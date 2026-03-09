@@ -17,7 +17,7 @@ import { useActionState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import FormItem from '../../../components/form/form-item';
 import DiaSemana from '../../../components/gestor/dia-semana/dia-semana';
-import SelecaoCustomizada from '../../../components/gestor/selecaoItem/selecao-customizada';
+import SelecaoCustomizada from '../../../components/selecaoItem/selecao-customizada';
 import Link from 'next/link';
 
 export default function Cadastro() {

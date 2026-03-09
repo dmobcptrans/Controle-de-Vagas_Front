@@ -14,9 +14,9 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, CheckCircle, CircleAlert, TruckIcon } from 'lucide-react';
 import Form from 'next/form';
 import FormItem from '@/components/form/form-item';
-import SelecaoCustomizada from '@/components/gestor/selecaoItem/selecao-customizada';
+import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import { addVeiculo } from '@/lib/api/veiculoApi';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/components/hooksGerais/useAuth';
 import Link from 'next/link';
 
 export default function CadastroVeiculo() {
