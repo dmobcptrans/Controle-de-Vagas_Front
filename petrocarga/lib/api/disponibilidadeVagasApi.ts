@@ -1,20 +1,10 @@
 'use client';
 
 import { clientApi } from '../clientApi';
-
-interface DisponibilidadeVaga {
-  id?: string;
-  vagaId: string;
-  inicio: string;
-  fim: string;
-}
-
-interface DisponibilidadeResponse {
-  error?: boolean;
-  message?: string;
-  valores?: DisponibilidadeVaga;
-  success?: boolean;
-}
+import type {
+  DisponibilidadeVaga,
+  DisponibilidadeResponse,
+} from '@/lib//types/disponibilidadeVagas';
 
 // ----------------------
 // POST DISPONIBILIDADE VAGAS

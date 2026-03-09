@@ -31,7 +31,7 @@ export default function GestorVeiculosPage({ params }: PageProps) {
         } else {
           setVeiculos(result.veiculos);
         }
-      } catch (err) {
+      } catch {
         setError('Erro ao buscar os veículos. Tente novamente mais tarde.');
       } finally {
         setLoading(false);

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Search,
   Loader2,
@@ -18,7 +17,6 @@ import { ReservaPlaca } from '@/lib/types/reservaPlaca';
 import ReservaPlacaCard from '@/components/agente/cards/reservaPlaca-card';
 
 export default function ConsultarPlacaPage() {
-  const router = useRouter();
   const [placa, setPlaca] = useState('');
   const [reservas, setReservas] = useState<ReservaPlaca[]>([]);
   const [loading, setLoading] = useState(false);

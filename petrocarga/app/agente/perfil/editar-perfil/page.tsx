@@ -50,7 +50,7 @@ export default function EditarAgentePerfil() {
             setAgente(m);
           }
         }
-      } catch (err) {
+      } catch {
         setError('Erro ao buscar perfil do agente.');
       } finally {
         setLoading(false);

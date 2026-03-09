@@ -50,7 +50,7 @@ export default function GestoresPage() {
         } else {
           setGestores(result.gestores || []);
         }
-      } catch (err) {
+      } catch {
         setError(
           'Erro ao buscar os gestores cadastrados. Tente novamente mais tarde.',
         );
@@ -84,7 +84,7 @@ export default function GestoresPage() {
       setPaginaAtual(1);
       fetchGestores(mostrarAtivos);
     }
-  }, [mostrarAtivos]);
+  }, [fetchGestores, loading, mostrarAtivos]);
 
   // Limpar filtros (mostrar todos)
   const mostrarTodos = () => {
@@ -281,9 +281,9 @@ export default function GestoresPage() {
                 <div className="text-sm text-gray-600">
                   {busca ? (
                     <>
-                      Resultados para "
+                      Resultados para &quot;
                       <span className="font-medium text-blue-600">{busca}</span>
-                      "
+                      &quot;
                       {mostrarAtivos !== null && (
                         <>
                           {' '}

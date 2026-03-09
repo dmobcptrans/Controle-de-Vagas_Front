@@ -1,16 +1,7 @@
 import { ReservaPlaca } from '@/lib/types/reservaPlaca';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  User,
-  Car,
-  Phone,
-  FileText,
-  Building,
-} from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Car } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 

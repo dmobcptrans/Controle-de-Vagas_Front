@@ -19,7 +19,6 @@ export default function ReservaCheckinModal({
   reserva,
   onClose,
   onCheckinSuccess,
-  onDenunciar,
 }: ModalCheckinReservaProps) {
   const [loading, setLoading] = useState(false);
   const [abrirModal, setAbrirModal] = useState(false);
@@ -128,7 +127,7 @@ export default function ReservaCheckinModal({
             disabled={loading}
             className={cn(
               buttonVariants({ variant: 'default' }),
-              'w-full bg-green-600 hover:bg-green-700 transition disabled:opacity-60'
+              'w-full bg-green-600 hover:bg-green-700 transition disabled:opacity-60',
             )}
           >
             {loading ? 'Realizando check-in...' : 'Confirmar Check-in'}
@@ -140,7 +139,7 @@ export default function ReservaCheckinModal({
               onClick={() => setAbrirModal(true)}
               className={cn(
                 buttonVariants({ variant: 'default' }),
-                'w-full bg-red-600 hover:bg-red-700 transition disabled:opacity-60'
+                'w-full bg-red-600 hover:bg-red-700 transition disabled:opacity-60',
               )}
             >
               <AlertTriangle className="w-4 h-4" />

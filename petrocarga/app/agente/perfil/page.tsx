@@ -43,7 +43,7 @@ export default function PerfilAgente() {
         } else {
           setAgente(resultado.agente);
         }
-      } catch (err) {
+      } catch {
         setError('Erro ao carregar informações do perfil. Tente novamente.');
       } finally {
         setLoading(false);

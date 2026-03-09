@@ -23,7 +23,7 @@ export default function ReservaRapidaPage() {
       try {
         const result = await getReservasRapidas(user.id);
         setReservas(result);
-      } catch (err) {
+      } catch {
         setError('Erro ao buscar as reservas. Tente novamente mais tarde.');
       } finally {
         setLoading(false);

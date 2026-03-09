@@ -20,3 +20,22 @@ export interface FiltrosAgente {
   telefone?: string;
   ativo?: boolean;
 }
+
+export type AgenteInput = {
+  id?: string;
+  nome: string;
+  cpf: string;
+  telefone: string;
+  email: string;
+  matricula: string;
+  senha?: string;
+};
+
+export type AgenteResponse = {
+  error?: boolean;
+  message?: string;
+  valores?: AgenteInput;
+  agenteId?: string;
+  agente?: Agente;
+  agentes?: Agente[];
+};

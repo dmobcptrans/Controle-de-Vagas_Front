@@ -12,10 +12,10 @@ import { Input } from '@/components/ui/input';
 import { atualizarMotorista } from '@/lib/api/motoristaApi';
 import { CheckCircle, CircleAlert, UserIcon } from 'lucide-react';
 import Form from 'next/form';
-import { useActionState, useState, useEffect } from 'react'; // Adicione useEffect
+import { useActionState, useEffect } from 'react';
 import FormItem from '@/components/form/form-item';
 import { Motorista } from '@/lib/types/motorista';
-import SelecaoCustomizada from '@/components/gestor/selecaoItem/selecao-customizada';
+import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 
 interface EditarMotoristaProps {
   motorista: Motorista;
@@ -35,8 +35,6 @@ export default function EditarMotorista({
     atualizar,
     null,
   );
-
-  const [exibirSenha, setExibirSenha] = useState(false);
 
   useEffect(() => {
     if (state && !state.error && state.message && onSuccess) {
