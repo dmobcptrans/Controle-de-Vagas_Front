@@ -15,9 +15,6 @@ import {
   CircleAlert,
   UserIcon,
   CheckCircle,
-  EyeOff,
-  Eye,
-  ArrowLeft,
   Shield,
   ChevronLeft,
   Badge,
@@ -32,7 +29,6 @@ import Link from 'next/link';
 
 export default function CadastroAgentes() {
   const [state, action, pending] = useActionState(addAgente, null);
-  const [exibirSenha, setExibirSenha] = useState(false);
   const [email, setEmail] = useState('');
   const [confirmarEmail, setConfirmarEmail] = useState('');
   const [emailsIguais, setEmailsIguais] = useState(true);
@@ -189,7 +185,8 @@ export default function CadastroAgentes() {
                         Formato inválido
                       </span>
                       <p className="text-sm mt-0.5">
-                        Digite um email válido no formato "exemplo@dominio.com"
+                        Digite um email válido no formato
+                        &quot;exemplo@dominio.com&quot;.
                       </p>
                     </div>
                   </div>

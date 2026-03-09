@@ -19,6 +19,19 @@ interface VehicleTypesChartProps {
   data: VehicleType[];
 }
 
+interface TooltipPayload {
+  color: string;
+  name: string;
+  value: number;
+  dataKey: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+}
+
 export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
   const total = data.reduce((sum, item) => sum + item.count, 0);
 
@@ -59,12 +72,12 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
     }
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 border rounded-lg shadow-lg">
           <p className="font-semibold">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry: TooltipPayload, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {entry.value}
               {entry.dataKey === 'percentual' ? '%' : ''}

@@ -92,10 +92,10 @@ export default function RecuperacaoSenha() {
       );
       setMostrarModal(true);
       setCodigoEnviado(true);
-    } catch (erro: any) {
+    } catch (erro: unknown) {
       setStatus('error');
       setMensagem(
-        erro.message || 'Erro ao solicitar recuperação. Tente novamente.',
+        (erro instanceof Error ? erro.message : 'Erro ao solicitar recuperação. Tente novamente.') || 'Erro ao solicitar recuperação. Tente novamente.',
       );
     } finally {
       setEstaCarregando(false);
