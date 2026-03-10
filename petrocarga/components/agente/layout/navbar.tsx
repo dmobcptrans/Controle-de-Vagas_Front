@@ -50,7 +50,10 @@ export function Navbar() {
         </Link>
 
         {/* LOGO */}
-        <Link href="/agente" className="flex justify-center md:justify-start">
+        <Link
+          href="/agente/consulta"
+          className="flex justify-center md:justify-start"
+        >
           <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
         </Link>
 
