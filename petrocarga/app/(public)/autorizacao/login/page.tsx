@@ -152,7 +152,7 @@ function LoginContent() {
           window.location.href = '/motorista/reservar-vaga';
           break;
         case 'AGENTE':
-          window.location.href = '/agente/reserva-rapida';
+          window.location.href = '/agente/consulta';
           break;
         default:
           setError('Permissão desconhecida');
