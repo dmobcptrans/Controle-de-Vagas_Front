@@ -14,8 +14,8 @@ import {
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { ReservaGet } from '@/lib/types/reserva';
-import ReservaEditarModal from './ReservaEditarModal/ReservaEditarModal';
-import ReservaCheckinModal from './ReservaCheckinModal/ReservaCheckinModal';
+import ReservaEditarModal from '../../modal/reserva/ReservaEditarModal/ReservaEditarModal';
+import ReservaCheckinModal from '../../modal/reserva/ReservaCheckinModal/ReservaCheckinModal';
 
 interface ReservaCardProps {
   reserva: ReservaGet;
