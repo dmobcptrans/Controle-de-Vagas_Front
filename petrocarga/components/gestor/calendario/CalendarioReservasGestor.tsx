@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBr from '@fullcalendar/core/locales/pt-br';
 import useReservas from '@/components/hooks/gestor/calendario/useReservas';
-import { ReservaModal } from './ReservaModal';
+import { ReservaModal } from '@/components/modal/gestor/calendario/ReservaModal';
 import { useState, useMemo, useRef } from 'react';
 import { toDateKey, dayStartISO } from '../../utils/gestor/calendario/utils';
 import type { EventClickArg, EventInput } from '@fullcalendar/core';
