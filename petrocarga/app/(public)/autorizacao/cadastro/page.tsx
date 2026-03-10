@@ -10,15 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { addMotorista } from '@/lib/api/motoristaApi';
-import {
-  CircleAlert,
-  Eye,
-  EyeOff,
-  UserIcon,
-  CheckCircle,
-  Mail,
-  X,
-} from 'lucide-react';
+import { CircleAlert, Eye, EyeOff, UserIcon, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Form from 'next/form';
 import { useActionState } from 'react';
@@ -27,6 +19,7 @@ import FormItem from '@/components/form/form-item';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
 import FeedbackSenha from '@/components/feedback/feedback-senha';
+import ModalSucessoCadastro from '@/components/modal/autorizacao/cadastro/ModalSucessoCadastro';
 
 export default function CadastroUsuario() {
   const [state, addMotoristaAction, pending] = useActionState(
@@ -97,7 +90,7 @@ export default function CadastroUsuario() {
     };
 
     // Verifica inicialmente
-    setTimeout(verificarCampos, 100); // Pequeno delay para garantir que o DOM esteja pronto
+    setTimeout(verificarCampos, 100);
 
     // Adiciona event listeners para todos os campos obrigatórios
     const camposIds = [
@@ -173,7 +166,7 @@ export default function CadastroUsuario() {
 
       observer.disconnect();
     };
-  }, []); // Executa apenas uma vez na montagem
+  }, []);
 
   // useEffect adicional para monitorar mudanças nos estados de senha
   useEffect(() => {
@@ -215,7 +208,6 @@ export default function CadastroUsuario() {
   // Função para lidar com o envio do formulário
   const handleSubmit = async (formData: FormData) => {
     if (!senhasIguais) {
-      // Impede o envio se as senhas não forem iguais
       toast.error('As senhas não coincidem.');
       return;
     }
@@ -225,10 +217,8 @@ export default function CadastroUsuario() {
       return;
     }
 
-    // Adiciona a senha ao formData
     formData.append('senha', senha);
 
-    // Chama a action
     return await addMotoristaAction(formData);
   };
 
@@ -236,18 +226,6 @@ export default function CadastroUsuario() {
   const closeModal = () => {
     setShowSuccessModal(false);
   };
-
-  // Fechar modal ao pressionar ESC
-  useEffect(() => {
-    const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && showSuccessModal) {
-        closeModal();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscKey);
-    return () => window.removeEventListener('keydown', handleEscKey);
-  }, [showSuccessModal]);
 
   return (
     <>
@@ -546,109 +524,12 @@ export default function CadastroUsuario() {
         </Card>
       </main>
 
-      {/* Modal de Sucesso */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div
-            className="relative w-full max-w-md bg-white rounded-xl shadow-2xl animate-in fade-in-0 zoom-in-95 duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Botão de fechar */}
-            <button
-              onClick={closeModal}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10"
-              aria-label="Fechar modal"
-            >
-              <X className="h-5 w-5 text-gray-500" />
-            </button>
-
-            {/* Conteúdo do Modal */}
-            <div className="p-6 sm:p-8">
-              {/* Ícone de sucesso */}
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
-                  <CheckCircle className="h-12 w-12 text-white" />
-                </div>
-              </div>
-
-              {/* Título */}
-              <h2 className="text-2xl font-bold text-center text-gray-900 mb-3">
-                Cadastro Realizado com Sucesso! 🎉
-              </h2>
-
-              {/* Mensagem principal */}
-              <p className="text-center text-gray-600 mb-6">
-                Sua conta foi criada com sucesso. Agora você precisa ativá-la.
-              </p>
-
-              {/* Card de verificação de email */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-5 mb-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Mail className="h-6 w-6 text-blue-600" />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-blue-800 text-lg mb-2">
-                      📧 Verifique seu e-mail
-                    </h3>
-                    <p className="text-blue-600 text-sm mt-3">
-                      <strong>
-                        Use o código enviado para ativar sua conta.
-                      </strong>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Botões */}
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={() => {
-                    window.location.href =
-                      '/autorizacao/login?ativar-conta=true';
-                  }}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-lg font-medium text-base shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                    />
-                  </svg>
-                  Ir para Ativar Conta
-                </Button>
-
-                <Button
-                  onClick={closeModal}
-                  variant="outline"
-                  className="w-full border-blue-200 text-blue-600 hover:text-blue-700 hover:bg-blue-50 py-3 rounded-lg font-medium text-base transition-colors"
-                >
-                  Fechar
-                </Button>
-
-                <p className="text-center text-gray-500 text-sm mt-2">
-                  Já ativou sua conta?{' '}
-                  <a
-                    href="/autorizacao/login"
-                    className="text-blue-600 hover:text-blue-800 font-medium underline"
-                  >
-                    Faça login agora
-                  </a>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal de Sucesso - Agora usando o componente separado */}
+      <ModalSucessoCadastro
+        isOpen={showSuccessModal}
+        onClose={closeModal}
+        userEmail={userEmail}
+      />
     </>
   );
 }

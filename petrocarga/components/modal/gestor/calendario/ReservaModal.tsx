@@ -6,23 +6,27 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { LogradouroItem, VagaItem, ReservaItem } from './ListItems';
+import {
+  LogradouroItem,
+  VagaItem,
+  ReservaItem,
+} from '@/components/gestor/calendario/ListItems';
 import { Reserva } from '@/lib/types/reserva';
 import { Vaga } from '@/lib/types/vaga';
 
 export type ModalState =
   | {
-    type: 'group';
-    data: { dateStr: string; logradouros: Record<string, Reserva[]> };
-  }
+      type: 'group';
+      data: { dateStr: string; logradouros: Record<string, Reserva[]> };
+    }
   | {
-    type: 'vagasLogradouro';
-    data: { logradouro: string; reservasDoLogradouro: Reserva[] };
-  }
+      type: 'vagasLogradouro';
+      data: { logradouro: string; reservasDoLogradouro: Reserva[] };
+    }
   | {
-    type: 'vaga';
-    data: { vagaId: string; vagaInfo: Vaga | null; reservas: Reserva[] };
-  }
+      type: 'vaga';
+      data: { vagaId: string; vagaInfo: Vaga | null; reservas: Reserva[] };
+    }
   | { type: 'reserva'; data: { reserva: Reserva; vagaInfo: Vaga | null } }
   | { type: null; data: null };
 
