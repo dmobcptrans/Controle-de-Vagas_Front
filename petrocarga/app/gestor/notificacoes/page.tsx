@@ -5,7 +5,7 @@ import { NotificationHeader } from '@/components/notification/notificationHeader
 import { NotificationList } from '@/components/notification/notificationList';
 import { NotificationModals } from '@/components/modal/notificacation/notificationModals';
 import { useState } from 'react';
-import { Bell, Settings, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function NotificacoesGestorPage() {
@@ -24,14 +24,6 @@ export default function NotificacoesGestorPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMarkReadModal, setShowMarkReadModal] = useState(false);
-
-  const handleSendSystemNotification = () => {
-    toast.success('Notificação enviada para todos os agentes!');
-  };
-
-  const handleConfigureNotifications = () => {
-    toast.success('Configurações salvas!');
-  };
 
   const handleDeleteSelected = async () => {
     try {
@@ -78,24 +70,6 @@ export default function NotificacoesGestorPage() {
   return (
     <div className="min-h-screen bg-gray-100 py-4 sm:py-8 px-3 sm:px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Ações exclusivas do Gestor */}
-        <div className="mb-4 flex flex-wrap gap-2">
-          <button
-            onClick={handleSendSystemNotification}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
-          >
-            <Bell className="h-4 w-4" />
-            <span>Enviar notificação em massa</span>
-          </button>
-          <button
-            onClick={handleConfigureNotifications}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            <Settings className="h-4 w-4" />
-            <span>Configurar</span>
-          </button>
-        </div>
-
         <NotificationHeader
           notifications={notifications}
           isConnected={isConnected}
