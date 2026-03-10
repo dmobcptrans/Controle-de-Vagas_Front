@@ -8,7 +8,7 @@ import { ReservaGet } from '@/lib/types/reserva';
 import { atualizarReserva } from '@/lib/api/reservaApi';
 import { useAuth } from '@/components/hooks/useAuth';
 import { useReserva } from '../../../hooks/reserva/useReserva';
-import OriginVehicleStep from '../../OriginVehicleStep';
+import OriginVehicleStep from '../../../reserva/OriginVehicleStep';
 
 import { useReservaData } from './useReservaData';
 import { ReservaSummary } from './ReservaSummary';

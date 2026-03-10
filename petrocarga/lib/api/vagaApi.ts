@@ -2,7 +2,7 @@
 
 import { clientApi } from '../clientApi';
 import type {
-  VagaCompleta,
+  Vaga,
   VagaPayload,
   VagaResponse,
   FiltrosVaga,
@@ -102,7 +102,7 @@ export async function atualizarVaga(
 // ----------------------
 // GET VAGAS
 // ----------------------
-export async function getVagas(status?: string): Promise<VagaCompleta[]> {
+export async function getVagas(status?: string): Promise<Vaga[]> {
   try {
     const query = status ? `?status=${encodeURIComponent(status)}` : '';
 
@@ -124,7 +124,7 @@ export async function getVagas(status?: string): Promise<VagaCompleta[]> {
 // ----------------------
 export async function getVagasComFiltros(
   filtros?: FiltrosVaga,
-): Promise<VagaResponse<VagaCompleta>> {
+): Promise<VagaResponse<Vaga>> {
   try {
     const params = new URLSearchParams();
 
@@ -154,7 +154,7 @@ export async function getVagasComFiltros(
 // ----------------------
 // GET VAGA POR ID
 // ----------------------
-export async function getVagaById(id: string): Promise<VagaCompleta | null> {
+export async function getVagaById(id: string): Promise<Vaga | null> {
   try {
     const res = await clientApi(`/petrocarga/vagas/${id}`, { method: 'GET' });
     return (await res.json()) ?? null;

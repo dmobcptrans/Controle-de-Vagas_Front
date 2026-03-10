@@ -39,7 +39,7 @@ export default function ReservaCheckinModal({
 
       onCheckinSuccess?.(reservaAtualizada);
       onClose();
-    } catch (err) {
+    } catch {
       setErro('Não foi possível realizar o check-in. Tente novamente.');
     } finally {
       setLoading(false);

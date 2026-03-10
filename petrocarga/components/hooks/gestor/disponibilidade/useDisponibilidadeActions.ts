@@ -2,7 +2,7 @@ import {
   removeDisponibilidade,
   postDisponibilidade,
   updateDisponibilidade,
-} from '../services/disponibilidadeService';
+} from '@/components/services/gestor/disponibilidade/disponibilidadeService';
 
 import toast from 'react-hot-toast';
 import { Disponibilidade } from '@/lib/types/disponibilidadeVagas';

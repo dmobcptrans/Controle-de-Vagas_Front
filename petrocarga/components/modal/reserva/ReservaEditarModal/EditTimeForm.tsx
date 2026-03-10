@@ -1,4 +1,4 @@
-import TimeSelection from '../../TimeSelection';
+import TimeSelection from '../../../reserva/TimeSelection';
 
 interface EditTimeFormProps {
   step: number;
