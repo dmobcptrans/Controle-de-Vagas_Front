@@ -135,7 +135,7 @@ export default function PerfilMotorista() {
 
         <div className="px-4 sm:px-6 pb-6 space-y-6">
           <section>
-            <PushNotificationToggle />
+            <PushNotificationToggle usuarioId={motorista.usuario.id}/>
           </section>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-lg">
