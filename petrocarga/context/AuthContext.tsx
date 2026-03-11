@@ -172,18 +172,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    try {
-      await api.post('/petrocarga/auth/logout');
-    } catch (error) {
-      console.error('Erro ao notificar logout', error);
-    } finally {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(TOKEN_KEY);
-      }
-      setUser(null);
-      router.push('/autorizacao/login');
+  const pushToken = localStorage.getItem('pushToken');
+  try {
+    if (pushToken) {
+      await api.patch(`/petrocarga/notificacoes/pushToken/desativar/${pushToken}`);
     }
-  }, [router]);
+    await api.post('/petrocarga/auth/logout');
+  } catch (error) {
+    console.error('Erro ao notificar logout', error);
+  } finally {
+    localStorage.removeItem(TOKEN_KEY);
+    setUser(null);
+    router.push('/autorizacao/login');
+  }
+}, [router]);
 
   const value = useMemo(
     () => ({
