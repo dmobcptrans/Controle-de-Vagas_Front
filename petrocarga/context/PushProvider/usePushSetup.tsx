@@ -14,7 +14,8 @@ interface UsePushSetupReturn {
   onDismiss: () => void;
 }
 
-const STORAGE_KEY = 'push_notification_dismissed';
+const DISMISSED_KEY = 'push_notification_dismissed';
+const REGISTERED_KEY = 'push_token_registered';
 
 async function registerAndSendToken(): Promise<void> {
   const permission = await Notification.requestPermission();
@@ -56,17 +57,14 @@ export function usePushSetup(): UsePushSetupReturn {
   useEffect(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
 
-    if (Notification.permission === 'granted') {
-      setStatus('loading');
-      registerAndSendToken()
-        .then(() => setStatus('granted'))
-        .catch(() => setStatus('error'));
+    if (localStorage.getItem(REGISTERED_KEY) === 'true') {
+      setStatus('granted');
       return;
     }
 
     if (
       Notification.permission === 'denied' ||
-      sessionStorage.getItem(STORAGE_KEY) === 'true'
+      sessionStorage.getItem(DISMISSED_KEY) === 'true'
     ) {
       setStatus('denied');
       return;
@@ -81,7 +79,10 @@ export function usePushSetup(): UsePushSetupReturn {
     setStatus('loading');
 
     registerAndSendToken()
-      .then(() => setStatus('granted'))
+      .then(() => {
+        localStorage.setItem(REGISTERED_KEY, 'true');
+        setStatus('granted');
+      })
       .catch((err: Error) => {
         console.error('[Push] Erro:', err.message);
         setStatus(err.message === 'permission_denied' ? 'denied' : 'error');
@@ -91,7 +92,7 @@ export function usePushSetup(): UsePushSetupReturn {
   function onDismiss() {
     setShowPrompt(false);
     setStatus('denied');
-    sessionStorage.setItem(STORAGE_KEY, 'true');
+    sessionStorage.setItem(DISMISSED_KEY, 'true');
   }
 
   return { status, showPrompt, onAccept, onDismiss };
