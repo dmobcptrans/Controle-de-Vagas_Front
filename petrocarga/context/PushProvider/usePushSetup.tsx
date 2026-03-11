@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { getToken } from 'firebase/messaging';
 import { getMessagingInstance } from '@/lib/firebase';
 import { clientApi } from '@/lib/clientApi';
+import { useAuth } from '../AuthContext';
 
 type PushStatus = 'idle' | 'prompted' | 'loading' | 'granted' | 'denied' | 'error';
 
@@ -14,14 +15,10 @@ interface UsePushSetupReturn {
   onDismiss: () => void;
 }
 
-const STORAGE_KEY = 'push_notification_dismissed';
+const DISMISSED_KEY = 'push_notification_dismissed';
+
 
 async function registerAndSendToken(): Promise<void> {
-  const permission = await Notification.requestPermission();
-
-  if (permission !== 'granted') {
-    throw new Error('permission_denied');
-  }
 
   const messaging = await getMessagingInstance();
   if (!messaging) {
@@ -42,19 +39,34 @@ async function registerAndSendToken(): Promise<void> {
     throw new Error('token_not_returned');
   }
 
+  
+
   await clientApi('/petrocarga/notificacoes/pushToken', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token, plataforma: 'WEB' }),
   });
+
+  localStorage.setItem('pushToken', token);
 }
 
 export function usePushSetup(): UsePushSetupReturn {
+  const { user } = useAuth();
+  const usuarioId = user?.id;
   const [status, setStatus] = useState<PushStatus>('idle');
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (!usuarioId) return;
+
+    if (
+      Notification.permission === 'denied' ||
+      sessionStorage.getItem(DISMISSED_KEY) === 'true'
+    ) {
+      setStatus('denied');
+      return;
+    }
 
     if (Notification.permission === 'granted') {
       setStatus('loading');
@@ -64,23 +76,19 @@ export function usePushSetup(): UsePushSetupReturn {
       return;
     }
 
-    if (
-      Notification.permission === 'denied' ||
-      sessionStorage.getItem(STORAGE_KEY) === 'true'
-    ) {
-      setStatus('denied');
-      return;
-    }
-
     setStatus('prompted');
     setShowPrompt(true);
-  }, []);
+  }, [usuarioId]); 
 
   function onAccept() {
     setShowPrompt(false);
     setStatus('loading');
 
-    registerAndSendToken()
+    Notification.requestPermission()
+      .then((permission) => {
+        if (permission !== 'granted') throw new Error('permission_denied');
+        return registerAndSendToken();
+      })
       .then(() => setStatus('granted'))
       .catch((err: Error) => {
         console.error('[Push] Erro:', err.message);
@@ -91,7 +99,7 @@ export function usePushSetup(): UsePushSetupReturn {
   function onDismiss() {
     setShowPrompt(false);
     setStatus('denied');
-    sessionStorage.setItem(STORAGE_KEY, 'true');
+    sessionStorage.setItem(DISMISSED_KEY, 'true');
   }
 
   return { status, showPrompt, onAccept, onDismiss };

@@ -246,3 +246,62 @@ export async function deletarNotificacoesSelecionadas(
 
   return { error: false, message: 'Notificações deletadas com sucesso' };
 }
+
+// ----------------------
+// BUSCAR STATUS DO PUSH TOKEN
+// ----------------------
+export async function buscarStatusPushToken() {
+  const res = await clientApi(`/petrocarga/notificacoes/pushToken`, {
+    method: 'GET',
+  });
+
+  if (!res.ok) {
+    let msg = 'Erro ao buscar status do push token';
+
+    try {
+      const err = await res.json();
+      msg = err.message ?? msg;
+    } catch {}
+
+    return { error: true, message: msg, data: null };
+  }
+
+  try {
+    const data = await res.json();
+    return { error: false, data };
+  } catch {
+    return { error: false, data: null };
+  }
+}
+
+// ----------------------
+// ATUALIZAR STATUS DO PUSH TOKEN
+// ----------------------
+export async function atualizarStatusPushToken(
+  usuarioId: string,
+  ativo: boolean
+) {
+  const res = await clientApi(
+    `/petrocarga/notificacoes/pushToken/${usuarioId}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ ativo }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  if (!res.ok) {
+    let msg = 'Erro ao atualizar status do push token';
+
+    try {
+      const err = await res.json();
+      msg = err.message ?? msg;
+    } catch {}
+
+    return { error: true, message: msg };
+  }
+
+  return { error: false, message: 'Status atualizado com sucesso' };
+}
