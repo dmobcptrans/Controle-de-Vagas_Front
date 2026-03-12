@@ -340,10 +340,10 @@ export default function ModalTermos({
                   <strong>Encarregado (DPO):</strong> Esther Faria Lima
                 </p>
                 <p className="text-sm">
-                  <strong>E-mail:</strong> contato@cptrans.petropolis.rj.gov.br
+                  <strong>E-mail:</strong> esther.cptrans@gmail.com
                 </p>
                 <p className="text-sm">
-                  <strong>Telefone:</strong> (24) 2246-9300
+                  <strong>Telefone:</strong> (24) 2237-1703 - Ramal 242
                 </p>
                 <p className="text-sm">
                   <strong>Endereço:</strong> Rua Alberto Torres, 115 - Centro,
