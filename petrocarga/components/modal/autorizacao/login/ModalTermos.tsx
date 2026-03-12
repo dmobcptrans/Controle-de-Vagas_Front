@@ -41,10 +41,11 @@ export default function ModalTermos({
                 Informações importantes
               </h3>
               <p className="text-gray-700 text-sm leading-relaxed">
-                Este serviço é fornecido pela [Nome da Prefeitura/Secretaria] em
-                conformidade com as leis brasileiras, especialmente a Lei
-                Federal nº 12.965/2014 (Marco Civil da Internet) e a Lei Federal
-                nº 13.709/2018 (Lei Geral de Proteção de Dados Pessoais - LGPD).
+                Este serviço é fornecido pela CPTrans (Companhia Petropolitana
+                de Trânsito e Transporte) em conformidade com as leis
+                brasileiras, especialmente a Lei Federal nº 12.965/2014 (Marco
+                Civil da Internet) e a Lei Federal nº 13.709/2018 (Lei Geral de
+                Proteção de Dados Pessoais - LGPD).
               </p>
             </section>
 
@@ -92,8 +93,8 @@ export default function ModalTermos({
                 3. Princípios da LGPD (Art. 6º)
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                A [Nome da Prefeitura] se compromete a cumprir as normas da LGPD
-                e respeitar os seguintes princípios:
+                A <i>CPTrans</i> se compromete a cumprir as normas da LGPD e
+                respeitar os seguintes princípios:
               </p>
               <div className="space-y-3 mt-2">
                 <p className="text-gray-600 text-sm">
@@ -168,11 +169,12 @@ export default function ModalTermos({
                   pessoais
                 </p>
                 <p className="text-gray-600 text-sm">
-                  <strong>Controlador:</strong> [Nome do Órgão/Secretaria]
+                  <strong>Controlador:</strong> <i>CPTrans</i>
                 </p>
                 <p className="text-gray-600 text-sm">
-                  <strong>Encarregado (DPO):</strong> [Nome do Encarregado] -
-                  [e-mail de contato]
+                  <strong>Encarregado (DPO):</strong> <i>Esther Faria Lima </i>
+                  (Coordenadora de Segurança de Dados) - (24) 2237-1703 -
+                  {' Ramal 242'}
                 </p>
               </div>
             </section>
@@ -182,7 +184,7 @@ export default function ModalTermos({
                 6. Tratamento dos dados
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                O tratamento de dados pessoais pela [Nome do Órgão] é realizado
+                O tratamento de dados pessoais pela <i>CPTrans</i> é realizado
                 com base no:
               </p>
               <ul className="list-disc list-inside text-sm text-gray-600 mt-2 space-y-1">
@@ -247,7 +249,7 @@ export default function ModalTermos({
                 9. Responsabilidades do órgão
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                A [Nome do Órgão] se responsabiliza por:
+                A <i>CPTrans</i> se responsabiliza por:
               </p>
               <ul className="list-disc list-inside text-sm text-gray-600 mt-2 space-y-1">
                 <li>Preservar a funcionalidade do serviço</li>
@@ -335,15 +337,17 @@ export default function ModalTermos({
               </p>
               <div className="bg-gray-50 p-3 rounded-lg mt-2">
                 <p className="text-sm">
-                  <strong>E-mail:</strong>{' '}
-                  [contato@cptrans.petropolis.rj.gov.br]
+                  <strong>Encarregado (DPO):</strong> Esther Faria Lima
                 </p>
                 <p className="text-sm">
-                  <strong>Telefone:</strong> [(24) 2246-9300]
+                  <strong>E-mail:</strong> contato@cptrans.petropolis.rj.gov.br
                 </p>
                 <p className="text-sm">
-                  <strong>Endereço:</strong> [Rua Alberto Torres, 115 - Centro,
-                  Petrópolis - RJ, CEP 25610-060]
+                  <strong>Telefone:</strong> (24) 2246-9300
+                </p>
+                <p className="text-sm">
+                  <strong>Endereço:</strong> Rua Alberto Torres, 115 - Centro,
+                  Petrópolis - RJ, CEP 25610-060
                 </p>
               </div>
               <p className="text-gray-600 text-sm mt-2">
@@ -355,7 +359,7 @@ export default function ModalTermos({
             <section>
               <h3 className="text-lg font-semibold mb-2">15. Foro</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Fica eleito o Foro da Comarca de [Nome da Cidade] para dirimir
+                Fica eleito o Foro da Comarca de Petrópolis para dirimir
                 quaisquer controvérsias decorrentes deste Termo, com renúncia
                 expressa a qualquer outro, por mais privilegiado que seja.
               </p>
@@ -381,7 +385,7 @@ export default function ModalTermos({
 
         <DialogFooter className="border-t pt-4">
           <p className="text-xs text-gray-500 text-left flex-1">
-            Última atualização: [data]
+            Última atualização: 12 de Março de 2026
           </p>
           <Button type="button" variant="outline" onClick={onClose}>
             Fechar
