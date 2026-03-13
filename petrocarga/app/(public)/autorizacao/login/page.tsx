@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ModalAtivacaoConta from '@/components/modal/autorizacao/login/ModalAtivacaoConta';
+import ButtonLoginGoogle from '@/components/ui/buttonLoginGoogle';
 
 function identificarTipoLogin(
   input: string,
@@ -376,6 +377,10 @@ function LoginContent() {
               )}
             </Button>
           </form>
+          
+          <div className="mt-4 space-y-4">
+          <ButtonLoginGoogle />
+          </div>
 
           <div className="mt-4 space-y-4">
             <Link href="/autorizacao/cadastro">
