@@ -1,5 +1,6 @@
 'use client';
 
+import { TOKEN_KEY } from '@/service/api';
 import { clientApi } from '../clientApi';
 
 export async function enviarNotificacaoParaUsuario(formData: FormData) {
@@ -250,10 +251,17 @@ export async function deletarNotificacoesSelecionadas(
 // ----------------------
 // BUSCAR STATUS DO PUSH TOKEN
 // ----------------------
-export async function buscarStatusPushToken() {
-  const res = await clientApi(`/petrocarga/notificacoes/pushToken`, {
-    method: 'GET',
-  });
+export async function buscarStatusPushToken(
+  token: string | null
+) {
+  const res = await clientApi(
+    `/petrocarga/notificacoes/pushToken/byToken?token=${encodeURIComponent(
+      token ?? ''
+    )}`,
+    {
+      method: 'GET',
+    }
+  );
 
   if (!res.ok) {
     let msg = 'Erro ao buscar status do push token';
@@ -273,19 +281,19 @@ export async function buscarStatusPushToken() {
     return { error: false, data: null };
   }
 }
-
 // ----------------------
 // ATUALIZAR STATUS DO PUSH TOKEN
 // ----------------------
 export async function atualizarStatusPushToken(
   usuarioId: string,
+  token: string | null,
   ativo: boolean
 ) {
   const res = await clientApi(
     `/petrocarga/notificacoes/pushToken/${usuarioId}`,
     {
       method: 'PATCH',
-      body: JSON.stringify({ ativo }),
+      body: JSON.stringify({ token, ativo }),
       headers: {
         'Content-Type': 'application/json',
       },
