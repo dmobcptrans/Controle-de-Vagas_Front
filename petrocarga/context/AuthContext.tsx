@@ -33,6 +33,7 @@ interface AuthContextData {
   user: UserData | null;
   loading: boolean;
   login: (data: { login: string; senha: string }) => Promise<UserData>;
+  loginWithGoogle: (token: string) => Promise<UserData>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -171,6 +172,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [identificarTipoLogin],
   );
+
+
+const loginWithGoogle = useCallback(async (googleToken: string) => {
+  try {
+    const response = await api.post('/petrocarga/auth/loginWithGoogle', {
+      token: googleToken,
+    });
+
+    const { usuario, token } = response.data as {
+      usuario: Record<string, unknown>;
+      token: string;
+    };
+
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    }
+
+    const userData = normalizeUserData(usuario);
+    setUser(userData);
+
+    return userData;
+  } catch (error) {
+    console.error('Erro no login Google:', error);
+    throw new Error('Erro ao autenticar com Google');
+  }
+}, []);
 
   const logout = useCallback(async () => {
   const pushToken = localStorage.getItem('pushToken');
