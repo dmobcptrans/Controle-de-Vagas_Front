@@ -3,7 +3,7 @@
 import { useNotifications } from '@/context/NotificationContext';
 import { NotificationHeader } from '@/components/notification/notificationHeader';
 import { NotificationList } from '@/components/notification/notificationList';
-import { NotificationModals } from '@/components/modal/notificacation/notificationModals';
+import { NotificationModals } from '@/components/modal/notification/notificationModals';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
