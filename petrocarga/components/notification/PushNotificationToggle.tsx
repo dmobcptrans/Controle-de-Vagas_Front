@@ -10,7 +10,7 @@ import {
   buscarStatusPushToken,
 } from '@/lib/api/notificacaoApi';
 
-const REGISTERED_KEY = 'push_token_registered';
+const Push_TOKEN_KEY = 'pushToken';
 
 type Props = {
   usuarioId: string;
@@ -39,7 +39,7 @@ async function registerAndSendToken(): Promise<void> {
     body: JSON.stringify({ token, plataforma: 'WEB' }),
   });
 
-  localStorage.setItem(REGISTERED_KEY, 'true');
+  localStorage.setItem(Push_TOKEN_KEY, token);
 }
 
 export function PushNotificationToggle({ usuarioId }: Props) {
@@ -55,8 +55,14 @@ export function PushNotificationToggle({ usuarioId }: Props) {
         setAtivo(false);
         return;
       }
+      const token = localStorage.getItem(Push_TOKEN_KEY);
 
-      const res = await buscarStatusPushToken();
+      if (!token) {
+        setAtivo(false);
+        return;
+      }
+
+      const res = await buscarStatusPushToken(token);
       if (!res.error) {
         setAtivo(res.data?.ativo ?? false);
       }
@@ -72,7 +78,6 @@ export function PushNotificationToggle({ usuarioId }: Props) {
   }, []);
 
   async function handleToggle() {
-    // Permissão revogada no browser → precisa refazer o setup antes de ativar
     if (browserRevogado) {
       try {
         setLoading(true);
@@ -91,7 +96,13 @@ export function PushNotificationToggle({ usuarioId }: Props) {
     try {
       setLoading(true);
       const novoStatus = !ativo;
-      const res = await atualizarStatusPushToken(usuarioId, novoStatus);
+      const tk = localStorage.getItem(Push_TOKEN_KEY);
+      if (!tk) {
+        console.warn('Push token não encontrado');
+        setLoading(false);
+        return;
+      }
+      const res = await atualizarStatusPushToken(usuarioId, tk, novoStatus);
       if (!res.error) setAtivo(novoStatus);
     } catch (error) {
       console.error('Erro ao atualizar notificações', error);
