@@ -14,223 +14,278 @@ import { CircleAlert, Eye, EyeOff, UserIcon, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Form from 'next/form';
 import { useActionState } from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import FormItem from '@/components/form/form-item';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
 import FeedbackSenha from '@/components/feedback/feedback-senha';
 import ModalSucessoCadastro from '@/components/modal/autorizacao/cadastro/ModalSucessoCadastro';
 
+/**
+ * @component CadastroUsuario
+ * @version 1.0.0
+ *
+ * @description Formulário multi-etapas para cadastro de motoristas parceiros.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO DO CADASTRO:
+ * ----------------------------------------------------------------------------
+ * 1. Coleta dados pessoais (nome, CPF, telefone) - com máscara automática
+ * 2. Coleta dados da CNH (número, categoria, validade)
+ * 3. Coleta dados de acesso (email, senha, confirmação)
+ * 4. Validações em tempo real:
+ *    - Força da senha via hook useValidacaoSenha
+ *    - Correspondência entre senha e confirmação
+ *    - Campos obrigatórios preenchidos
+ * 5. Envio para API via useActionState (gerencia loading/error/success)
+ * 6. Pós-cadastro:
+ *    - Modal de ativação da conta
+ *    - Email salvo no sessionStorage para fluxo de ativação
+ *    - Formulário resetado para novo uso
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * - Estados individuais: Optamos por useState separados em vez de um objeto
+ *   único para melhor legibilidade e para evitar re-renders desnecessários
+ *   em campos não relacionados
+ *
+ * - Senha controlada via hook: useValidacaoSenha encapsula lógica complexa
+ *   de validação (requisitos, força) para reuso em outros componentes
+ *
+ * - SessionStorage pós-cadastro: Escolhido em vez de localStorage para não
+ *   persistir dados sensíveis após fechar a aba. Usado apenas para disparar
+ *   o modal de ativação na página de login
+ *
+ * - useActionState do Next.js: Gerencia estados de loading, erro e sucesso
+ *   de forma integrada com Server Actions, eliminando boilerplate manual
+ *
+ * - Campos controlados vs não-controlados: Todos os inputs são controlados
+ *   via useState para garantir sincronia entre validações e UI
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * - ModalSucessoCadastro: Modal de confirmação e ativação da conta
+ * - FeedbackSenha: Feedback visual dos requisitos e força da senha
+ * - SelecaoCustomizada: Select estilizado para categoria da CNH
+ * - FormItem: Wrapper com label e tooltip de ajuda
+ * - useValidacaoSenha: Hook com lógica de validação de senha
+ *
+ * ----------------------------------------------------------------------------
+ * 📦 CONSTANTES E CONFIGURAÇÕES:
+ * ----------------------------------------------------------------------------
+ * @constant CATEGORIAS_CNH - Opções baseadas na legislação brasileira (DENATRAN)
+ * @constant VALIDATION_LENGTHS - Tamanhos máximos para campos numéricos
+ * @constant ERROR_MESSAGES - Mensagens padronizadas de erro
+ *
+ * @example
+ * // Uso básico em rota protegida
+ * <CadastroUsuario />
+ *
+ * @see /src/lib/api/motoristaApi.ts - Integração com backend
+ * @see /src/components/hooks/useValidacaoSenha - Validação de senha
+ * @see /src/components/modal/autorizacao/cadastro/ModalSucessoCadastro - Modal pós-cadastro
+ */
+
+// ----------------------------------------------------------------------------
+// CONSTANTES
+// ----------------------------------------------------------------------------
+
+/**
+ * Tamanhos máximos para campos numéricos
+ * Centralizados para facilitar alterações futuras
+ */
+const VALIDATION_LENGTHS = {
+  CPF: 11,
+  PHONE: 11,
+  CNH: 11, // Formato padrão nacional
+} as const;
+
+/**
+ * Mensagens de erro padronizadas
+ * Garantem consistência na experiência do usuário
+ */
+const ERROR_MESSAGES = {
+  PASSWORD_MISMATCH: 'As senhas não coincidem. Por favor, verifique.',
+  PASSWORD_REQUIREMENTS: 'A senha não atende aos requisitos mínimos.',
+  GENERIC_ERROR: 'Erro ao cadastrar motorista.',
+  SUCCESS: 'Cadastro realizado com sucesso!',
+} as const;
+
 export default function CadastroUsuario() {
+  // --------------------------------------------------------------------------
+  // ESTADOS DE FORMULÁRIO E UI
+  // --------------------------------------------------------------------------
+
+  // useActionState gerencia o estado da submissão (loading, erro, sucesso)
+  // Integrado com Server Actions do Next.js para chamadas à API
   const [state, addMotoristaAction, pending] = useActionState(
     addMotorista,
     null,
   );
+
+  // Controles de UI para mostrar/ocultar senhas
   const [exibirSenha, setExibirSenha] = useState(false);
   const [exibirConfirmarSenha, setExibirConfirmarSenha] = useState(false);
+
+  // Hook customizado que encapsula toda lógica de validação de senha
+  // Retorna: senha, setSenha, regras, ehValida, forca
   const { senha, setSenha, regras, ehValida, forca } = useValidacaoSenha();
+
+  // Estado da confirmação de senha (separado para validação cruzada)
   const [confirmarSenha, setConfirmarSenha] = useState('');
-  const [senhasIguais, setSenhasIguais] = useState(true);
+
+  // Estados para feedback pós-cadastro
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [userEmail, setUserEmail] = useState('');
-  const [camposPreenchidos, setCamposPreenchidos] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
 
-  // Validação das senhas
-  useEffect(() => {
-    if (confirmarSenha === '') {
-      setSenhasIguais(true);
-    } else {
-      setSenhasIguais(senha === confirmarSenha);
-    }
-  }, [senha, confirmarSenha]);
+  // Estados individuais para cada campo do formulário
+  // Escolha intencional: estados separados melhoram legibilidade e performance
+  const [nome, setNome] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [numeroCnh, setNumeroCnh] = useState('');
+  const [tipoCnh, setTipoCnh] = useState('');
+  const [dataValidadeCnh, setDataValidadeCnh] = useState('');
+  const [email, setEmail] = useState('');
 
-  // Função para verificar se todos os campos obrigatórios estão preenchidos
-  const verificarCamposObrigatorios = () => {
-    if (!formRef.current) return false;
+  // --------------------------------------------------------------------------
+  // VALORES DERIVADOS (COMPUTADOS)
+  // --------------------------------------------------------------------------
 
-    // Lista de IDs dos campos obrigatórios
-    const camposObrigatorios = [
-      'nome',
-      'cpf',
-      'telefone',
-      'numeroCnh',
-      'tipoCnh',
-      'dataValidadeCnh',
-      'email',
-      'senha',
-      'confirmarSenha',
-    ];
+  // Verifica se as senhas são iguais (ignora quando confirmação está vazia)
+  // Preferimos calcular diretamente em vez de usar estado + useEffect
+  const senhasIguais = confirmarSenha === '' || senha === confirmarSenha;
 
-    // Verifica se todos os campos estão preenchidos
-    for (const campoId of camposObrigatorios) {
-      if (campoId === 'tipoCnh') {
-        // Para o select personalizado, verifica através do name
-        const selectElement = document.querySelector(
-          '[name="tipoCnh"]',
-        ) as HTMLSelectElement;
-        if (!selectElement || !selectElement.value) {
-          return false;
-        }
-      } else {
-        const campo = document.getElementById(campoId) as HTMLInputElement;
-        if (!campo || !campo.value || campo.value.trim() === '') {
-          return false;
-        }
-      }
-    }
+  // Verifica se todos os campos obrigatórios estão preenchidos
+  // Usado para habilitar/desabilitar botão de submit
+  const camposPreenchidos =
+    nome.trim() !== '' &&
+    cpf.trim() !== '' &&
+    telefone.trim() !== '' &&
+    numeroCnh.trim() !== '' &&
+    tipoCnh !== '' && // Select precisa ter valor selecionado
+    dataValidadeCnh !== '' &&
+    email.trim() !== '' &&
+    senha !== '' &&
+    confirmarSenha !== '';
 
-    return true;
+  // --------------------------------------------------------------------------
+  // FUNÇÕES DE RESET E UTILITÁRIAS
+  // --------------------------------------------------------------------------
+
+  /**
+   * Reseta todos os estados do formulário para valores iniciais
+   * Usada após cadastro bem-sucedido para preparar novo cadastro
+   */
+  const resetForm = () => {
+    setNome('');
+    setCpf('');
+    setTelefone('');
+    setNumeroCnh('');
+    setTipoCnh('');
+    setDataValidadeCnh('');
+    setEmail('');
+    setSenha('');
+    setConfirmarSenha('');
   };
 
-  // useEffect para monitorar mudanças nos campos e atualizar o estado
-  useEffect(() => {
-    const verificarCampos = () => {
-      setCamposPreenchidos(verificarCamposObrigatorios());
-    };
+  /**
+   * Fecha o modal de sucesso pós-cadastro
+   */
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+  };
 
-    // Verifica inicialmente
-    setTimeout(verificarCampos, 100);
+  // --------------------------------------------------------------------------
+  // HANDLERS DE EVENTOS
+  // --------------------------------------------------------------------------
 
-    // Adiciona event listeners para todos os campos obrigatórios
-    const camposIds = [
-      'nome',
-      'cpf',
-      'telefone',
-      'numeroCnh',
-      'dataValidadeCnh',
-      'email',
-      'senha',
-      'confirmarSenha',
-    ];
-
-    const handleChange = () => {
-      verificarCampos();
-    };
-
-    // WeakSet para rastrear elementos que já têm listeners
-    const elementsWithListeners = new WeakSet<Element>();
-
-    // Função para adicionar listeners após o DOM estar pronto
-    const adicionarListeners = () => {
-      camposIds.forEach((id) => {
-        const campo = document.getElementById(id);
-        if (campo) {
-          campo.addEventListener('input', handleChange);
-          campo.addEventListener('change', handleChange);
-        }
-      });
-
-      // Listener específico para o select personalizado
-      const selectTipoCnh = document.querySelector('[name="tipoCnh"]');
-      if (selectTipoCnh) {
-        selectTipoCnh.addEventListener('change', handleChange);
-        elementsWithListeners.add(selectTipoCnh);
-      }
-    };
-
-    adicionarListeners();
-
-    // Observer para detectar quando o select personalizado é carregado
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'childList') {
-          const selectTipoCnh = document.querySelector('[name="tipoCnh"]');
-          if (selectTipoCnh && !elementsWithListeners.has(selectTipoCnh)) {
-            selectTipoCnh.addEventListener('change', handleChange);
-            elementsWithListeners.add(selectTipoCnh);
-          }
-        }
-      });
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    // Cleanup
-    return () => {
-      camposIds.forEach((id) => {
-        const campo = document.getElementById(id);
-        if (campo) {
-          campo.removeEventListener('input', handleChange);
-          campo.removeEventListener('change', handleChange);
-        }
-      });
-
-      const selectTipoCnh = document.querySelector('[name="tipoCnh"]');
-      if (selectTipoCnh) {
-        selectTipoCnh.removeEventListener('change', handleChange);
-      }
-
-      observer.disconnect();
-    };
-  }, []);
-
-  // useEffect adicional para monitorar mudanças nos estados de senha
-  useEffect(() => {
-    if (formRef.current) {
-      setCamposPreenchidos(verificarCamposObrigatorios());
-    }
-  }, [senha, confirmarSenha]);
-
-  // Monitora o state para abrir o modal quando o cadastro for bem-sucedido
-  useEffect(() => {
-    if (!state) return;
-
-    if (state.error) {
-      toast.error(state.message || 'Erro ao cadastrar motorista.');
-      return;
-    }
-
-    if (!state.error) {
-      toast.success(state.message || 'Cadastro realizado com sucesso!');
-
-      const emailInput = document.getElementById('email') as HTMLInputElement;
-
-      if (emailInput) {
-        setUserEmail(emailInput.value);
-        sessionStorage.setItem('abrirModalAtivacao', 'true');
-        sessionStorage.setItem('emailCadastro', emailInput.value);
-      }
-
-      setShowSuccessModal(true);
-
-      if (formRef.current) {
-        formRef.current.reset();
-        setSenha('');
-        setConfirmarSenha('');
-      }
-    }
-  }, [setSenha, state]);
-
-  // Função para lidar com o envio do formulário
+  /**
+   * Processa o envio do formulário de cadastro
+   *
+   * @param formData - Dados do formulário (excluindo senha, que é adicionada manualmente)
+   * @returns Promise com resultado da API
+   *
+   * @remarks
+   * A senha é adicionada manualmente ao FormData porque:
+   * 1. O input de senha não tem atributo 'name' (evita duplicidade no FormData)
+   * 2. Precisamos garantir que a senha validada seja exatamente a mesma enviada
+   * 3. O hook useValidacaoSenha mantém a senha em estado separado do formulário
+   *
+   * @throws Não lança erros diretamente, usa toast para feedback visual
+   */
   const handleSubmit = async (formData: FormData) => {
+    // Validações antes do envio
     if (!senhasIguais) {
-      toast.error('As senhas não coincidem.');
+      toast.error(ERROR_MESSAGES.PASSWORD_MISMATCH);
       return;
     }
 
     if (!ehValida) {
-      toast.error('A senha não atende aos requisitos mínimos.');
+      toast.error(ERROR_MESSAGES.PASSWORD_REQUIREMENTS);
       return;
     }
 
+    // Adiciona a senha validada ao FormData
     formData.append('senha', senha);
 
+    // Envia para a Server Action
     return await addMotoristaAction(formData);
   };
 
-  // Fechar modal
-  const closeModal = () => {
-    setShowSuccessModal(false);
-  };
+  // --------------------------------------------------------------------------
+  // EFEITOS COLATERAIS
+  // --------------------------------------------------------------------------
+
+  /**
+   * Monitora o resultado da Server Action (addMotoristaAction)
+   *
+   * @effect
+   * - Em caso de erro: Exibe toast com mensagem
+   * - Em caso de sucesso:
+   *   - Exibe toast de sucesso
+   *   - Salva email no sessionStorage (para modal de ativação na página de login)
+   *   - Abre modal de sucesso
+   *   - Reseta formulário
+   *
+   * @dependency state - Resultado da Server Action
+   * @dependency email - Para salvar no sessionStorage
+   * @dependency setSenha - Necessário para reset do formulário
+   */
+  useEffect(() => {
+    if (!state) return;
+
+    // Caso de erro na API
+    if (state.error) {
+      toast.error(state.message || ERROR_MESSAGES.GENERIC_ERROR);
+      return;
+    }
+
+    // Sucesso no cadastro
+    toast.success(state.message || ERROR_MESSAGES.SUCCESS);
+
+    // Prepara dados para o modal de ativação
+    // SessionStorage: escolhido para não persistir após fechar a aba
+    setUserEmail(email);
+    sessionStorage.setItem('abrirModalAtivacao', 'true');
+    sessionStorage.setItem('emailCadastro', email);
+
+    // Abre modal e limpa formulário
+    setShowSuccessModal(true);
+    resetForm();
+  }, [state]); // Incluímos a dependência necessária
+
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO
+  // --------------------------------------------------------------------------
 
   return (
     <>
       <main className="container mx-auto px-3 sm:px-4 py-4 md:py-8">
         <Card className="w-full max-w-5xl mx-auto">
+          {/* Header do Card com ícone e título */}
           <CardHeader className="space-y-3 text-center pb-4 sm:pb-6">
             <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-md sm:shadow-lg">
               <UserIcon className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white" />
@@ -243,9 +298,10 @@ export default function CadastroUsuario() {
             </CardDescription>
           </CardHeader>
 
-          <Form action={handleSubmit} ref={formRef}>
+          {/* Formulário - usa Form do Next.js para integração com Server Actions */}
+          <Form action={handleSubmit}>
             <CardContent className="p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6">
-              {/* Mensagem de erro ou sucesso */}
+              {/* Feedback de erro/sucesso da API */}
               {(state?.error || state?.message) && (
                 <div
                   className={`flex items-start gap-2 sm:gap-3 rounded-md border p-3 sm:p-4 mb-4 sm:mb-6 ${
@@ -265,25 +321,25 @@ export default function CadastroUsuario() {
                 </div>
               )}
 
-              {/* Mensagem de erro para senhas diferentes */}
+              {/* Feedback de senhas diferentes */}
               {!senhasIguais && (
                 <div className="flex items-start gap-2 sm:gap-3 rounded-md border border-red-200 bg-red-50 text-red-900 p-3 sm:p-4 mb-4 sm:mb-6">
                   <CircleAlert className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 mt-0.5" />
                   <span className="text-xs sm:text-sm md:text-base">
-                    As senhas não coincidem. Por favor, verifique.
+                    {ERROR_MESSAGES.PASSWORD_MISMATCH}
                   </span>
                 </div>
               )}
 
               <div className="space-y-6 sm:space-y-8">
-                {/* Seção Dados Pessoais */}
+                {/* SEÇÃO 1: DADOS PESSOAIS */}
                 <div className="space-y-4">
                   <CardDescription className="text-sm sm:text-base text-center text-blue-800 font-bold">
                     Primeiro, alguns dados pessoais
                   </CardDescription>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                    {/* Nome */}
+                    {/* Nome completo - largura total em mobile e desktop */}
                     <div className="md:col-span-2">
                       <FormItem
                         name="Nome"
@@ -294,12 +350,14 @@ export default function CadastroUsuario() {
                           id="nome"
                           name="nome"
                           placeholder="João Alves da Silva"
+                          value={nome}
+                          onChange={(e) => setNome(e.target.value)}
                           required
                         />
                       </FormItem>
                     </div>
 
-                    {/* CPF */}
+                    {/* CPF - com máscara automática (remove não-números) */}
                     <FormItem
                       name="CPF"
                       description="Insira seu CPF (apenas números). Exemplo: 12345678900"
@@ -309,18 +367,18 @@ export default function CadastroUsuario() {
                         id="cpf"
                         name="cpf"
                         placeholder="12345678900"
-                        maxLength={11}
+                        maxLength={VALIDATION_LENGTHS.CPF}
                         type="text"
                         inputMode="numeric"
+                        value={cpf}
+                        onChange={(e) =>
+                          setCpf(e.target.value.replace(/\D/g, ''))
+                        }
                         required
-                        onInput={(e) => {
-                          const target = e.target as HTMLInputElement;
-                          target.value = target.value.replace(/\D/g, '');
-                        }}
                       />
                     </FormItem>
 
-                    {/* Telefone */}
+                    {/* Telefone - com máscara automática (remove não-números) */}
                     <FormItem
                       name="Número de Telefone"
                       description="Digite seu número de telefone com DDD (apenas números). Exemplo: 22912345678"
@@ -330,27 +388,27 @@ export default function CadastroUsuario() {
                         id="telefone"
                         name="telefone"
                         placeholder="22912345678"
-                        maxLength={11}
+                        maxLength={VALIDATION_LENGTHS.PHONE}
                         type="text"
                         inputMode="numeric"
+                        value={telefone}
+                        onChange={(e) =>
+                          setTelefone(e.target.value.replace(/\D/g, ''))
+                        }
                         required
-                        onInput={(e) => {
-                          const target = e.target as HTMLInputElement;
-                          target.value = target.value.replace(/\D/g, '');
-                        }}
                       />
                     </FormItem>
                   </div>
                 </div>
 
-                {/* Seção CNH */}
+                {/* SEÇÃO 2: DADOS DA CNH */}
                 <div className="space-y-4">
                   <CardDescription className="text-sm sm:text-base text-center text-blue-800 font-bold">
                     Agora Vamos para a CNH
                   </CardDescription>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                    {/* CNH */}
+                    {/* Número da CNH */}
                     <div className="md:col-span-2">
                       <FormItem
                         name="Número da CNH"
@@ -361,12 +419,15 @@ export default function CadastroUsuario() {
                           id="numeroCnh"
                           name="numeroCnh"
                           placeholder="12345678900"
+                          maxLength={VALIDATION_LENGTHS.CNH}
+                          value={numeroCnh}
+                          onChange={(e) => setNumeroCnh(e.target.value)}
                           required
                         />
                       </FormItem>
                     </div>
 
-                    {/* Tipo da CNH */}
+                    {/* Categoria da CNH - Select customizado */}
                     <FormItem
                       name="Categoria da CNH"
                       description="Selecione a categoria da sua CNH"
@@ -375,6 +436,8 @@ export default function CadastroUsuario() {
                         id="tipoCnh"
                         name="tipoCnh"
                         placeholder="Selecione a categoria"
+                        value={tipoCnh}
+                        onChange={(val) => setTipoCnh(val)}
                         options={[
                           { value: 'B', label: 'Categoria B' },
                           { value: 'AB', label: 'Categoria AB' },
@@ -388,7 +451,7 @@ export default function CadastroUsuario() {
                       />
                     </FormItem>
 
-                    {/* Data de Vencimento da CNH */}
+                    {/* Data de validade da CNH */}
                     <FormItem
                       name="Data de Vencimento da CNH"
                       description="Informe a data de vencimento da sua CNH"
@@ -398,13 +461,15 @@ export default function CadastroUsuario() {
                         type="date"
                         id="dataValidadeCnh"
                         name="dataValidadeCnh"
+                        value={dataValidadeCnh}
+                        onChange={(e) => setDataValidadeCnh(e.target.value)}
                         required
                       />
                     </FormItem>
                   </div>
                 </div>
 
-                {/* Seção Dados de Acesso */}
+                {/* SEÇÃO 3: DADOS DE ACESSO */}
                 <div className="space-y-4">
                   <CardDescription className="text-sm sm:text-base text-center text-blue-800 font-bold">
                     Por fim, os dados de acesso
@@ -420,22 +485,24 @@ export default function CadastroUsuario() {
                           id="email"
                           name="email"
                           placeholder="seu@email.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                           required
                         />
                       </FormItem>
                     </div>
 
-                    {/* Senha */}
+                    {/* Senha - com botão de mostrar/ocultar e feedback visual */}
                     <FormItem name="Senha" description="Digite sua senha">
                       <div className="relative">
                         <Input
                           type={exibirSenha ? 'text' : 'password'}
                           className="rounded-sm border-gray-400 text-sm sm:text-base pr-10"
                           id="senha"
-                          name="senha"
                           placeholder="••••••••"
-                          required
+                          value={senha}
                           onChange={(e) => setSenha(e.target.value)}
+                          required
                         />
                         <button
                           type="button"
@@ -452,6 +519,7 @@ export default function CadastroUsuario() {
                           )}
                         </button>
                       </div>
+                      {/* Componente de feedback visual da força da senha */}
                       <FeedbackSenha
                         regras={regras}
                         forca={forca}
@@ -459,7 +527,7 @@ export default function CadastroUsuario() {
                       />
                     </FormItem>
 
-                    {/* Confirmar Senha */}
+                    {/* Confirmar Senha - com validação em tempo real */}
                     <FormItem
                       name="Confirmar Senha"
                       description="Digite novamente sua senha"
@@ -473,10 +541,10 @@ export default function CadastroUsuario() {
                               : ''
                           }`}
                           id="confirmarSenha"
-                          name="confirmarSenha"
                           placeholder="••••••••"
-                          required
+                          value={confirmarSenha}
                           onChange={(e) => setConfirmarSenha(e.target.value)}
+                          required
                         />
                         <button
                           type="button"
@@ -497,6 +565,7 @@ export default function CadastroUsuario() {
                           )}
                         </button>
                       </div>
+                      {/* Feedback específico para senhas diferentes */}
                       {!senhasIguais && confirmarSenha !== '' && (
                         <p className="text-red-500 text-xs mt-1">
                           As senhas não coincidem
@@ -508,7 +577,7 @@ export default function CadastroUsuario() {
               </div>
             </CardContent>
 
-            {/* Footer com botão */}
+            {/* Footer com botão de submit */}
             <CardFooter className="px-3 sm:px-4 md:px-6 lg:px-8 pb-4 sm:pb-6 pt-0">
               <Button
                 type="submit"
@@ -524,10 +593,10 @@ export default function CadastroUsuario() {
         </Card>
       </main>
 
-      {/* Modal de Sucesso - Agora usando o componente separado */}
+      {/* Modal de sucesso pós-cadastro */}
       <ModalSucessoCadastro
         isOpen={showSuccessModal}
-        onClose={closeModal}
+        onClose={handleCloseModal}
         userEmail={userEmail}
       />
     </>
