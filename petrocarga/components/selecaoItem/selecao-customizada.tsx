@@ -1,39 +1,31 @@
-import React from 'react';
-
-{
-  /* Definição dos tipos para as opções e propriedades do componente */
-}
 interface SelecionarOpcao {
   value: string;
   label: string;
 }
 
-{
-  /* Definição das propriedades esperadas pelo componente */
-}
 interface SelecaoCustomizadaProps {
   id: string;
   name: string;
   options: SelecionarOpcao[];
   placeholder?: string;
-  defaultValue?: string;
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
-{
-  /* Componente de seleção customizada */
-}
 export default function SelecaoCustomizada({
   id,
   name,
   options,
   placeholder,
-  defaultValue,
+  value,
+  onChange,
 }: SelecaoCustomizadaProps) {
   return (
     <select
       id={id}
       name={name}
-      defaultValue={defaultValue}
+      value={value}
+      onChange={(e) => onChange?.(e.target.value)}
       className="flex h-10 w-45 rounded-sm border border-gray-400 text-sm md:text-base"
     >
       {placeholder && (
