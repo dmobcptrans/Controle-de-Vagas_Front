@@ -4,6 +4,7 @@ import { MapProvider } from '@/context/MapContext';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { Navbar } from '@/components/gestor/layout/navbar';
 import PrivateRoute from '@/context/PrivateRoute';
+import { PushNotificationBanner } from '@/context/PushProvider/PushNotificationBanner';
 
 export const metadata: Metadata = {
   title: 'PetroCarga',
@@ -18,6 +19,7 @@ export default function GestorLayout({
 }>) {
   return (
     <div className="flex min-h-screen flex-col">
+      <PushNotificationBanner />
       <Navbar />
       <main className="flex-1 relative">
         <PrivateRoute allowedRoles={['GESTOR', 'ADMIN']}>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/components/hooks/useAuth';
+import { PushNotificationToggle } from '@/components/notification/PushNotificationToggle';
 import {
   Card,
   CardDescription,
@@ -175,6 +176,8 @@ export default function PerfilAgente() {
               </div>
             </div>
           </div>
+
+          <PushNotificationToggle usuarioId={agente.usuario.id}/>
 
           {/* Botão de Ação */}
           <div className="flex justify-center pt-6">

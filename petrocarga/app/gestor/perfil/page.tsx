@@ -20,6 +20,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import Link from 'next/link';
+import { PushNotificationToggle } from '@/components/notification/PushNotificationToggle';
 
 export default function PerfilGestor() {
   const [gestor, setGestor] = useState<Gestor | null>(null);
@@ -160,6 +161,8 @@ export default function PerfilGestor() {
               </div>
             </div>
           </div>
+
+          <PushNotificationToggle usuarioId={gestor.id}/>
 
           {/* Botão de Ação */}
           <div className="flex justify-center pt-6">
