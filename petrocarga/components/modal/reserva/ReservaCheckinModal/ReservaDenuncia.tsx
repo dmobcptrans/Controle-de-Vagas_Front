@@ -10,7 +10,10 @@ interface ReservaDenunciaProps {
   onClose: () => void;
 }
 
-type TipoDenuncia = 'USO_INDEVIDO_DA_VAGA' | 'ATRASO_POR_MOTIVO_DE_FORCA_MAIOR' | 'OUTROS';
+type TipoDenuncia =
+  | 'USO_INDEVIDO_DA_VAGA'
+  | 'ATRASO_POR_MOTIVO_DE_FORCA_MAIOR'
+  | 'OUTROS';
 
 export default function ReservaDenuncia({
   reserva,
@@ -42,7 +45,7 @@ export default function ReservaDenuncia({
       }
 
       onClose();
-    } catch (err: unknown) {
+    } catch {
       setErro('Não foi possível enviar a denúncia.');
     } finally {
       setLoading(false);
@@ -81,7 +84,9 @@ export default function ReservaDenuncia({
               className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               <option value="USO_INDEVIDO_DA_VAGA">Uso indevido da vaga</option>
-              <option value="ATRASO_POR_MOTIVO_DE_FORCA_MAIOR">Atraso por motivo de força maior</option>
+              <option value="ATRASO_POR_MOTIVO_DE_FORCA_MAIOR">
+                Atraso por motivo de força maior
+              </option>
               <option value="OUTROS">Outros</option>
             </select>
           </div>

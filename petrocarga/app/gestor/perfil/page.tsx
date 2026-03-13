@@ -42,7 +42,7 @@ export default function PerfilGestor() {
         } else {
           setGestor(resultado.gestor);
         }
-      } catch (err) {
+      } catch {
         setError('Erro ao carregar informações do perfil. Tente novamente.');
       } finally {
         setLoading(false);

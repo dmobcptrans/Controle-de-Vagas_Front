@@ -6,7 +6,7 @@ import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
 import { Loader2 } from 'lucide-react';
 import { Veiculo } from '@/lib/types/veiculo';
 import VeiculoDetalhes from '@/components/motorista/cards/veiculo-card';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -14,7 +14,6 @@ import toast from 'react-hot-toast';
 export default function EditarVeiculoPage() {
   const { user } = useAuth();
   const params = useParams() as { id: string };
-  const router = useRouter();
 
   const [veiculo, setVeiculo] = useState<Veiculo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +51,7 @@ export default function EditarVeiculoPage() {
             setVeiculo(v);
           }
         }
-      } catch (err) {
+      } catch {
         toast.error('Erro ao carregar os dados do veículo. Tente novamente.');
         setError('Erro ao buscar veículo.');
       } finally {

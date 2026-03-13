@@ -26,6 +26,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { PushNotificationToggle } from '@/components/notification/PushNotificationToggle';
+import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
 
 export default function PerfilMotorista() {
   const [motorista, setMotorista] = useState<Motorista | null>(null);
@@ -65,14 +66,14 @@ export default function PerfilMotorista() {
       const resultado = await deleteMotorista(user.id);
 
       if (resultado?.error) {
-        // Sem alert
+        // Tratar erro se necessário
       } else {
         setModalAberto(false);
         await logout();
         router.push('/');
       }
     } catch {
-      // Sem alert e sem console.error
+      // Tratar erro se necessário
     }
   };
 
@@ -227,37 +228,12 @@ export default function PerfilMotorista() {
         </div>
       </Card>
 
-      {modalAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-            onClick={() => setModalAberto(false)}
-          />
-          <div className="relative bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 w-full max-w-sm sm:max-w-md md:max-w-lg shadow-2xl transform transition-all duration-300 scale-95 sm:scale-100 animate-scaleIn">
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3">
-              Confirmar exclusão
-            </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-6">
-              Tem certeza que deseja excluir sua conta? Esta ação não pode ser
-              desfeita e todos os seus dados serão permanentemente removidos.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-end">
-              <button
-                onClick={() => setModalAberto(false)}
-                className="px-6 py-3 h-11 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition text-sm sm:text-base order-2 sm:order-1 min-w-[120px] font-medium"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleExcluir}
-                className="px-6 py-3 h-11 bg-red-500 hover:bg-red-600 text-white rounded-lg transition text-sm sm:text-base order-1 sm:order-2 min-w-[120px] font-medium"
-              >
-                Excluir
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal de Confirmação de Exclusão */}
+      <ModalConfirmacaoExclusao
+        isOpen={modalAberto}
+        onClose={() => setModalAberto(false)}
+        onConfirm={handleExcluir}
+      />
     </main>
   );
 }

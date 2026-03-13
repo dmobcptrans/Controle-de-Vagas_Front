@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useReserva } from '@/components/reserva/hooks/useReserva';
+import { useReserva } from '@/components/hooks/reserva/useReserva';
 import { Vaga } from '@/lib/types/vaga';
 import DaySelection from '@/components/reserva/DaySelection';
 import TimeSelection from '@/components/reserva/TimeSelection';

@@ -60,7 +60,7 @@ export default function EnviarNotificacoesPage() {
         if (!motoristasRes.error) {
           setMotoristas(motoristasRes.motoristas || []);
         }
-      } catch (err) {
+      } catch {
         toast.error(
           'Erro ao carregar motoristas. Por favor, tente novamente mais tarde.',
         );
@@ -91,11 +91,6 @@ export default function EnviarNotificacoesPage() {
         ? prev.filter((userId) => userId !== id)
         : [...prev, id],
     );
-  };
-
-  const selecionarTodos = () => {
-    const ids = motoristasFiltrados.map((m) => m.usuario.id);
-    setMotoristasSelecionados(ids);
   };
 
   const deselecionarTodos = () => {
@@ -258,7 +253,16 @@ export default function EnviarNotificacoesPage() {
                 </label>
                 <select
                   value={tipo}
-                  onChange={(e) => setTipo(e.target.value as any)}
+                  onChange={(e) =>
+                    setTipo(
+                      e.target.value as
+                        | 'RESERVA'
+                        | 'VAGA'
+                        | 'VEICULO'
+                        | 'MOTORISTA'
+                        | 'SISTEMA',
+                    )
+                  }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="SISTEMA">Sistema</option>

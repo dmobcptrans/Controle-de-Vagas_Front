@@ -2,12 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { getReservas, finalizarForcado } from '@/lib/api/reservaApi';
-import { useAuth } from '@/components/hooks/useAuth';
 import { Reserva } from '@/lib/types/reserva';
 import { toast } from 'sonner';
 
 export default function useReservas() {
-  const { user } = useAuth();
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);

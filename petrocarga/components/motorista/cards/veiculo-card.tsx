@@ -5,6 +5,7 @@ import { Veiculo } from '@/lib/types/veiculo';
 import { useRouter } from 'next/navigation';
 import { deleteVeiculo, atualizarVeiculo } from '@/lib/api/veiculoApi';
 import { CheckCircle2, AlertCircle, Edit, Trash2, Save, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 type VeiculoDetalhesProps = {
   veiculo: Veiculo;
@@ -75,7 +76,7 @@ export default function VeiculoDetalhes({
         marca: formData.marca,
         modelo: formData.modelo,
         placa: formData.placa,
-        tipo: formData.tipo as any,
+        tipo: formData.tipo as 'AUTOMOVEL' | 'VUC' | 'CAMINHONETA' | 'CAMINHAO_MEDIO' | 'CAMINHAO_LONGO',
         usuarioId: formData.usuarioId || undefined,
         cpfProprietario: formData.cpfProprietario || null,
         cnpjProprietario: formData.cnpjProprietario || null,
@@ -107,8 +108,9 @@ export default function VeiculoDetalhes({
       setModalAberto(false);
       router.back();
     } catch (err) {
-      console.error(err);
-      alert('Erro ao excluir veículo.');
+      toast.error(
+        err instanceof Error ? err.message : 'Erro ao excluir veículo.',
+      );
     }
   };
 

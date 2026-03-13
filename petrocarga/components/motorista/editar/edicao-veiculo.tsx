@@ -12,11 +12,10 @@ import { Input } from '@/components/ui/input';
 import { atualizarVeiculo } from '@/lib/api/veiculoApi';
 import { CircleAlert, TruckIcon } from 'lucide-react';
 import Form from 'next/form';
-import { useActionState, useState } from 'react';
+import { useActionState } from 'react';
 import FormItem from '@/components/form/form-item';
-import React from 'react';
 import { Veiculo } from '@/lib/types/veiculo';
-import SelecaoCustomizada from '@/components/gestor/selecaoItem/selecao-customizada';
+import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 
 export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
   // Wrapper para passar o token na action
@@ -26,9 +25,8 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
 
   const [state, atualizarVeiculoAction, pending] = useActionState(
     atualizarComToken,
-    null
+    null,
   );
-  const [exibirSenha, setExibirSenha] = useState(false);
 
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">

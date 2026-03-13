@@ -50,7 +50,7 @@ export default function AgentesPage() {
         } else {
           setAgentes(result.agentes || []);
         }
-      } catch (err) {
+      } catch {
         setError(
           'Erro ao buscar os agentes cadastrados. Tente novamente mais tarde.',
         );
@@ -84,7 +84,7 @@ export default function AgentesPage() {
       setPaginaAtual(1);
       fetchAgentes(mostrarAtivos);
     }
-  }, [mostrarAtivos]);
+  }, [fetchAgentes, loading, mostrarAtivos]);
 
   // Limpar filtros (mostrar todos)
   const mostrarTodos = () => {
@@ -283,9 +283,8 @@ export default function AgentesPage() {
                 <div className="text-sm text-gray-600">
                   {busca ? (
                     <>
-                      Resultados para "
+                      Resultados para
                       <span className="font-medium text-blue-600">{busca}</span>
-                      "
                       {mostrarAtivos !== null && (
                         <>
                           {' '}

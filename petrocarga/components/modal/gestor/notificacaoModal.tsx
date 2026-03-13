@@ -57,7 +57,7 @@ export function NotificacaoModal({
             tipo: tipoUsuario,
           },
           enviadoEm: new Date().toISOString(),
-        })
+        }),
       );
 
       const result = await enviarNotificacaoParaUsuario(formData);
@@ -150,7 +150,16 @@ export function NotificacaoModal({
             </label>
             <select
               value={tipo}
-              onChange={(e) => setTipo(e.target.value as any)}
+              onChange={(e) =>
+                setTipo(
+                  e.target.value as
+                    | 'RESERVA'
+                    | 'VAGA'
+                    | 'VEICULO'
+                    | 'MOTORISTA'
+                    | 'SISTEMA',
+                )
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="SISTEMA">Sistema</option>

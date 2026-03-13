@@ -1,23 +1,7 @@
 'use client';
 
 import { clientApi } from '../clientApi';
-
-interface GestorPayload {
-  nome: string;
-  cpf: string;
-  telefone: string;
-  email: string;
-  senha?: string;
-}
-
-interface GestorResult {
-  error: boolean;
-  message?: string;
-  valores?: GestorPayload;
-  gestorId?: string;
-  gestor?: unknown;
-  gestores?: unknown[];
-}
+import type { GestorInput, GestorResponse } from '@/lib/types/gestor';
 
 // ----------------------
 // ADD GESTOR
@@ -52,7 +36,7 @@ export async function addGestor(_: unknown, formData: FormData) {
 // ----------------------
 // DELETE GESTOR
 // ----------------------
-export async function deleteGestor(gestorId: string): Promise<GestorResult> {
+export async function deleteGestor(gestorId: string): Promise<GestorResponse> {
   try {
     await clientApi(`/petrocarga/gestores/${gestorId}`, { method: 'DELETE' });
     return { error: false, message: 'Gestor deletado com sucesso!' };
@@ -69,10 +53,10 @@ export async function deleteGestor(gestorId: string): Promise<GestorResult> {
 // ----------------------
 export async function atualizarGestor(
   formData: FormData,
-): Promise<GestorResult> {
+): Promise<GestorResponse> {
   const usuarioId = formData.get('id') as string;
 
-  const payload: GestorPayload = {
+  const payload: GestorInput = {
     nome: formData.get('nome') as string,
     cpf: formData.get('cpf') as string,
     telefone: formData.get('telefone') as string,

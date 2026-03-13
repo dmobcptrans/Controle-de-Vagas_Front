@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     'O Petrocarga trás aos motoristas uma plataforma eficiente para gerenciamento de cargas e rotas.',
 };
 
-export default function GestorLayout({
+export default function AgenteLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

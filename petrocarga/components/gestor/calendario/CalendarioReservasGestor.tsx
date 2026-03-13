@@ -3,10 +3,10 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBr from '@fullcalendar/core/locales/pt-br';
-import useReservas from '@/components/gestor/calendario/hooks/useReservas';
-import { ReservaModal } from './ReservaModal';
+import useReservas from '@/components/hooks/gestor/calendario/useReservas';
+import { ReservaModal } from '@/components/modal/gestor/calendario/ReservaModal';
 import { useState, useMemo, useRef } from 'react';
-import { toDateKey, dayStartISO } from './utils/utils';
+import { toDateKey, dayStartISO } from '../../utils/gestor/calendario/utils';
 import type { EventClickArg, EventInput } from '@fullcalendar/core';
 import { getVagaById } from '@/lib/api/vagaApi';
 import type { Reserva } from '@/lib/types/reserva';
@@ -91,7 +91,7 @@ export default function CalendarioReservasGestor() {
           (reserva) =>
             reserva.status === 'CONCLUIDA' ||
             reserva.status === 'REMOVIDA' ||
-            reserva.status === 'CANCELADA'
+            reserva.status === 'CANCELADA',
         );
       return {
         id: dateStr,
@@ -118,7 +118,7 @@ export default function CalendarioReservasGestor() {
         } catch (err) {
           console.error('Erro ao buscar vaga', id, err);
         }
-      })
+      }),
     );
   };
 
@@ -135,8 +135,8 @@ export default function CalendarioReservasGestor() {
       new Set(
         Object.values(logradouros)
           .flat()
-          .map((r) => r.vagaId)
-      )
+          .map((r) => r.vagaId),
+      ),
     );
 
     await ensureVagasInCache(todosVagaIds);
@@ -152,7 +152,7 @@ export default function CalendarioReservasGestor() {
   /* -------------------- Checkout forçado (SIMPLIFICADO) -------------------- */
   const handleCheckoutForcado = async (
     reservaId: string,
-    reservaData: Reserva
+    reservaData: Reserva,
   ) => {
     if (actionLoading) return;
 

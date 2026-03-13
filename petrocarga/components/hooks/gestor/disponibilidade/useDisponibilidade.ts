@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
-import { fetchDisponibilidades } from '../services/disponibilidadeService';
+import { fetchDisponibilidades } from '@/components/services/gestor/disponibilidade/disponibilidadeService';
 
 /* -------------------------------------------------------
   HOOK PRINCIPAL (Foco em Gerenciamento de Estado)

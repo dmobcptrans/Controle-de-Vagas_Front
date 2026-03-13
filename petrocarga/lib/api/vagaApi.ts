@@ -1,14 +1,16 @@
 'use client';
 
-import { Vaga, OperacoesVaga } from '../types/vaga';
 import { clientApi } from '../clientApi';
+import type {
+  Vaga,
+  VagaPayload,
+  VagaResponse,
+  FiltrosVaga,
+  ApiError,
+  OperacoesVaga,
+} from '@/lib/types/vaga';
 
-interface ApiError {
-  status?: number;
-  message: string;
-}
-
-function buildVagaPayload(formData: FormData) {
+function buildVagaPayload(formData: FormData): VagaPayload {
   const diasSemanaRaw = formData.get('diaSemana') as string;
   const diasSemana: OperacoesVaga[] = diasSemanaRaw
     ? JSON.parse(diasSemanaRaw)
@@ -42,8 +44,11 @@ function buildVagaPayload(formData: FormData) {
 // ----------------------
 // POST VAGA
 // ----------------------
-export async function addVaga(formData: FormData) {
+export async function addVaga(
+  formData: FormData,
+): Promise<VagaResponse<VagaPayload>> {
   const payload = buildVagaPayload(formData);
+
   try {
     await clientApi('/petrocarga/vagas', { method: 'POST', json: payload });
     return {
@@ -61,7 +66,7 @@ export async function addVaga(formData: FormData) {
 // ----------------------
 // DELETE VAGA
 // ----------------------
-export async function deleteVaga(id: string) {
+export async function deleteVaga(id: string): Promise<VagaResponse> {
   try {
     await clientApi(`/petrocarga/vagas/${id}`, { method: 'DELETE' });
     return { error: false, message: 'Vaga deletada com sucesso!' };
@@ -75,7 +80,9 @@ export async function deleteVaga(id: string) {
 // ----------------------
 // PATCH VAGA
 // ----------------------
-export async function atualizarVaga(formData: FormData) {
+export async function atualizarVaga(
+  formData: FormData,
+): Promise<VagaResponse<VagaPayload>> {
   const id = formData.get('id') as string;
   const payload = buildVagaPayload(formData);
 
@@ -109,6 +116,38 @@ export async function getVagas(status?: string): Promise<Vaga[]> {
     const error = err as ApiError;
     console.error('Erro ao buscar vagas:', error);
     return [];
+  }
+}
+
+// ----------------------
+// GET VAGAS COM FILTROS (versão alternativa com mais filtros)
+// ----------------------
+export async function getVagasComFiltros(
+  filtros?: FiltrosVaga,
+): Promise<VagaResponse<Vaga>> {
+  try {
+    const params = new URLSearchParams();
+
+    if (filtros?.status) params.append('status', filtros.status);
+    if (filtros?.area) params.append('area', filtros.area);
+    if (filtros?.tipoVaga) params.append('tipoVaga', filtros.tipoVaga);
+    if (filtros?.bairro) params.append('bairro', filtros.bairro);
+
+    const queryString = params.toString();
+    const url = queryString
+      ? `/petrocarga/vagas/all?${queryString}`
+      : '/petrocarga/vagas/all';
+
+    const res = await clientApi(url, { method: 'GET' });
+    const data = await res.json();
+
+    const vagas = Array.isArray(data) ? data : (data?.vagas ?? []);
+
+    return { error: false, vagas };
+  } catch (err) {
+    const error = err as ApiError;
+    console.error('Erro ao buscar vagas:', error);
+    return { error: true, message: error.message };
   }
 }
 

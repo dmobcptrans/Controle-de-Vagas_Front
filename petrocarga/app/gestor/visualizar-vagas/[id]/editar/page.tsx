@@ -31,7 +31,7 @@ export default function EditarVagaPage() {
         } else {
           setVaga(vagaData);
         }
-      } catch (err) {
+      } catch {
         router.replace('/gestor/visualizar-vagas');
       } finally {
         setLoading(false);

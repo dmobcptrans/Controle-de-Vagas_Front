@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import FormItem from '@/components/form/form-item';
 import React from 'react';
 import DiaSemana from '@/components/gestor/dia-semana/dia-semana';
-import SelecaoCustomizada from '@/components/gestor/selecaoItem/selecao-customizada';
+import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import { Vaga } from '@/lib/types/vaga';
 
 export default function EditarVaga({ vaga }: { vaga: Vaga }) {
@@ -21,14 +21,14 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
 
   const [state, atualizarVagaAction, pending] = useActionState(atualizar, null);
   useEffect(() => {
-  if (!state) return;
+    if (!state) return;
 
-  if (state.error) {
-    toast.error(state.message || 'Erro ao atualizar vaga');
-  } else {
-    toast.success(state.message || 'Vaga atualizada com sucesso!');
-  }
-}, [state]);
+    if (state.error) {
+      toast.error(state.message || 'Erro ao atualizar vaga');
+    } else {
+      toast.success(state.message || 'Vaga atualizada com sucesso!');
+    }
+  }, [state]);
 
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">

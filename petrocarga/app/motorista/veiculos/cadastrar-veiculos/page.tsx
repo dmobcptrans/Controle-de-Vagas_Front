@@ -14,7 +14,7 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, CheckCircle, CircleAlert, TruckIcon } from 'lucide-react';
 import Form from 'next/form';
 import FormItem from '@/components/form/form-item';
-import SelecaoCustomizada from '@/components/gestor/selecaoItem/selecao-customizada';
+import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import { addVeiculo } from '@/lib/api/veiculoApi';
 import { useAuth } from '@/components/hooks/useAuth';
 import Link from 'next/link';
@@ -42,7 +42,7 @@ export default function CadastroVeiculo() {
         } else {
           toast.success(result?.message || 'Veículo cadastrado com sucesso!');
         }
-      } catch (err) {
+      } catch {
         toast.error('Erro inesperado ao cadastrar veículo.');
       }
     });

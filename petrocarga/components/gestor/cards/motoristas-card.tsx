@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Mail, Phone, UserCircle, Bell, Car, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { NotificacaoModal } from '@/components/gestor/modals/notificacaoModal';
+import { NotificacaoModal } from '@/components/modal/gestor/notificacaoModal';
 
 interface MotoristaCardProps {
   motorista: Motorista;

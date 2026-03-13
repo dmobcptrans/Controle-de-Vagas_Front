@@ -6,7 +6,6 @@ import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
 import { Loader2 } from 'lucide-react';
 import { Veiculo } from '@/lib/types/veiculo';
 import VeiculoCard from '@/components/motorista/cards/veiculo-item';
-import toast from 'react-hot-toast';
 
 export default function VeiculosPage() {
   const { user } = useAuth();
@@ -24,7 +23,7 @@ export default function VeiculosPage() {
       try {
         const result = await getVeiculosUsuario(user.id);
         setVeiculos(result.veiculos);
-      } catch (err) {
+      } catch {
         setError('Erro ao buscar seus veículos. Tente novamente mais tarde.');
       } finally {
         setLoading(false);
