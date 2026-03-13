@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, TOKEN_KEY } from '@/service/api';
+import { atualizarStatusPushToken } from '@/lib/api/notificacaoApi';
 
 interface UserData {
   id: string;
@@ -174,8 +175,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
   const pushToken = localStorage.getItem('pushToken');
   try {
-    if (pushToken) {
-      await api.patch(`/petrocarga/notificacoes/pushToken/desativar/${pushToken}`);
+    if (pushToken && user?.id) {
+      await atualizarStatusPushToken(user.id, pushToken, false);
     }
     await api.post('/petrocarga/auth/logout');
   } catch (error) {
@@ -185,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     router.push('/autorizacao/login');
   }
-}, [router]);
+}, [router, user]);
 
   const value = useMemo(
     () => ({
