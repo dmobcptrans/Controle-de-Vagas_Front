@@ -20,17 +20,82 @@ import GestorCard from '@/components/gestor/cards/gestores-card';
 
 const ITENS_POR_PAGINA = 9;
 
+/**
+ * @component GestoresPage
+ * @version 1.0.0
+ *
+ * @description Página de listagem e gerenciamento de gestores para administradores.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. CARREGAMENTO INICIAL:
+ *    - Verifica autenticação (user?.id)
+ *    - Busca gestores via getGestores()
+ *    - Estados: loading → erro → sucesso
+ *
+ * 2. FILTROS:
+ *    - Busca textual (nome, email, telefone)
+ *    - Filtro por status (todos/ativos/inativos) com toggle cíclico
+ *    - Botão "Limpar Filtros" quando ativos
+ *    - Resumo dos filtros aplicados
+ *
+ * 3. PAGINAÇÃO:
+ *    - 9 itens por página (ITENS_POR_PAGINA)
+ *    - Controles: primeira, anterior, próxima, última
+ *    - Seletor de página dropdown
+ *    - Indicador de itens visíveis
+ *    - Números de página com reticências para muitas páginas
+ *
+ * 4. ESTADOS DE UI:
+ *    - Loading inicial: spinner com animação
+ *    - Loading de filtros: overlay sutil
+ *    - Erro: card vermelho com botão de retry
+ *    - Vazio (sem filtros): mensagem sem gestores
+ *    - Vazio (com filtros): mensagem com opção "Ver todos"
+ *    - Sucesso: grid de cards + paginação
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - useCallback + useEffect: Padrão para busca de dados com user?.id
+ * - useMemo: Filtragem e paginação otimizadas
+ * - Filtro por status cíclico: null → true → false → null
+ * - Paginação mantém estado durante recarregamentos
+ * - Grid responsivo: 1 (mobile) / 2 (tablet) / 3 (desktop) colunas
+ * - Diferenciação de tipos: Gestor (diferente de Agente/Motorista)
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - GestorCard: Card individual de gestor
+ * - getGestores: API de busca com filtros
+ * - useAuth: Hook de autenticação
+ *
+ * @example
+ * <GestoresPage />
+ */
+
 export default function GestoresPage() {
+  // --------------------------------------------------------------------------
+  // ESTADOS
+  // --------------------------------------------------------------------------
+
   const { user } = useAuth();
   const [gestores, setGestores] = useState<Gestor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoadingGestores, setIsLoadingGestores] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [mostrarAtivos, setMostrarAtivos] = useState<boolean | null>(null);
-  const [isLoadingGestores, setIsLoadingGestores] = useState(false);
 
-  // Buscar gestores com filtros
+  // --------------------------------------------------------------------------
+  // BUSCA DE DADOS
+  // --------------------------------------------------------------------------
+
   const fetchGestores = useCallback(
     async (ativo?: boolean | null) => {
       if (!user?.id) return;
@@ -40,7 +105,7 @@ export default function GestoresPage() {
 
       try {
         const filtros: FiltrosGestor = {};
-        if (ativo !== null) {
+        if (ativo !== null && ativo !== undefined) {
           filtros.ativo = ativo;
         }
 
@@ -56,45 +121,42 @@ export default function GestoresPage() {
         );
       } finally {
         setIsLoadingGestores(false);
-        setLoading(false);
       }
     },
     [user?.id],
   );
 
-  // Buscar gestores inicialmente
+  // Carrega dados iniciais
   useEffect(() => {
     fetchGestores();
   }, [fetchGestores]);
 
-  // Alternar filtro de ativos
+  // Recarrega quando filtro de status muda
+  useEffect(() => {
+    setPaginaAtual(1);
+    fetchGestores(mostrarAtivos);
+  }, [mostrarAtivos]);
+
+  // --------------------------------------------------------------------------
+  // FILTROS
+  // --------------------------------------------------------------------------
+
   const toggleAtivos = () => {
     if (mostrarAtivos === null) {
-      setMostrarAtivos(true); // Mostrar apenas ativos
+      setMostrarAtivos(true);
     } else if (mostrarAtivos === true) {
-      setMostrarAtivos(false); // Mostrar apenas inativos
+      setMostrarAtivos(false);
     } else {
-      setMostrarAtivos(null); // Mostrar todos
+      setMostrarAtivos(null);
     }
   };
 
-  // Aplicar filtro quando mostrarAtivos mudar
-  useEffect(() => {
-    if (!loading) {
-      setPaginaAtual(1);
-      fetchGestores(mostrarAtivos);
-    }
-  }, [fetchGestores, loading, mostrarAtivos]);
-
-  // Limpar filtros (mostrar todos)
   const mostrarTodos = () => {
     setMostrarAtivos(null);
     setBusca('');
     setPaginaAtual(1);
-    fetchGestores(null);
   };
 
-  // Filtrar gestores localmente para busca rápida
   const gestoresFiltrados = useMemo(() => {
     if (!busca.trim()) return gestores;
 
@@ -103,24 +165,20 @@ export default function GestoresPage() {
       (gestor) =>
         gestor.nome.toLowerCase().includes(termoBusca) ||
         gestor.email.toLowerCase().includes(termoBusca) ||
-        (gestor.telefone && gestor.telefone.includes(termoBusca)) ||
-        false,
+        (gestor.telefone && gestor.telefone.includes(termoBusca)),
     );
   }, [gestores, busca]);
 
-  // Cálculos de paginação
+  // --------------------------------------------------------------------------
+  // PAGINAÇÃO
+  // --------------------------------------------------------------------------
+
   const totalPaginas = Math.ceil(gestoresFiltrados.length / ITENS_POR_PAGINA);
 
   const gestoresPaginados = useMemo(() => {
     const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
-    const fim = inicio + ITENS_POR_PAGINA;
-    return gestoresFiltrados.slice(inicio, fim);
+    return gestoresFiltrados.slice(inicio, inicio + ITENS_POR_PAGINA);
   }, [gestoresFiltrados, paginaAtual]);
-
-  // Resetar para página 1 quando buscar
-  useEffect(() => {
-    setPaginaAtual(1);
-  }, [busca]);
 
   const irParaPagina = (pagina: number) => {
     setPaginaAtual(Math.max(1, Math.min(pagina, totalPaginas)));
@@ -131,7 +189,11 @@ export default function GestoresPage() {
   const irParaPaginaAnterior = () => irParaPagina(paginaAtual - 1);
   const irParaProximaPagina = () => irParaPagina(paginaAtual + 1);
 
-  if (loading) {
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO CONDICIONAL
+  // --------------------------------------------------------------------------
+
+  if (isLoadingGestores && !gestores.length) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col items-center justify-center p-4">
         <div className="text-center max-w-sm w-full">
@@ -183,7 +245,7 @@ export default function GestoresPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Cabeçalho */}
+        {/* HEADER */}
         <div className="mb-6 sm:mb-8 lg:mb-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
@@ -196,10 +258,10 @@ export default function GestoresPage() {
             </div>
           </div>
 
-          {/* Barra de busca e filtros */}
+          {/* BARRA DE FILTROS */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              {/* Barra de busca */}
+              {/* Campo de busca */}
               <div className="flex-1">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -208,7 +270,10 @@ export default function GestoresPage() {
                   <input
                     type="text"
                     value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
+                    onChange={(e) => {
+                      setBusca(e.target.value);
+                      setPaginaAtual(1);
+                    }}
                     placeholder="Buscar por nome, email ou telefone..."
                     className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm sm:text-base"
                   />
@@ -224,9 +289,9 @@ export default function GestoresPage() {
                 </div>
               </div>
 
-              {/* Botões de ação */}
+              {/* Controles de filtro */}
               <div className="flex items-center gap-3">
-                {/* Filtro de Ativos/Inativos */}
+                {/* Filtro de status (cíclico) */}
                 <button
                   onClick={toggleAtivos}
                   className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
@@ -254,7 +319,7 @@ export default function GestoresPage() {
                   )}
                 </button>
 
-                {/* Botão para limpar todos os filtros */}
+                {/* Botão limpar filtros */}
                 {(busca || mostrarAtivos !== null) && (
                   <button
                     onClick={mostrarTodos}
@@ -265,7 +330,7 @@ export default function GestoresPage() {
                   </button>
                 )}
 
-                {/* Estatísticas */}
+                {/* Contador de gestores */}
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
                   <Users className="h-4 w-4 text-blue-600" />
                   <span className="text-sm font-medium text-blue-800">
@@ -275,7 +340,7 @@ export default function GestoresPage() {
               </div>
             </div>
 
-            {/* Informação dos filtros aplicados */}
+            {/* Resumo dos filtros aplicados */}
             {(busca || mostrarAtivos !== null) && (
               <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="text-sm text-gray-600">
@@ -323,7 +388,7 @@ export default function GestoresPage() {
           </div>
         </div>
 
-        {/* Indicador de carregamento de filtros */}
+        {/* Loading overlay durante filtros */}
         {isLoadingGestores && (
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-2">
@@ -335,10 +400,10 @@ export default function GestoresPage() {
           </div>
         )}
 
-        {/* Conteúdo principal */}
+        {/* LISTA DE GESTORES */}
         <div className="space-y-4 sm:space-y-6">
-          {/* Estado vazio */}
           {gestoresFiltrados.length === 0 ? (
+            // Estado vazio (com ou sem filtros)
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 sm:p-12 text-center">
               {busca || mostrarAtivos !== null ? (
                 <div className="max-w-md mx-auto">
@@ -378,118 +443,7 @@ export default function GestoresPage() {
             </div>
           ) : (
             <>
-              {/* Informações de paginação no topo */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                <div className="text-sm text-gray-600">
-                  Mostrando{' '}
-                  <span className="font-medium text-blue-600">
-                    {Math.min(
-                      (paginaAtual - 1) * ITENS_POR_PAGINA + 1,
-                      gestoresFiltrados.length,
-                    )}{' '}
-                    -{' '}
-                    {Math.min(
-                      paginaAtual * ITENS_POR_PAGINA,
-                      gestoresFiltrados.length,
-                    )}
-                  </span>{' '}
-                  de{' '}
-                  <span className="font-medium">
-                    {gestoresFiltrados.length}
-                  </span>{' '}
-                  gestor(es)
-                  {busca && ' encontrados'}
-                  {mostrarAtivos !== null && !busca && (
-                    <> ({mostrarAtivos === true ? 'ativos' : 'inativos'})</>
-                  )}
-                </div>
-
-                {totalPaginas > 1 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 hidden sm:inline">
-                      Página {paginaAtual} de {totalPaginas}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={irParaPrimeiraPagina}
-                        disabled={paginaAtual === 1}
-                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Primeira página"
-                      >
-                        <ChevronsLeft className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button
-                        onClick={irParaPaginaAnterior}
-                        disabled={paginaAtual === 1}
-                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Página anterior"
-                      >
-                        <ChevronLeft className="h-4 w-4 text-gray-600" />
-                      </button>
-
-                      {/* Números das páginas */}
-                      <div className="flex items-center gap-1">
-                        {[...Array(totalPaginas)].map((_, i) => {
-                          const paginaNumero = i + 1;
-                          // Mostrar apenas algumas páginas ao redor da atual
-                          if (
-                            paginaNumero === 1 ||
-                            paginaNumero === totalPaginas ||
-                            (paginaNumero >= paginaAtual - 1 &&
-                              paginaNumero <= paginaAtual + 1)
-                          ) {
-                            return (
-                              <button
-                                key={paginaNumero}
-                                onClick={() => irParaPagina(paginaNumero)}
-                                className={`min-w-8 h-8 flex items-center justify-center px-2 rounded-lg text-sm font-medium transition-colors ${
-                                  paginaAtual === paginaNumero
-                                    ? 'bg-blue-600 text-white'
-                                    : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                }`}
-                              >
-                                {paginaNumero}
-                              </button>
-                            );
-                          } else if (
-                            paginaNumero === paginaAtual - 2 ||
-                            paginaNumero === paginaAtual + 2
-                          ) {
-                            return (
-                              <span
-                                key={paginaNumero}
-                                className="px-1 text-gray-400"
-                              >
-                                ...
-                              </span>
-                            );
-                          }
-                          return null;
-                        })}
-                      </div>
-
-                      <button
-                        onClick={irParaProximaPagina}
-                        disabled={paginaAtual === totalPaginas}
-                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Próxima página"
-                      >
-                        <ChevronRight className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button
-                        onClick={irParaUltimaPagina}
-                        disabled={paginaAtual === totalPaginas}
-                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Última página"
-                      >
-                        <ChevronsRight className="h-4 w-4 text-gray-600" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Grid de gestores */}
+              {/* Grid de cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {gestoresPaginados.map((gestor) => (
                   <div key={gestor.id} className="h-full">
@@ -498,13 +452,35 @@ export default function GestoresPage() {
                 ))}
               </div>
 
-              {/* Paginação na parte inferior */}
+              {/* Paginação */}
               {totalPaginas > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                  {/* Informação de itens visíveis */}
                   <div className="text-sm text-gray-600">
-                    Mostrando {gestoresPaginados.length} gestor(es) nesta página
+                    Mostrando{' '}
+                    <span className="font-medium text-blue-600">
+                      {Math.min(
+                        (paginaAtual - 1) * ITENS_POR_PAGINA + 1,
+                        gestoresFiltrados.length,
+                      )}{' '}
+                      -{' '}
+                      {Math.min(
+                        paginaAtual * ITENS_POR_PAGINA,
+                        gestoresFiltrados.length,
+                      )}
+                    </span>{' '}
+                    de{' '}
+                    <span className="font-medium">
+                      {gestoresFiltrados.length}
+                    </span>{' '}
+                    gestor(es)
+                    {busca && ' encontrados'}
+                    {mostrarAtivos !== null && !busca && (
+                      <> ({mostrarAtivos === true ? 'ativos' : 'inativos'})</>
+                    )}
                   </div>
 
+                  {/* Controles de página */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={irParaPrimeiraPagina}
@@ -523,23 +499,62 @@ export default function GestoresPage() {
                       <span className="hidden sm:inline">Anterior</span>
                     </button>
 
+                    {/* Números das páginas (com reticências) */}
                     <div className="flex items-center gap-1">
-                      <span className="text-sm text-gray-700 px-2">
-                        Página{' '}
-                        <select
-                          value={paginaAtual}
-                          onChange={(e) => irParaPagina(Number(e.target.value))}
-                          className="ml-1 px-2 py-1 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          {[...Array(totalPaginas)].map((_, i) => (
-                            <option key={i + 1} value={i + 1}>
-                              {i + 1}
-                            </option>
-                          ))}
-                        </select>{' '}
-                        de {totalPaginas}
-                      </span>
+                      {[...Array(totalPaginas)].map((_, i) => {
+                        const paginaNumero = i + 1;
+                        if (
+                          paginaNumero === 1 ||
+                          paginaNumero === totalPaginas ||
+                          (paginaNumero >= paginaAtual - 1 &&
+                            paginaNumero <= paginaAtual + 1)
+                        ) {
+                          return (
+                            <button
+                              key={paginaNumero}
+                              onClick={() => irParaPagina(paginaNumero)}
+                              className={`min-w-8 h-8 flex items-center justify-center px-2 rounded-lg text-sm font-medium transition-colors ${
+                                paginaAtual === paginaNumero
+                                  ? 'bg-blue-600 text-white'
+                                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {paginaNumero}
+                            </button>
+                          );
+                        } else if (
+                          paginaNumero === paginaAtual - 2 ||
+                          paginaNumero === paginaAtual + 2
+                        ) {
+                          return (
+                            <span
+                              key={paginaNumero}
+                              className="px-1 text-gray-400"
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
                     </div>
+
+                    {/* Seletor de página dropdown */}
+                    <span className="text-sm text-gray-700 px-2">
+                      Página{' '}
+                      <select
+                        value={paginaAtual}
+                        onChange={(e) => irParaPagina(Number(e.target.value))}
+                        className="ml-1 px-2 py-1 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {[...Array(totalPaginas)].map((_, i) => (
+                          <option key={i + 1} value={i + 1}>
+                            {i + 1}
+                          </option>
+                        ))}
+                      </select>{' '}
+                      de {totalPaginas}
+                    </span>
 
                     <button
                       onClick={irParaProximaPagina}

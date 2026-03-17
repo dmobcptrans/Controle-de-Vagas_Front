@@ -141,7 +141,7 @@ export default function EditarMotorista({
                 id="tipoCnh"
                 name="tipoCnh"
                 placeholder="Selecione a categoria"
-                defaultValue={motorista.tipoCnh}
+                // defaultValue={motorista.tipoCnh}
                 options={[
                   { value: 'B', label: 'Categoria B' },
                   { value: 'AB', label: 'Categoria AB' },

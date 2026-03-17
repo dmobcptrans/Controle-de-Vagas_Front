@@ -10,69 +10,251 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import Form from 'next/form';
-import { useActionState, useState, useEffect } from 'react';
+import { useActionState, useState } from 'react';
 import {
   CircleAlert,
   UserIcon,
   CheckCircle,
   Shield,
   ChevronLeft,
-  Badge,
   Phone,
   Fingerprint,
   Mail,
   FileText,
+  Tag,
 } from 'lucide-react';
 import FormItem from '@/components/form/form-item';
 import { addAgente } from '@/lib/api/agenteApi';
 import Link from 'next/link';
 
+/**
+ * @component CadastroAgentes
+ * @version 1.0.0
+ *
+ * @description Página de cadastro de novos agentes para gestores.
+ * Permite criar novos agentes com validação em tempo real de email, CPF e telefone.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. ACESSO:
+ *    - Acesso restrito a gestores (rota protegida)
+ *    - Link de retorno para lista de agentes
+ *
+ * 2. PREENCHIMENTO DO FORMULÁRIO:
+ *    - Nome completo (obrigatório)
+ *    - Email (com validação de formato)
+ *    - Confirmar email (validação de igualdade)
+ *    - CPF (apenas números, 11 dígitos)
+ *    - Telefone (apenas números, com DDD)
+ *    - Matrícula (identificação única)
+ *
+ * 3. VALIDAÇÕES EM TEMPO REAL:
+ *    a) EMAIL:
+ *       - Formato válido (regex)
+ *       - Feedback visual com ícone e borda vermelha
+ *       - Mensagem de erro específica
+ *
+ *    b) CONFIRMAR EMAIL:
+ *       - Verifica se é igual ao email digitado
+ *       - Ícone de check verde quando igual
+ *       - Mensagem de erro quando diferente
+ *
+ *    c) CPF:
+ *       - Remove caracteres não numéricos
+ *       - Limite de 11 dígitos
+ *       - Formatação automática (apenas números)
+ *
+ *    d) TELEFONE:
+ *       - Remove caracteres não numéricos
+ *       - Limite de 11 dígitos (incluindo DDD)
+ *       - Máscara automática
+ *
+ * 4. ENVIO:
+ *    - Server Action addAgente via useActionState
+ *    - Botão desabilitado se validações falharem
+ *    - Loading state durante envio
+ *    - Feedback de sucesso/erro pós-envio
+ *
+ * 5. PÓS-CADASTRO:
+ *    - Agente recebe email com instruções de acesso
+ *    - Mensagem de sucesso com detalhes
+ *    - Botão para voltar à lista
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - COMPONENTE CLIENT: Necessário para:
+ *   - useState (validações em tempo real)
+ *   - useActionState (Server Actions)
+ *   - Interatividade (máscaras, feedback visual)
+ *
+ * - VALIDAÇÕES EM TEMPO REAL:
+ *   - emailValido: Regex para formato de email
+ *   - emailsIguais: Comparação entre email e confirmarEmail
+ *   - Ambos calculados (não estados) para performance
+ *
+ * - MÁSCARAS AUTOMÁTICAS:
+ *   - CPF: remove não números e limita 11 dígitos
+ *   - Telefone: mesma lógica para consistência
+ *   - Aplicadas no onChange, mantendo estado limpo
+ *
+ * - FEEDBACK VISUAL MULTI-ESTADO:
+ *   - Mensagens de erro da API (state.error)
+ *   - Mensagens de sucesso (state.message)
+ *   - Validações locais (email inválido, emails diferentes)
+ *   - Cada um com ícone e cor apropriados
+ *
+ * - LAYOUT RICO:
+ *   - Gradientes e sombras para hierarquia visual
+ *   - Cards informativos sobre o perfil do agente
+ *   - Ícones contextuais em cada campo
+ *   - Design responsivo (múltiplos breakpoints)
+ *
+ * - SEGURANÇA:
+ *   - Previne submit se validações falharem
+ *   - Server Action valida no backend também
+ *   - AutoComplete configurado apropriadamente
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - addAgente: Server Action de cadastro
+ * - FormItem: Componente de campo com label e tooltip
+ * - /gestor/agentes: Página de listagem (retorno)
+ *
+ * ----------------------------------------------------------------------------
+ * ⚙️ VALIDAÇÕES IMPLEMENTADAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - Nome: não vazio (HTML required)
+ * - Email: formato válido (regex) e não vazio
+ * - Confirmar Email: igual ao email principal
+ * - CPF: 11 dígitos numéricos (via required + máscara)
+ * - Telefone: 11 dígitos numéricos (via required + máscara)
+ * - Matrícula: não vazia (HTML required)
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 UX/UI:
+ * ----------------------------------------------------------------------------
+ *
+ * - HEADER:
+ *   - Botão "Voltar" com animação hover
+ *   - Indicador visual de etapa (círculo azul)
+ *   - Título grande com gradiente
+ *   - Descrição do propósito
+ *
+ * - CARD PRINCIPAL:
+ *   - Ícone grande com badge de segurança
+ *   - Título e subtítulo
+ *   - Campos com ícones contextuais
+ *   - Indicador de campo obrigatório (*)
+ *
+ * - FEEDBACK VISUAL:
+ *   - Borda vermelha em campos inválidos
+ *   - Ícone verde quando emails coincidem
+ *   - Alertas coloridos para erros
+ *   - Loading spinner durante envio
+ *
+ * - CARDS INFORMATIVOS (rodapé):
+ *   1. Perfil do Agente (azul)
+ *   2. Matrícula (cinza)
+ *   3. Acesso Imediato (verde)
+ *
+ * - RESPONSIVIDADE:
+ *   - Mobile: empilhamento, padding menor
+ *   - Tablet: ajustes de grid
+ *   - Desktop: layout completo
+ *
+ * @example
+ * // Uso em rota de gestor
+ * <CadastroAgentes />
+ *
+ * @see /src/lib/api/agenteApi.ts - Server Action addAgente
+ * @see /src/components/form/form-item.tsx - Componente de campo
+ */
+
 export default function CadastroAgentes() {
+  // --------------------------------------------------------------------------
+  // HOOKS E ESTADOS
+  // --------------------------------------------------------------------------
+
+  /**
+   * useActionState gerencia:
+   * - state: Resultado da Server Action (erro/sucesso)
+   * - action: Função de submit (addAgente)
+   * - pending: Estado de carregamento
+   */
   const [state, action, pending] = useActionState(addAgente, null);
+
+  // Estados para validação em tempo real
   const [email, setEmail] = useState('');
   const [confirmarEmail, setConfirmarEmail] = useState('');
-  const [emailsIguais, setEmailsIguais] = useState(true);
-  const [emailValido, setEmailValido] = useState(true);
-  const [formTocado, setFormTocado] = useState(false);
+  const [cpf, setCpf] = useState('');
+  const [telefone, setTelefone] = useState('');
 
-  // Validação dos emails
-  useEffect(() => {
-    if (confirmarEmail === '') {
-      setEmailsIguais(true);
-    } else {
-      setEmailsIguais(email === confirmarEmail);
-    }
-  }, [email, confirmarEmail]);
+  // --------------------------------------------------------------------------
+  // VALORES DERIVADOS (VALIDAÇÕES)
+  // --------------------------------------------------------------------------
 
-  // Validação do formato do email
-  useEffect(() => {
-    if (email === '') {
-      setEmailValido(true);
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      setEmailValido(emailRegex.test(email));
-    }
-  }, [email]);
+  /**
+   * emailValido: Verifica formato do email usando regex
+   * - Ignora campo vazio (validação só após digitar)
+   */
+  const emailValido = email === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // Função para lidar com o envio do formulário
+  /**
+   * emailsIguais: Compara email e confirmação
+   * - Considera válido se confirmação vazia (evita erro prematuro)
+   */
+  const emailsIguais = confirmarEmail === '' || email === confirmarEmail;
+
+  // --------------------------------------------------------------------------
+  // HANDLER DE SUBMIT
+  // --------------------------------------------------------------------------
+
+  /**
+   * @function handleSubmit
+   * @description Processa o envio do formulário
+   *
+   * Validações antes do envio:
+   * 1. Emails devem ser iguais
+   * 2. Email deve ter formato válido
+   *
+   * @param formData - Dados do formulário
+   * @returns Resultado da Server Action
+   */
   const handleSubmit = async (formData: FormData) => {
-    if (!emailsIguais || !emailValido) {
-      return; // Impede o envio se os emails não forem válidos
-    }
+    // Validações locais antes do envio
+    if (!emailsIguais || !emailValido) return;
 
-    setFormTocado(true);
+    // Chama Server Action
     return await action(formData);
   };
+
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO
+  // --------------------------------------------------------------------------
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Container principal */}
         <div className="max-w-4xl mx-auto">
-          {/* Cabeçalho melhorado */}
+          {/* --------------------------------------------------------------------
+            HEADER DA PÁGINA
+            Inclui:
+            - Botão voltar para lista
+            - Indicador de página
+            - Título e descrição
+          -------------------------------------------------------------------- */}
           <div className="mb-6 sm:mb-8 lg:mb-10">
+            {/* Barra de navegação superior */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
+                {/* Botão voltar */}
                 <Link
                   href="/gestor/agentes"
                   className="group flex items-center gap-2 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg transition-all hover:shadow-sm hover:border-gray-300"
@@ -82,7 +264,11 @@ export default function CadastroAgentes() {
                     Voltar
                   </span>
                 </Link>
+
+                {/* Divisor (desktop) */}
                 <div className="hidden sm:block h-6 w-px bg-gray-300"></div>
+
+                {/* Indicador de página (desktop) */}
                 <div className="hidden sm:flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                   <span className="text-sm font-medium text-gray-700">
@@ -91,7 +277,7 @@ export default function CadastroAgentes() {
                 </div>
               </div>
 
-              {/* Indicador de progresso para mobile */}
+              {/* Indicador mobile */}
               <div className="sm:hidden flex items-center justify-center">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-full">
                   <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
@@ -102,7 +288,7 @@ export default function CadastroAgentes() {
               </div>
             </div>
 
-            {/* Título principal */}
+            {/* Título e descrição */}
             <div className="text-center sm:text-left">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
                 Cadastrar Novo Agente
@@ -114,9 +300,14 @@ export default function CadastroAgentes() {
             </div>
           </div>
 
+          {/* --------------------------------------------------------------------
+            CARD PRINCIPAL DO FORMULÁRIO
+          -------------------------------------------------------------------- */}
           <Card className="w-full overflow-hidden border-gray-200 shadow-lg">
+            {/* Header do Card */}
             <CardHeader className="pb-4 sm:pb-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                {/* Ícone principal com badge de segurança */}
                 <div className="relative mx-auto sm:mx-0">
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
                     <UserIcon className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
@@ -127,6 +318,8 @@ export default function CadastroAgentes() {
                     </div>
                   </div>
                 </div>
+
+                {/* Título e descrição */}
                 <div className="flex-1 text-center sm:text-left">
                   <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                     Dados do Agente
@@ -138,9 +331,14 @@ export default function CadastroAgentes() {
               </div>
             </CardHeader>
 
+            {/* Formulário (Server Action) */}
             <Form action={handleSubmit}>
               <CardContent className="p-4 sm:p-6 lg:p-8">
-                {/* Mensagens de feedback */}
+                {/* --------------------------------------------------------------------
+                  MENSAGENS DE FEEDBACK (3 TIPOS)
+                -------------------------------------------------------------------- */}
+
+                {/* Mensagem da API (erro/sucesso) */}
                 {(state?.error || state?.message) && (
                   <div
                     className={`flex items-start gap-3 rounded-xl border p-4 mb-6 ${
@@ -163,7 +361,7 @@ export default function CadastroAgentes() {
                   </div>
                 )}
 
-                {/* Mensagem de erro para emails diferentes */}
+                {/* Validação: emails diferentes */}
                 {!emailsIguais && confirmarEmail !== '' && (
                   <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-900 p-4 mb-6">
                     <CircleAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
@@ -176,7 +374,7 @@ export default function CadastroAgentes() {
                   </div>
                 )}
 
-                {/* Mensagem de erro para email inválido */}
+                {/* Validação: email inválido */}
                 {!emailValido && email !== '' && (
                   <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-900 p-4 mb-6">
                     <CircleAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
@@ -192,26 +390,25 @@ export default function CadastroAgentes() {
                   </div>
                 )}
 
+                {/* --------------------------------------------------------------------
+                  CAMPOS DO FORMULÁRIO
+                -------------------------------------------------------------------- */}
                 <div className="space-y-4 sm:space-y-6">
-                  {/* Nome */}
+                  {/* Campo: Nome Completo */}
                   <FormItem
                     name="Nome Completo"
                     description="Insira o nome completo do agente"
                   >
                     <div className="relative">
                       <Input
-                        className={`rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base py-3 px-4 ${
-                          formTocado
-                            ? 'group-focus-within:ring-2 group-focus-within:ring-blue-100'
-                            : ''
-                        }`}
+                        className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base py-3 px-4"
                         id="nome"
                         name="nome"
                         placeholder="Exemplo: Eduardo Silva Dantas"
                         required
                         autoComplete="name"
-                        onFocus={() => setFormTocado(true)}
                       />
+                      {/* Indicador de campo obrigatório */}
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
                           <span className="text-xs text-gray-500">*</span>
@@ -220,8 +417,9 @@ export default function CadastroAgentes() {
                     </div>
                   </FormItem>
 
-                  {/* Email */}
+                  {/* Grupo: Email e Confirmar Email */}
                   <div className="space-y-4 sm:space-y-6">
+                    {/* Campo: Email */}
                     <FormItem
                       name="Email"
                       description="Email institucional do agente"
@@ -232,10 +430,6 @@ export default function CadastroAgentes() {
                             !emailValido && email !== ''
                               ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                               : ''
-                          } ${
-                            formTocado
-                              ? 'group-focus-within:ring-2 group-focus-within:ring-blue-100'
-                              : ''
                           }`}
                           type="email"
                           id="email"
@@ -245,8 +439,8 @@ export default function CadastroAgentes() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           autoComplete="email"
-                          onFocus={() => setFormTocado(true)}
                         />
+                        {/* Ícone decorativo */}
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                           <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
                             <Mail className="w-3 h-3 text-gray-500" />
@@ -255,7 +449,7 @@ export default function CadastroAgentes() {
                       </div>
                     </FormItem>
 
-                    {/* Confirmar Email */}
+                    {/* Campo: Confirmar Email */}
                     <FormItem
                       name="Confirmar Email"
                       description="Digite novamente para confirmar"
@@ -266,10 +460,6 @@ export default function CadastroAgentes() {
                             !emailsIguais && confirmarEmail !== ''
                               ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                               : ''
-                          } ${
-                            formTocado
-                              ? 'group-focus-within:ring-2 group-focus-within:ring-blue-100'
-                              : ''
                           }`}
                           type="email"
                           id="confirmarEmail"
@@ -279,8 +469,8 @@ export default function CadastroAgentes() {
                           value={confirmarEmail}
                           onChange={(e) => setConfirmarEmail(e.target.value)}
                           autoComplete="email"
-                          onFocus={() => setFormTocado(true)}
                         />
+                        {/* Ícone de validação (verde quando igual) */}
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                           <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
                             <CheckCircle
@@ -296,7 +486,7 @@ export default function CadastroAgentes() {
                     </FormItem>
                   </div>
 
-                  {/* CPF */}
+                  {/* Campo: CPF */}
                   <FormItem
                     name="CPF"
                     description="Apenas números, sem pontuação"
@@ -310,14 +500,11 @@ export default function CadastroAgentes() {
                         maxLength={11}
                         inputMode="numeric"
                         required
+                        value={cpf}
+                        onChange={(e) =>
+                          setCpf(e.target.value.replace(/\D/g, ''))
+                        }
                         autoComplete="off"
-                        onInput={(e) => {
-                          e.currentTarget.value = e.currentTarget.value.replace(
-                            /\D/g,
-                            '',
-                          );
-                        }}
-                        onFocus={() => setFormTocado(true)}
                       />
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
@@ -327,7 +514,7 @@ export default function CadastroAgentes() {
                     </div>
                   </FormItem>
 
-                  {/* Telefone */}
+                  {/* Campo: Telefone */}
                   <FormItem
                     name="Telefone"
                     description="Com DDD, apenas números"
@@ -341,14 +528,11 @@ export default function CadastroAgentes() {
                         maxLength={11}
                         inputMode="tel"
                         required
+                        value={telefone}
+                        onChange={(e) =>
+                          setTelefone(e.target.value.replace(/\D/g, ''))
+                        }
                         autoComplete="tel"
-                        onInput={(e) => {
-                          e.currentTarget.value = e.currentTarget.value.replace(
-                            /\D/g,
-                            '',
-                          );
-                        }}
-                        onFocus={() => setFormTocado(true)}
                       />
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
@@ -358,7 +542,7 @@ export default function CadastroAgentes() {
                     </div>
                   </FormItem>
 
-                  {/* Matrícula */}
+                  {/* Campo: Matrícula */}
                   <FormItem
                     name="Matrícula"
                     description="Número de matrícula do agente"
@@ -371,11 +555,10 @@ export default function CadastroAgentes() {
                         placeholder="Ex: MSD20231"
                         required
                         autoComplete="off"
-                        onFocus={() => setFormTocado(true)}
                       />
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                          <Badge className="w-3 h-3 text-gray-500" />
+                          <Tag className="w-3 h-3 text-gray-500" />
                         </div>
                       </div>
                     </div>
@@ -383,14 +566,18 @@ export default function CadastroAgentes() {
                 </div>
               </CardContent>
 
+              {/* Footer do Card com botão de submit */}
               <CardFooter className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 pt-4 sm:pt-6 border-t border-gray-200">
                 <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4">
+                  {/* Mensagem informativa */}
                   <div className="text-center sm:text-left">
                     <p className="text-xs sm:text-sm text-gray-500">
                       Ao cadastrar, o agente receberá um email com instruções de
                       acesso
                     </p>
                   </div>
+
+                  {/* Botão de submit */}
                   <div className="w-full sm:w-auto">
                     <Button
                       type="submit"
@@ -415,8 +602,11 @@ export default function CadastroAgentes() {
             </Form>
           </Card>
 
-          {/* Informações adicionais */}
+          {/* --------------------------------------------------------------------
+            CARDS INFORMATIVOS (RODAPÉ)
+          -------------------------------------------------------------------- */}
           <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Card 1: Perfil do Agente */}
             <div className="bg-blue-50 rounded-lg border border-blue-100 p-4">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -433,6 +623,7 @@ export default function CadastroAgentes() {
               </div>
             </div>
 
+            {/* Card 2: Matrícula */}
             <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
@@ -449,6 +640,7 @@ export default function CadastroAgentes() {
               </div>
             </div>
 
+            {/* Card 3: Acesso Imediato */}
             <div className="bg-green-50 rounded-lg border border-green-100 p-4">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">

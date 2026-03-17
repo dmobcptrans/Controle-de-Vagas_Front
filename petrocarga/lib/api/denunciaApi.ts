@@ -4,10 +4,65 @@ import toast from 'react-hot-toast';
 import { clientApi } from '../clientApi';
 import { ConfirmResult } from '../types/confirmResult';
 
+/**
+ * @module denunciaApi
+ * @description Módulo de API para gerenciamento de denúncias.
+ * Fornece funções para criar, listar e gerenciar o fluxo de análise de denúncias.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FUNÇÕES DISPONÍVEIS:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. Denunciar - Cria uma nova denúncia (agente/motorista)
+ * 2. getDenuncias - Lista todas as denúncias (gestor)
+ * 3. getDenunciasByUsuario - Lista denúncias por usuário (agente/motorista)
+ * 4. iniciarAnaliseDenuncia - Inicia análise de uma denúncia (gestor)
+ * 5. finalizarAnaliseDenuncia - Finaliza análise com parecer (gestor)
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 TIPOS RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - ConfirmResult: { success: boolean; message?: string }
+ *
+ * ----------------------------------------------------------------------------
+ * 📊 FLUXO DE ANÁLISE:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. Denúncia criada (pendente)
+ * 2. Gestor inicia análise (status: EM_ANALISE)
+ * 3. Gestor finaliza com parecer (PROCEDENTE ou IMPROCEDENTE)
+ */
+
 // ----------------------
 // POST DENUNCIA
 // ----------------------
 
+/**
+ * @function Denunciar
+ * @description Cria uma nova denúncia para uma reserva.
+ * Acessível para agentes e motoristas.
+ *
+ * @param formData - Formulário com dados da denúncia
+ * @param formData.descricao - Descrição detalhada da denúncia
+ * @param formData.reservaId - ID da reserva denunciada
+ * @param formData.tipo - Tipo da denúncia (ex: "VAGA_OCUPADA", "VEICULO_INCORRETO")
+ *
+ * @returns Promise<ConfirmResult>
+ *
+ * @example
+ * ```ts
+ * const formData = new FormData();
+ * formData.append('descricao', 'Vaga ocupada por veículo não autorizado');
+ * formData.append('reservaId', '123');
+ * formData.append('tipo', 'VAGA_OCUPADA');
+ *
+ * const result = await Denunciar(formData);
+ * if (result.success) {
+ *   // Denúncia enviada com sucesso (toast já exibido)
+ * }
+ * ```
+ */
 export async function Denunciar(formData: FormData): Promise<ConfirmResult> {
   const body = {
     descricao: formData.get('descricao'),
@@ -34,6 +89,24 @@ export async function Denunciar(formData: FormData): Promise<ConfirmResult> {
 // GET TODAS AS DENUNCIAS (GESTOR)
 // ----------------------
 
+/**
+ * @function getDenuncias
+ * @description Lista todas as denúncias do sistema.
+ * Acesso restrito a gestores.
+ *
+ * @returns Promise<Denuncia[]> - Array de denúncias
+ * @throws {Error} Dispara erro se a requisição falhar
+ *
+ * @example
+ * ```ts
+ * try {
+ *   const denuncias = await getDenuncias();
+ *   console.log(`Total de denúncias: ${denuncias.length}`);
+ * } catch (error) {
+ *   console.error('Erro ao carregar denúncias:', error);
+ * }
+ * ```
+ */
 export async function getDenuncias() {
   try {
     const res = await clientApi('/petrocarga/denuncias/all');
@@ -49,6 +122,25 @@ export async function getDenuncias() {
 // GET DENUNCIAS POR USUARIO
 // ----------------------
 
+/**
+ * @function getDenunciasByUsuario
+ * @description Lista denúncias criadas por um usuário específico.
+ * Acessível para agentes e motoristas (apenas suas próprias denúncias).
+ *
+ * @param usuarioId - ID do usuário
+ * @returns Promise<Denuncia[]> - Array de denúncias do usuário
+ * @throws {Error} Dispara erro se a requisição falhar
+ *
+ * @example
+ * ```ts
+ * try {
+ *   const minhasDenuncias = await getDenunciasByUsuario(user.id);
+ *   console.log(`Você fez ${minhasDenuncias.length} denúncias`);
+ * } catch (error) {
+ *   console.error('Erro ao carregar suas denúncias:', error);
+ * }
+ * ```
+ */
 export async function getDenunciasByUsuario(usuarioId: string) {
   try {
     const res = await clientApi(`/petrocarga/denuncias/byUsuario/${usuarioId}`);
@@ -66,6 +158,23 @@ export async function getDenunciasByUsuario(usuarioId: string) {
 // PATCH DENUNCIA INICIAR ANALISE
 // ----------------------
 
+/**
+ * @function iniciarAnaliseDenuncia
+ * @description Inicia o processo de análise de uma denúncia.
+ * Altera o status da denúncia para "EM_ANALISE".
+ * Acesso restrito a gestores.
+ *
+ * @param denunciaId - ID da denúncia
+ * @returns Promise<ConfirmResult>
+ *
+ * @example
+ * ```ts
+ * const result = await iniciarAnaliseDenuncia('123');
+ * if (result.success) {
+ *   // Análise iniciada (toast já exibido)
+ * }
+ * ```
+ */
 export async function iniciarAnaliseDenuncia(denunciaId: string) {
   try {
     await clientApi(`/petrocarga/denuncias/iniciarAnalise/${denunciaId}`, {
@@ -85,6 +194,30 @@ export async function iniciarAnaliseDenuncia(denunciaId: string) {
 // PATCH DENUNCIA FINALIZAR ANALISE
 // ----------------------
 
+/**
+ * @function finalizarAnaliseDenuncia
+ * @description Finaliza a análise de uma denúncia com um parecer.
+ * Acesso restrito a gestores.
+ *
+ * @param denunciaId - ID da denúncia
+ * @param body - Objeto com status e resposta
+ * @param body.status - Parecer final: 'PROCEDENTE' ou 'IMPROCEDENTE'
+ * @param body.resposta - Texto explicativo da decisão
+ *
+ * @returns Promise<ConfirmResult>
+ *
+ * @example
+ * ```ts
+ * const result = await finalizarAnaliseDenuncia('123', {
+ *   status: 'PROCEDENTE',
+ *   resposta: 'Confirmado que a vaga estava ocupada irregularmente'
+ * });
+ *
+ * if (result.success) {
+ *   // Análise finalizada (toast já exibido)
+ * }
+ * ```
+ */
 export async function finalizarAnaliseDenuncia(
   denunciaId: string,
   body: {
