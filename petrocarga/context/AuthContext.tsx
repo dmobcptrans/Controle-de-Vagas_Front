@@ -176,9 +176,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 const loginWithGoogle = useCallback(async (googleToken: string) => {
   try {
-    const response = await api.post('/petrocarga/auth/loginWithGoogle', {
-      token: googleToken,
-    });
+    const response = await api.post(
+      `/petrocarga/auth/loginWithGoogle?token=${googleToken}`
+    );
 
     const { usuario, token } = response.data as {
       usuario: Record<string, unknown>;
@@ -221,6 +221,7 @@ const loginWithGoogle = useCallback(async (googleToken: string) => {
       user,
       loading,
       login,
+      loginWithGoogle,
       logout,
       refreshUser,
     }),

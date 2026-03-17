@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 
 export default function ButtonLoginGoogle() {
-  const {  } = useAuth();
+  const { loginWithGoogle } = useAuth();
 
   return (
     <GoogleLogin
