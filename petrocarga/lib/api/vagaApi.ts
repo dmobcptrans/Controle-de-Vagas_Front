@@ -10,6 +10,40 @@ import type {
   OperacoesVaga,
 } from '@/lib/types/vaga';
 
+/**
+ * @module vagaApi
+ * @description Módulo de API para gerenciamento de vagas de estacionamento.
+ * Fornece funções para criar, consultar, atualizar e deletar vagas,
+ * incluindo dados complexos como endereço, operações por dia da semana e georreferenciamento.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FUNÇÕES DISPONÍVEIS:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. addVaga - Cadastra uma nova vaga
+ * 2. deleteVaga - Remove uma vaga existente
+ * 3. atualizarVaga - Atualiza dados de uma vaga
+ * 4. getVagas - Lista vagas com filtro opcional por status
+ * 5. getVagasComFiltros - Lista vagas com múltiplos filtros
+ * 6. getVagaById - Busca vaga específica por ID
+ *
+ * ----------------------------------------------------------------------------
+ * 🔧 FUNÇÃO AUXILIAR INTERNA:
+ * ----------------------------------------------------------------------------
+ *
+ * buildVagaPayload - Constrói payload padronizado a partir do FormData
+ */
+
+/**
+ * @function buildVagaPayload
+ * @description Função interna que converte FormData em VagaPayload.
+ * Processa campos complexos como dias da semana (JSON parse) e coordenadas.
+ *
+ * @param formData - Formulário com dados da vaga
+ * @returns VagaPayload - Objeto formatado para envio à API
+ *
+ * @private
+ */
 function buildVagaPayload(formData: FormData): VagaPayload {
   const diasSemanaRaw = formData.get('diaSemana') as string;
   const diasSemana: OperacoesVaga[] = diasSemanaRaw
@@ -44,6 +78,48 @@ function buildVagaPayload(formData: FormData): VagaPayload {
 // ----------------------
 // POST VAGA
 // ----------------------
+
+/**
+ * @function addVaga
+ * @description Cadastra uma nova vaga de estacionamento.
+ *
+ * @param formData - Formulário com dados completos da vaga
+ *
+ * Campos do FormData:
+ * - codigo/codigoPmp: Código PMP da rua
+ * - logradouro: Nome da rua/avenida
+ * - bairro: Bairro
+ * - area: Área (vermelha, amarela, azul, branca) - convertido para maiúsculas
+ * - numeroEndereco: Números de referência
+ * - descricao: Descrição/referências
+ * - tipo: Tipo (paralela, perpendicular) - convertido para maiúsculas
+ * - status: Status da vaga (padrão: DISPONIVEL)
+ * - localizacao-inicio: Coordenadas de início
+ * - localizacao-fim: Coordenadas de fim
+ * - comprimento: Comprimento em metros
+ * - diaSemana: JSON string com operações por dia
+ *
+ * @returns Promise<VagaResponse<VagaPayload>>
+ *
+ * @example
+ * ```ts
+ * const formData = new FormData();
+ * formData.append('codigo', 'Md-1234');
+ * formData.append('logradouro', 'Rua do Imperador');
+ * formData.append('area', 'vermelha');
+ * formData.append('comprimento', '10');
+ * formData.append('diaSemana', JSON.stringify([
+ *   { codigoDiaSemana: 1, horaInicio: '08:00', horaFim: '18:00' }
+ * ]));
+ *
+ * const result = await addVaga(formData);
+ * if (result.error) {
+ *   toast.error(result.message);
+ * } else {
+ *   toast.success(result.message);
+ * }
+ * ```
+ */
 export async function addVaga(
   formData: FormData,
 ): Promise<VagaResponse<VagaPayload>> {
@@ -66,6 +142,24 @@ export async function addVaga(
 // ----------------------
 // DELETE VAGA
 // ----------------------
+
+/**
+ * @function deleteVaga
+ * @description Remove uma vaga existente pelo ID.
+ *
+ * @param id - ID da vaga a ser deletada
+ * @returns Promise<VagaResponse>
+ *
+ * @example
+ * ```ts
+ * const result = await deleteVaga('vaga123');
+ * if (result.error) {
+ *   toast.error(result.message);
+ * } else {
+ *   toast.success(result.message);
+ * }
+ * ```
+ */
 export async function deleteVaga(id: string): Promise<VagaResponse> {
   try {
     await clientApi(`/petrocarga/vagas/${id}`, { method: 'DELETE' });
@@ -80,6 +174,26 @@ export async function deleteVaga(id: string): Promise<VagaResponse> {
 // ----------------------
 // PATCH VAGA
 // ----------------------
+
+/**
+ * @function atualizarVaga
+ * @description Atualiza dados de uma vaga existente.
+ *
+ * @param formData - Formulário com dados atualizados da vaga (inclui id)
+ * @returns Promise<VagaResponse<VagaPayload>>
+ *
+ * Campos adicionais do FormData:
+ * - id: ID da vaga (obrigatório)
+ *
+ * @example
+ * ```ts
+ * const formData = new FormData();
+ * formData.append('id', 'vaga123');
+ * formData.append('status', 'INDISPONIVEL');
+ *
+ * const result = await atualizarVaga(formData);
+ * ```
+ */
 export async function atualizarVaga(
   formData: FormData,
 ): Promise<VagaResponse<VagaPayload>> {
@@ -102,6 +216,25 @@ export async function atualizarVaga(
 // ----------------------
 // GET VAGAS
 // ----------------------
+
+/**
+ * @function getVagas
+ * @description Lista vagas com filtro opcional por status.
+ *
+ * @param status - (opcional) Filtro por status ('DISPONIVEL', 'INDISPONIVEL', etc.)
+ * @returns Promise<Vaga[]>
+ *
+ * @example
+ * ```ts
+ * // Todas as vagas
+ * const todas = await getVagas();
+ *
+ * // Apenas vagas disponíveis
+ * const disponiveis = await getVagas('DISPONIVEL');
+ *
+ * console.log(`Total: ${todas.length}`);
+ * ```
+ */
 export async function getVagas(status?: string): Promise<Vaga[]> {
   try {
     const query = status ? `?status=${encodeURIComponent(status)}` : '';
@@ -122,6 +255,35 @@ export async function getVagas(status?: string): Promise<Vaga[]> {
 // ----------------------
 // GET VAGAS COM FILTROS (versão alternativa com mais filtros)
 // ----------------------
+
+/**
+ * @function getVagasComFiltros
+ * @description Lista vagas com múltiplos filtros opcionais.
+ * Versão mais completa que retorna objeto padronizado VagaResponse.
+ *
+ * @param filtros - Objeto com filtros para a busca
+ * @param filtros.status - Status da vaga
+ * @param filtros.area - Área (vermelha, amarela, etc.)
+ * @param filtros.tipoVaga - Tipo (paralela, perpendicular)
+ * @param filtros.bairro - Bairro
+ *
+ * @returns Promise<VagaResponse<Vaga>>
+ *
+ * @example
+ * ```ts
+ * const result = await getVagasComFiltros({
+ *   area: 'vermelha',
+ *   bairro: 'Centro',
+ *   status: 'DISPONIVEL'
+ * });
+ *
+ * if (!result.error) {
+ *   result.vagas?.forEach(vaga => {
+ *     console.log(vaga.endereco.logradouro);
+ *   });
+ * }
+ * ```
+ */
 export async function getVagasComFiltros(
   filtros?: FiltrosVaga,
 ): Promise<VagaResponse<Vaga>> {
@@ -154,6 +316,22 @@ export async function getVagasComFiltros(
 // ----------------------
 // GET VAGA POR ID
 // ----------------------
+
+/**
+ * @function getVagaById
+ * @description Busca uma vaga específica pelo ID.
+ *
+ * @param id - ID da vaga
+ * @returns Promise<Vaga | null> - Dados da vaga ou null se não encontrada
+ *
+ * @example
+ * ```ts
+ * const vaga = await getVagaById('vaga123');
+ * if (vaga) {
+ *   console.log(vaga.endereco.logradouro);
+ * }
+ * ```
+ */
 export async function getVagaById(id: string): Promise<Vaga | null> {
   try {
     const res = await clientApi(`/petrocarga/vagas/${id}`, { method: 'GET' });
