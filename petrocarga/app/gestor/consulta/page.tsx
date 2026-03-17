@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Search,
@@ -21,7 +21,83 @@ import { getReservasPorPlaca } from '@/lib/api/reservaApi';
 import { ReservaPlaca } from '@/lib/types/reservaPlaca';
 import ReservaPlacaGestorCard from '@/components/gestor/cards/reservaPlaca-card';
 
+const ITENS_POR_PAGINA = 9;
+
+function formatarPlaca(value: string): string {
+  return value
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+    .slice(0, 7);
+}
+
+/**
+ * @component GestorConsultarPlacaPage
+ * @version 1.0.0
+ *
+ * @description Página de consulta de reservas por placa para gestores.
+ * Painel completo com estatísticas, filtros e visualização detalhada.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. INICIALIZAÇÃO:
+ *    - Verifica parâmetro 'placa' na URL (para links diretos)
+ *    - Se existir, executa busca automática
+ *
+ * 2. BUSCA:
+ *    - Digitação com formatação automática (maiúsculas, sem hífen)
+ *    - Validação de placa não vazia
+ *    - Filtro automático: remove CANCELADAS e FINALIZADAS
+ *
+ * 3. ESTATÍSTICAS:
+ *    - Total de reservas
+ *    - Contagem de ATIVAS e RESERVADAS
+ *    - Cards coloridos para cada status
+ *
+ * 4. FILTROS:
+ *    - Tabs para filtrar por status (TODAS, ATIVA, RESERVADA)
+ *    - Filtro em tempo real via useMemo
+ *    - Contadores nos botões de filtro
+ *
+ * 5. ESTADOS DE UI:
+ *    - Loading: spinner com ícone de carro animado
+ *    - Erro: card vermelho com opções "Tentar Novamente" e "Nova Busca"
+ *    - Vazio (com busca): card amarelo informativo
+ *    - Vazio (sem busca): tela inicial com cards de recursos
+ *    - Sucesso: lista de cards + resumo
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - useSearchParams: Permite compartilhamento de links com placa pré-preenchida
+ * - useCallback + useMemo: Otimização de performance para filtros e estatísticas
+ * - Filtro automático: Remove status indesejados (CANCELADA/FINALIZADA)
+ * - Layout responsivo: 3 colunas no desktop para estatísticas
+ * - Tabs integradas: Filtro visual sem perder contadores
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - ReservaPlacaGestorCard: Card detalhado para gestores
+ * - getReservasPorPlaca: API de busca
+ * - UI Components: Tabs, Badge, Card
+ *
+ * @example
+ * // Uso direto
+ * <GestorConsultarPlacaPage />
+ *
+ * // Uso com parâmetro na URL (compartilhamento)
+ * /gestor/consultar-placa?placa=ABC1234
+ */
+
 export default function GestorConsultarPlacaPage() {
+  // --------------------------------------------------------------------------
+  // HOOKS E ESTADOS
+  // --------------------------------------------------------------------------
+
   const searchParams = useSearchParams();
   const [placa, setPlaca] = useState('');
   const [reservas, setReservas] = useState<ReservaPlaca[]>([]);
@@ -29,11 +105,70 @@ export default function GestorConsultarPlacaPage() {
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
   const [filter, setFilter] = useState<string>('TODAS');
-  const [stats, setStats] = useState({
-    total: 0,
-    ativas: 0,
-    reservadas: 0,
-  });
+
+  // --------------------------------------------------------------------------
+  // MEMOIZED VALUES (ESTATÍSTICAS E FILTROS)
+  // --------------------------------------------------------------------------
+
+  const stats = useMemo(
+    () => ({
+      total: reservas.length,
+      ativas: reservas.filter((r) => r.status === 'ATIVA').length,
+      reservadas: reservas.filter((r) => r.status === 'RESERVADA').length,
+    }),
+    [reservas],
+  );
+
+  const filteredReservas = useMemo(() => {
+    if (filter === 'TODAS') return reservas;
+    return reservas.filter((r) => r.status === filter);
+  }, [reservas, filter]);
+
+  // --------------------------------------------------------------------------
+  // HANDLER DE BUSCA
+  // --------------------------------------------------------------------------
+
+  const handleSearch = useCallback(
+    async (customPlaca?: string) => {
+      const placaToSearch = customPlaca || placa;
+
+      if (!placaToSearch.trim()) {
+        setError('Por favor, digite uma placa válida');
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      setSearched(true);
+      setFilter('TODAS');
+
+      try {
+        const resultado = await getReservasPorPlaca(placaToSearch);
+
+        // Filtro automático: remove canceladas e finalizadas
+        const reservasFiltradas = (resultado || []).filter(
+          (reserva) =>
+            reserva.status !== 'CANCELADA' && reserva.status !== 'FINALIZADA',
+        );
+
+        setReservas(reservasFiltradas);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Erro ao buscar reservas por placa',
+        );
+        setReservas([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [placa],
+  );
+
+  // --------------------------------------------------------------------------
+  // EFEITO INICIAL (PARÂMETRO DA URL)
+  // --------------------------------------------------------------------------
 
   useEffect(() => {
     const placaParam = searchParams.get('placa');
@@ -41,80 +176,16 @@ export default function GestorConsultarPlacaPage() {
       setPlaca(placaParam);
       handleSearch(placaParam);
     }
-  }, [searchParams]);
+  }, [searchParams, handleSearch]);
 
-  const handleSearch = async (customPlaca?: string) => {
-    const placaToSearch = customPlaca || placa;
-
-    if (!placaToSearch.trim()) {
-      setError('Por favor, digite uma placa válida');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setSearched(true);
-    setFilter('TODAS');
-
-    try {
-      const resultado = await getReservasPorPlaca(placaToSearch);
-
-      const reservasFiltradas = (resultado || []).filter(
-        (reserva) =>
-          reserva.status !== 'CANCELADA' && reserva.status !== 'FINALIZADA',
-      );
-
-      setReservas(reservasFiltradas);
-
-      const stats = {
-        total: reservasFiltradas.length,
-        ativas: reservasFiltradas.filter((r) => r.status === 'ATIVA').length,
-        reservadas: reservasFiltradas.filter((r) => r.status === 'RESERVADA')
-          .length,
-      };
-      setStats(stats);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao buscar reservas por placa',
-      );
-      setReservas([]);
-      setStats({
-        total: 0,
-        ativas: 0,
-        reservadas: 0,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  const formatarPlaca = (value: string) => {
-    let formatted = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-    formatted = formatted.slice(0, 7);
-    return formatted;
-  };
-
-  const handlePlacaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatarPlaca(e.target.value);
-    setPlaca(formatted);
-  };
-
-  const filteredReservas = reservas.filter((reserva) => {
-    if (filter === 'TODAS') return true;
-    return reserva.status === filter;
-  });
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO
+  // --------------------------------------------------------------------------
 
   return (
     <div className="p-4 md:p-6 lg:p-8 flex flex-col items-center w-full min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="w-full max-w-7xl">
+        {/* HEADER */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
@@ -138,7 +209,9 @@ export default function GestorConsultarPlacaPage() {
           </div>
         </div>
 
+        {/* CARDS SUPERIORES (BUSCA + ESTATÍSTICAS) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Card de busca (2 colunas) */}
           <Card className="lg:col-span-2 shadow-lg border-blue-100">
             <CardContent className="p-6">
               <div className="mb-4">
@@ -166,8 +239,10 @@ export default function GestorConsultarPlacaPage() {
                       type="text"
                       placeholder="AAA0000"
                       value={placa}
-                      onChange={handlePlacaChange}
-                      onKeyPress={handleKeyPress}
+                      onChange={(e) => setPlaca(formatarPlaca(e.target.value))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !loading) handleSearch();
+                      }}
                       className="pl-10 text-lg font-bold font-mono uppercase h-12 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
                       maxLength={7}
                       disabled={loading}
@@ -195,6 +270,7 @@ export default function GestorConsultarPlacaPage() {
                 </div>
               </div>
 
+              {/* Informações para gestores */}
               <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4" />
@@ -209,6 +285,7 @@ export default function GestorConsultarPlacaPage() {
             </CardContent>
           </Card>
 
+          {/* Card de estatísticas (1 coluna) */}
           <Card className="shadow-lg border-gray-200">
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -241,6 +318,7 @@ export default function GestorConsultarPlacaPage() {
           </Card>
         </div>
 
+        {/* TABS DE FILTRO (só aparece se houver reservas) */}
         {reservas.length > 0 && (
           <div className="mb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
@@ -280,6 +358,9 @@ export default function GestorConsultarPlacaPage() {
           </div>
         )}
 
+        {/* RENDERIZAÇÃO CONDICIONAL */}
+
+        {/* Estado: Loading */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
             <div className="relative">
@@ -296,6 +377,7 @@ export default function GestorConsultarPlacaPage() {
             </div>
           </div>
         ) : error ? (
+          /* Estado: Erro */
           <Card className="border-red-200 bg-red-50">
             <CardContent className="p-8 text-center">
               <div className="w-20 h-20 mx-auto rounded-full bg-red-100 flex items-center justify-center mb-4">
@@ -313,6 +395,7 @@ export default function GestorConsultarPlacaPage() {
                   onClick={() => {
                     setError(null);
                     setSearched(false);
+                    setPlaca('');
                   }}
                 >
                   Nova Busca
@@ -321,6 +404,7 @@ export default function GestorConsultarPlacaPage() {
             </CardContent>
           </Card>
         ) : searched && filteredReservas.length === 0 ? (
+          /* Estado: Busca sem resultados */
           <Card className="border-yellow-200 bg-yellow-50">
             <CardContent className="p-8 text-center">
               <div className="w-20 h-20 mx-auto rounded-full bg-yellow-100 flex items-center justify-center mb-4">
@@ -339,6 +423,7 @@ export default function GestorConsultarPlacaPage() {
             </CardContent>
           </Card>
         ) : filteredReservas.length > 0 ? (
+          /* Estado: Sucesso (com reservas) */
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
               {filteredReservas.map((reserva) => (
@@ -346,6 +431,7 @@ export default function GestorConsultarPlacaPage() {
               ))}
             </div>
 
+            {/* Rodapé informativo */}
             <Card className="bg-gray-50 border-gray-200">
               <CardContent className="p-4">
                 <div className="text-sm text-gray-600">
@@ -359,6 +445,7 @@ export default function GestorConsultarPlacaPage() {
             </Card>
           </div>
         ) : (
+          /* Estado: Inicial (sem busca) */
           <div className="flex flex-col items-center justify-center py-16 md:py-24 text-center bg-gradient-to-b from-white to-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
             <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-50 to-blue-100 flex items-center justify-center mb-8">
               <Building className="w-12 h-12 text-blue-600" />
@@ -371,7 +458,8 @@ export default function GestorConsultarPlacaPage() {
               reservadas.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+            {/* Cards de recursos */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
               <Card className="border-blue-100 hover:border-blue-300 transition-colors">
                 <CardContent className="p-6">
                   <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center mb-4 mx-auto">
