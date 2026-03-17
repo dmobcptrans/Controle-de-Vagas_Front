@@ -17,6 +17,7 @@ interface UserData {
   nome: string;
   login: string;
   permissao: 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE';
+  cpf?: string;
 }
 
 function normalizeUserData(data: Record<string, unknown>): UserData {
@@ -25,6 +26,7 @@ function normalizeUserData(data: Record<string, unknown>): UserData {
     nome: String(data.nome ?? ''),
     login: String(data.login ?? data.email ?? ''),
     permissao: (data.permissao as UserData['permissao']) ?? 'MOTORISTA',
+    cpf: data.cpf ? String(data.cpf) : undefined,
   };
 }
 
