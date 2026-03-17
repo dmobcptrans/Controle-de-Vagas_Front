@@ -5,6 +5,8 @@ import PrivateRoute from '@/context/PrivateRoute';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { MapProvider } from '@/context/MapContext';
 import { PushNotificationBanner } from '@/context/PushProvider/PushNotificationBanner';
+import { OnboardingProvider } from '@/context/OnboardingContext';
+import OnboardingModal from '@/components/modal/autorizacao/completar-cadastro/OnboardingModal';
 
 export const metadata: Metadata = {
   title: 'PetroCarga',
@@ -21,6 +23,7 @@ export default function MotoristaLayout({
     <div className="flex min-h-screen flex-col motorista-layout">
       <PrivateRoute allowedRoles={['MOTORISTA']}>
         <PushNotificationBanner />
+        <OnboardingProvider>
           <Navbar />
 
           <main className="flex-1 relative">
@@ -28,6 +31,8 @@ export default function MotoristaLayout({
           </main>
 
           <Footer />
+          <OnboardingModal />
+          </OnboardingProvider>
       </PrivateRoute>
     </div>
   );
