@@ -7,7 +7,82 @@ import { NotificationModals } from '@/components/modal/notification/notification
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
+/**
+ * @component NotificacoesMotoristaPage
+ * @version 1.0.0
+ *
+ * @description Página de notificações específica para motoristas.
+ * Filtra e exibe apenas notificações relevantes para o perfil de motorista.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. CONTEXTO DE NOTIFICAÇÕES:
+ *    - useNotifications() fornece estado global das notificações
+ *    - Gerencia conexão WebSocket em tempo real
+ *    - Oferece funções CRUD para notificações
+ *
+ * 2. FILTRO POR TIPO:
+ *    - Motoristas só veem notificações dos tipos: RESERVA, VEICULO, SISTEMA
+ *    - Notificações de VAGA e MOTORISTA são filtradas (não relevantes)
+ *
+ * 3. SELEÇÃO EM LOTE:
+ *    - toggleSelectNotification: Seleciona/desseleciona individual
+ *    - toggleSelectAll: Seleciona todas as notificações filtradas
+ *    - allSelected: Calcula se todas estão selecionadas
+ *
+ * 4. AÇÕES EM LOTE:
+ *    - Marcar como lidas (com modal de confirmação)
+ *    - Excluir notificações (com modal de confirmação)
+ *    - Feedback com toast para sucesso/erro
+ *
+ * 5. PERSONALIZAÇÃO:
+ *    - Título: "Minhas Notificações"
+ *    - Subtítulo: "Fique por dentro das suas reservas e atualizações do veículo"
+ *    - Mensagem vazia: "Você não tem notificações no momento. Fique tranquilo!"
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - FILTRO POR PERFIL: motoristaNotifications filtra apenas tipos relevantes:
+ *   - RESERVA: Confirmações, lembretes, alterações de reserva
+ *   - VEICULO: Atualizações sobre veículos cadastrados
+ *   - SISTEMA: Comunicados gerais do sistema
+ *
+ * - EXCLUSÃO DE TIPOS:
+ *   - VAGA: Não relevante (gestão de vagas é do gestor)
+ *   - MOTORISTA: Não faria sentido (auto-notificação)
+ *
+ * - CONTEXTO COMPARTILHADO: Mesmo hook useNotifications do agente/gestor,
+ *   mas com visualização filtrada para o perfil
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - NotificationContext: Contexto global de notificações
+ * - NotificationHeader: Barra superior com título e ações
+ * - NotificationList: Lista de notificações
+ * - NotificationModals: Modais de confirmação
+ *
+ * @example
+ * ```tsx
+ * // Uso em rota de motorista
+ * <NotificacoesMotoristaPage />
+ * ```
+ *
+ * @see /src/context/NotificationContext.tsx - Contexto de notificações
+ * @see /src/components/notification/notificationHeader.tsx - Header
+ * @see /src/components/notification/notificationList.tsx - Lista
+ */
+
 export default function NotificacoesMotoristaPage() {
+  // --------------------------------------------------------------------------
+  // CONTEXTO DE NOTIFICAÇÕES
+  // --------------------------------------------------------------------------
+
   const {
     notifications,
     isConnected,
@@ -20,9 +95,17 @@ export default function NotificacoesMotoristaPage() {
     reconnect,
   } = useNotifications();
 
+  // --------------------------------------------------------------------------
+  // ESTADOS LOCAIS
+  // --------------------------------------------------------------------------
+
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMarkReadModal, setShowMarkReadModal] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // HANDLERS DE AÇÕES EM LOTE
+  // --------------------------------------------------------------------------
 
   const handleDeleteSelected = async () => {
     try {
@@ -48,24 +131,37 @@ export default function NotificacoesMotoristaPage() {
     }
   };
 
+  // --------------------------------------------------------------------------
+  // FUNÇÕES DE SELEÇÃO
+  // --------------------------------------------------------------------------
+
   const toggleSelectNotification = (id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
-  const toggleSelectAll = () => {
-    if (selectedIds.length === notifications.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(notifications.map((n) => n.id));
-    }
-  };
-
   const allSelected =
     selectedIds.length === notifications.length && notifications.length > 0;
 
-  // Filtra apenas notificações relevantes para motorista
+  const toggleSelectAll = () => {
+    setSelectedIds(allSelected ? [] : notifications.map((n) => n.id));
+  };
+
+  // --------------------------------------------------------------------------
+  // FILTRO POR PERFIL
+  // --------------------------------------------------------------------------
+
+  /**
+   * Filtra notificações para mostrar apenas as relevantes ao motorista:
+   * - RESERVA: Sobre reservas do motorista
+   * - VEICULO: Sobre veículos cadastrados
+   * - SISTEMA: Comunicados gerais
+   *
+   * Exclui:
+   * - VAGA: Gestão de vagas (não relevante)
+   * - MOTORISTA: Auto-notificação (não faria sentido)
+   */
   const motoristaNotifications = notifications.filter((n) =>
     ['RESERVA', 'VEICULO', 'SISTEMA'].includes(n.tipo),
   );
@@ -73,6 +169,7 @@ export default function NotificacoesMotoristaPage() {
   return (
     <div className="min-h-screen bg-gray-100 py-4 sm:py-8 px-3 sm:px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Header personalizado para motorista */}
         <NotificationHeader
           notifications={motoristaNotifications}
           isConnected={isConnected}
@@ -89,6 +186,7 @@ export default function NotificacoesMotoristaPage() {
           subtitle="Fique por dentro das suas reservas e atualizações do veículo"
         />
 
+        {/* Lista de notificações filtrada */}
         <NotificationList
           notifications={motoristaNotifications}
           selectedIds={selectedIds}
@@ -102,6 +200,7 @@ export default function NotificacoesMotoristaPage() {
         />
       </div>
 
+      {/* Modais de confirmação */}
       <NotificationModals
         showDeleteModal={showDeleteModal}
         showMarkReadModal={showMarkReadModal}
