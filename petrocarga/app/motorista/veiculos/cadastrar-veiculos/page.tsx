@@ -11,7 +11,13 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
-import { ArrowLeft, CheckCircle, CircleAlert, TruckIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle,
+  CircleAlert,
+  Loader2,
+  TruckIcon,
+} from 'lucide-react';
 import Form from 'next/form';
 import FormItem from '@/components/form/form-item';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
@@ -19,13 +25,104 @@ import { addVeiculo } from '@/lib/api/veiculoApi';
 import { useAuth } from '@/components/hooks/useAuth';
 import Link from 'next/link';
 
-export default function CadastroVeiculo() {
-  const { user } = useAuth();
-  const [message, setMessage] = useState<{ error?: boolean; text?: string }>(
-    {},
-  );
-  const [isPending, startTransition] = useTransition();
+/**
+ * @component CadastroVeiculo
+ * @version 1.0.0
+ *
+ * @description Página de cadastro de veículos para motoristas.
+ * Formulário completo com validações para dados do veículo e proprietário (CPF/CNPJ).
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. AUTENTICAÇÃO:
+ *    - Hook useAuth obtém usuário logado
+ *    - Usuário deve estar autenticado para cadastrar veículo
+ *    - ID do usuário é anexado ao formulário automaticamente
+ *
+ * 2. FORMULÁRIO EM DUAS SEÇÕES:
+ *
+ *    a) DADOS DO VEÍCULO:
+ *       - Placa (formato livre)
+ *       - Marca
+ *       - Modelo
+ *       - Tipo (select com 5 opções)
+ *
+ *    b) DADOS DO PROPRIETÁRIO:
+ *       - CPF (pessoa física, 11 dígitos)
+ *       - CNPJ (pessoa jurídica, 14 dígitos)
+ *       - Regra: APENAS UM dos campos deve ser preenchido
+ *
+ * 3. VALIDAÇÕES:
+ *    - CPF: apenas números, máximo 11 dígitos
+ *    - CNPJ: apenas números, máximo 14 dígitos
+ *    - Todos os campos obrigatórios (exceto CPF/CNPJ, mas um deles é obrigatório)
+ *
+ * 4. ENVIO:
+ *    - useTransition para controle de estado de loading
+ *    - addVeiculo chama API de cadastro
+ *    - Feedback com toast para sucesso/erro
+ *
+ * 5. PÓS-CADASTRO:
+ *    - Redirecionamento via link "Voltar" (não automático)
+ *    - Mensagem de sucesso em toast
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - useTransition: Gerencia estado de loading sem bloquear UI
+ * - Regra de CPF/CNPJ: Exclusividade tratada no backend (API)
+ * - Máscaras: Remoção automática de caracteres não numéricos
+ * - Design rico: Gradientes, sombras, bordas arredondadas
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - SelecaoCustomizada: Select estilizado para tipo de veículo
+ * - FormItem: Campo com label e descrição
+ * - addVeiculo: API de cadastro
+ * - /motorista/veiculos/meus-veiculos: Página de listagem (retorno)
+ *
+ * @example
+ * ```tsx
+ * // Uso em rota de motorista
+ * <CadastroVeiculo />
+ * ```
+ *
+ * @see /src/lib/api/veiculoApi.ts - Função addVeiculo
+ * @see /src/components/selecaoItem/selecao-customizada.tsx - Select customizado
+ */
 
+export default function CadastroVeiculo() {
+  // --------------------------------------------------------------------------
+  // HOOKS E ESTADOS
+  // --------------------------------------------------------------------------
+
+  const { user } = useAuth();
+  const [isPending, startTransition] = useTransition();
+  const [cpf, setCpf] = useState('');
+  const [cnpj, setCnpj] = useState('');
+  const [tipo, setTipo] = useState('');
+
+  // --------------------------------------------------------------------------
+  // HANDLER DE SUBMIT
+  // --------------------------------------------------------------------------
+
+  /**
+   * @function handleAction
+   * @description Processa o envio do formulário
+   *
+   * Fluxo:
+   * 1. Verifica autenticação do usuário
+   * 2. Anexa usuarioId ao FormData
+   * 3. Chama API addVeiculo
+   * 4. Exibe toast de sucesso/erro
+   *
+   * @param formData - Dados do formulário
+   */
   async function handleAction(formData: FormData) {
     startTransition(async () => {
       try {
@@ -52,7 +149,9 @@ export default function CadastroVeiculo() {
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="container mx-auto px-3 sm:px-4 py-6 md:py-8 lg:py-12">
         <div className="max-w-6xl mx-auto">
-          {/* Botão Voltar */}
+          {/* --------------------------------------------------------------------
+            LINK DE RETORNO
+          -------------------------------------------------------------------- */}
           <div className="mb-6 md:mb-8">
             <Link
               href="/motorista/veiculos/meus-veiculos"
@@ -63,21 +162,20 @@ export default function CadastroVeiculo() {
             </Link>
           </div>
 
-          {/* Card Principal */}
+          {/* --------------------------------------------------------------------
+            CARD PRINCIPAL
+          -------------------------------------------------------------------- */}
           <Card className="w-full mx-auto shadow-2xl border-0 rounded-2xl overflow-hidden bg-white">
+            {/* Header com gradiente */}
             <CardHeader className="px-4 py-8 md:px-12 md:py-12 space-y-6 text-center bg-gradient-to-r from-blue-50 to-indigo-50">
-              {/* Ícone */}
               <div className="mx-auto w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-xl">
                 <TruckIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
               </div>
 
-              {/* Título */}
               <div className="space-y-3">
                 <CardTitle className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-700 to-indigo-800 bg-clip-text text-transparent">
                   Cadastro de Veículo
                 </CardTitle>
-
-                {/* Descrição */}
                 <CardDescription className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto font-medium">
                   Preencha os dados abaixo para adicionar um novo veículo à sua
                   frota
@@ -85,29 +183,12 @@ export default function CadastroVeiculo() {
               </div>
             </CardHeader>
 
+            {/* Formulário */}
             <Form action={handleAction}>
               <CardContent className="p-6 md:p-10 lg:p-12 space-y-12">
-                {/* Mensagem de Status */}
-                {(message.text || message.error) && (
-                  <div
-                    className={`flex items-center gap-4 rounded-xl border-2 p-5 ${
-                      message.error
-                        ? 'border-red-300 bg-red-50 text-red-800'
-                        : 'border-green-300 bg-green-50 text-green-800'
-                    }`}
-                  >
-                    {message.error ? (
-                      <CircleAlert className="h-6 w-6 flex-shrink-0" />
-                    ) : (
-                      <CheckCircle className="h-6 w-6 flex-shrink-0" />
-                    )}
-                    <span className="text-base md:text-lg font-medium flex-1">
-                      {message.text}
-                    </span>
-                  </div>
-                )}
-
-                {/* Seção 1: Dados do Veículo */}
+                {/* --------------------------------------------------------------------
+                  SEÇÃO 1: DADOS DO VEÍCULO
+                -------------------------------------------------------------------- */}
                 <div className="space-y-10">
                   <div className="text-center mb-10">
                     <div className="inline-flex items-center gap-3 mb-3">
@@ -123,98 +204,88 @@ export default function CadastroVeiculo() {
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10">
-                    {/* Coluna 1 */}
+                    {/* Coluna esquerda */}
                     <div className="space-y-8">
-                      {/* Placa - Input grande */}
-                      <div className="space-y-2">
-                        <FormItem
-                          name="Placa do Veículo"
-                          description="Formato: ABC1D23. Exemplo: KLD2J19"
-                        >
-                          <Input
-                            className="w-full rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 h-12 text-base md:text-lg shadow-sm"
-                            id="placa"
-                            name="placa"
-                            placeholder="KLD2J19"
-                            required
-                          />
-                        </FormItem>
-                      </div>
+                      <FormItem
+                        name="Placa do Veículo"
+                        description="Formato: ABC1D23. Exemplo: KLD2J19"
+                      >
+                        <Input
+                          className="w-full rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 h-12 text-base md:text-lg shadow-sm"
+                          id="placa"
+                          name="placa"
+                          placeholder="KLD2J19"
+                          required
+                        />
+                      </FormItem>
 
-                      {/* Marca - Input grande */}
-                      <div className="space-y-2">
-                        <FormItem
-                          name="Marca do Veículo"
-                          description="Exemplo: Ford, Volkswagen, Chevrolet"
-                        >
-                          <Input
-                            className="w-full rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 h-12 text-base md:text-lg shadow-sm"
-                            id="marca"
-                            name="marca"
-                            placeholder="Ford"
-                            required
-                          />
-                        </FormItem>
-                      </div>
+                      <FormItem
+                        name="Marca do Veículo"
+                        description="Exemplo: Ford, Volkswagen, Chevrolet"
+                      >
+                        <Input
+                          className="w-full rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 h-12 text-base md:text-lg shadow-sm"
+                          id="marca"
+                          name="marca"
+                          placeholder="Ford"
+                          required
+                        />
+                      </FormItem>
                     </div>
 
-                    {/* Coluna 2 */}
+                    {/* Coluna direita */}
                     <div className="space-y-8">
-                      {/* Modelo - Input grande */}
-                      <div className="space-y-2">
-                        <FormItem
-                          name="Modelo do Veículo"
-                          description="Exemplo: Fiesta, Gol, Onix"
-                        >
-                          <Input
-                            className="w-full rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 h-12 text-base md:text-lg shadow-sm"
-                            id="modelo"
-                            name="modelo"
-                            placeholder="Fiesta"
-                            required
-                          />
-                        </FormItem>
-                      </div>
+                      <FormItem
+                        name="Modelo do Veículo"
+                        description="Exemplo: Fiesta, Gol, Onix"
+                      >
+                        <Input
+                          className="w-full rounded-xl border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 h-12 text-base md:text-lg shadow-sm"
+                          id="modelo"
+                          name="modelo"
+                          placeholder="Fiesta"
+                          required
+                        />
+                      </FormItem>
 
-                      {/* Tipo - Select com largura máxima */}
-                      <div className="space-y-2">
-                        <FormItem
-                          name="Tipo do Veículo"
-                          description="Selecione o tipo de veículo"
-                        >
-                          <div className="relative w-full">
-                            <SelecaoCustomizada
-                              id="tipo"
-                              name="tipo"
-                              placeholder="Selecione o tipo"
-                              options={[
-                                {
-                                  value: 'AUTOMOVEL',
-                                  label: 'Carro - Até 5 metros',
-                                },
-                                { value: 'VUC', label: 'VUC - 6 a 7 metros' },
-                                {
-                                  value: 'CAMINHONETA',
-                                  label: 'Caminhoneta - Até 8 metros',
-                                },
-                                {
-                                  value: 'CAMINHAO_MEDIO',
-                                  label: 'Caminhão Médio - 9 a 12 metros',
-                                },
-                                {
-                                  value: 'CAMINHAO_LONGO',
-                                  label: 'Caminhão Longo - 13 a 19 metros',
-                                },
-                              ]}
-                            />
-                          </div>
-                        </FormItem>
-                      </div>
+                      <FormItem
+                        name="Tipo do Veículo"
+                        description="Selecione o tipo de veículo"
+                      >
+                        <SelecaoCustomizada
+                          id="tipo"
+                          name="tipo"
+                          placeholder="Selecione o tipo"
+                          value={tipo}
+                          onChange={(val) => setTipo(val)}
+                          options={[
+                            {
+                              value: 'AUTOMOVEL',
+                              label: 'Carro - Até 5 metros',
+                            },
+                            { value: 'VUC', label: 'VUC - 6 a 7 metros' },
+                            {
+                              value: 'CAMINHONETA',
+                              label: 'Caminhoneta - Até 8 metros',
+                            },
+                            {
+                              value: 'CAMINHAO_MEDIO',
+                              label: 'Caminhão Médio - 9 a 12 metros',
+                            },
+                            {
+                              value: 'CAMINHAO_LONGO',
+                              label: 'Caminhão Longo - 13 a 19 metros',
+                            },
+                          ]}
+                        />
+                      </FormItem>
                     </div>
                   </div>
                 </div>
 
-                {/* Seção 2: Dados do Proprietário */}
+                {/* --------------------------------------------------------------------
+                  SEÇÃO 2: DADOS DO PROPRIETÁRIO
+                -------------------------------------------------------------------- */}
                 <div className="space-y-10 pt-10 border-t-2 border-gray-300">
                   <div className="text-center mb-10">
                     <div className="inline-flex items-center gap-3 mb-3">
@@ -229,162 +300,66 @@ export default function CadastroVeiculo() {
                     </CardDescription>
                   </div>
 
-                  {/* Container Principal para CPF e CNPJ */}
                   <div className="max-w-5xl mx-auto">
-                    {/* Container Principal para CPF e CNPJ */}
-                    <div className="max-w-5xl mx-auto">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-                        {/* CPF */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                            <label className="font-semibold text-gray-800">
-                              CPF do Proprietário
-                            </label>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-4">
-                            Para pessoa física. Apenas números. Exemplo:
-                            12345678900
-                          </p>
-                          <Input
-                            className="w-full rounded-xl border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 h-12 text-lg md:text-xl shadow-sm px-6"
-                            id="cpfProprietario"
-                            name="cpfProprietario"
-                            placeholder="12345678900"
-                            maxLength={11}
-                            type="text"
-                            inputMode="numeric"
-                            onKeyDown={(e) => {
-                              // Permite apenas números e teclas de controle
-                              const allowedKeys = [
-                                '0',
-                                '1',
-                                '2',
-                                '3',
-                                '4',
-                                '5',
-                                '6',
-                                '7',
-                                '8',
-                                '9',
-                                'Backspace',
-                                'Delete',
-                                'Tab',
-                                'ArrowLeft',
-                                'ArrowRight',
-                                'Home',
-                                'End',
-                                'Control',
-                                'a',
-                                'A',
-                                'c',
-                                'C',
-                                'v',
-                                'V',
-                                'x',
-                                'X',
-                              ];
-
-                              if (!allowedKeys.includes(e.key)) {
-                                e.preventDefault();
-                              }
-                            }}
-                            onPaste={(e) => {
-                              // Remove caracteres não numéricos ao colar
-                              const pasteData = e.clipboardData.getData('text');
-                              const onlyNumbers = pasteData.replace(/\D/g, '');
-                              e.preventDefault();
-
-                              const target = e.target as HTMLInputElement;
-                              const currentValue = target.value.replace(
-                                /\D/g,
-                                '',
-                              );
-                              const newValue = (
-                                currentValue + onlyNumbers
-                              ).slice(0, 11);
-                              target.value = newValue;
-                            }}
-                          />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+                      {/* Campo CPF */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                          <label className="font-semibold text-gray-800">
+                            CPF do Proprietário
+                          </label>
                         </div>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Para pessoa física. Apenas números. Exemplo:
+                          12345678900
+                        </p>
+                        <Input
+                          className="w-full rounded-xl border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 h-12 text-lg md:text-xl shadow-sm px-6"
+                          id="cpfProprietario"
+                          name="cpfProprietario"
+                          placeholder="12345678900"
+                          maxLength={11}
+                          inputMode="numeric"
+                          value={cpf}
+                          onChange={(e) =>
+                            setCpf(
+                              e.target.value.replace(/\D/g, '').slice(0, 11),
+                            )
+                          }
+                        />
+                      </div>
 
-                        {/* CNPJ */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
-                            <label className="font-semibold text-gray-800">
-                              CNPJ do Proprietário
-                            </label>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-4">
-                            Para pessoa jurídica. Apenas números. Exemplo:
-                            12345678000190
-                          </p>
-                          <Input
-                            className="w-full rounded-xl border-2 border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 h-12 text-lg md:text-xl shadow-sm px-6"
-                            id="cnpjProprietario"
-                            name="cnpjProprietario"
-                            placeholder="12345678000190"
-                            maxLength={14}
-                            type="text"
-                            inputMode="numeric"
-                            onKeyDown={(e) => {
-                              // Permite apenas números e teclas de controle
-                              const allowedKeys = [
-                                '0',
-                                '1',
-                                '2',
-                                '3',
-                                '4',
-                                '5',
-                                '6',
-                                '7',
-                                '8',
-                                '9',
-                                'Backspace',
-                                'Delete',
-                                'Tab',
-                                'ArrowLeft',
-                                'ArrowRight',
-                                'Home',
-                                'End',
-                                'Control',
-                                'a',
-                                'A',
-                                'c',
-                                'C',
-                                'v',
-                                'V',
-                                'x',
-                                'X',
-                              ];
-
-                              if (!allowedKeys.includes(e.key)) {
-                                e.preventDefault();
-                              }
-                            }}
-                            onPaste={(e) => {
-                              // Remove caracteres não numéricos ao colar
-                              const pasteData = e.clipboardData.getData('text');
-                              const onlyNumbers = pasteData.replace(/\D/g, '');
-                              e.preventDefault();
-
-                              const target = e.target as HTMLInputElement;
-                              const currentValue = target.value.replace(
-                                /\D/g,
-                                '',
-                              );
-                              const newValue = (
-                                currentValue + onlyNumbers
-                              ).slice(0, 14);
-                              target.value = newValue;
-                            }}
-                          />
+                      {/* Campo CNPJ */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                          <label className="font-semibold text-gray-800">
+                            CNPJ do Proprietário
+                          </label>
                         </div>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Para pessoa jurídica. Apenas números. Exemplo:
+                          12345678000190
+                        </p>
+                        <Input
+                          className="w-full rounded-xl border-2 border-indigo-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 h-12 text-lg md:text-xl shadow-sm px-6"
+                          id="cnpjProprietario"
+                          name="cnpjProprietario"
+                          placeholder="12345678000190"
+                          maxLength={14}
+                          inputMode="numeric"
+                          value={cnpj}
+                          onChange={(e) =>
+                            setCnpj(
+                              e.target.value.replace(/\D/g, '').slice(0, 14),
+                            )
+                          }
+                        />
                       </div>
                     </div>
 
-                    {/* OU entre os campos em telas grandes */}
+                    {/* Divisor "OU" (desktop) */}
                     <div className="hidden lg:flex items-center justify-center my-8">
                       <div className="relative w-full max-w-md">
                         <div className="absolute inset-0 flex items-center">
@@ -398,7 +373,7 @@ export default function CadastroVeiculo() {
                       </div>
                     </div>
 
-                    {/* Nota sobre CPF/CNPJ - Destaque */}
+                    {/* Card de aviso importante */}
                     <div className="mt-10">
                       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6 md:p-8">
                         <div className="flex flex-col md:flex-row items-center gap-6">
@@ -440,6 +415,7 @@ export default function CadastroVeiculo() {
                 </div>
               </CardContent>
 
+              {/* Footer com botão de submit */}
               <CardFooter className="px-6 md:px-10 lg:px-12 pb-10 md:pb-12 pt-8 md:pt-10 border-t-2 border-gray-300 bg-gradient-to-r from-gray-50 to-blue-50">
                 <div className="w-full flex flex-col lg:flex-row justify-between items-center gap-8">
                   <div className="text-center lg:text-left">
@@ -459,25 +435,7 @@ export default function CadastroVeiculo() {
                     >
                       {isPending ? (
                         <span className="flex items-center gap-3 justify-center">
-                          <svg
-                            className="animate-spin h-6 w-6 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            />
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            />
-                          </svg>
+                          <Loader2 className="animate-spin h-6 w-6 text-white" />
                           <span className="text-lg md:text-xl">
                             Cadastrando...
                           </span>
