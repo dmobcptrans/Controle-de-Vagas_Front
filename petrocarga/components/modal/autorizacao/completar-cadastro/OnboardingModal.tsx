@@ -1,13 +1,17 @@
 'use client';
 
 import { useOnboarding } from '@/context/OnboardingContext';
-import { useState } from 'react';
+import { use, useState } from 'react';
 
 const CNH_CATS = ['A', 'B', 'AB', 'C', 'D'];
 
 export default function OnboardingModal() {
   const { isOpen, step, data, updateData, nextStep, prevStep, submit } = useOnboarding();
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [exibirConfirmarSenha, setExibirConfirmarSenha] = useState(false);
+
+  const senhasIguais = data.senha === confirmarSenha;
 
   if (!isOpen) return null;
 
@@ -26,37 +30,42 @@ export default function OnboardingModal() {
   const strengthLabels = ['', 'Fraca', 'Razoável', 'Boa', 'Forte'];
   const strength = pwdStrength(data.senha || '');
 
-const fmtCPF = (value: string) => {
-  const numbers = value.replace(/\D/g, '');
+  const fmtCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
 
-  if (numbers.length <= 3) return numbers;
-  if (numbers.length <= 6)
-    return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
-  if (numbers.length <= 9)
-    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
-  
-  return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
-};
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 6)
+      return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+    if (numbers.length <= 9)
+      return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
 
-const fmtTel = (value: string) => {
-  const numbers = value.replace(/\D/g, '');
+    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
+  };
 
-  if (numbers.length <= 2) return numbers;
-  if (numbers.length <= 7)
-    return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-  if (numbers.length <= 11)
-    return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+  const fmtTel = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
 
-  return value;
-};
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 7)
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 11)
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
 
-const onlyNumbers = (value: string) => value.replace(/\D/g, '');
+    return value;
+  };
+
+  const onlyNumbers = (value: string) => value.replace(/\D/g, '');
 
   const isStepValid = () => {
     if (step === 1) {
       const cpf = (data.cpf || '').replace(/\D/g, '');
       const tel = (data.telefone || '').replace(/\D/g, '');
-      return cpf.length === 11 && tel.length >= 10 && (data.senha || '').length >= 8;
+      return (
+        cpf.length === 11 &&
+        tel.length >= 10 &&
+        (data.senha || '').length >= 8 &&
+        senhasIguais
+      );
     }
     if (step === 2) {
       return !!(data.tipoCnh && data.numeroCnh?.length >= 8 && data.dataValidadeCnh);
@@ -167,6 +176,34 @@ const onlyNumbers = (value: string) => value.replace(/\D/g, '');
                 </>
               )}
             </Field>
+            <Field label="Confirmar senha">
+              <div className="relative">
+                <input
+                  className={`${inputCls} pr-10 ${!senhasIguais && confirmarSenha !== ''
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-100'
+                    : ''
+                    }`}
+                  type={exibirConfirmarSenha ? 'text' : 'password'}
+                  placeholder="Digite novamente sua senha"
+                  value={confirmarSenha}
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setExibirConfirmarSenha(!exibirConfirmarSenha)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <EyeIcon />
+                </button>
+              </div>
+
+              {!senhasIguais && confirmarSenha !== '' && (
+                <p className="text-red-500 text-xs mt-1">
+                  As senhas não coincidem
+                </p>
+              )}
+            </Field>
           </div>
         )}
 
@@ -228,7 +265,7 @@ const onlyNumbers = (value: string) => value.replace(/\D/g, '');
               checked={!!data.aceitarTermos}
               onChange={(v) => updateData({ aceitarTermos: v })}
             />
-            </div>
+          </div>
         )}
 
         {/* Footer */}
