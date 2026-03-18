@@ -1,82 +1,170 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
-import { Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { Veiculo } from '@/lib/types/veiculo';
 import VeiculoDetalhes from '@/components/motorista/cards/veiculo-card';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Button } from '@/components/ui/button';
+
+/**
+ * @component EditarVeiculoPage
+ * @version 1.0.0
+ *
+ * @description Página de edição de veículo para motoristas.
+ * Gerencia carregamento dos dados do veículo via ID da URL e renderiza o formulário de edição.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. AUTENTICAÇÃO:
+ *    - Hook useAuth obtém usuário logado
+ *    - Se não houver user.id, não carrega veículos
+ *
+ * 2. PARÂMETROS DA URL:
+ *    - useParams captura o ID do veículo da rota dinâmica
+ *    - ID é usado para filtrar o veículo na lista do usuário
+ *
+ * 3. CARREGAMENTO DE VEÍCULOS:
+ *    - useEffect dispara fetchVeiculo na montagem
+ *    - useCallback memoiza função com base no user.id e params.id
+ *    - Busca TODOS os veículos do usuário e filtra pelo ID
+ *
+ * 4. CALLBACK DE ATUALIZAÇÃO:
+ *    - handleVeiculoAtualizado recebe dados do componente filho
+ *    - Atualiza estado local e dispara toast de sucesso
+ *    - Recarrega dados para garantir consistência
+ *
+ * 5. ESTADOS DE UI (4 ESTADOS):
+ *
+ *    a) LOADING:
+ *       - Spinner centralizado
+ *       - Mensagem "Carregando veículo..."
+ *
+ *    b) ERRO (geral):
+ *       - Falha na API
+ *       - Ícone de alerta vermelho
+ *       - Botões: "Tentar novamente" e "Voltar"
+ *
+ *    c) VEÍCULO NÃO ENCONTRADO:
+ *       - Mesma UI do erro
+ *       - Mensagem "Veículo não encontrado"
+ *
+ *    d) SUCESSO:
+ *       - Link "Voltar para meus veículos"
+ *       - Layout em duas colunas (desktop)
+ *       - VeiculoDetalhes na coluna principal
+ *       - Sidebar com informações úteis (desktop)
+ *       - Botão de atualizar (mobile)
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - FILTRAGEM LOCAL: Busca todos veículos e filtra por ID em vez de API específica
+ *   (simplifica, mas pode ser menos eficiente com muitos veículos)
+ *
+ * - CALLBACK DE ATUALIZAÇÃO: Permite que o componente filho notifique mudanças
+ *
+ * - LAYOUT RESPONSIVO:
+ *   - Desktop: grid 3 colunas (2 para detalhes, 1 para sidebar sticky)
+ *   - Mobile: empilhamento com botão de atualizar
+ *
+ * - SIDEBAR INFORMATIVA: Dicas úteis e resumo das informações do veículo
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - VeiculoDetalhes: Formulário de edição (filho)
+ * - useAuth: Hook de autenticação
+ * - getVeiculosUsuario: API de listagem
+ * - /motorista/veiculos/meus-veiculos: Página de listagem (retorno)
+ *
+ * @example
+ * ```tsx
+ * // Uso em rota dinâmica: /motorista/veiculos/editar/123
+ * <EditarVeiculoPage />
+ * ```
+ *
+ * @see /src/components/motorista/cards/veiculo-card.tsx - Formulário de edição
+ * @see /src/lib/api/veiculoApi.ts - Função getVeiculosUsuario
+ */
 
 export default function EditarVeiculoPage() {
+  // --------------------------------------------------------------------------
+  // HOOKS E PARÂMETROS
+  // --------------------------------------------------------------------------
+
   const { user } = useAuth();
   const params = useParams() as { id: string };
 
   const [veiculo, setVeiculo] = useState<Veiculo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  useEffect(() => {
+  // --------------------------------------------------------------------------
+  // FUNÇÃO DE BUSCA
+  // --------------------------------------------------------------------------
+
+  const fetchVeiculo = useCallback(async () => {
     if (!user?.id) {
-      toast.error('Usuário não autenticado. Faça login novamente.');
-      setError('Usuário não autenticado.');
       setLoading(false);
       return;
     }
 
-    const userId = user.id;
-    if (!userId) return;
+    setLoading(true);
+    setError('');
 
-    async function fetchVeiculo() {
-      setLoading(true);
-      setError('');
+    try {
+      const result = await getVeiculosUsuario(user.id);
 
-      try {
-        const result = await getVeiculosUsuario(userId);
-
-        if (result.error) {
-          toast.error(result.message || 'Erro ao buscar veículo');
-          setError(result.message);
-          setVeiculo(null);
+      if (result.error) {
+        toast.error(result.message || 'Erro ao buscar veículo');
+        setError(result.message);
+        setVeiculo(null);
+      } else {
+        const v = result.veiculos.find((v) => v.id === params.id);
+        if (!v) {
+          setError('Veículo não encontrado.');
         } else {
-          const v = result.veiculos.find((v) => v.id === params.id);
-          if (!v) {
-            toast.error('Veículo não encontrado.');
-            setError('Veículo não encontrado.');
-          } else {
-            setVeiculo(v);
-          }
+          setVeiculo(v);
         }
-      } catch {
-        toast.error('Erro ao carregar os dados do veículo. Tente novamente.');
-        setError('Erro ao buscar veículo.');
-      } finally {
-        setLoading(false);
       }
+    } catch {
+      toast.error('Erro ao carregar os dados do veículo. Tente novamente.');
+      setError('Erro ao buscar veículo.');
+    } finally {
+      setLoading(false);
     }
+  }, [user?.id, params.id]);
 
+  // --------------------------------------------------------------------------
+  // EFEITO INICIAL
+  // --------------------------------------------------------------------------
+
+  useEffect(() => {
     fetchVeiculo();
-  }, [user?.id, params.id, refetchTrigger]);
+  }, [fetchVeiculo]);
 
-  // Função para lidar com a atualização do veículo
+  // --------------------------------------------------------------------------
+  // CALLBACK DE ATUALIZAÇÃO
+  // --------------------------------------------------------------------------
+
   const handleVeiculoAtualizado = (veiculoAtualizado: Veiculo) => {
     setVeiculo(veiculoAtualizado);
-
     toast.success('Veículo atualizado com sucesso!');
-
-    setTimeout(() => {
-      setRefetchTrigger((prev) => prev + 1);
-    }, 100);
+    fetchVeiculo(); // Recarrega para garantir consistência
   };
 
-  // Função para recarregar os dados manualmente
-  const handleRecarregarDados = () => {
-    setRefetchTrigger((prev) => prev + 1);
-  };
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO CONDICIONAL
+  // --------------------------------------------------------------------------
 
   if (loading) {
     return (
@@ -89,21 +177,20 @@ export default function EditarVeiculoPage() {
 
   if (error || !veiculo) {
     return (
-      <div className="p-4 flex flex-col items-center justify-center min-h-[60vh] text-red-600 text-center gap-2">
-        <p>{error || 'Veículo não encontrado'}</p>
-        <div className="flex gap-2 mt-4">
-          <Link
-            href="/motorista/veiculos/meus-veiculos"
-            className="text-blue-600 underline px-4 py-2 hover:bg-blue-50 rounded-md transition-colors"
-          >
-            Voltar para todos os veículos
-          </Link>
-          <button
-            onClick={handleRecarregarDados}
-            className="text-gray-600 underline px-4 py-2 hover:bg-gray-100 rounded-md transition-colors"
-          >
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
+        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+          <AlertCircle className="w-8 h-8 text-red-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">
+          {error || 'Veículo não encontrado'}
+        </h3>
+        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <Button onClick={fetchVeiculo} variant="outline">
             Tentar novamente
-          </button>
+          </Button>
+          <Link href="/motorista/veiculos/meus-veiculos">
+            <Button variant="ghost">Voltar para todos os veículos</Button>
+          </Link>
         </div>
       </div>
     );
@@ -112,7 +199,7 @@ export default function EditarVeiculoPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 flex flex-col items-center w-full min-h-screen bg-gray-50">
       <div className="w-full max-w-4xl lg:max-w-6xl">
-        {/* Header responsivo */}
+        {/* Link de retorno */}
         <div className="mb-6 sm:mb-8">
           <Link
             href="/motorista/veiculos/meus-veiculos"
@@ -125,9 +212,9 @@ export default function EditarVeiculoPage() {
           </Link>
         </div>
 
-        {/* Container responsivo para o card */}
+        {/* Layout principal (desktop: 2 colunas + sidebar) */}
         <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Card ocupa 2 colunas em telas grandes */}
+          {/* Coluna principal - Formulário */}
           <div className="lg:col-span-2">
             <VeiculoDetalhes
               veiculo={veiculo}
@@ -135,7 +222,7 @@ export default function EditarVeiculoPage() {
             />
           </div>
 
-          {/* Espaço para informações adicionais em telas grandes */}
+          {/* Sidebar informativa (desktop) */}
           <div className="hidden lg:block">
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 sticky top-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -156,20 +243,12 @@ export default function EditarVeiculoPage() {
                 </li>
               </ul>
 
-              {/* Status do veículo */}
+              {/* Resumo do veículo */}
               <div className="pt-4 border-t border-gray-200">
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">
                   Status do veículo
                 </h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">
-                      Última atualização:
-                    </span>
-                    <span className="text-sm font-medium text-gray-800">
-                      {new Date().toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Placa:</span>
                     <span className="text-sm font-mono font-medium text-gray-800">
@@ -188,13 +267,13 @@ export default function EditarVeiculoPage() {
           </div>
         </div>
 
-        {/* Botão de recarregar para mobile */}
+        {/* Botão de atualizar (mobile) */}
         <div className="lg:hidden mt-6">
           <button
-            onClick={handleRecarregarDados}
+            onClick={fetchVeiculo}
             className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
           >
-            <Loader2 className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4" />
             <span>Atualizar dados do veículo</span>
           </button>
         </div>
