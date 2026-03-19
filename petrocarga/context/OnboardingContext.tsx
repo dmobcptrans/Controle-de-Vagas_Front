@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { api } from '@/service/api';
 import { useAuth } from '@/context/AuthContext';
+import toast from 'react-hot-toast';
 
 interface OnboardingData {
   cpf: string;
@@ -85,17 +86,24 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const submit = useCallback(async () => {
     try {
       await api.post('/petrocarga/auth/completarCadastro', data);
-
-
       await refreshUser();
+      toast.success('Cadastro completo com sucesso!');
 
       setIsOpen(false);
       setStep(1);
 
-    } catch (error) {
-      console.error('Erro ao completar onboarding', error);
-      throw new Error('Erro ao completar cadastro');
-    }
+    } catch (error: any) {
+  console.error('Erro ao completar onboarding', error);
+
+  const mensagem =
+    error?.response?.data?.erro ||
+    error?.response?.data?.message || 
+    'Erro ao completar cadastro';
+
+  toast.error(mensagem);
+
+  throw error;
+}
   }, [data, refreshUser]);
 
   const reset = useCallback(() => {

@@ -1,15 +1,19 @@
 'use client';
 
 import { useOnboarding } from '@/context/OnboardingContext';
-import { use, useState } from 'react';
+import { useState } from 'react';
 
-const CNH_CATS = ['A', 'B', 'AB', 'C', 'D'];
+// Lista expandida de categorias
+const CNH_CATS = ['B', 'AB', 'C', 'AC', 'D', 'AD', 'E', 'AE'];
 
 export default function OnboardingModal() {
   const { isOpen, step, data, updateData, nextStep, prevStep, submit } = useOnboarding();
   const [showPassword, setShowPassword] = useState(false);
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [exibirConfirmarSenha, setExibirConfirmarSenha] = useState(false);
+
+  // Estado para controlar a "gaveta" de seleção da CNH
+  const [isCnhDrawerOpen, setIsCnhDrawerOpen] = useState(false);
 
   const senhasIguais = data.senha === confirmarSenha;
 
@@ -31,26 +35,19 @@ export default function OnboardingModal() {
   const strength = pwdStrength(data.senha || '');
 
   const fmtCPF = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
+    const numbers = value.replace(/\D/g, '').slice(0, 11);
 
     if (numbers.length <= 3) return numbers;
-    if (numbers.length <= 6)
-      return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
-    if (numbers.length <= 9)
-      return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
-
+    if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+    if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
     return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
   };
 
   const fmtTel = (value: string) => {
     const numbers = value.replace(/\D/g, '');
-
     if (numbers.length <= 2) return numbers;
-    if (numbers.length <= 7)
-      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-    if (numbers.length <= 11)
-      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
-
+    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
     return value;
   };
 
@@ -60,12 +57,7 @@ export default function OnboardingModal() {
     if (step === 1) {
       const cpf = (data.cpf || '').replace(/\D/g, '');
       const tel = (data.telefone || '').replace(/\D/g, '');
-      return (
-        cpf.length === 11 &&
-        tel.length >= 10 &&
-        (data.senha || '').length >= 8 &&
-        senhasIguais
-      );
+      return cpf.length >= 11 && tel.length >= 10 && (data.senha || '').length >= 8 && senhasIguais;
     }
     if (step === 2) {
       return !!(data.tipoCnh && data.numeroCnh?.length >= 8 && data.dataValidadeCnh);
@@ -87,11 +79,11 @@ export default function OnboardingModal() {
   ];
 
   const inputCls =
-    'mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+    'mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-3 sm:py-2.5 text-base sm:text-sm text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 cursor-pointer text-left flex items-center justify-between';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="relative w-full max-w-md sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-8 shadow-xl">
 
         {/* Header */}
         <div className="mb-6">
@@ -102,107 +94,45 @@ export default function OnboardingModal() {
               {step === 3 && <CheckIcon />}
             </div>
             <div>
-              <h2 className="text-base font-medium text-gray-900">
-                {stepMeta[step - 1].title}
-              </h2>
+              <h2 className="text-base font-medium text-gray-900">{stepMeta[step - 1].title}</h2>
               <p className="text-xs text-gray-400">{stepMeta[step - 1].sub}</p>
             </div>
           </div>
-
-          {/* Progress bar */}
           <div className="mt-3 flex gap-1.5">
             {[1, 2, 3].map((s) => (
-              <div
-                key={s}
-                className="h-1 flex-1 rounded-full transition-all"
-                style={{ background: s <= step ? '#3B82F6' : '#E5E7EB' }}
-              />
+              <div key={s} className="h-1 flex-1 rounded-full transition-all" style={{ background: s <= step ? '#3B82F6' : '#E5E7EB' }} />
             ))}
           </div>
         </div>
 
-        {/* Step 1 — dados pessoais */}
+        {/* Step 1 */}
         {step === 1 && (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="CPF">
-              <input
-                className={inputCls}
-                placeholder="000.000.000-00"
-                value={fmtCPF(data.cpf)}
-                onChange={(e) => updateData({ cpf: onlyNumbers(e.target.value) })}
-              />
+              <input className={inputCls} placeholder="000.000.000-00" value={fmtCPF(data.cpf || '')} onChange={(e) =>
+                updateData({
+                  cpf: onlyNumbers(e.target.value).slice(0, 11),
+                })
+              } />
             </Field>
-
             <Field label="Telefone">
-              <input
-                className={inputCls}
-                placeholder="(00) 00000-0000"
-                value={fmtTel(data.telefone)}
-                onChange={(e) => updateData({ telefone: onlyNumbers(e.target.value) })}
-              />
+              <input className={inputCls} placeholder="(00) 00000-0000" value={fmtTel(data.telefone || '')} onChange={(e) => updateData({ telefone: onlyNumbers(e.target.value) })} />
             </Field>
-
             <Field label="Senha">
               <div className="relative">
-                <input
-                  className={inputCls + ' pr-10'}
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Mínimo 8 caracteres"
-                  value={data.senha || ''}
-                  onChange={(e) => updateData({ senha: e.target.value })}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((p) => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
+                <input className={inputCls + ' pr-10'} type={showPassword ? 'text' : 'password'} placeholder="Mínimo 8 caracteres" value={data.senha || ''} onChange={(e) => updateData({ senha: e.target.value })} />
+                <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600">
                   <EyeIcon />
                 </button>
               </div>
-              {(data.senha || '').length > 0 && (
-                <>
-                  <div className="mt-2 flex gap-1">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div
-                        key={i}
-                        className="h-0.5 flex-1 rounded-full transition-all"
-                        style={{ background: i <= strength ? strengthColors[strength] : '#E5E7EB' }}
-                      />
-                    ))}
-                  </div>
-                  <p className="mt-1 text-xs" style={{ color: strengthColors[strength] }}>
-                    {strengthLabels[strength]}
-                  </p>
-                </>
-              )}
             </Field>
             <Field label="Confirmar senha">
               <div className="relative">
-                <input
-                  className={`${inputCls} pr-10 ${!senhasIguais && confirmarSenha !== ''
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-100'
-                    : ''
-                    }`}
-                  type={exibirConfirmarSenha ? 'text' : 'password'}
-                  placeholder="Digite novamente sua senha"
-                  value={confirmarSenha}
-                  onChange={(e) => setConfirmarSenha(e.target.value)}
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setExibirConfirmarSenha(!exibirConfirmarSenha)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
+                <input className={`${inputCls} pr-10 ${!senhasIguais && confirmarSenha !== '' ? 'border-red-500' : ''}`} type={exibirConfirmarSenha ? 'text' : 'password'} placeholder="Digite novamente" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} />
+                <button type="button" onClick={() => setExibirConfirmarSenha(!exibirConfirmarSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600">
                   <EyeIcon />
                 </button>
               </div>
-
-              {!senhasIguais && confirmarSenha !== '' && (
-                <p className="text-red-500 text-xs mt-1">
-                  As senhas não coincidem
-                </p>
-              )}
             </Field>
           </div>
         )}
@@ -211,128 +141,128 @@ export default function OnboardingModal() {
         {step === 2 && (
           <div className="space-y-4">
             <Field label="Categoria da CNH">
-              <div className="mt-1 flex gap-2">
-                {CNH_CATS.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => updateData({ tipoCnh: cat })}
-                    className="flex-1 rounded-lg border py-2.5 text-sm font-medium transition-all"
-                    style={{
-                      background: data.tipoCnh === cat ? '#EFF6FF' : '#fff',
-                      borderColor: data.tipoCnh === cat ? '#3B82F6' : '#E5E7EB',
-                      color: data.tipoCnh === cat ? '#3B82F6' : '#374151',
-                    }}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsCnhDrawerOpen(true)}
+                className={inputCls}
+              >
+                <span className={data.tipoCnh ? 'text-gray-900' : 'text-gray-400'}>
+                  {data.tipoCnh || 'Selecione a categoria'}
+                </span>
+                <ChevronDownIcon />
+              </button>
             </Field>
 
             <Field label="Número da CNH">
-              <input
-                className={inputCls}
-                placeholder="00000000000"
-                maxLength={11}
-                value={data.numeroCnh}
-                onChange={(e) => updateData({ numeroCnh: e.target.value.replace(/\D/g, '') })}
-              />
+              <input className={inputCls} placeholder="00000000000" maxLength={11} inputMode="numeric" value={data.numeroCnh || ''} onChange={(e) => updateData({ numeroCnh: e.target.value.replace(/\D/g, '') })} />
             </Field>
 
             <Field label="Data de validade">
-              <input
-                type="date"
-                className={inputCls}
-                value={data.dataValidadeCnh}
-                onChange={(e) => updateData({ dataValidadeCnh: e.target.value })}
-              />
+              <input type="date" className={inputCls} value={data.dataValidadeCnh || ''} onChange={(e) => updateData({ dataValidadeCnh: e.target.value })} />
             </Field>
           </div>
         )}
 
         {/* Step 3 — Termos */}
         {step === 3 && (
-          <div className="space-y-3">
-            <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-xs leading-relaxed text-gray-500" style={{ maxHeight: 140, overflowY: 'auto' }}>
-              Ao criar sua conta, você concorda com os Termos de Uso e a Política de Privacidade.
-              Seus dados serão utilizados exclusivamente para fins de cadastro e verificação,
-              em conformidade com a LGPD. Você pode solicitar a exclusão dos seus dados a qualquer momento.
+          <div className="space-y-4">
+            <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500" style={{ maxHeight: 150, overflowY: 'auto' }}>
+              Termos de Uso e Política de Privacidade...
             </div>
-
-            <TermoItem
-              label={<>Li e aceito os <span className="text-blue-500">Termos de Uso</span> e a <span className="text-blue-500">Política de Privacidade</span></>}
-              checked={!!data.aceitarTermos}
-              onChange={(v) => updateData({ aceitarTermos: v })}
-            />
+            <TermoItem label="Li e aceito os termos" checked={!!data.aceitarTermos} onChange={(v) => updateData({ aceitarTermos: v })} />
           </div>
         )}
 
         {/* Footer */}
-        <div className="mt-6 flex items-center justify-between">
-          {step > 1 ? (
-            <button
-              onClick={prevStep}
-              className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-500 hover:bg-gray-50"
-            >
+        <div className="mt-8 flex items-center justify-between gap-3">
+          {step > 1 && (
+            <button onClick={prevStep} className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 flex-1">
               Voltar
             </button>
-          ) : <div />}
-
-          <button
-            onClick={handleNext}
-            disabled={!isStepValid()}
-            className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
+          )}
+          <button onClick={handleNext} disabled={!isStepValid()} className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white disabled:opacity-40 flex-1">
             {step === totalSteps ? 'Finalizar' : 'Próximo'}
           </button>
         </div>
+
+        {/* GAVETA DE SELEÇÃO (CNH DRAWER) */}
+        {isCnhDrawerOpen && (
+          <div className="absolute inset-0 z-[60] flex flex-col bg-white p-5 sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400">Categorias</h3>
+                <p className="text-xs text-gray-500">Escolha uma das opções abaixo</p>
+              </div>
+              <button onClick={() => setIsCnhDrawerOpen(false)} className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200">
+                <CloseIcon />
+              </button>
+            </div>
+
+            {/* Grid 3x3 para mostrar as 9 opções sem scroll */}
+            <div className="flex flex-1 items-center">
+              <div className="grid w-full grid-cols-3 gap-4">
+                {CNH_CATS.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => {
+                      updateData({ tipoCnh: cat });
+                      setIsCnhDrawerOpen(false);
+                    }}
+                    className={`flex h-16 flex-col items-center justify-center rounded-xl border-2 transition-all ${data.tipoCnh === cat
+                      ? 'border-blue-500 bg-blue-50 text-blue-600'
+                      : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
+                      }`}
+                  >
+                    <span className="text-lg font-bold">{cat}</span>
+                    {data.tipoCnh === cat && <div className="h-1 w-4 rounded-full bg-blue-500 mt-1" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <p className="mt-6 text-center text-xs text-gray-400">
+              Toque na categoria para selecionar
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
+// --- Componentes de Apoio ---
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</label>
+      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</label>
       {children}
     </div>
   );
 }
 
-function TermoItem({ label, checked, onChange }: { label: React.ReactNode; checked: boolean; onChange: (v: boolean) => void }) {
+function TermoItem({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-100 p-3 transition hover:bg-gray-50">
-      <div
-        onClick={() => onChange(!checked)}
-        className="mt-0.5 flex h-4.5 w-4.5 flex-shrink-0 items-center justify-center rounded border transition"
-        style={{
-          background: checked ? '#3B82F6' : '#fff',
-          borderColor: checked ? '#3B82F6' : '#D1D5DB',
-          width: 18, height: 18,
-        }}
-      >
-        {checked && (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 5l2.5 2.5 4-5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
-      </div>
-      <span className="text-sm text-gray-700 leading-relaxed" onClick={() => onChange(!checked)}>{label}</span>
+    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 p-4 hover:bg-gray-50">
+      <input type="checkbox" className="h-5 w-5 rounded border-gray-300 text-blue-600" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span className="text-sm text-gray-700">{label}</span>
     </label>
   );
 }
 
-function PersonIcon() {
-  return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#3B82F6" strokeWidth="1.5" /><path d="M2 13c0-3 2.5-5 6-5s6 2 6 5" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" /></svg>;
+// --- Ícones ---
+
+function ChevronDownIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>;
 }
-function CNHIcon() {
-  return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3.5" width="14" height="9" rx="2" stroke="#3B82F6" strokeWidth="1.5" /><path d="M4 8h4M4 10.5h2.5" stroke="#3B82F6" strokeWidth="1.3" strokeLinecap="round" /><circle cx="11.5" cy="8.5" r="2" stroke="#3B82F6" strokeWidth="1.3" /></svg>;
+function CloseIcon() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>;
 }
-function CheckIcon() {
-  return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5 6.5-7" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+function CheckCircleIcon() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>;
 }
-function EyeIcon() {
-  return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3" /><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" /></svg>;
-}
+function PersonIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#3B82F6" strokeWidth="1.5" /><path d="M2 13c0-3 2.5-5 6-5s6 2 6 5" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" /></svg>; }
+function CNHIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3.5" width="14" height="9" rx="2" stroke="#3B82F6" strokeWidth="1.5" /><path d="M4 8h4M4 10.5h2.5" stroke="#3B82F6" strokeWidth="1.3" strokeLinecap="round" /><circle cx="11.5" cy="8.5" r="2" stroke="#3B82F6" strokeWidth="1.3" /></svg>; }
+function CheckIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5 6.5-7" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
+function EyeIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3" /><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" /></svg>; }

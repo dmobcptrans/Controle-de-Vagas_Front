@@ -18,6 +18,7 @@ interface UserData {
   login: string;
   permissao: 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE';
   cpf?: string;
+  veiculoCadastrado: boolean;
 }
 
 function normalizeUserData(data: Record<string, unknown>): UserData {
@@ -27,6 +28,7 @@ function normalizeUserData(data: Record<string, unknown>): UserData {
     login: String(data.login ?? data.email ?? ''),
     permissao: (data.permissao as UserData['permissao']) ?? 'MOTORISTA',
     cpf: data.cpf ? String(data.cpf) : undefined,
+    veiculoCadastrado: Boolean(data.veiculoCadastrado ?? false),
   };
 }
 
@@ -49,11 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      if (typeof window !== 'undefined' && !localStorage.getItem(TOKEN_KEY)) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
       const response = await api.get('/petrocarga/auth/me');
       setUser(normalizeUserData(response.data));
     } catch (error) {
