@@ -11,12 +11,15 @@ import {
 import { useRouter } from 'next/navigation';
 import { api, TOKEN_KEY } from '@/service/api';
 import { atualizarStatusPushToken } from '@/lib/api/notificacaoApi';
+import { AxiosError } from 'axios';
 
 interface UserData {
   id: string;
   nome: string;
   login: string;
   permissao: 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE';
+  cpf?: string;
+  veiculoCadastrado: boolean;
 }
 
 function normalizeUserData(data: Record<string, unknown>): UserData {
@@ -25,6 +28,8 @@ function normalizeUserData(data: Record<string, unknown>): UserData {
     nome: String(data.nome ?? ''),
     login: String(data.login ?? data.email ?? ''),
     permissao: (data.permissao as UserData['permissao']) ?? 'MOTORISTA',
+    cpf: data.cpf ? String(data.cpf) : undefined,
+    veiculoCadastrado: Boolean(data.veiculoCadastrado ?? false),
   };
 }
 
@@ -33,9 +38,16 @@ interface AuthContextData {
   user: UserData | null;
   loading: boolean;
   login: (data: { login: string; senha: string }) => Promise<UserData>;
+  loginWithGoogle: (token: string) => Promise<UserData>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
+
+type ApiError = {
+  erro?: string;
+  message?: string;
+  cause?: string;
+};
 
 export const AuthContext = createContext({} as AuthContextData);
 
@@ -46,11 +58,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      if (typeof window !== 'undefined' && !localStorage.getItem(TOKEN_KEY)) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
       const response = await api.get('/petrocarga/auth/me');
       setUser(normalizeUserData(response.data));
     } catch (error) {
@@ -104,16 +111,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const dadosLogin =
           tipo === 'email'
             ? {
-                email: identificador.trim().toLowerCase(),
-                senha,
-              }
+              email: identificador.trim().toLowerCase(),
+              senha,
+            }
             : {
-                cpf: identificador.replace(/\D/g, ''),
-                senha,
-              };
+              cpf: identificador.replace(/\D/g, ''),
+              senha,
+            };
 
-        const loginResponse = await api.post('/petrocarga/auth/login', dadosLogin);
-        const { usuario, token } = loginResponse.data as { usuario: Record<string, unknown>; token: string };
+        const loginResponse = await api.post(
+          '/petrocarga/auth/login',
+          dadosLogin,
+        );
+        const { usuario, token } = loginResponse.data as {
+          usuario: Record<string, unknown>;
+          token: string;
+        };
 
         if (token) {
           localStorage.setItem(TOKEN_KEY, token);
@@ -122,48 +135,73 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = normalizeUserData(usuario);
         setUser(userData);
         return userData;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro no login:', error);
 
         let mensagemErro = 'Credenciais inválidas ou conta não ativada.';
 
-        if (error.response?.data?.message) {
-          const backendMessage = String(
-            error.response.data.message,
-          ).toLowerCase();
+        // Verificação de tipo para error
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as {
+            response?: {
+              data?: {
+                message?: unknown;
+              };
+              status?: number;
+            };
+          };
 
-          if (backendMessage.includes('cpf')) {
-            mensagemErro = 'CPF inválido. Verifique o formato.';
-          } else if (backendMessage.includes('email')) {
-            mensagemErro = 'Email inválido. Verifique o formato.';
-          } else if (
-            backendMessage.includes('senha') ||
-            backendMessage.includes('password')
+          if (
+            axiosError.response?.data?.message &&
+            typeof axiosError.response.data.message === 'string'
           ) {
-            mensagemErro = 'Senha incorreta.';
-          } else if (
-            backendMessage.includes('formato') ||
-            backendMessage.includes('format')
-          ) {
-            mensagemErro =
-              'Formato inválido. Use email ou CPF (apenas números).';
-          } else if (
-            backendMessage.includes('desativado') ||
-            backendMessage.includes('inativo')
-          ) {
-            mensagemErro = 'Usuário desativado.';
-          } else {
-            mensagemErro = error.response.data.message || mensagemErro;
+            const backendMessage =
+              axiosError.response.data.message.toLowerCase();
+
+            if (backendMessage.includes('cpf')) {
+              mensagemErro = 'CPF inválido. Verifique o formato.';
+            } else if (backendMessage.includes('email')) {
+              mensagemErro = 'Email inválido. Verifique o formato.';
+            } else if (
+              backendMessage.includes('senha') ||
+              backendMessage.includes('password')
+            ) {
+              mensagemErro = 'Senha incorreta.';
+            } else if (
+              backendMessage.includes('formato') ||
+              backendMessage.includes('format')
+            ) {
+              mensagemErro =
+                'Formato inválido. Use email ou CPF (apenas números).';
+            } else if (
+              backendMessage.includes('desativado') ||
+              backendMessage.includes('inativo')
+            ) {
+              mensagemErro = 'Usuário desativado.';
+            } else {
+              mensagemErro = axiosError.response.data.message;
+            }
+          } else if (axiosError.response?.status) {
+            switch (axiosError.response.status) {
+              case 400:
+                mensagemErro = 'Erro na requisição. Verifique seus dados.';
+                break;
+              case 401:
+                mensagemErro = 'CPF/Email ou senha incorretos.';
+                break;
+              case 403:
+                mensagemErro =
+                  'Conta não ativada. Por favor, ative sua conta primeiro.';
+                break;
+              case 404:
+                mensagemErro =
+                  'Usuário não encontrado. Verifique seu CPF/Email.';
+                break;
+            }
           }
-        } else if (error.response?.status === 400) {
-          mensagemErro = 'Erro na requisição. Verifique seus dados.';
-        } else if (error.response?.status === 401) {
-          mensagemErro = 'CPF/Email ou senha incorretos.';
-        } else if (error.response?.status === 403) {
-          mensagemErro =
-            'Conta não ativada. Por favor, ative sua conta primeiro.';
-        } else if (error.response?.status === 404) {
-          mensagemErro = 'Usuário não encontrado. Verifique seu CPF/Email.';
+        } else if (error instanceof Error) {
+          // Se for um erro padrão do JavaScript, usa a mensagem dele
+          mensagemErro = error.message;
         }
 
         throw new Error(mensagemErro);
@@ -172,21 +210,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [identificarTipoLogin],
   );
 
-  const logout = useCallback(async () => {
-  const pushToken = localStorage.getItem('pushToken');
-  try {
-    if (pushToken && user?.id) {
-      await atualizarStatusPushToken(user.id, pushToken, false);
+
+  const loginWithGoogle = useCallback(async (googleToken: string) => {
+    try {
+      const response = await api.post(
+        `/petrocarga/auth/loginWithGoogle?token=${googleToken}`
+      );
+
+      const { usuario, token } = response.data as {
+        usuario: Record<string, unknown>;
+        token: string;
+      };
+
+      if (token) {
+        localStorage.setItem(TOKEN_KEY, token);
+      }
+
+      const userData = normalizeUserData(usuario);
+      setUser(userData);
+
+      return userData;
+    } catch (error: unknown) {
+      console.error('Erro no login Google:', error);
+
+      let message;
+
+      if (error instanceof AxiosError) {
+        const data = error.response?.data as ApiError;
+
+        if (data?.erro) {
+          message = data.erro;
+        } else if (data?.message) {
+          message = data.message;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
+      throw new Error(message);
     }
-    await api.post('/petrocarga/auth/logout');
-  } catch (error) {
-    console.error('Erro ao notificar logout', error);
-  } finally {
-    localStorage.removeItem(TOKEN_KEY);
-    setUser(null);
-    router.push('/autorizacao/login');
-  }
-}, [router, user]);
+  }, []);
+
+  const logout = useCallback(async () => {
+    const pushToken = localStorage.getItem('pushToken');
+    try {
+      if (pushToken && user?.id) {
+        await atualizarStatusPushToken(user.id, pushToken, false);
+      }
+      await api.post('/petrocarga/auth/logout');
+    } catch (error: unknown) {
+      console.error('Erro ao notificar logout', error);
+    } finally {
+      localStorage.removeItem(TOKEN_KEY);
+      setUser(null);
+      router.push('/autorizacao/login');
+    }
+  }, [router, user]);
 
   const value = useMemo(
     () => ({
@@ -194,6 +273,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       loading,
       login,
+      loginWithGoogle,
       logout,
       refreshUser,
     }),
