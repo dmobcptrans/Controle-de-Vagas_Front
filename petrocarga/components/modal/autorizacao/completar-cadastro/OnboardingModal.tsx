@@ -8,22 +8,36 @@ import { Checkbox } from '@/components/ui/checkbox';
 // Lista expandida de categorias
 const CNH_CATS = ['B', 'AB', 'C', 'AC', 'D', 'AD', 'E', 'AE'];
 
-export default function OnboardingModal() {
-  const { isOpen, step, data, updateData, nextStep, prevStep, submit } = useOnboarding();
+export default function OnboardingModal({ lockInitialSteps = false }: { lockInitialSteps?: boolean }) {
+  const { isOpen, step, data, updateData, nextStep, prevStep, submit, submitVeiculo } = useOnboarding();
   const [showPassword, setShowPassword] = useState(false);
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [exibirConfirmarSenha, setExibirConfirmarSenha] = useState(false);
   const [aceitarTermos, setAceitarTermos] = useState(false);
   const [mostrarModalTermos, setMostrarModalTermos] = useState(false);
 
+  const { isVeiculoOnlyFlow } = useOnboarding();
+  const isLockedFlow = isVeiculoOnlyFlow;
+
   // Estado para controlar a "gaveta" de seleção da CNH
   const [isCnhDrawerOpen, setIsCnhDrawerOpen] = useState(false);
+
+  // Estado do veículo (Step 4)
+  const [veiculo, setVeiculo] = useState({
+    placa: '',
+    marca: '',
+    modelo: '',
+    tipo: 'AUTOMOVEL',
+    tipoProprietario: "CPF",
+    cpfProprietario: '',
+    cnpjProprietario: '',
+  });
 
   const senhasIguais = data.senha === confirmarSenha;
 
   if (!isOpen) return null;
 
-  const totalSteps = 3;
+  const totalSteps = 4;
 
   const pwdStrength = (p: string) => {
     let s = 0;
@@ -34,9 +48,6 @@ export default function OnboardingModal() {
     return s;
   };
 
-  const strengthColors = ['', '#E24B4A', '#EF9F27', '#1D9E75', '#1D9E75'];
-  const strengthLabels = ['', 'Fraca', 'Razoável', 'Boa', 'Forte'];
-  const strength = pwdStrength(data.senha || '');
 
   const fmtCPF = (value: string) => {
     const numbers = value.replace(/\D/g, '').slice(0, 11);
@@ -46,6 +57,15 @@ export default function OnboardingModal() {
     if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
     return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
   };
+
+  const fmtCNPJ = (v: string) =>
+    v
+      .replace(/\D/g, "")
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2")
+      .slice(0, 18);
 
   const fmtTel = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -67,19 +87,40 @@ export default function OnboardingModal() {
       return !!(data.tipoCnh && data.numeroCnh?.length >= 8 && data.dataValidadeCnh);
     }
     if (step === 3) return !!data.aceitarTermos;
+    if (step === 4) {
+      return (
+        veiculo.placa.length >= 7 &&
+        !!veiculo.marca &&
+        !!veiculo.modelo &&
+        !!(veiculo.cpfProprietario || veiculo.cnpjProprietario)
+      );
+    }
     return false;
   };
 
   const handleNext = async () => {
     if (!isStepValid()) return;
-    if (step === totalSteps) await submit();
-    else nextStep();
+
+    if (isLockedFlow && step < 4) {
+      return;
+    }
+
+    if (step === 3) {
+      await submit();
+      return;
+    }
+    if (step === 4) {
+      await submitVeiculo(veiculo);
+      return;
+    }
+    nextStep();
   };
 
   const stepMeta = [
-    { title: 'Dados pessoais', sub: 'Etapa 1 de 3' },
-    { title: 'Habilitação', sub: 'Etapa 2 de 3' },
-    { title: 'Termos e condições', sub: 'Etapa 3 de 3' },
+    { title: 'Dados pessoais', sub: 'Etapa 1 de 4' },
+    { title: 'Habilitação', sub: 'Etapa 2 de 4' },
+    { title: 'Termos e condições', sub: 'Etapa 3 de 4' },
+    { title: 'Veículo', sub: 'Etapa 4 de 4' },
   ];
 
   const inputCls =
@@ -87,8 +128,7 @@ export default function OnboardingModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-md sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-8 shadow-xl">
-
+      <div className="relative w-full max-w-md sm:max-w-2xl rounded-2xl bg-white p-5 sm:p-8 shadow-xl">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
@@ -96,6 +136,7 @@ export default function OnboardingModal() {
               {step === 1 && <PersonIcon />}
               {step === 2 && <CNHIcon />}
               {step === 3 && <CheckIcon />}
+              {step === 4 && <CarIcon />}
             </div>
             <div>
               <h2 className="text-base font-medium text-gray-900">{stepMeta[step - 1].title}</h2>
@@ -103,7 +144,7 @@ export default function OnboardingModal() {
             </div>
           </div>
           <div className="mt-3 flex gap-1.5">
-            {[1, 2, 3].map((s) => (
+            {[1, 2, 3, 4].map((s) => (
               <div key={s} className="h-1 flex-1 rounded-full transition-all" style={{ background: s <= step ? '#3B82F6' : '#E5E7EB' }} />
             ))}
           </div>
@@ -203,14 +244,135 @@ export default function OnboardingModal() {
           </div>
         )}
 
+        {/* Step 4 — Veículo */}
+        {step === 4 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Placa">
+              <input
+                className={inputCls}
+                placeholder="ABC1D23"
+                maxLength={8}
+                value={veiculo.placa}
+                onChange={(e) => setVeiculo({ ...veiculo, placa: e.target.value.toUpperCase() })}
+              />
+            </Field>
+
+            <Field label="Marca">
+              <input
+                className={inputCls}
+                placeholder="Ex: Toyota"
+                value={veiculo.marca}
+                onChange={(e) => setVeiculo({ ...veiculo, marca: e.target.value })}
+              />
+            </Field>
+
+            <Field label="Modelo">
+              <input
+                className={inputCls}
+                placeholder="Ex: Corolla"
+                value={veiculo.modelo}
+                onChange={(e) => setVeiculo({ ...veiculo, modelo: e.target.value })}
+              />
+            </Field>
+
+            <Field label="Tipo">
+              <select
+                className={inputCls}
+                value={veiculo.tipo}
+                onChange={(e) => setVeiculo({ ...veiculo, tipo: e.target.value })}
+              >
+                <option value="AUTOMOVEL">Automóvel</option>
+                <option value="VUC">VUC</option>
+                <option value="CAMINHONETA">Caminhoneta</option>
+                <option value="CAMINHAO_MEDIO">Caminhão Médio</option>
+                <option value="CAMINHAO_LONGO">Caminhão Longo</option>
+              </select>
+            </Field>
+
+            <div className="col-span-1 sm:col-span-2">
+              <Field label="Tipo de proprietário">
+                <div className="flex gap-3">
+                  {["CPF", "CNPJ"].map((tipo) => (
+                    <button
+                      key={tipo}
+                      type="button"
+                      onClick={() =>
+                        setVeiculo({
+                          ...veiculo,
+                          tipoProprietario: tipo as "CPF" | "CNPJ",
+                          cpfProprietario: "",
+                          cnpjProprietario: "",
+                        })
+                      }
+                      className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${veiculo.tipoProprietario === tipo
+                        ? "bg-blue-600 border-blue-600 text-white"
+                        : "bg-transparent border-gray-300 text-gray-600 hover:border-blue-400"
+                        }`}
+                    >
+                      {tipo}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            </div>
+
+            {veiculo.tipoProprietario === "CPF" && (
+              <div className="col-span-1 sm:col-span-2">
+                <Field label="CPF do proprietário">
+                  <input
+                    className={inputCls}
+                    placeholder="000.000.000-00"
+                    inputMode="numeric"
+                    value={fmtCPF(veiculo.cpfProprietario)}
+                    onChange={(e) =>
+                      setVeiculo({
+                        ...veiculo,
+                        cpfProprietario: onlyNumbers(e.target.value).slice(0, 11),
+                      })
+                    }
+                  />
+                </Field>
+              </div>
+            )}
+
+            {veiculo.tipoProprietario === "CNPJ" && (
+              <div className="col-span-1 sm:col-span-2">
+                <Field label="CNPJ do proprietário">
+                  <input
+                    className={inputCls}
+                    placeholder="00.000.000/0000-00"
+                    inputMode="numeric"
+                    value={fmtCNPJ(veiculo.cnpjProprietario)}
+                    onChange={(e) =>
+                      setVeiculo({
+                        ...veiculo,
+                        cnpjProprietario: onlyNumbers(e.target.value).slice(0, 14),
+                      })
+                    }
+                  />
+                </Field>
+              </div>
+            )}
+          </div>
+        )}
+
+
         {/* Footer */}
-        <div className="mt-8 flex items-center justify-between gap-3">
-          {step > 1 && (
+        <div
+          className={`mt-8 flex items-center gap-3 ${isLockedFlow && step === 4 ? 'justify-center' : 'justify-between'
+            }`}
+        >
+          {step > 1 && !(isLockedFlow && step === 4) && (
             <button onClick={prevStep} className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 flex-1">
               Voltar
             </button>
           )}
-          <button onClick={handleNext} disabled={!isStepValid()} className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white disabled:opacity-40 flex-1">
+          <button
+            onClick={handleNext}
+            disabled={!isStepValid()}
+            className={`rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white disabled:opacity-40 ${isLockedFlow && step === 4 ? 'w-full max-w-xs' : 'flex-1'
+              }`}
+          >
             {step === totalSteps ? 'Finalizar' : 'Próximo'}
           </button>
         </div>
@@ -301,3 +463,4 @@ function PersonIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" f
 function CNHIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3.5" width="14" height="9" rx="2" stroke="#3B82F6" strokeWidth="1.5" /><path d="M4 8h4M4 10.5h2.5" stroke="#3B82F6" strokeWidth="1.3" strokeLinecap="round" /><circle cx="11.5" cy="8.5" r="2" stroke="#3B82F6" strokeWidth="1.3" /></svg>; }
 function CheckIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5 6.5-7" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
 function EyeIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3" /><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" /></svg>; }
+function CarIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 9l1.5-4h9L14 9" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><rect x="1" y="9" width="14" height="4" rx="1.5" stroke="#3B82F6" strokeWidth="1.5" /><circle cx="4.5" cy="13" r="1" fill="#3B82F6" /><circle cx="11.5" cy="13" r="1" fill="#3B82F6" /></svg>; }
