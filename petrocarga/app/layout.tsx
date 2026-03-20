@@ -44,7 +44,7 @@ export default function RootLayout({
     <html lang="pt-br" className={mavenPro.variable}>
       <body>
         <Toaster position="top-center" />
-        <GoogleOAuthProvider clientId={"558997216644-5namvgh3n5vavu40c7jnrthc932q1k8j.apps.googleusercontent.com"}>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
         <AuthProvider>
           <NotificationWrapper>{children}</NotificationWrapper>
         </AuthProvider>

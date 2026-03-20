@@ -2,6 +2,8 @@
 
 import { useOnboarding } from '@/context/OnboardingContext';
 import { useState } from 'react';
+import ModalTermos from '../login/ModalTermos';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Lista expandida de categorias
 const CNH_CATS = ['B', 'AB', 'C', 'AC', 'D', 'AD', 'E', 'AE'];
@@ -11,6 +13,8 @@ export default function OnboardingModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [exibirConfirmarSenha, setExibirConfirmarSenha] = useState(false);
+  const [aceitarTermos, setAceitarTermos] = useState(false);
+  const [mostrarModalTermos, setMostrarModalTermos] = useState(false);
 
   // Estado para controlar a "gaveta" de seleção da CNH
   const [isCnhDrawerOpen, setIsCnhDrawerOpen] = useState(false);
@@ -166,10 +170,36 @@ export default function OnboardingModal() {
         {/* Step 3 — Termos */}
         {step === 3 && (
           <div className="space-y-4">
-            <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500" style={{ maxHeight: 150, overflowY: 'auto' }}>
-              Termos de Uso e Política de Privacidade...
+            <div className="flex items-start space-x-2 pt-2">
+              <Checkbox
+                id="termos"
+                checked={data.aceitarTermos}
+                onCheckedChange={(checked) => {
+                  const value = checked as boolean;
+                  setAceitarTermos(value);
+                  updateData({ aceitarTermos: value });
+                }}
+                className="mt-1"
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="termos"
+                  className="text-sm text-gray-600 leading-relaxed"
+                >
+                  Li e aceito os{' '}
+                  <button
+                    type="button"
+                    onClick={() => setMostrarModalTermos(true)}
+                    className="text-blue-600 hover:text-blue-700 font-medium underline underline-offset-2 hover:no-underline transition-colors"
+                  >
+                    Termos de Uso e Política de Privacidade
+                  </button>
+                </label>
+                <p className="text-xs text-gray-500">
+                  É necessário aceitar os termos para ativar sua conta
+                </p>
+              </div>
             </div>
-            <TermoItem label="Li e aceito os termos" checked={!!data.aceitarTermos} onChange={(v) => updateData({ aceitarTermos: v })} />
           </div>
         )}
 
@@ -227,6 +257,11 @@ export default function OnboardingModal() {
           </div>
         )}
       </div>
+      <ModalTermos
+        open={mostrarModalTermos}
+        onOpenChange={setMostrarModalTermos}
+        onClose={() => setMostrarModalTermos(false)}
+      />
     </div>
   );
 }
