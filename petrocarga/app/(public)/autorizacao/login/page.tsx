@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ModalAtivacaoConta from '@/components/modal/autorizacao/login/ModalAtivacaoConta';
+import ButtonLoginGoogle from '@/components/ui/buttonLoginGoogle';
 
 /**
  * @component LoginPage
@@ -515,6 +516,10 @@ function LoginContent() {
               )}
             </Button>
           </form>
+          
+          <div className="mt-4 space-y-4">
+          <ButtonLoginGoogle />
+          </div>
 
           {/* Botão de cadastro */}
           <div className="mt-4 space-y-4">

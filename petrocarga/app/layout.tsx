@@ -3,6 +3,7 @@ import { Maven_Pro } from 'next/font/google';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import {GoogleOAuthProvider} from '@react-oauth/google'
 import { NotificationWrapper } from '@/components/notification/notificationWrapper';
 import { Toaster } from 'react-hot-toast';
 
@@ -43,9 +44,11 @@ export default function RootLayout({
     <html lang="pt-br" className={mavenPro.variable}>
       <body>
         <Toaster position="top-center" />
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
         <AuthProvider>
           <NotificationWrapper>{children}</NotificationWrapper>
         </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

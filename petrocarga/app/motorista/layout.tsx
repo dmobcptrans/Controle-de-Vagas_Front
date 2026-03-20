@@ -5,6 +5,8 @@ import PrivateRoute from '@/context/PrivateRoute';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { MapProvider } from '@/context/MapContext';
 import { PushNotificationBanner } from '@/context/PushProvider/PushNotificationBanner';
+import { OnboardingProvider } from '@/context/OnboardingContext';
+import OnboardingModal from '@/components/modal/autorizacao/completar-cadastro/OnboardingModal';
 
 /**
  * @module MotoristaLayout
@@ -113,17 +115,17 @@ export default function MotoristaLayout({
       <PrivateRoute allowedRoles={['MOTORISTA']}>
         {/* Banner de notificações push */}
         <PushNotificationBanner />
-
-        {/* Barra de navegação superior (versão motorista) */}
-        <Navbar />
+        <OnboardingProvider>
+          <Navbar />
 
         {/* Conteúdo principal com contexto do mapa */}
         <main className="flex-1 relative">
           <MapProvider>{children}</MapProvider>
         </main>
 
-        {/* Rodapé */}
-        <Footer />
+          <Footer />
+          <OnboardingModal />
+          </OnboardingProvider>
       </PrivateRoute>
     </div>
   );

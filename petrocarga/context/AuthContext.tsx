@@ -17,6 +17,8 @@ interface UserData {
   nome: string;
   login: string;
   permissao: 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE';
+  cpf?: string;
+  veiculoCadastrado: boolean;
 }
 
 function normalizeUserData(data: Record<string, unknown>): UserData {
@@ -25,6 +27,8 @@ function normalizeUserData(data: Record<string, unknown>): UserData {
     nome: String(data.nome ?? ''),
     login: String(data.login ?? data.email ?? ''),
     permissao: (data.permissao as UserData['permissao']) ?? 'MOTORISTA',
+    cpf: data.cpf ? String(data.cpf) : undefined,
+    veiculoCadastrado: Boolean(data.veiculoCadastrado ?? false),
   };
 }
 
@@ -33,6 +37,7 @@ interface AuthContextData {
   user: UserData | null;
   loading: boolean;
   login: (data: { login: string; senha: string }) => Promise<UserData>;
+  loginWithGoogle: (token: string) => Promise<UserData>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -46,11 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      if (typeof window !== 'undefined' && !localStorage.getItem(TOKEN_KEY)) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
       const response = await api.get('/petrocarga/auth/me');
       setUser(normalizeUserData(response.data));
     } catch (error) {
@@ -203,6 +203,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [identificarTipoLogin],
   );
 
+
+const loginWithGoogle = useCallback(async (googleToken: string) => {
+  try {
+    const response = await api.post(
+      `/petrocarga/auth/loginWithGoogle?token=${googleToken}`
+    );
+
+    const { usuario, token } = response.data as {
+      usuario: Record<string, unknown>;
+      token: string;
+    };
+
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    }
+
+    const userData = normalizeUserData(usuario);
+    setUser(userData);
+
+    return userData;
+  } catch (error) {
+    console.error('Erro no login Google:', error);
+    throw new Error('Erro ao autenticar com Google');
+  }
+}, []);
+
   const logout = useCallback(async () => {
     const pushToken = localStorage.getItem('pushToken');
     try {
@@ -225,6 +251,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       loading,
       login,
+      loginWithGoogle,
       logout,
       refreshUser,
     }),
