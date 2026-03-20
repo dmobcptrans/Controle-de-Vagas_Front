@@ -15,10 +15,13 @@ export const api = axios.create({
 
 /**
  * INTERCEPTOR DE REQUISIÇÃO
- * Adiciona o token JWT no header Authorization para autenticação persistente.
+ * Adiciona:
+ * - JWT no Authorization
+ * - Header do ngrok (bypass warning)
  */
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    config.headers['ngrok-skip-browser-warning'] = 'true';
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem(TOKEN_KEY);
       if (token) {

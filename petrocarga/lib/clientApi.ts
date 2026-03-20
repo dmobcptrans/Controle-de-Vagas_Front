@@ -11,6 +11,7 @@ export async function clientApi(path: string, options: ClientApiOptions = {}) {
 
   const headers: Record<string, string> = {
     ...((options.headers as Record<string, string>) || {}),
+    'ngrok-skip-browser-warning': 'true',
   };
 
   if (typeof window !== 'undefined') {
