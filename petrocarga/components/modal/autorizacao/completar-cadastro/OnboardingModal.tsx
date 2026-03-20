@@ -8,8 +8,21 @@ import { Checkbox } from '@/components/ui/checkbox';
 // Lista expandida de categorias
 const CNH_CATS = ['B', 'AB', 'C', 'AC', 'D', 'AD', 'E', 'AE'];
 
-export default function OnboardingModal({ lockInitialSteps = false }: { lockInitialSteps?: boolean }) {
-  const { isOpen, step, data, updateData, nextStep, prevStep, submit, submitVeiculo } = useOnboarding();
+export default function OnboardingModal({
+  lockInitialSteps = false,
+}: {
+  lockInitialSteps?: boolean;
+}) {
+  const {
+    isOpen,
+    step,
+    data,
+    updateData,
+    nextStep,
+    prevStep,
+    submit,
+    submitVeiculo,
+  } = useOnboarding();
   const [showPassword, setShowPassword] = useState(false);
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [exibirConfirmarSenha, setExibirConfirmarSenha] = useState(false);
@@ -22,13 +35,23 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
   // Estado para controlar a "gaveta" de seleção da CNH
   const [isCnhDrawerOpen, setIsCnhDrawerOpen] = useState(false);
 
+  type VeiculoFormData = {
+    placa: string;
+    marca: string;
+    modelo: string;
+    tipo: string;
+    tipoProprietario: 'CPF' | 'CNPJ';
+    cpfProprietario: string;
+    cnpjProprietario: string;
+  };
+
   // Estado do veículo (Step 4)
-  const [veiculo, setVeiculo] = useState({
+  const [veiculo, setVeiculo] = useState<VeiculoFormData>({
     placa: '',
     marca: '',
     modelo: '',
     tipo: 'AUTOMOVEL',
-    tipoProprietario: "CPF",
+    tipoProprietario: 'CPF',
     cpfProprietario: '',
     cnpjProprietario: '',
   });
@@ -48,30 +71,33 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
     return s;
   };
 
-
   const fmtCPF = (value: string) => {
     const numbers = value.replace(/\D/g, '').slice(0, 11);
 
     if (numbers.length <= 3) return numbers;
-    if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
-    if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
+    if (numbers.length <= 6)
+      return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+    if (numbers.length <= 9)
+      return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
     return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
   };
 
   const fmtCNPJ = (v: string) =>
     v
-      .replace(/\D/g, "")
-      .replace(/^(\d{2})(\d)/, "$1.$2")
-      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-      .replace(/\.(\d{3})(\d)/, ".$1/$2")
-      .replace(/(\d{4})(\d)/, "$1-$2")
+      .replace(/\D/g, '')
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2')
       .slice(0, 18);
 
   const fmtTel = (value: string) => {
     const numbers = value.replace(/\D/g, '');
     if (numbers.length <= 2) return numbers;
-    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-    if (numbers.length <= 11) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+    if (numbers.length <= 7)
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    if (numbers.length <= 11)
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
     return value;
   };
 
@@ -81,10 +107,19 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
     if (step === 1) {
       const cpf = (data.cpf || '').replace(/\D/g, '');
       const tel = (data.telefone || '').replace(/\D/g, '');
-      return cpf.length >= 11 && tel.length >= 10 && (data.senha || '').length >= 8 && senhasIguais;
+      return (
+        cpf.length >= 11 &&
+        tel.length >= 10 &&
+        (data.senha || '').length >= 8 &&
+        senhasIguais
+      );
     }
     if (step === 2) {
-      return !!(data.tipoCnh && data.numeroCnh?.length >= 8 && data.dataValidadeCnh);
+      return !!(
+        data.tipoCnh &&
+        data.numeroCnh?.length >= 8 &&
+        data.dataValidadeCnh
+      );
     }
     if (step === 3) return !!data.aceitarTermos;
     if (step === 4) {
@@ -139,13 +174,19 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
               {step === 4 && <CarIcon />}
             </div>
             <div>
-              <h2 className="text-base font-medium text-gray-900">{stepMeta[step - 1].title}</h2>
+              <h2 className="text-base font-medium text-gray-900">
+                {stepMeta[step - 1].title}
+              </h2>
               <p className="text-xs text-gray-400">{stepMeta[step - 1].sub}</p>
             </div>
           </div>
           <div className="mt-3 flex gap-1.5">
             {[1, 2, 3, 4].map((s) => (
-              <div key={s} className="h-1 flex-1 rounded-full transition-all" style={{ background: s <= step ? '#3B82F6' : '#E5E7EB' }} />
+              <div
+                key={s}
+                className="h-1 flex-1 rounded-full transition-all"
+                style={{ background: s <= step ? '#3B82F6' : '#E5E7EB' }}
+              />
             ))}
           </div>
         </div>
@@ -154,27 +195,61 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
         {step === 1 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="CPF">
-              <input className={inputCls} inputMode="numeric" placeholder="000.000.000-00" value={fmtCPF(data.cpf || '')} onChange={(e) =>
-                updateData({
-                  cpf: onlyNumbers(e.target.value).slice(0, 11),
-                })
-              } />
+              <input
+                className={inputCls}
+                inputMode="numeric"
+                placeholder="000.000.000-00"
+                value={fmtCPF(data.cpf || '')}
+                onChange={(e) =>
+                  updateData({
+                    cpf: onlyNumbers(e.target.value).slice(0, 11),
+                  })
+                }
+              />
             </Field>
             <Field label="Telefone">
-              <input className={inputCls} inputMode="numeric" placeholder="(00) 00000-0000" value={fmtTel(data.telefone || '')} onChange={(e) => updateData({ telefone: onlyNumbers(e.target.value) })} />
+              <input
+                className={inputCls}
+                inputMode="numeric"
+                placeholder="(00) 00000-0000"
+                value={fmtTel(data.telefone || '')}
+                onChange={(e) =>
+                  updateData({ telefone: onlyNumbers(e.target.value) })
+                }
+              />
             </Field>
             <Field label="Senha">
               <div className="relative">
-                <input className={inputCls + ' pr-10'} type={showPassword ? 'text' : 'password'} placeholder="Mínimo 8 caracteres" value={data.senha || ''} onChange={(e) => updateData({ senha: e.target.value })} />
-                <button type="button" onClick={() => setShowPassword((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600">
+                <input
+                  className={inputCls + ' pr-10'}
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Mínimo 8 caracteres"
+                  value={data.senha || ''}
+                  onChange={(e) => updateData({ senha: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                >
                   <EyeIcon />
                 </button>
               </div>
             </Field>
             <Field label="Confirmar senha">
               <div className="relative">
-                <input className={`${inputCls} pr-10 ${!senhasIguais && confirmarSenha !== '' ? 'border-red-500' : ''}`} type={exibirConfirmarSenha ? 'text' : 'password'} placeholder="Digite novamente" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} />
-                <button type="button" onClick={() => setExibirConfirmarSenha(!exibirConfirmarSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600">
+                <input
+                  className={`${inputCls} pr-10 ${!senhasIguais && confirmarSenha !== '' ? 'border-red-500' : ''}`}
+                  type={exibirConfirmarSenha ? 'text' : 'password'}
+                  placeholder="Digite novamente"
+                  value={confirmarSenha}
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setExibirConfirmarSenha(!exibirConfirmarSenha)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                >
                   <EyeIcon />
                 </button>
               </div>
@@ -191,7 +266,9 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
                 onClick={() => setIsCnhDrawerOpen(true)}
                 className={inputCls}
               >
-                <span className={data.tipoCnh ? 'text-gray-900' : 'text-gray-400'}>
+                <span
+                  className={data.tipoCnh ? 'text-gray-900' : 'text-gray-400'}
+                >
                   {data.tipoCnh || 'Selecione a categoria'}
                 </span>
                 <ChevronDownIcon />
@@ -199,11 +276,27 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
             </Field>
 
             <Field label="Número da CNH">
-              <input className={inputCls} placeholder="00000000000" maxLength={11} inputMode="numeric" value={data.numeroCnh || ''} onChange={(e) => updateData({ numeroCnh: e.target.value.replace(/\D/g, '') })} />
+              <input
+                className={inputCls}
+                placeholder="00000000000"
+                maxLength={11}
+                inputMode="numeric"
+                value={data.numeroCnh || ''}
+                onChange={(e) =>
+                  updateData({ numeroCnh: e.target.value.replace(/\D/g, '') })
+                }
+              />
             </Field>
 
             <Field label="Data de validade">
-              <input type="date" className={inputCls} value={data.dataValidadeCnh || ''} onChange={(e) => updateData({ dataValidadeCnh: e.target.value })} />
+              <input
+                type="date"
+                className={inputCls}
+                value={data.dataValidadeCnh || ''}
+                onChange={(e) =>
+                  updateData({ dataValidadeCnh: e.target.value })
+                }
+              />
             </Field>
           </div>
         )}
@@ -253,7 +346,12 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
                 placeholder="ABC1D23"
                 maxLength={8}
                 value={veiculo.placa}
-                onChange={(e) => setVeiculo({ ...veiculo, placa: e.target.value.toUpperCase() })}
+                onChange={(e) =>
+                  setVeiculo({
+                    ...veiculo,
+                    placa: e.target.value.toUpperCase(),
+                  })
+                }
               />
             </Field>
 
@@ -262,7 +360,9 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
                 className={inputCls}
                 placeholder="Ex: Toyota"
                 value={veiculo.marca}
-                onChange={(e) => setVeiculo({ ...veiculo, marca: e.target.value })}
+                onChange={(e) =>
+                  setVeiculo({ ...veiculo, marca: e.target.value })
+                }
               />
             </Field>
 
@@ -271,7 +371,9 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
                 className={inputCls}
                 placeholder="Ex: Corolla"
                 value={veiculo.modelo}
-                onChange={(e) => setVeiculo({ ...veiculo, modelo: e.target.value })}
+                onChange={(e) =>
+                  setVeiculo({ ...veiculo, modelo: e.target.value })
+                }
               />
             </Field>
 
@@ -279,7 +381,9 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
               <select
                 className={inputCls}
                 value={veiculo.tipo}
-                onChange={(e) => setVeiculo({ ...veiculo, tipo: e.target.value })}
+                onChange={(e) =>
+                  setVeiculo({ ...veiculo, tipo: e.target.value })
+                }
               >
                 <option value="AUTOMOVEL">Automóvel</option>
                 <option value="VUC">VUC</option>
@@ -292,22 +396,23 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
             <div className="col-span-1 sm:col-span-2">
               <Field label="Tipo de proprietário">
                 <div className="flex gap-3">
-                  {["CPF", "CNPJ"].map((tipo) => (
+                  {['CPF', 'CNPJ'].map((tipo) => (
                     <button
                       key={tipo}
                       type="button"
                       onClick={() =>
                         setVeiculo({
                           ...veiculo,
-                          tipoProprietario: tipo as "CPF" | "CNPJ",
-                          cpfProprietario: "",
-                          cnpjProprietario: "",
+                          tipoProprietario: tipo as 'CPF' | 'CNPJ',
+                          cpfProprietario: '',
+                          cnpjProprietario: '',
                         })
                       }
-                      className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${veiculo.tipoProprietario === tipo
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "bg-transparent border-gray-300 text-gray-600 hover:border-blue-400"
-                        }`}
+                      className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        veiculo.tipoProprietario === tipo
+                          ? 'bg-blue-600 border-blue-600 text-white'
+                          : 'bg-transparent border-gray-300 text-gray-600 hover:border-blue-400'
+                      }`}
                     >
                       {tipo}
                     </button>
@@ -316,7 +421,7 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
               </Field>
             </div>
 
-            {veiculo.tipoProprietario === "CPF" && (
+            {veiculo.tipoProprietario === 'CPF' && (
               <div className="col-span-1 sm:col-span-2">
                 <Field label="CPF do proprietário">
                   <input
@@ -327,7 +432,10 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
                     onChange={(e) =>
                       setVeiculo({
                         ...veiculo,
-                        cpfProprietario: onlyNumbers(e.target.value).slice(0, 11),
+                        cpfProprietario: onlyNumbers(e.target.value).slice(
+                          0,
+                          11,
+                        ),
                       })
                     }
                   />
@@ -335,7 +443,7 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
               </div>
             )}
 
-            {veiculo.tipoProprietario === "CNPJ" && (
+            {veiculo.tipoProprietario === 'CNPJ' && (
               <div className="col-span-1 sm:col-span-2">
                 <Field label="CNPJ do proprietário">
                   <input
@@ -346,7 +454,10 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
                     onChange={(e) =>
                       setVeiculo({
                         ...veiculo,
-                        cnpjProprietario: onlyNumbers(e.target.value).slice(0, 14),
+                        cnpjProprietario: onlyNumbers(e.target.value).slice(
+                          0,
+                          14,
+                        ),
                       })
                     }
                   />
@@ -356,22 +467,26 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
           </div>
         )}
 
-
         {/* Footer */}
         <div
-          className={`mt-8 flex items-center gap-3 ${isLockedFlow && step === 4 ? 'justify-center' : 'justify-between'
-            }`}
+          className={`mt-8 flex items-center gap-3 ${
+            isLockedFlow && step === 4 ? 'justify-center' : 'justify-between'
+          }`}
         >
           {step > 1 && !(isLockedFlow && step === 4) && (
-            <button onClick={prevStep} className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 flex-1">
+            <button
+              onClick={prevStep}
+              className="rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 flex-1"
+            >
               Voltar
             </button>
           )}
           <button
             onClick={handleNext}
             disabled={!isStepValid()}
-            className={`rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white disabled:opacity-40 ${isLockedFlow && step === 4 ? 'w-full max-w-xs' : 'flex-1'
-              }`}
+            className={`rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white disabled:opacity-40 ${
+              isLockedFlow && step === 4 ? 'w-full max-w-xs' : 'flex-1'
+            }`}
           >
             {step === totalSteps ? 'Finalizar' : 'Próximo'}
           </button>
@@ -382,10 +497,17 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
           <div className="absolute inset-0 z-[60] flex flex-col bg-white p-5 sm:p-6">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400">Categorias</h3>
-                <p className="text-xs text-gray-500">Escolha uma das opções abaixo</p>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400">
+                  Categorias
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Escolha uma das opções abaixo
+                </p>
               </div>
-              <button onClick={() => setIsCnhDrawerOpen(false)} className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200">
+              <button
+                onClick={() => setIsCnhDrawerOpen(false)}
+                className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200"
+              >
                 <CloseIcon />
               </button>
             </div>
@@ -401,13 +523,16 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
                       updateData({ tipoCnh: cat });
                       setIsCnhDrawerOpen(false);
                     }}
-                    className={`flex h-16 flex-col items-center justify-center rounded-xl border-2 transition-all ${data.tipoCnh === cat
-                      ? 'border-blue-500 bg-blue-50 text-blue-600'
-                      : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
-                      }`}
+                    className={`flex h-16 flex-col items-center justify-center rounded-xl border-2 transition-all ${
+                      data.tipoCnh === cat
+                        ? 'border-blue-500 bg-blue-50 text-blue-600'
+                        : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
+                    }`}
                   >
                     <span className="text-lg font-bold">{cat}</span>
-                    {data.tipoCnh === cat && <div className="h-1 w-4 rounded-full bg-blue-500 mt-1" />}
+                    {data.tipoCnh === cat && (
+                      <div className="h-1 w-4 rounded-full bg-blue-500 mt-1" />
+                    )}
                   </button>
                 ))}
               </div>
@@ -430,19 +555,40 @@ export default function OnboardingModal({ lockInitialSteps = false }: { lockInit
 
 // --- Componentes de Apoio ---
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</label>
+      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+        {label}
+      </label>
       {children}
     </div>
   );
 }
 
-function TermoItem({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+function TermoItem({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
   return (
     <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 p-4 hover:bg-gray-50">
-      <input type="checkbox" className="h-5 w-5 rounded border-gray-300 text-blue-600" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <input
+        type="checkbox"
+        className="h-5 w-5 rounded border-gray-300 text-blue-600"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
       <span className="text-sm text-gray-700">{label}</span>
     </label>
   );
@@ -451,16 +597,136 @@ function TermoItem({ label, checked, onChange }: { label: string; checked: boole
 // --- Ícones ---
 
 function ChevronDownIcon() {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>;
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
 }
 function CloseIcon() {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>;
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
 }
 function CheckCircleIcon() {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>;
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-blue-600"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
 }
-function PersonIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#3B82F6" strokeWidth="1.5" /><path d="M2 13c0-3 2.5-5 6-5s6 2 6 5" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" /></svg>; }
-function CNHIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3.5" width="14" height="9" rx="2" stroke="#3B82F6" strokeWidth="1.5" /><path d="M4 8h4M4 10.5h2.5" stroke="#3B82F6" strokeWidth="1.3" strokeLinecap="round" /><circle cx="11.5" cy="8.5" r="2" stroke="#3B82F6" strokeWidth="1.3" /></svg>; }
-function CheckIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5 6.5-7" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
-function EyeIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.3" /><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" /></svg>; }
-function CarIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 9l1.5-4h9L14 9" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><rect x="1" y="9" width="14" height="4" rx="1.5" stroke="#3B82F6" strokeWidth="1.5" /><circle cx="4.5" cy="13" r="1" fill="#3B82F6" /><circle cx="11.5" cy="13" r="1" fill="#3B82F6" /></svg>; }
+function PersonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="5" r="3" stroke="#3B82F6" strokeWidth="1.5" />
+      <path
+        d="M2 13c0-3 2.5-5 6-5s6 2 6 5"
+        stroke="#3B82F6"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+function CNHIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect
+        x="1"
+        y="3.5"
+        width="14"
+        height="9"
+        rx="2"
+        stroke="#3B82F6"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M4 8h4M4 10.5h2.5"
+        stroke="#3B82F6"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <circle cx="11.5" cy="8.5" r="2" stroke="#3B82F6" strokeWidth="1.3" />
+    </svg>
+  );
+}
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M3 8.5l3.5 3.5 6.5-7"
+        stroke="#3B82F6"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+function EyeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+      />
+      <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+function CarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path
+        d="M2 9l1.5-4h9L14 9"
+        stroke="#3B82F6"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <rect
+        x="1"
+        y="9"
+        width="14"
+        height="4"
+        rx="1.5"
+        stroke="#3B82F6"
+        strokeWidth="1.5"
+      />
+      <circle cx="4.5" cy="13" r="1" fill="#3B82F6" />
+      <circle cx="11.5" cy="13" r="1" fill="#3B82F6" />
+    </svg>
+  );
+}
