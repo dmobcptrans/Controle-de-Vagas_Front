@@ -50,7 +50,7 @@ export default function ButtonLoginGoogle() {
           size="large"
           shape="rectangular"
           theme="outline"
-          width={400}
+          width="100%"
         />
       </div>
     </div>
