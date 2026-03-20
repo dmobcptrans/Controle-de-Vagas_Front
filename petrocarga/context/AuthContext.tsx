@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { api, TOKEN_KEY } from '@/service/api';
 import { atualizarStatusPushToken } from '@/lib/api/notificacaoApi';
+import { AxiosError } from 'axios';
 
 interface UserData {
   id: string;
@@ -41,6 +42,12 @@ interface AuthContextData {
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
+
+type ApiError = {
+  erro?: string;
+  message?: string;
+  cause?: string;
+};
 
 export const AuthContext = createContext({} as AuthContextData);
 
@@ -104,13 +111,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const dadosLogin =
           tipo === 'email'
             ? {
-                email: identificador.trim().toLowerCase(),
-                senha,
-              }
+              email: identificador.trim().toLowerCase(),
+              senha,
+            }
             : {
-                cpf: identificador.replace(/\D/g, ''),
-                senha,
-              };
+              cpf: identificador.replace(/\D/g, ''),
+              senha,
+            };
 
         const loginResponse = await api.post(
           '/petrocarga/auth/login',
@@ -204,30 +211,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
 
-const loginWithGoogle = useCallback(async (googleToken: string) => {
-  try {
-    const response = await api.post(
-      `/petrocarga/auth/loginWithGoogle?token=${googleToken}`
-    );
+  const loginWithGoogle = useCallback(async (googleToken: string) => {
+    try {
+      const response = await api.post(
+        `/petrocarga/auth/loginWithGoogle?token=${googleToken}`
+      );
 
-    const { usuario, token } = response.data as {
-      usuario: Record<string, unknown>;
-      token: string;
-    };
+      const { usuario, token } = response.data as {
+        usuario: Record<string, unknown>;
+        token: string;
+      };
 
-    if (token) {
-      localStorage.setItem(TOKEN_KEY, token);
+      if (token) {
+        localStorage.setItem(TOKEN_KEY, token);
+      }
+
+      const userData = normalizeUserData(usuario);
+      setUser(userData);
+
+      return userData;
+    } catch (error: unknown) {
+      console.error('Erro no login Google:', error);
+
+      let message;
+
+      if (error instanceof AxiosError) {
+        const data = error.response?.data as ApiError;
+
+        if (data?.erro) {
+          message = data.erro;
+        } else if (data?.message) {
+          message = data.message;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
+      throw new Error(message);
     }
-
-    const userData = normalizeUserData(usuario);
-    setUser(userData);
-
-    return userData;
-  } catch (error) {
-    console.error('Erro no login Google:', error);
-    throw new Error('Erro ao autenticar com Google');
-  }
-}, []);
+  }, []);
 
   const logout = useCallback(async () => {
     const pushToken = localStorage.getItem('pushToken');
