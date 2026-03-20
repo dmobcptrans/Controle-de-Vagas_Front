@@ -8,8 +8,12 @@ export default function ButtonLoginGoogle() {
   const { loginWithGoogle } = useAuth();
 
   return (
-    <div className="w-full flex justify-center">
-      <div className="w-full [&>div]:w-full [&>div>div]:w-full [&>div>div]:h-12">
+    <div className="w-full">
+      <div className="w-full 
+        [&>div]:!w-full 
+        [&>div>iframe]:!w-full 
+        [&>div>iframe]:!min-w-full 
+        [&>div>iframe]:!max-w-full">
         <GoogleLogin
           onSuccess={async (credentialResponse) => {
             try {
@@ -44,7 +48,7 @@ export default function ButtonLoginGoogle() {
             toast.error("Falha no login com Google");
           }}
           size="large"
-          shape="pill"
+          shape="rectangular"
           theme="outline"
           width={400}
         />
