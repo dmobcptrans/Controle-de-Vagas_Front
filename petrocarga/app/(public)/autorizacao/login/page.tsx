@@ -517,7 +517,7 @@ function LoginContent() {
             </Button>
           </form>
           
-          <div className="mt-4 w-full flex flex-col items-center">
+          <div className="mt-4 w-full flex items-center">
           <ButtonLoginGoogle />
           </div>
 
