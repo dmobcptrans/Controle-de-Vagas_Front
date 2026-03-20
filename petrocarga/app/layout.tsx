@@ -6,6 +6,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import {GoogleOAuthProvider} from '@react-oauth/google'
 import { NotificationWrapper } from '@/components/notification/notificationWrapper';
 import { Toaster } from 'react-hot-toast';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 const mavenPro = Maven_Pro({
   weight: 'variable',

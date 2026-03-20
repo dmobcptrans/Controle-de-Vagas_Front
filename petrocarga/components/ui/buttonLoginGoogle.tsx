@@ -46,7 +46,7 @@ export default function ButtonLoginGoogle() {
           size="large"
           shape="pill"
           theme="outline"
-          width="100%"
+          width={400}
         />
       </div>
     </div>
