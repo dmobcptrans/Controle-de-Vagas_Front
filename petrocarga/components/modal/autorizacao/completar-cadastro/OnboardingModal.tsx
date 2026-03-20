@@ -113,14 +113,14 @@ export default function OnboardingModal() {
         {step === 1 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="CPF">
-              <input className={inputCls} placeholder="000.000.000-00" value={fmtCPF(data.cpf || '')} onChange={(e) =>
+              <input className={inputCls} inputMode="numeric" placeholder="000.000.000-00" value={fmtCPF(data.cpf || '')} onChange={(e) =>
                 updateData({
                   cpf: onlyNumbers(e.target.value).slice(0, 11),
                 })
               } />
             </Field>
             <Field label="Telefone">
-              <input className={inputCls} placeholder="(00) 00000-0000" value={fmtTel(data.telefone || '')} onChange={(e) => updateData({ telefone: onlyNumbers(e.target.value) })} />
+              <input className={inputCls} inputMode="numeric" placeholder="(00) 00000-0000" value={fmtTel(data.telefone || '')} onChange={(e) => updateData({ telefone: onlyNumbers(e.target.value) })} />
             </Field>
             <Field label="Senha">
               <div className="relative">
