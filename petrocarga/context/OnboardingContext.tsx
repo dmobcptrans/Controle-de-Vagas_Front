@@ -11,6 +11,7 @@ import {
 import { api } from '@/service/api';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
+import { AxiosError } from 'axios';
 
 interface OnboardingData {
   cpf: string;
@@ -22,13 +23,23 @@ interface OnboardingData {
   dataValidadeCnh: string;
 }
 
+interface VeiculoData {
+  cpfProprietario?: string;
+  cnpjProprietario?: string;
+  tipoProprietario: 'CPF' | 'CNPJ';
+  [key: string]: unknown;
+}
+
+interface ApiError {
+  erro?: string;
+  message?: string;
+}
+
 interface OnboardingContextData {
   isOpen: boolean;
-  
   step: number;
   data: OnboardingData;
-
-  isVeiculoOnlyFlow: boolean; 
+  isVeiculoOnlyFlow: boolean;
 
   startOnboarding: () => void;
   nextStep: () => void;
@@ -36,7 +47,7 @@ interface OnboardingContextData {
   updateData: (data: Partial<OnboardingData>) => void;
 
   submit: () => Promise<void>;
-  submitVeiculo: (veiculoData: any) => Promise<void>;
+  submitVeiculo: (veiculoData: VeiculoData) => Promise<void>;
 
   reset: () => void;
   close: () => void;
@@ -44,11 +55,16 @@ interface OnboardingContextData {
 
 const OnboardingContext = createContext({} as OnboardingContextData);
 
-export function OnboardingProvider({ children }: { children: React.ReactNode }) {
+export function OnboardingProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
+  const [checked, setChecked] = useState(false);
 
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, loading } = useAuth();
   const isVeiculoOnlyFlow = !!user?.cpf && user?.veiculoCadastrado === false;
 
   const [data, setData] = useState<OnboardingData>({
@@ -62,25 +78,27 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   });
 
   useEffect(() => {
+    if (loading || checked) return;
     if (!user) return;
 
     const precisaCpf = !user.cpf;
     const precisaVeiculo = user.veiculoCadastrado === false;
 
-    if (!precisaCpf && !precisaVeiculo) return;
+    if (!precisaCpf && !precisaVeiculo) {
+      setChecked(true);
+      return;
+    }
 
     setIsOpen(true);
 
     if (precisaCpf) {
       setStep(1);
-      return;
+    } else if (precisaVeiculo) {
+      setStep(4);
     }
 
-    if (precisaVeiculo) {
-      setStep(4);
-      return;
-    }
-  }, [user]);
+    setChecked(true);
+  }, [user, loading, checked]);
 
   const startOnboarding = useCallback(() => {
     setIsOpen(true);
@@ -113,7 +131,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const prevStep = useCallback(() => {
     if (isVeiculoOnlyFlow) return;
-
     setStep((prev) => Math.max(prev - 1, 1));
   }, [isVeiculoOnlyFlow]);
 
@@ -139,24 +156,26 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
       setIsOpen(false);
       setStep(1);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao completar onboarding', error);
 
-      const mensagem =
-        error?.response?.data?.erro ||
-        error?.response?.data?.message ||
-        'Erro ao completar cadastro';
+      let mensagem = 'Erro ao completar cadastro';
+
+      if (error instanceof AxiosError) {
+        const data = error.response?.data as ApiError;
+        mensagem = data?.erro || data?.message || mensagem;
+      }
 
       toast.error(mensagem);
-
       throw error;
     }
   }, [data, refreshUser, user]);
 
   const submitVeiculo = useCallback(
-    async (veiculoData: any) => {
+    async (veiculoData: VeiculoData) => {
       try {
-        const { cpfProprietario, cnpjProprietario, tipoProprietario, ...rest } = veiculoData;
+        const { cpfProprietario, cnpjProprietario, tipoProprietario, ...rest } =
+          veiculoData;
 
         const payload = {
           ...rest,
@@ -173,21 +192,23 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
         setIsOpen(false);
         setStep(1);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro ao cadastrar veículo', error);
 
-        const mensagem =
-          error?.response?.data?.erro ||
-          error?.response?.data?.message ||
-          'Erro ao cadastrar veículo';
+        let mensagem = 'Erro ao cadastrar veículo';
+
+        if (error instanceof AxiosError) {
+          const data = error.response?.data as ApiError;
+          mensagem = data?.erro || data?.message || mensagem;
+        }
 
         toast.error(mensagem);
-
         throw error;
       }
     },
-    [refreshUser, user]
+    [refreshUser, user],
   );
+
   const reset = useCallback(() => {
     setData({
       cpf: '',
@@ -211,7 +232,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       isOpen,
       step,
       data,
-      isVeiculoOnlyFlow, 
+      isVeiculoOnlyFlow,
       startOnboarding,
       nextStep,
       prevStep,
@@ -225,7 +246,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       isOpen,
       step,
       data,
-      isVeiculoOnlyFlow, 
+      isVeiculoOnlyFlow,
       startOnboarding,
       nextStep,
       prevStep,
@@ -234,7 +255,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       submitVeiculo,
       reset,
       close,
-    ]
+    ],
   );
 
   return (
@@ -248,7 +269,9 @@ export function useOnboarding() {
   const context = useContext(OnboardingContext);
 
   if (!context) {
-    throw new Error('useOnboarding deve ser usado dentro do OnboardingProvider');
+    throw new Error(
+      'useOnboarding deve ser usado dentro do OnboardingProvider',
+    );
   }
 
   return context;

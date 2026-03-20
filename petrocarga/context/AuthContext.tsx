@@ -111,36 +111,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const dadosLogin =
           tipo === 'email'
             ? {
-              email: identificador.trim().toLowerCase(),
-              senha,
-            }
+                email: identificador.trim().toLowerCase(),
+                senha,
+              }
             : {
-              cpf: identificador.replace(/\D/g, ''),
-              senha,
-            };
+                cpf: identificador.replace(/\D/g, ''),
+                senha,
+              };
 
         const loginResponse = await api.post(
           '/petrocarga/auth/login',
           dadosLogin,
         );
-        const { usuario, token } = loginResponse.data as {
-          usuario: Record<string, unknown>;
-          token: string;
-        };
+
+        const { token } = loginResponse.data;
 
         if (token) {
           localStorage.setItem(TOKEN_KEY, token);
         }
 
-        const userData = normalizeUserData(usuario);
-        setUser(userData);
-        return userData;
+        setLoading(true);
+
+        await refreshUser();
+
+        const response = await api.get('/petrocarga/auth/me');
+        return normalizeUserData(response.data);
       } catch (error: unknown) {
         console.error('Erro no login:', error);
 
         let mensagemErro = 'Credenciais inválidas ou conta não ativada.';
 
-        // Verificação de tipo para error
         if (error && typeof error === 'object' && 'response' in error) {
           const axiosError = error as {
             response?: {
@@ -155,32 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             axiosError.response?.data?.message &&
             typeof axiosError.response.data.message === 'string'
           ) {
-            const backendMessage =
-              axiosError.response.data.message.toLowerCase();
-
-            if (backendMessage.includes('cpf')) {
-              mensagemErro = 'CPF inválido. Verifique o formato.';
-            } else if (backendMessage.includes('email')) {
-              mensagemErro = 'Email inválido. Verifique o formato.';
-            } else if (
-              backendMessage.includes('senha') ||
-              backendMessage.includes('password')
-            ) {
-              mensagemErro = 'Senha incorreta.';
-            } else if (
-              backendMessage.includes('formato') ||
-              backendMessage.includes('format')
-            ) {
-              mensagemErro =
-                'Formato inválido. Use email ou CPF (apenas números).';
-            } else if (
-              backendMessage.includes('desativado') ||
-              backendMessage.includes('inativo')
-            ) {
-              mensagemErro = 'Usuário desativado.';
-            } else {
-              mensagemErro = axiosError.response.data.message;
-            }
+            mensagemErro = axiosError.response.data.message;
           } else if (axiosError.response?.status) {
             switch (axiosError.response.status) {
               case 400:
@@ -190,75 +165,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 mensagemErro = 'CPF/Email ou senha incorretos.';
                 break;
               case 403:
-                mensagemErro =
-                  'Conta não ativada. Por favor, ative sua conta primeiro.';
+                mensagemErro = 'Conta não ativada.';
                 break;
               case 404:
-                mensagemErro =
-                  'Usuário não encontrado. Verifique seu CPF/Email.';
+                mensagemErro = 'Usuário não encontrado.';
                 break;
             }
           }
         } else if (error instanceof Error) {
-          // Se for um erro padrão do JavaScript, usa a mensagem dele
           mensagemErro = error.message;
         }
 
         throw new Error(mensagemErro);
       }
     },
-    [identificarTipoLogin],
+    [identificarTipoLogin, refreshUser],
   );
 
+  const loginWithGoogle = useCallback(
+    async (googleToken: string) => {
+      try {
+        const response = await api.post(
+          `/petrocarga/auth/loginWithGoogle?token=${googleToken}`,
+        );
 
-  const loginWithGoogle = useCallback(async (googleToken: string) => {
-    try {
-      const response = await api.post(
-        `/petrocarga/auth/loginWithGoogle?token=${googleToken}`
-      );
+        const { token } = response.data;
 
-      const { usuario, token } = response.data as {
-        usuario: Record<string, unknown>;
-        token: string;
-      };
-
-      if (token) {
-        localStorage.setItem(TOKEN_KEY, token);
-      }
-
-      const userData = normalizeUserData(usuario);
-      setUser(userData);
-
-      return userData;
-    } catch (error: unknown) {
-      console.error('Erro no login Google:', error);
-
-      let message;
-
-      if (error instanceof AxiosError) {
-        const data = error.response?.data as ApiError;
-
-        if (data?.erro) {
-          message = data.erro;
-        } else if (data?.message) {
-          message = data.message;
+        if (token) {
+          localStorage.setItem(TOKEN_KEY, token);
         }
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
 
-      throw new Error(message);
-    }
-  }, []);
+        setLoading(true);
+
+        await refreshUser();
+
+        const meResponse = await api.get('/petrocarga/auth/me');
+        return normalizeUserData(meResponse.data);
+      } catch (error: unknown) {
+        console.error('Erro no login Google:', error);
+
+        let message;
+
+        if (error instanceof AxiosError) {
+          const data = error.response?.data as ApiError;
+          message = data?.erro || data?.message;
+        } else if (error instanceof Error) {
+          message = error.message;
+        }
+
+        throw new Error(message);
+      }
+    },
+    [refreshUser],
+  );
 
   const logout = useCallback(async () => {
     const pushToken = localStorage.getItem('pushToken');
+
     try {
       if (pushToken && user?.id) {
         await atualizarStatusPushToken(user.id, pushToken, false);
       }
       await api.post('/petrocarga/auth/logout');
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Erro ao notificar logout', error);
     } finally {
       localStorage.removeItem(TOKEN_KEY);
@@ -285,8 +254,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error('useAuth deve ser usado dentro de AuthProvider');
   }
+
   return context;
 }
