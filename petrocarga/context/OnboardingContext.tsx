@@ -7,7 +7,6 @@ import {
   useCallback,
   useMemo,
   useEffect,
-  use,
 } from 'react';
 import { api } from '@/service/api';
 import { useAuth } from '@/context/AuthContext';
@@ -25,14 +24,20 @@ interface OnboardingData {
 
 interface OnboardingContextData {
   isOpen: boolean;
+  
   step: number;
   data: OnboardingData;
+
+  isVeiculoOnlyFlow: boolean; 
 
   startOnboarding: () => void;
   nextStep: () => void;
   prevStep: () => void;
   updateData: (data: Partial<OnboardingData>) => void;
+
   submit: () => Promise<void>;
+  submitVeiculo: (veiculoData: any) => Promise<void>;
+
   reset: () => void;
   close: () => void;
 }
@@ -43,7 +48,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
 
-  const { user,refreshUser } = useAuth(); 
+  const { user, refreshUser } = useAuth();
+  const isVeiculoOnlyFlow = !!user?.cpf && user?.veiculoCadastrado === false;
 
   const [data, setData] = useState<OnboardingData>({
     cpf: '',
@@ -56,9 +62,23 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   });
 
   useEffect(() => {
-    if (user && !user.cpf) {
-      setIsOpen(true);
+    if (!user) return;
+
+    const precisaCpf = !user.cpf;
+    const precisaVeiculo = user.veiculoCadastrado === false;
+
+    if (!precisaCpf && !precisaVeiculo) return;
+
+    setIsOpen(true);
+
+    if (precisaCpf) {
       setStep(1);
+      return;
+    }
+
+    if (precisaVeiculo) {
+      setStep(4);
+      return;
     }
   }, [user]);
 
@@ -68,12 +88,34 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const nextStep = useCallback(() => {
-    setStep((prev) => prev + 1);
-  }, []);
+    setStep((prev) => {
+      if (isVeiculoOnlyFlow) {
+        return 4;
+      }
+
+      if (prev === 3) {
+        if (user?.veiculoCadastrado === false) {
+          return 4;
+        }
+
+        setIsOpen(false);
+        return 1;
+      }
+
+      if (prev === 4) {
+        setIsOpen(false);
+        return 1;
+      }
+
+      return prev + 1;
+    });
+  }, [user, isVeiculoOnlyFlow]);
 
   const prevStep = useCallback(() => {
-    setStep((prev) => prev - 1);
-  }, []);
+    if (isVeiculoOnlyFlow) return;
+
+    setStep((prev) => Math.max(prev - 1, 1));
+  }, [isVeiculoOnlyFlow]);
 
   const updateData = useCallback((newData: Partial<OnboardingData>) => {
     setData((prev) => ({
@@ -82,30 +124,70 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }));
   }, []);
 
-
   const submit = useCallback(async () => {
     try {
       await api.post('/petrocarga/auth/completarCadastro', data);
+
       await refreshUser();
+
       toast.success('Cadastro completo com sucesso!');
+
+      if (user?.veiculoCadastrado === false) {
+        setStep(4);
+        return;
+      }
 
       setIsOpen(false);
       setStep(1);
-
     } catch (error: any) {
-  console.error('Erro ao completar onboarding', error);
+      console.error('Erro ao completar onboarding', error);
 
-  const mensagem =
-    error?.response?.data?.erro ||
-    error?.response?.data?.message || 
-    'Erro ao completar cadastro';
+      const mensagem =
+        error?.response?.data?.erro ||
+        error?.response?.data?.message ||
+        'Erro ao completar cadastro';
 
-  toast.error(mensagem);
+      toast.error(mensagem);
 
-  throw error;
-}
-  }, [data, refreshUser]);
+      throw error;
+    }
+  }, [data, refreshUser, user]);
 
+  const submitVeiculo = useCallback(
+    async (veiculoData: any) => {
+      try {
+        const { cpfProprietario, cnpjProprietario, tipoProprietario, ...rest } = veiculoData;
+
+        const payload = {
+          ...rest,
+          ...(tipoProprietario === 'CPF'
+            ? { cpfProprietario }
+            : { cnpjProprietario }),
+        };
+
+        await api.post(`/petrocarga/veiculos/${user?.id}`, payload);
+
+        await refreshUser();
+
+        toast.success('Veículo cadastrado com sucesso!');
+
+        setIsOpen(false);
+        setStep(1);
+      } catch (error: any) {
+        console.error('Erro ao cadastrar veículo', error);
+
+        const mensagem =
+          error?.response?.data?.erro ||
+          error?.response?.data?.message ||
+          'Erro ao cadastrar veículo';
+
+        toast.error(mensagem);
+
+        throw error;
+      }
+    },
+    [refreshUser, user]
+  );
   const reset = useCallback(() => {
     setData({
       cpf: '',
@@ -129,15 +211,30 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       isOpen,
       step,
       data,
+      isVeiculoOnlyFlow, 
       startOnboarding,
       nextStep,
       prevStep,
       updateData,
       submit,
+      submitVeiculo,
       reset,
       close,
     }),
-    [isOpen, step, data, startOnboarding, nextStep, prevStep, updateData, submit, reset, close],
+    [
+      isOpen,
+      step,
+      data,
+      isVeiculoOnlyFlow, 
+      startOnboarding,
+      nextStep,
+      prevStep,
+      updateData,
+      submit,
+      submitVeiculo,
+      reset,
+      close,
+    ]
   );
 
   return (
