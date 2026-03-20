@@ -112,7 +112,7 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
                 id="area"
                 name="area"
                 placeholder="Selecione a área"
-                defaultValue={vaga.area.toLowerCase()} // ← Adicione .toLowerCase() //
+                defaultValue={vaga.area.toLowerCase()}
                 options={[
                   { value: 'vermelha', label: 'Vermelha' },
                   { value: 'amarela', label: 'Amarela' },
@@ -128,7 +128,7 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
                 id="tipo"
                 name="tipo"
                 placeholder="Selecione o tipo"
-                defaultValue={vaga.tipoVaga.toLowerCase()} // ← Adicione .toLowerCase() //
+                defaultValue={vaga.tipoVaga.toLowerCase()}
                 options={[
                   { value: 'paralela', label: 'Paralela' },
                   { value: 'perpendicular', label: 'Perpendicular' },

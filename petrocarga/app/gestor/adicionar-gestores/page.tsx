@@ -10,65 +10,282 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import Form from 'next/form';
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import {
   CircleAlert,
   UserIcon,
   CheckCircle,
   Shield,
   ChevronLeft,
+  Mail,
+  Fingerprint,
+  Phone,
 } from 'lucide-react';
 import FormItem from '@/components/form/form-item';
 import { addGestor } from '@/lib/api/gestorApi';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+
+/**
+ * @component CadastroGestores
+ * @version 1.0.0
+ *
+ * @description Página de cadastro de novos gestores para administradores.
+ * Permite criar novos gestores com validação em tempo real de email, CPF e telefone.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. ACESSO:
+ *    - Acesso restrito a administradores (rota protegida)
+ *    - Link de retorno para lista de gestores (/gestor/gestores)
+ *    - Indicador visual de "Novo Gestor" em mobile
+ *
+ * 2. PREENCHIMENTO DO FORMULÁRIO:
+ *    - Nome completo (obrigatório)
+ *    - Email (com validação de formato)
+ *    - Confirmar email (validação de igualdade)
+ *    - CPF (apenas números, 11 dígitos)
+ *    - Telefone (apenas números, com DDD)
+ *
+ * 3. VALIDAÇÕES EM TEMPO REAL:
+ *    a) EMAIL:
+ *       - Formato válido (regex)
+ *       - Feedback visual com borda vermelha
+ *       - Mensagem de erro específica
+ *       - Ícone de envelope no campo
+ *
+ *    b) CONFIRMAR EMAIL:
+ *       - Verifica se é igual ao email digitado
+ *       - Ícone de check verde quando igual
+ *       - Borda vermelha quando diferente
+ *       - Mensagem de erro contextual
+ *
+ *    c) CPF:
+ *       - Remove caracteres não numéricos (/\D/g)
+ *       - Limite de 11 dígitos (maxLength)
+ *       - InputMode numeric para teclado numérico mobile
+ *       - Ícone de impressão digital
+ *
+ *    d) TELEFONE:
+ *       - Remove caracteres não numéricos
+ *       - Limite de 11 dígitos (incluindo DDD)
+ *       - InputMode tel para teclado telefônico mobile
+ *       - Ícone de telefone
+ *
+ * 4. ENVIO:
+ *    - Server Action addGestor via useActionState
+ *    - Botão desabilitado se validações falharem
+ *    - Loading state com spinner durante envio
+ *    - Feedback de sucesso/erro pós-envio
+ *
+ * 5. PÓS-CADASTRO:
+ *    - Gestor recebe email com instruções de acesso
+ *    - Mensagem de sucesso na interface
+ *    - Botão para voltar à lista de gestores
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - COMPONENTE CLIENT: Necessário para:
+ *   - useState (validações em tempo real)
+ *   - useActionState (Server Actions)
+ *   - Interatividade (máscaras, feedback visual)
+ *
+ * - VALIDAÇÕES EM TEMPO REAL:
+ *   - emailValido: Regex para formato de email
+ *   - emailsIguais: Comparação entre email e confirmarEmail
+ *   - Ambos calculados (não estados) para performance
+ *   - Validação só após usuário digitar (evita erro prematuro)
+ *
+ * - MÁSCARAS AUTOMÁTICAS:
+ *   - CPF: remove não números e limita 11 dígitos
+ *   - Telefone: mesma lógica para consistência
+ *   - Aplicadas no onChange, mantendo estado limpo
+ *   - Preserva apenas números para envio ao backend
+ *
+ * - FEEDBACK VISUAL MULTI-ESTADO:
+ *   - Mensagens da API (state.error / state.message)
+ *   - Validação de emails diferentes
+ *   - Validação de formato de email
+ *   - Cada um com ícone e cor apropriados
+ *   - Posicionamento entre header e campos
+ *
+ * - ÍCONES CONTEXTUAIS:
+ *   - Shield: ícone principal (gestor = autoridade)
+ *   - UserIcon: badge secundário
+ *   - Mail: campo de email
+ *   - CheckCircle: confirmação de email (dinâmico)
+ *   - Fingerprint: CPF (identificação única)
+ *   - Phone: telefone
+ *
+ * - SEGURANÇA:
+ *   - Previne submit se validações locais falharem
+ *   - Server Action valida no backend também
+ *   - AutoComplete configurado apropriadamente
+ *   - InputMode específico para cada campo
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - addGestor: Server Action de cadastro (lib/api/gestorApi)
+ * - FormItem: Componente de campo com label e tooltip
+ * - /gestor/gestores: Página de listagem (retorno)
+ * - /components/ui/button: Botão estilizado
+ * - /components/ui/card: Container do formulário
+ *
+ * ----------------------------------------------------------------------------
+ * ⚙️ VALIDAÇÕES IMPLEMENTADAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - Nome: não vazio (HTML required)
+ * - Email: formato válido (regex) e não vazio
+ * - Confirmar Email: igual ao email principal
+ * - CPF: 11 dígitos numéricos (via required + máscara)
+ * - Telefone: 11 dígitos numéricos (via required + máscara)
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 UX/UI:
+ * ----------------------------------------------------------------------------
+ *
+ * - HEADER DA PÁGINA:
+ *   - Botão "Voltar" com animação hover (translate -x)
+ *   - Divisor visual entre botão e indicador
+ *   - Indicador de página (círculo azul) em desktop
+ *   - Badge "Novo Gestor" com pulse em mobile
+ *   - Título grande com gradiente
+ *   - Descrição contextual
+ *
+ * - CARD PRINCIPAL:
+ *   - Ícone grande (Shield) com badge secundário
+ *   - Gradiente no título "Dados do Gestor"
+ *   - Sombras suaves (shadow-lg, shadow-md)
+ *   - Cantos arredondados (rounded-2xl, rounded-lg)
+ *
+ * - CAMPOS DO FORMULÁRIO:
+ *   - Todos com ícone à direita
+ *   - Indicador de campo obrigatório (*)
+ *   - Padding generoso (py-3 px-4)
+ *   - Borda com foco azul (focus:ring-blue-500)
+ *   - Validação visual com borda vermelha
+ *
+ * - FEEDBACK VISUAL:
+ *   - Alertas coloridos (vermelho/verde/azul)
+ *   - Ícones consistentes por tipo
+ *   - Mensagens claras e objetivas
+ *   - Posicionamento estratégico
+ *
+ * - CARDS INFORMATIVOS (rodapé):
+ *   1. Permissões (azul): acesso completo
+ *   2. Confirmação (cinza): email será enviado
+ *   3. Validação (verde): dados validados
+ *   - Grid responsivo (1/2/3 colunas)
+ *   - Ícones circulares com cores temáticas
+ *
+ * - RESPONSIVIDADE:
+ *   - Mobile: empilhamento, padding menor
+ *   - Tablet: grid de 2 colunas nos cards
+ *   - Desktop: grid de 3 colunas, layout completo
+ *   - Breakpoints: sm, lg, xl
+ *
+ * @example
+ * // Uso em rota de administrador
+ * <CadastroGestores />
+ *
+ * @see /src/lib/api/gestorApi.ts - Server Action addGestor
+ * @see /src/components/form/form-item.tsx - Componente de campo
+ * @see /src/app/gestor/gestores/page.tsx - Lista de gestores
+ */
 
 export default function CadastroGestores() {
+  // --------------------------------------------------------------------------
+  // HOOKS E ESTADOS
+  // --------------------------------------------------------------------------
+
+  /**
+   * useActionState gerencia:
+   * - state: Resultado da Server Action { error?: boolean, message?: string }
+   * - action: Função de submit (addGestor)
+   * - pending: Estado de carregamento durante envio
+   */
   const [state, action, pending] = useActionState(addGestor, null);
+
+  // Estados para validação em tempo real
   const [email, setEmail] = useState('');
   const [confirmarEmail, setConfirmarEmail] = useState('');
-  const [emailsIguais, setEmailsIguais] = useState(true);
-  const [emailValido, setEmailValido] = useState(true);
-  const [formTocado, setFormTocado] = useState(false);
+  const [cpf, setCpf] = useState('');
+  const [telefone, setTelefone] = useState('');
 
-  // Validação dos emails
-  useEffect(() => {
-    if (confirmarEmail === '') {
-      setEmailsIguais(true);
-    } else {
-      setEmailsIguais(email === confirmarEmail);
-    }
-  }, [email, confirmarEmail]);
+  // --------------------------------------------------------------------------
+  // VALORES DERIVADOS (VALIDAÇÕES COMPUTADAS)
+  // --------------------------------------------------------------------------
 
-  // Validação do formato do email
-  useEffect(() => {
-    if (email === '') {
-      setEmailValido(true);
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      setEmailValido(emailRegex.test(email));
-    }
-  }, [email]);
+  /**
+   * emailValido: Verifica formato do email usando regex
+   * - Ignora campo vazio (email === '') para não mostrar erro prematuro
+   * - Só valida após usuário começar a digitar
+   *
+   * Regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+   * - [^\s@]+ : caracteres antes do @ (sem espaços ou @)
+   * - @ : símbolo obrigatório
+   * - [^\s@]+ : domínio (sem espaços ou @)
+   * - \. : ponto obrigatório
+   * - [^\s@]+ : extensão (sem espaços ou @)
+   */
+  const emailValido = email === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // Função para lidar com o envio do formulário
+  /**
+   * emailsIguais: Compara email e confirmação
+   * - Considera válido se confirmação vazia (evita erro prematuro)
+   * - Só valida após usuário digitar no campo de confirmação
+   */
+  const emailsIguais = confirmarEmail === '' || email === confirmarEmail;
+
+  // --------------------------------------------------------------------------
+  // HANDLER DE SUBMIT
+  // --------------------------------------------------------------------------
+
+  /**
+   * @function handleSubmit
+   * @description Processa o envio do formulário
+   *
+   * Validações antes do envio:
+   * 1. Emails devem ser iguais (emailsIguais)
+   * 2. Email deve ter formato válido (emailValido)
+   *
+   * Se validações falharem, a função retorna sem chamar a action
+   * As mensagens de erro já estão sendo exibidas na UI
+   *
+   * @param formData - Dados do formulário (inclui nome, email, cpf, telefone)
+   * @returns Resultado da Server Action ou undefined
+   */
   const handleSubmit = async (formData: FormData) => {
-    if (!emailsIguais || !emailValido) {
-      return; // Impede o envio se os emails não forem válidos
-    }
+    // Validações locais antes do envio
+    if (!emailsIguais || !emailValido) return;
 
-    setFormTocado(true);
+    // Chama Server Action
     return await action(formData);
   };
+
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO
+  // --------------------------------------------------------------------------
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Container principal */}
         <div className="max-w-4xl mx-auto">
-          {/* Cabeçalho melhorado */}
+          {/* --------------------------------------------------------------------
+            HEADER DA PÁGINA
+            Inclui navegação, título e descrição
+          -------------------------------------------------------------------- */}
           <div className="mb-6 sm:mb-8 lg:mb-10">
+            {/* Barra de navegação superior */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
+                {/* Botão voltar para lista de gestores */}
                 <Link
                   href="/gestor/gestores"
                   className="group flex items-center gap-2 px-3 py-2 bg-white hover:bg-gray-50 border border-gray-200 rounded-lg transition-all hover:shadow-sm hover:border-gray-300"
@@ -78,7 +295,11 @@ export default function CadastroGestores() {
                     Voltar
                   </span>
                 </Link>
+
+                {/* Divisor vertical (desktop) */}
                 <div className="hidden sm:block h-6 w-px bg-gray-300"></div>
+
+                {/* Indicador de página (desktop) */}
                 <div className="hidden sm:flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                   <span className="text-sm font-medium text-gray-700">
@@ -87,7 +308,7 @@ export default function CadastroGestores() {
                 </div>
               </div>
 
-              {/* Indicador de progresso para mobile */}
+              {/* Badge "Novo Gestor" para mobile */}
               <div className="sm:hidden flex items-center justify-center">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-full">
                   <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
@@ -98,7 +319,7 @@ export default function CadastroGestores() {
               </div>
             </div>
 
-            {/* Título principal */}
+            {/* Título e descrição da página */}
             <div className="text-center sm:text-left">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
                 Cadastrar Novo Gestor
@@ -110,9 +331,14 @@ export default function CadastroGestores() {
             </div>
           </div>
 
+          {/* --------------------------------------------------------------------
+            CARD PRINCIPAL DO FORMULÁRIO
+          -------------------------------------------------------------------- */}
           <Card className="w-full overflow-hidden border-gray-200 shadow-lg">
+            {/* Header do Card com ícone e título */}
             <CardHeader className="pb-4 sm:pb-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                {/* Ícone principal com badge */}
                 <div className="relative mx-auto sm:mx-0">
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
                     <Shield className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
@@ -123,6 +349,8 @@ export default function CadastroGestores() {
                     </div>
                   </div>
                 </div>
+
+                {/* Título e descrição do card */}
                 <div className="flex-1 text-center sm:text-left">
                   <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                     Dados do Gestor
@@ -134,9 +362,14 @@ export default function CadastroGestores() {
               </div>
             </CardHeader>
 
+            {/* Formulário usando Next.js Form (Server Action) */}
             <Form action={handleSubmit}>
               <CardContent className="p-4 sm:p-6 lg:p-8">
-                {/* Mensagens de feedback */}
+                {/* --------------------------------------------------------------------
+                  MENSAGENS DE FEEDBACK (3 TIPOS)
+                -------------------------------------------------------------------- */}
+
+                {/* Mensagem da API (erro/sucesso pós-submit) */}
                 {(state?.error || state?.message) && (
                   <div
                     className={`flex items-start gap-3 rounded-xl border p-4 mb-6 ${
@@ -159,7 +392,7 @@ export default function CadastroGestores() {
                   </div>
                 )}
 
-                {/* Mensagem de erro para emails diferentes */}
+                {/* Validação: emails diferentes */}
                 {!emailsIguais && confirmarEmail !== '' && (
                   <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-900 p-4 mb-6">
                     <CircleAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
@@ -172,7 +405,7 @@ export default function CadastroGestores() {
                   </div>
                 )}
 
-                {/* Mensagem de erro para email inválido */}
+                {/* Validação: email com formato inválido */}
                 {!emailValido && email !== '' && (
                   <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-900 p-4 mb-6">
                     <CircleAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
@@ -188,26 +421,25 @@ export default function CadastroGestores() {
                   </div>
                 )}
 
+                {/* --------------------------------------------------------------------
+                  CAMPOS DO FORMULÁRIO
+                -------------------------------------------------------------------- */}
                 <div className="space-y-4 sm:space-y-6">
-                  {/* Nome */}
+                  {/* Campo: Nome Completo */}
                   <FormItem
                     name="Nome Completo"
                     description="Insira o nome completo do gestor"
                   >
                     <div className="relative">
                       <Input
-                        className={`rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base py-3 px-4 ${
-                          formTocado
-                            ? 'group-focus-within:ring-2 group-focus-within:ring-blue-100'
-                            : ''
-                        }`}
+                        className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base py-3 px-4"
                         id="nome"
                         name="nome"
                         placeholder="Exemplo: Maria da Silva Souza"
                         required
                         autoComplete="name"
-                        onFocus={() => setFormTocado(true)}
                       />
+                      {/* Indicador de campo obrigatório */}
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
                           <span className="text-xs text-gray-500">*</span>
@@ -216,8 +448,9 @@ export default function CadastroGestores() {
                     </div>
                   </FormItem>
 
-                  {/* Email */}
+                  {/* Grupo: Email e Confirmar Email */}
                   <div className="space-y-4 sm:space-y-6">
+                    {/* Campo: Email */}
                     <FormItem
                       name="Email"
                       description="Email institucional do gestor"
@@ -228,10 +461,6 @@ export default function CadastroGestores() {
                             !emailValido && email !== ''
                               ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                               : ''
-                          } ${
-                            formTocado
-                              ? 'group-focus-within:ring-2 group-focus-within:ring-blue-100'
-                              : ''
                           }`}
                           type="email"
                           id="email"
@@ -241,17 +470,17 @@ export default function CadastroGestores() {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           autoComplete="email"
-                          onFocus={() => setFormTocado(true)}
                         />
+                        {/* Ícone de email */}
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                           <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                            <MailIcon className="w-3 h-3 text-gray-500" />
+                            <Mail className="w-3 h-3 text-gray-500" />
                           </div>
                         </div>
                       </div>
                     </FormItem>
 
-                    {/* Confirmar Email */}
+                    {/* Campo: Confirmar Email */}
                     <FormItem
                       name="Confirmar Email"
                       description="Digite novamente para confirmar"
@@ -262,10 +491,6 @@ export default function CadastroGestores() {
                             !emailsIguais && confirmarEmail !== ''
                               ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                               : ''
-                          } ${
-                            formTocado
-                              ? 'group-focus-within:ring-2 group-focus-within:ring-blue-100'
-                              : ''
                           }`}
                           type="email"
                           id="confirmarEmail"
@@ -275,8 +500,8 @@ export default function CadastroGestores() {
                           value={confirmarEmail}
                           onChange={(e) => setConfirmarEmail(e.target.value)}
                           autoComplete="email"
-                          onFocus={() => setFormTocado(true)}
                         />
+                        {/* Ícone de validação (verde quando igual) */}
                         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                           <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
                             <CheckCircle
@@ -292,7 +517,7 @@ export default function CadastroGestores() {
                     </FormItem>
                   </div>
 
-                  {/* CPF */}
+                  {/* Campo: CPF */}
                   <FormItem
                     name="CPF"
                     description="Apenas números, sem pontuação"
@@ -306,24 +531,22 @@ export default function CadastroGestores() {
                         maxLength={11}
                         inputMode="numeric"
                         required
+                        value={cpf}
+                        onChange={(e) =>
+                          setCpf(e.target.value.replace(/\D/g, ''))
+                        }
                         autoComplete="off"
-                        onInput={(e) => {
-                          e.currentTarget.value = e.currentTarget.value.replace(
-                            /\D/g,
-                            '',
-                          );
-                        }}
-                        onFocus={() => setFormTocado(true)}
                       />
+                      {/* Ícone de impressão digital */}
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                          <FingerprintIcon className="w-3 h-3 text-gray-500" />
+                          <Fingerprint className="w-3 h-3 text-gray-500" />
                         </div>
                       </div>
                     </div>
                   </FormItem>
 
-                  {/* Telefone */}
+                  {/* Campo: Telefone */}
                   <FormItem
                     name="Telefone"
                     description="Com DDD, apenas números"
@@ -337,18 +560,16 @@ export default function CadastroGestores() {
                         maxLength={11}
                         inputMode="tel"
                         required
+                        value={telefone}
+                        onChange={(e) =>
+                          setTelefone(e.target.value.replace(/\D/g, ''))
+                        }
                         autoComplete="tel"
-                        onInput={(e) => {
-                          e.currentTarget.value = e.currentTarget.value.replace(
-                            /\D/g,
-                            '',
-                          );
-                        }}
-                        onFocus={() => setFormTocado(true)}
                       />
+                      {/* Ícone de telefone */}
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center">
-                          <PhoneIcon className="w-3 h-3 text-gray-500" />
+                          <Phone className="w-3 h-3 text-gray-500" />
                         </div>
                       </div>
                     </div>
@@ -356,14 +577,18 @@ export default function CadastroGestores() {
                 </div>
               </CardContent>
 
+              {/* Footer do Card com botão de submit */}
               <CardFooter className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 pt-4 sm:pt-6 border-t border-gray-200">
                 <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4">
+                  {/* Mensagem informativa */}
                   <div className="text-center sm:text-left">
                     <p className="text-xs sm:text-sm text-gray-500">
                       Ao cadastrar, o gestor receberá um email com instruções de
                       acesso
                     </p>
                   </div>
+
+                  {/* Botão de submit */}
                   <div className="w-full sm:w-auto">
                     <Button
                       type="submit"
@@ -388,8 +613,12 @@ export default function CadastroGestores() {
             </Form>
           </Card>
 
-          {/* Informações adicionais */}
+          {/* --------------------------------------------------------------------
+            CARDS INFORMATIVOS (RODAPÉ)
+            Três cards com dicas sobre o perfil do gestor
+          -------------------------------------------------------------------- */}
           <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Card 1: Permissões */}
             <div className="bg-blue-50 rounded-lg border border-blue-100 p-4">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -406,10 +635,11 @@ export default function CadastroGestores() {
               </div>
             </div>
 
+            {/* Card 2: Confirmação */}
             <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                  <MailIcon className="w-4 h-4 text-gray-600" />
+                  <Mail className="w-4 h-4 text-gray-600" />
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900 text-sm">
@@ -422,6 +652,7 @@ export default function CadastroGestores() {
               </div>
             </div>
 
+            {/* Card 3: Validação */}
             <div className="bg-green-50 rounded-lg border border-green-100 p-4">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
@@ -441,60 +672,5 @@ export default function CadastroGestores() {
         </div>
       </div>
     </main>
-  );
-}
-
-// Componentes de ícones auxiliares
-function MailIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-      />
-    </svg>
-  );
-}
-
-function FingerprintIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
-      />
-    </svg>
-  );
-}
-
-function PhoneIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-      />
-    </svg>
   );
 }

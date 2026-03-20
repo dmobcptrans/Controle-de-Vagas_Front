@@ -20,29 +20,87 @@ import AgenteCard from '@/components/gestor/cards/agentes-card';
 
 const ITENS_POR_PAGINA = 9;
 
+/**
+ * @component AgentesPage
+ * @version 1.0.0
+ *
+ * @description Página de listagem e gerenciamento de agentes para gestores.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. CARREGAMENTO INICIAL:
+ *    - Verifica autenticação (user?.id)
+ *    - Busca agentes via getAgentes()
+ *    - Estados: loading → erro → sucesso
+ *
+ * 2. FILTROS:
+ *    - Busca textual (nome, email, matrícula, telefone)
+ *    - Filtro por status (todos/ativos/inativos) com toggle cíclico
+ *    - Botão "Limpar Filtros" quando ativos
+ *
+ * 3. PAGINAÇÃO:
+ *    - 9 itens por página (ITENS_POR_PAGINA)
+ *    - Controles: primeira, anterior, próxima, última
+ *    - Seletor de página dropdown
+ *    - Indicador de itens visíveis
+ *
+ * 4. ESTADOS DE UI:
+ *    - Loading: spinner animado com ícone Users
+ *    - Erro: card vermelho com botão de retry
+ *    - Vazio (sem filtros): mensagem sem agentes
+ *    - Vazio (com filtros): mensagem com opção "Ver todos"
+ *    - Sucesso: grid de cards + paginação
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - useCallback + useEffect: Padrão para busca de dados
+ * - useMemo: Filtragem e paginação otimizadas
+ * - Filtro por status cíclico: null → true → false → null
+ * - Paginação mantém estado mesmo durante recarregamentos
+ * - Grid responsivo: 1 (mobile) / 2 (tablet) / 3 (desktop) colunas
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - AgenteCard: Card individual de agente
+ * - getAgentes: API de busca com filtros
+ * - useAuth: Hook de autenticação
+ *
+ * @example
+ * <AgentesPage />
+ */
+
 export default function AgentesPage() {
+  // --------------------------------------------------------------------------
+  // ESTADOS
+  // --------------------------------------------------------------------------
+
   const { user } = useAuth();
   const [agentes, setAgentes] = useState<Agente[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoadingAgentes, setIsLoadingAgentes] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [mostrarAtivos, setMostrarAtivos] = useState<boolean | null>(null);
-  const [isLoadingAgentes, setIsLoadingAgentes] = useState(false);
 
-  // Buscar agentes com filtros
+  // --------------------------------------------------------------------------
+  // BUSCA DE DADOS
+  // --------------------------------------------------------------------------
+
   const fetchAgentes = useCallback(
     async (ativo?: boolean | null) => {
       if (!user?.id) return;
-
       setIsLoadingAgentes(true);
       setError(null);
 
       try {
         const filtros: FiltrosAgente = {};
-        if (ativo !== null) {
-          filtros.ativo = ativo;
-        }
+        if (ativo !== null && ativo !== undefined) filtros.ativo = ativo;
 
         const result = await getAgentes(filtros);
         if (result.error) {
@@ -56,48 +114,40 @@ export default function AgentesPage() {
         );
       } finally {
         setIsLoadingAgentes(false);
-        setLoading(false);
       }
     },
     [user?.id],
   );
 
-  // Buscar agentes inicialmente
+  // Carrega dados iniciais
   useEffect(() => {
     fetchAgentes();
   }, [fetchAgentes]);
 
-  // Alternar filtro de ativos
+  // Recarrega quando filtro de status muda
+  useEffect(() => {
+    setPaginaAtual(1);
+    fetchAgentes(mostrarAtivos);
+  }, [mostrarAtivos]);
+
+  // --------------------------------------------------------------------------
+  // FILTROS
+  // --------------------------------------------------------------------------
+
   const toggleAtivos = () => {
-    if (mostrarAtivos === null) {
-      setMostrarAtivos(true); // Mostrar apenas ativos
-    } else if (mostrarAtivos === true) {
-      setMostrarAtivos(false); // Mostrar apenas inativos
-    } else {
-      setMostrarAtivos(null); // Mostrar todos
-    }
+    if (mostrarAtivos === null) setMostrarAtivos(true);
+    else if (mostrarAtivos === true) setMostrarAtivos(false);
+    else setMostrarAtivos(null);
   };
 
-  // Aplicar filtro quando mostrarAtivos mudar
-  useEffect(() => {
-    if (!loading) {
-      setPaginaAtual(1);
-      fetchAgentes(mostrarAtivos);
-    }
-  }, [fetchAgentes, loading, mostrarAtivos]);
-
-  // Limpar filtros (mostrar todos)
   const mostrarTodos = () => {
     setMostrarAtivos(null);
     setBusca('');
     setPaginaAtual(1);
-    fetchAgentes(null);
   };
 
-  // Filtrar agentes localmente para busca rápida
   const agentesFiltrados = useMemo(() => {
     if (!busca.trim()) return agentes;
-
     const termoBusca = busca.toLowerCase().trim();
     return agentes.filter(
       (agente) =>
@@ -105,24 +155,20 @@ export default function AgentesPage() {
         agente.usuario.email.toLowerCase().includes(termoBusca) ||
         agente.matricula.toLowerCase().includes(termoBusca) ||
         (agente.usuario.telefone &&
-          agente.usuario.telefone.includes(termoBusca)) ||
-        false,
+          agente.usuario.telefone.includes(termoBusca)),
     );
   }, [agentes, busca]);
 
-  // Cálculos de paginação
+  // --------------------------------------------------------------------------
+  // PAGINAÇÃO
+  // --------------------------------------------------------------------------
+
   const totalPaginas = Math.ceil(agentesFiltrados.length / ITENS_POR_PAGINA);
 
   const agentesPaginados = useMemo(() => {
     const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
-    const fim = inicio + ITENS_POR_PAGINA;
-    return agentesFiltrados.slice(inicio, fim);
+    return agentesFiltrados.slice(inicio, inicio + ITENS_POR_PAGINA);
   }, [agentesFiltrados, paginaAtual]);
-
-  // Resetar para página 1 quando buscar
-  useEffect(() => {
-    setPaginaAtual(1);
-  }, [busca]);
 
   const irParaPagina = (pagina: number) => {
     setPaginaAtual(Math.max(1, Math.min(pagina, totalPaginas)));
@@ -133,7 +179,11 @@ export default function AgentesPage() {
   const irParaPaginaAnterior = () => irParaPagina(paginaAtual - 1);
   const irParaProximaPagina = () => irParaPagina(paginaAtual + 1);
 
-  if (loading) {
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO CONDICIONAL
+  // --------------------------------------------------------------------------
+
+  if (isLoadingAgentes && !agentes.length) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col items-center justify-center p-4">
         <div className="text-center max-w-sm w-full">
@@ -185,7 +235,7 @@ export default function AgentesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Cabeçalho */}
+        {/* HEADER */}
         <div className="mb-6 sm:mb-8 lg:mb-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
@@ -198,10 +248,10 @@ export default function AgentesPage() {
             </div>
           </div>
 
-          {/* Barra de busca e filtros */}
+          {/* BARRA DE FILTROS */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              {/* Barra de busca */}
+              {/* Campo de busca */}
               <div className="flex-1">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -210,7 +260,10 @@ export default function AgentesPage() {
                   <input
                     type="text"
                     value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
+                    onChange={(e) => {
+                      setBusca(e.target.value);
+                      setPaginaAtual(1);
+                    }}
                     placeholder="Buscar por nome, email, matrícula ou telefone..."
                     className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm sm:text-base"
                   />
@@ -226,9 +279,9 @@ export default function AgentesPage() {
                 </div>
               </div>
 
-              {/* Botões de ação */}
+              {/* Controles de filtro */}
               <div className="flex items-center gap-3">
-                {/* Filtro de Ativos/Inativos */}
+                {/* Filtro de status (cíclico) */}
                 <button
                   onClick={toggleAtivos}
                   className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
@@ -256,7 +309,7 @@ export default function AgentesPage() {
                   )}
                 </button>
 
-                {/* Botão para limpar todos os filtros */}
+                {/* Botão limpar filtros */}
                 {(busca || mostrarAtivos !== null) && (
                   <button
                     onClick={mostrarTodos}
@@ -267,7 +320,7 @@ export default function AgentesPage() {
                   </button>
                 )}
 
-                {/* Estatísticas */}
+                {/* Contador de agentes */}
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
                   <Users className="h-4 w-4 text-blue-600" />
                   <span className="text-sm font-medium text-blue-800">
@@ -277,13 +330,13 @@ export default function AgentesPage() {
               </div>
             </div>
 
-            {/* Informação dos filtros aplicados */}
+            {/* Resumo dos filtros aplicados */}
             {(busca || mostrarAtivos !== null) && (
               <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="text-sm text-gray-600">
                   {busca ? (
                     <>
-                      Resultados para
+                      Resultados para{' '}
                       <span className="font-medium text-blue-600">{busca}</span>
                       {mostrarAtivos !== null && (
                         <>
@@ -324,7 +377,7 @@ export default function AgentesPage() {
           </div>
         </div>
 
-        {/* Indicador de carregamento de filtros */}
+        {/* Loading overlay durante filtros */}
         {isLoadingAgentes && (
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-2">
@@ -336,10 +389,10 @@ export default function AgentesPage() {
           </div>
         )}
 
-        {/* Conteúdo principal */}
+        {/* LISTA DE AGENTES */}
         <div className="space-y-4 sm:space-y-6">
-          {/* Estado vazio */}
           {agentesFiltrados.length === 0 ? (
+            // Estado vazio (com ou sem filtros)
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 sm:p-12 text-center">
               {busca || mostrarAtivos !== null ? (
                 <div className="max-w-md mx-auto">
@@ -379,116 +432,7 @@ export default function AgentesPage() {
             </div>
           ) : (
             <>
-              {/* Informações de paginação no topo */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-                <div className="text-sm text-gray-600">
-                  Mostrando{' '}
-                  <span className="font-medium text-blue-600">
-                    {Math.min(
-                      (paginaAtual - 1) * ITENS_POR_PAGINA + 1,
-                      agentesFiltrados.length,
-                    )}{' '}
-                    -{' '}
-                    {Math.min(
-                      paginaAtual * ITENS_POR_PAGINA,
-                      agentesFiltrados.length,
-                    )}
-                  </span>{' '}
-                  de{' '}
-                  <span className="font-medium">{agentesFiltrados.length}</span>{' '}
-                  agente(s)
-                  {busca && ' encontrados'}
-                  {mostrarAtivos !== null && !busca && (
-                    <> ({mostrarAtivos === true ? 'ativos' : 'inativos'})</>
-                  )}
-                </div>
-
-                {totalPaginas > 1 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 hidden sm:inline">
-                      Página {paginaAtual} de {totalPaginas}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={irParaPrimeiraPagina}
-                        disabled={paginaAtual === 1}
-                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Primeira página"
-                      >
-                        <ChevronsLeft className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button
-                        onClick={irParaPaginaAnterior}
-                        disabled={paginaAtual === 1}
-                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Página anterior"
-                      >
-                        <ChevronLeft className="h-4 w-4 text-gray-600" />
-                      </button>
-
-                      {/* Números das páginas */}
-                      <div className="flex items-center gap-1">
-                        {[...Array(totalPaginas)].map((_, i) => {
-                          const paginaNumero = i + 1;
-                          // Mostrar apenas algumas páginas ao redor da atual
-                          if (
-                            paginaNumero === 1 ||
-                            paginaNumero === totalPaginas ||
-                            (paginaNumero >= paginaAtual - 1 &&
-                              paginaNumero <= paginaAtual + 1)
-                          ) {
-                            return (
-                              <button
-                                key={paginaNumero}
-                                onClick={() => irParaPagina(paginaNumero)}
-                                className={`min-w-8 h-8 flex items-center justify-center px-2 rounded-lg text-sm font-medium transition-colors ${
-                                  paginaAtual === paginaNumero
-                                    ? 'bg-blue-600 text-white'
-                                    : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                }`}
-                              >
-                                {paginaNumero}
-                              </button>
-                            );
-                          } else if (
-                            paginaNumero === paginaAtual - 2 ||
-                            paginaNumero === paginaAtual + 2
-                          ) {
-                            return (
-                              <span
-                                key={paginaNumero}
-                                className="px-1 text-gray-400"
-                              >
-                                ...
-                              </span>
-                            );
-                          }
-                          return null;
-                        })}
-                      </div>
-
-                      <button
-                        onClick={irParaProximaPagina}
-                        disabled={paginaAtual === totalPaginas}
-                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Próxima página"
-                      >
-                        <ChevronRight className="h-4 w-4 text-gray-600" />
-                      </button>
-                      <button
-                        onClick={irParaUltimaPagina}
-                        disabled={paginaAtual === totalPaginas}
-                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Última página"
-                      >
-                        <ChevronsRight className="h-4 w-4 text-gray-600" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Grid de agentes */}
+              {/* Grid de cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {agentesPaginados.map((agente) => (
                   <div key={agente.usuario.id} className="h-full">
@@ -497,13 +441,35 @@ export default function AgentesPage() {
                 ))}
               </div>
 
-              {/* Paginação na parte inferior */}
+              {/* Paginação */}
               {totalPaginas > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                  {/* Informação de itens visíveis */}
                   <div className="text-sm text-gray-600">
-                    Mostrando {agentesPaginados.length} agente(s) nesta página
+                    Mostrando{' '}
+                    <span className="font-medium text-blue-600">
+                      {Math.min(
+                        (paginaAtual - 1) * ITENS_POR_PAGINA + 1,
+                        agentesFiltrados.length,
+                      )}{' '}
+                      -{' '}
+                      {Math.min(
+                        paginaAtual * ITENS_POR_PAGINA,
+                        agentesFiltrados.length,
+                      )}
+                    </span>{' '}
+                    de{' '}
+                    <span className="font-medium">
+                      {agentesFiltrados.length}
+                    </span>{' '}
+                    agente(s)
+                    {busca && ' encontrados'}
+                    {mostrarAtivos !== null && !busca && (
+                      <> ({mostrarAtivos === true ? 'ativos' : 'inativos'})</>
+                    )}
                   </div>
 
+                  {/* Controles de página */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={irParaPrimeiraPagina}
@@ -522,23 +488,62 @@ export default function AgentesPage() {
                       <span className="hidden sm:inline">Anterior</span>
                     </button>
 
+                    {/* Números das páginas (com reticências) */}
                     <div className="flex items-center gap-1">
-                      <span className="text-sm text-gray-700 px-2">
-                        Página{' '}
-                        <select
-                          value={paginaAtual}
-                          onChange={(e) => irParaPagina(Number(e.target.value))}
-                          className="ml-1 px-2 py-1 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          {[...Array(totalPaginas)].map((_, i) => (
-                            <option key={i + 1} value={i + 1}>
-                              {i + 1}
-                            </option>
-                          ))}
-                        </select>{' '}
-                        de {totalPaginas}
-                      </span>
+                      {[...Array(totalPaginas)].map((_, i) => {
+                        const paginaNumero = i + 1;
+                        if (
+                          paginaNumero === 1 ||
+                          paginaNumero === totalPaginas ||
+                          (paginaNumero >= paginaAtual - 1 &&
+                            paginaNumero <= paginaAtual + 1)
+                        ) {
+                          return (
+                            <button
+                              key={paginaNumero}
+                              onClick={() => irParaPagina(paginaNumero)}
+                              className={`min-w-8 h-8 flex items-center justify-center px-2 rounded-lg text-sm font-medium transition-colors ${
+                                paginaAtual === paginaNumero
+                                  ? 'bg-blue-600 text-white'
+                                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {paginaNumero}
+                            </button>
+                          );
+                        } else if (
+                          paginaNumero === paginaAtual - 2 ||
+                          paginaNumero === paginaAtual + 2
+                        ) {
+                          return (
+                            <span
+                              key={paginaNumero}
+                              className="px-1 text-gray-400"
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
                     </div>
+
+                    {/* Seletor de página dropdown */}
+                    <span className="text-sm text-gray-700 px-2">
+                      Página{' '}
+                      <select
+                        value={paginaAtual}
+                        onChange={(e) => irParaPagina(Number(e.target.value))}
+                        className="ml-1 px-2 py-1 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {[...Array(totalPaginas)].map((_, i) => (
+                          <option key={i + 1} value={i + 1}>
+                            {i + 1}
+                          </option>
+                        ))}
+                      </select>{' '}
+                      de {totalPaginas}
+                    </span>
 
                     <button
                       onClick={irParaProximaPagina}

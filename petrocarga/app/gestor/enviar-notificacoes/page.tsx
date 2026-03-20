@@ -20,38 +20,107 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+/**
+ * @component EnviarNotificacoesPage
+ * @version 1.0.0
+ *
+ * @description Página de envio de notificações para motoristas.
+ * Permite enviar notificações individuais ou em grupo com diferentes tipos.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. CARREGAMENTO INICIAL:
+ *    - Verifica autenticação (user?.id)
+ *    - Carrega lista de motoristas via getMotoristas()
+ *
+ * 2. MODOS DE ENVIO:
+ *    a) INDIVIDUAL:
+ *       - Busca motoristas por nome/email
+ *       - Seleção múltipla de motoristas
+ *       - Envio para IDs específicos
+ *
+ *    b) GRUPO:
+ *       - Envio para todos os motoristas
+ *       - Usa permissão 'MOTORISTA' como filtro
+ *
+ * 3. FORMULÁRIO DE NOTIFICAÇÃO:
+ *    - Título (obrigatório)
+ *    - Mensagem (obrigatório)
+ *    - Tipo (RESERVA, VAGA, VEICULO, MOTORISTA, SISTEMA)
+ *
+ * 4. PROCESSAMENTO:
+ *    - Valida campos obrigatórios
+ *    - Loading state durante envio
+ *    - Resultado detalhado (sucessos/erros)
+ *    - Feedback com toast
+ *
+ * 5. ESTADOS DE UI:
+ *    - Loading inicial: spinner centralizado
+ *    - Envio em andamento: botão desabilitado com spinner
+ *    - Resultado: card resumo com contadores
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - useMemo: Filtro de motoristas otimizado (busca em memória)
+ * - Promise.all: Envio paralelo para motoristas selecionados
+ * - useAuth: Garante que apenas gestores autenticados acessem
+ * - Grid responsivo: 1 coluna mobile, 2 colunas desktop
+ * - Sticky sidebar: Resumo sempre visível em telas grandes
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - getMotoristas: API de listagem de motoristas
+ * - enviarNotificacaoParaUsuario: API de envio individual
+ * - enviarNotificacaoPorPermissao: API de envio em grupo
+ * - toast: Feedback visual (react-hot-toast)
+ *
+ * @example
+ * // Uso em rota de gestor
+ * <EnviarNotificacoesPage />
+ */
+
 export default function EnviarNotificacoesPage() {
+  // --------------------------------------------------------------------------
+  // HOOKS E ESTADOS
+  // --------------------------------------------------------------------------
+
   const { user } = useAuth();
   const [motoristas, setMotoristas] = useState<Motorista[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Modo de envio (apenas motoristas)
   const [modoEnvio, setModoEnvio] = useState<'INDIVIDUAL' | 'GRUPO'>(
     'INDIVIDUAL',
   );
-
-  // Filtro de busca (apenas para modo individual)
   const [busca, setBusca] = useState('');
-
-  // Formulário
   const [titulo, setTitulo] = useState('');
   const [mensagem, setMensagem] = useState('');
   const [tipo, setTipo] = useState<
     'RESERVA' | 'VAGA' | 'VEICULO' | 'MOTORISTA' | 'SISTEMA'
   >('SISTEMA');
-
-  // Seleção de motoristas (apenas para modo individual)
   const [motoristasSelecionados, setMotoristasSelecionados] = useState<
     string[]
   >([]);
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState<{
+    sucesso: boolean;
     enviadas: number;
     erros: number;
   } | null>(null);
 
+  // --------------------------------------------------------------------------
+  // EFEITO INICIAL (CARREGAR MOTORISTAS)
+  // --------------------------------------------------------------------------
+
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
 
     const fetchData = async () => {
       setLoading(true);
@@ -71,9 +140,12 @@ export default function EnviarNotificacoesPage() {
     };
 
     fetchData();
-  }, [user]);
+  }, [user?.id]);
 
-  // Filtra motoristas com base na busca
+  // --------------------------------------------------------------------------
+  // FILTRO DE MOTORISTAS (BUSCA EM TEMPO REAL)
+  // --------------------------------------------------------------------------
+
   const motoristasFiltrados = useMemo(() => {
     if (!busca.trim()) return motoristas;
 
@@ -85,6 +157,10 @@ export default function EnviarNotificacoesPage() {
     );
   }, [motoristas, busca]);
 
+  // --------------------------------------------------------------------------
+  // FUNÇÕES DE SELEÇÃO
+  // --------------------------------------------------------------------------
+
   const toggleMotorista = (id: string) => {
     setMotoristasSelecionados((prev) =>
       prev.includes(id)
@@ -93,15 +169,15 @@ export default function EnviarNotificacoesPage() {
     );
   };
 
-  const deselecionarTodos = () => {
-    setMotoristasSelecionados([]);
+  const deselecionarTodos = () => setMotoristasSelecionados([]);
+
+  const selecionarTodosFiltrados = () => {
+    setMotoristasSelecionados(motoristasFiltrados.map((m) => m.usuario.id));
   };
 
-  // Selecionar todos os motoristas filtrados
-  const selecionarTodosFiltrados = () => {
-    const ids = motoristasFiltrados.map((m) => m.usuario.id);
-    setMotoristasSelecionados(ids);
-  };
+  // --------------------------------------------------------------------------
+  // HANDLERS DE ENVIO
+  // --------------------------------------------------------------------------
 
   const handleEnvioIndividual = async () => {
     if (
@@ -109,47 +185,48 @@ export default function EnviarNotificacoesPage() {
       !mensagem.trim() ||
       motoristasSelecionados.length === 0
     ) {
-      alert('Preencha título, mensagem e selecione pelo menos um motorista');
+      toast.error(
+        'Preencha título, mensagem e selecione pelo menos um motorista',
+      );
       return;
     }
 
     setEnviando(true);
     setResultado(null);
 
-    let enviadas = 0;
-    let erros = 0;
-
     try {
-      // Envia notificação para cada motorista selecionado
-      for (const usuarioId of motoristasSelecionados) {
-        const formData = new FormData();
-        formData.append('usuarioId', usuarioId);
-        formData.append('titulo', titulo);
-        formData.append('mensagem', mensagem);
-        formData.append('tipo', tipo);
+      const resultados = await Promise.all(
+        motoristasSelecionados.map(async (usuarioId) => {
+          const formData = new FormData();
+          formData.append('usuarioId', usuarioId);
+          formData.append('titulo', titulo);
+          formData.append('mensagem', mensagem);
+          formData.append('tipo', tipo);
+          return await enviarNotificacaoParaUsuario(formData);
+        }),
+      );
 
-        const result = await enviarNotificacaoParaUsuario(formData);
+      const enviadas = resultados.filter((r) => !r.error).length;
+      const erros = resultados.filter((r) => r.error).length;
 
-        if (result.error) {
-          console.error(`Erro para motorista ${usuarioId}:`, result.message);
-          erros++;
-        } else {
-          enviadas++;
-        }
-      }
+      setResultado({ sucesso: erros === 0, enviadas, erros });
 
-      setResultado({ enviadas, erros });
-
-      // Limpa o formulário se tudo foi enviado com sucesso
       if (erros === 0) {
         setTitulo('');
         setMensagem('');
         setMotoristasSelecionados([]);
-        setBusca(''); // Limpa a busca também
+        setBusca('');
+        toast.success(`${enviadas} notificação(ões) enviada(s) com sucesso!`);
+      } else {
+        toast.error(`${erros} erro(s) ao enviar notificações.`);
       }
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao enviar notificações');
+    } catch {
+      toast.error('Erro ao enviar notificações');
+      setResultado({
+        sucesso: false,
+        enviadas: 0,
+        erros: motoristasSelecionados.length,
+      });
     } finally {
       setEnviando(false);
     }
@@ -157,7 +234,7 @@ export default function EnviarNotificacoesPage() {
 
   const handleEnvioGrupo = async () => {
     if (!titulo.trim() || !mensagem.trim()) {
-      alert('Preencha título e mensagem');
+      toast.error('Preencha título e mensagem');
       return;
     }
 
@@ -174,22 +251,27 @@ export default function EnviarNotificacoesPage() {
       const result = await enviarNotificacaoPorPermissao(formData);
 
       if (result.error) {
-        setResultado({ enviadas: 0, erros: 1 });
-        alert(`Erro: ${result.message}`);
+        setResultado({ sucesso: false, enviadas: 0, erros: 1 });
+        toast.error(
+          result.message || 'Erro ao enviar notificação para o grupo',
+        );
       } else {
-        setResultado({ enviadas: 1, erros: 0 }); // 1 grupo enviado
+        setResultado({ sucesso: true, enviadas: motoristas.length, erros: 0 });
         setTitulo('');
         setMensagem('');
-        setBusca(''); // Limpa a busca também
+        toast.success('Notificação enviada para todos os motoristas!');
       }
-    } catch (err) {
-      console.error(err);
-      setResultado({ enviadas: 0, erros: 1 });
-      alert('Erro ao enviar notificação para o grupo');
+    } catch {
+      setResultado({ sucesso: false, enviadas: 0, erros: 1 });
+      toast.error('Erro ao enviar notificação para o grupo');
     } finally {
       setEnviando(false);
     }
   };
+
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO CONDICIONAL
+  // --------------------------------------------------------------------------
 
   if (loading) {
     return (
@@ -201,6 +283,7 @@ export default function EnviarNotificacoesPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      {/* HEADER */}
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
           <Bell className="h-8 w-8 text-blue-600" />
@@ -212,15 +295,18 @@ export default function EnviarNotificacoesPage() {
         </p>
       </div>
 
+      {/* GRID PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Formulário */}
+        {/* COLUNA ESQUERDA (2/3) - FORMULÁRIO E SELEÇÃO */}
         <div className="lg:col-span-2">
+          {/* Card de conteúdo da notificação */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               Conteúdo da Notificação
             </h2>
 
             <div className="space-y-4">
+              {/* Campo título */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Título *
@@ -234,6 +320,7 @@ export default function EnviarNotificacoesPage() {
                 />
               </div>
 
+              {/* Campo mensagem */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Mensagem *
@@ -247,6 +334,7 @@ export default function EnviarNotificacoesPage() {
                 />
               </div>
 
+              {/* Tipo de notificação */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Tipo de Notificação
@@ -275,7 +363,7 @@ export default function EnviarNotificacoesPage() {
             </div>
           </div>
 
-          {/* Destinatários */}
+          {/* Card de seleção de destinatários */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Filter className="h-5 w-5" />
@@ -283,12 +371,13 @@ export default function EnviarNotificacoesPage() {
             </h2>
 
             <div className="space-y-4 mb-6">
-              {/* Modo de envio */}
+              {/* Escolha do modo de envio */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Escolha o modo de envio:
                 </label>
                 <div className="grid grid-cols-2 gap-3">
+                  {/* Botão modo INDIVIDUAL */}
                   <button
                     onClick={() => setModoEnvio('INDIVIDUAL')}
                     className={`p-3 border rounded-lg transition-colors flex flex-col items-center justify-center gap-2 ${
@@ -306,6 +395,7 @@ export default function EnviarNotificacoesPage() {
                     </span>
                   </button>
 
+                  {/* Botão modo GRUPO */}
                   <button
                     onClick={() => setModoEnvio('GRUPO')}
                     className={`p-3 border rounded-lg transition-colors flex flex-col items-center justify-center gap-2 ${
@@ -325,7 +415,7 @@ export default function EnviarNotificacoesPage() {
                 </div>
               </div>
 
-              {/* Modo INDIVIDUAL - Lista de motoristas */}
+              {/* MODO INDIVIDUAL - Busca e lista de motoristas */}
               {modoEnvio === 'INDIVIDUAL' && (
                 <div className="space-y-4">
                   {/* Campo de busca */}
@@ -382,7 +472,7 @@ export default function EnviarNotificacoesPage() {
                     </div>
                   </div>
 
-                  {/* Lista de motoristas */}
+                  {/* Lista de motoristas com checkboxes */}
                   <div className="border border-gray-200 rounded-lg overflow-hidden max-h-60 overflow-y-auto">
                     {motoristasFiltrados.map((motorista) => (
                       <div
@@ -395,7 +485,7 @@ export default function EnviarNotificacoesPage() {
                         onClick={() => toggleMotorista(motorista.usuario.id)}
                       >
                         <div
-                          className={`w-5 h-5 rounded border flex items-center justify-center ${
+                          className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
                             motoristasSelecionados.includes(
                               motorista.usuario.id,
                             )
@@ -420,18 +510,11 @@ export default function EnviarNotificacoesPage() {
                             </span>
                           </div>
                         </div>
-                        {motoristasSelecionados.includes(
-                          motorista.usuario.id,
-                        ) && (
-                          <div className="text-blue-500">
-                            <Check className="w-4 h-4" />
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
 
-                  {/* Contador de selecionados */}
+                  {/* Resumo da seleção */}
                   {motoristasSelecionados.length > 0 && (
                     <div className="p-3 bg-blue-50 rounded-lg">
                       <div className="flex items-center justify-between">
@@ -451,7 +534,7 @@ export default function EnviarNotificacoesPage() {
                     </div>
                   )}
 
-                  {/* Dica de busca */}
+                  {/* Dica */}
                   {motoristas.length > 5 && (
                     <div className="p-2 bg-gray-50 rounded text-xs text-gray-600">
                       💡 <strong>Dica:</strong> Use a busca para encontrar
@@ -461,7 +544,7 @@ export default function EnviarNotificacoesPage() {
                 </div>
               )}
 
-              {/* Modo GRUPO - Informação */}
+              {/* MODO GRUPO - Informação sobre envio para todos */}
               {modoEnvio === 'GRUPO' && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center gap-3">
@@ -517,13 +600,13 @@ export default function EnviarNotificacoesPage() {
           </div>
         </div>
 
-        {/* Painel lateral */}
+        {/* COLUNA DIREITA (1/3) - RESUMO E DICAS (STICKY) */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo</h3>
 
             <div className="space-y-4">
-              {/* Estatísticas */}
+              {/* Card total de motoristas */}
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-gray-700">
@@ -538,7 +621,7 @@ export default function EnviarNotificacoesPage() {
                 </p>
               </div>
 
-              {/* Modo atual */}
+              {/* Card modo atual */}
               <div
                 className={`p-4 rounded-lg border ${
                   modoEnvio === 'GRUPO'
@@ -565,33 +648,37 @@ export default function EnviarNotificacoesPage() {
                 </p>
               </div>
 
-              {/* Resultado do envio */}
+              {/* Resultado do último envio */}
               {resultado && (
                 <div
                   className={`p-4 rounded-lg border ${
-                    resultado.erros > 0
-                      ? 'bg-red-50 border-red-200 text-red-800'
-                      : 'bg-green-50 border-green-200 text-green-800'
+                    resultado.sucesso
+                      ? 'bg-green-50 border-green-200 text-green-800'
+                      : 'bg-red-50 border-red-200 text-red-800'
                   }`}
                 >
                   <div className="flex items-center gap-2 font-medium mb-1">
-                    {resultado.erros > 0 ? (
+                    {resultado.sucesso ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Sucesso!
+                      </>
+                    ) : (
                       <>
                         <X className="h-4 w-4" />
                         {modoEnvio === 'GRUPO'
                           ? 'Erro no envio'
                           : 'Envio parcial'}
                       </>
-                    ) : (
-                      <>
-                        <Check className="h-4 w-4" />
-                        Sucesso!
-                      </>
                     )}
                   </div>
                   <div className="text-sm">
                     {modoEnvio === 'GRUPO' ? (
-                      <p>Notificação enviada para todos os motoristas</p>
+                      <p>
+                        {resultado.sucesso
+                          ? `Notificação enviada para todos os ${resultado.enviadas} motoristas`
+                          : 'Não foi possível enviar a notificação para o grupo'}
+                      </p>
                     ) : (
                       <>
                         <p>
@@ -609,7 +696,7 @@ export default function EnviarNotificacoesPage() {
                 </div>
               )}
 
-              {/* Dicas */}
+              {/* Dicas de uso */}
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">
                   Dicas de uso:

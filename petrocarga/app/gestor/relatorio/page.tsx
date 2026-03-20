@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import { RelatorioSumario, RelatorioKpis } from '@/lib/api/dashboardApi';
 import { DashboardSummary, DashboardKPIs } from '@/lib/types/dashboard';
@@ -52,7 +52,112 @@ import {
   Line,
 } from 'recharts';
 
+/**
+ * @component RelatoriosPage
+ * @version 1.0.0
+ *
+ * @description Página de relatórios e dashboard com métricas completas do sistema.
+ * Visualização de KPIs, gráficos, estatísticas e análise de dados.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. CARREGAMENTO DE DADOS:
+ *    - Verifica autenticação (user?.id)
+ *    - Busca dados via Promise.allSettled (RelatorioSumario e RelatorioKpis)
+ *    - Trata erros individualmente por requisição
+ *
+ * 2. FILTRO POR DATA:
+ *    - DateRangePicker permite selecionar período
+ *    - Recarrega dados automaticamente ao mudar datas
+ *
+ * 3. MÉTRICAS DERIVADAS:
+ *    - Taxa de conclusão (completadas / total)
+ *    - Taxa de cancelamento (canceladas / total)
+ *    - Reservas por vaga (total / vagas)
+ *
+ * 4. GRÁFICOS E VISUALIZAÇÕES:
+ *    - Gráficos de pizza (status, tipos de reserva)
+ *    - Gráficos de barras (bairros, tempo de permanência)
+ *    - Gráficos combinados (comparação de veículos)
+ *    - Tabelas de rotas mais utilizadas
+ *
+ * 5. TABS DE NAVEGAÇÃO:
+ *    - Visão Geral: KPIs principais e gráficos resumidos
+ *    - Veículos: Análise detalhada de tipos e uso
+ *    - Localizações: Estatísticas por bairro e origem
+ *    - Avançado: Métricas de tempo e espaço
+ *
+ * 6. ESTADOS DE UI:
+ *    - Loading: spinner centralizado
+ *    - Erro: card vermelho com opção de retry
+ *    - Sem dados: mensagem amigável
+ *    - Sucesso: dashboard completo
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - Promise.allSettled: Permite que uma requisição falhe sem quebrar a outra
+ * - useMemo: Otimização para dados derivados (taxas, gráficos)
+ * - useCallback: Memoização da função de busca
+ * - Responsividade: Grid adaptativo (1/2/4 colunas)
+ * - Sheet mobile: Filtros em drawer no mobile
+ * - Recharts: Biblioteca de gráficos (pizza, barras, linhas)
+ *
+ * ----------------------------------------------------------------------------
+ * 📊 KPIs PRINCIPAIS:
+ * ----------------------------------------------------------------------------
+ *
+ * - Total de Vagas
+ * - Taxa de Ocupação
+ * - Reservas Pendentes
+ * - Reservas Ativas
+ * - Reservas Concluídas
+ * - Reservas Canceladas
+ * - Reservas Removidas
+ * - Reservas Totais
+ * - Múltiplas Vagas
+ * - Taxa de Conclusão
+ * - Taxa de Cancelamento
+ * - Reservas por Vaga
+ *
+ * ----------------------------------------------------------------------------
+ * 📈 GRÁFICOS E VISUALIZAÇÕES:
+ * ----------------------------------------------------------------------------
+ *
+ * - Tipos de Veículo (barras)
+ * - Status das Reservas (pizza)
+ * - Distribuição de Tipos de Reserva (pizza)
+ * - Top 5 Bairros (barras horizontais)
+ * - Comparação de Utilização (barras + linha)
+ * - Tempo de Permanência (barras)
+ * - Utilização de Espaço (pizza)
+ * - Rotas Mais Utilizadas (tabela)
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - KPICard: Card de métrica individual
+ * - VehicleTypesChart: Gráfico de tipos de veículo
+ * - LocationStats: Estatísticas de localização
+ * - DateRangePicker: Seletor de período
+ * - DashboardMetricsSection: Métricas avançadas
+ * - MostUsedParkingSpaces: Vagas mais utilizadas
+ * - VehicleRoutesTable: Tabela de rotas
+ *
+ * @example
+ * // Uso em rota de gestor/admin
+ * <RelatoriosPage />
+ */
+
 export default function RelatoriosPage() {
+  // --------------------------------------------------------------------------
+  // ESTADOS
+  // --------------------------------------------------------------------------
+
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<DashboardSummary | null>(
@@ -60,75 +165,85 @@ export default function RelatoriosPage() {
   );
   const [kpisData, setKpisData] = useState<DashboardKPIs | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
   const [activeTab, setActiveTab] = useState('overview');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const isFetching = useRef(false);
 
-  const fetchDashboardData = useCallback(
-    async (forceRefresh = false) => {
-      if (isFetching.current && !forceRefresh) return;
-      if (!user?.id) return;
+  // --------------------------------------------------------------------------
+  // BUSCA DE DADOS
+  // --------------------------------------------------------------------------
 
-      isFetching.current = true;
-      setLoading(true);
-      setError(null);
+  const fetchDashboardData = useCallback(async () => {
+    if (!user?.id) return;
 
-      try {
-        const [summaryResult, kpisResult] = await Promise.allSettled([
-          RelatorioSumario(startDate || undefined, endDate || undefined),
-          RelatorioKpis(startDate || undefined, endDate || undefined),
-        ]);
+    setLoading(true);
+    setError(null);
 
-        if (summaryResult.status === 'fulfilled') {
-          setDashboardData(summaryResult.value);
-        } else {
-          setError('Erro ao carregar resumo do dashboard');
-        }
+    try {
+      // Promise.allSettled permite que uma requisição falhe sem quebrar a outra
+      const [summaryResult, kpisResult] = await Promise.allSettled([
+        RelatorioSumario(
+          dateRange.startDate || undefined,
+          dateRange.endDate || undefined,
+        ),
+        RelatorioKpis(
+          dateRange.startDate || undefined,
+          dateRange.endDate || undefined,
+        ),
+      ]);
 
-        if (kpisResult.status === 'fulfilled') {
-          setKpisData(kpisResult.value);
-        } else {
-          setError((prev) =>
-            prev
-              ? `${prev}; Erro ao carregar KPIs`
-              : 'Erro ao carregar KPIs do dashboard',
-          );
-        }
-
-        if (
-          summaryResult.status === 'rejected' &&
-          kpisResult.status === 'rejected'
-        ) {
-          setError(
-            'Não foi possível carregar os dados do dashboard. Verifique se o serviço está disponível.',
-          );
-        }
-      } catch {
-        setError('Erro interno ao processar os dados');
-      } finally {
-        setLoading(false);
-        isFetching.current = false;
+      if (summaryResult.status === 'fulfilled') {
+        setDashboardData(summaryResult.value);
+      } else {
+        setError('Erro ao carregar resumo do dashboard');
       }
-    },
-    [user?.id, startDate, endDate],
-  );
 
+      if (kpisResult.status === 'fulfilled') {
+        setKpisData(kpisResult.value);
+      } else {
+        setError((prev) =>
+          prev
+            ? `${prev}; Erro ao carregar KPIs`
+            : 'Erro ao carregar KPIs do dashboard',
+        );
+      }
+
+      if (
+        summaryResult.status === 'rejected' &&
+        kpisResult.status === 'rejected'
+      ) {
+        setError(
+          'Não foi possível carregar os dados do dashboard. Verifique se o serviço está disponível.',
+        );
+      }
+    } catch {
+      setError('Erro interno ao processar os dados');
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, dateRange.startDate, dateRange.endDate]);
+
+  // Carrega dados iniciais
   useEffect(() => {
+    if (!user?.id) return;
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, [user?.id]);
+
+  // Recarrega quando filtro de data muda
+  useEffect(() => {
+    if (!user?.id || (!dateRange.startDate && !dateRange.endDate)) return;
+    fetchDashboardData();
+  }, [dateRange.startDate, dateRange.endDate]);
+
+  // --------------------------------------------------------------------------
+  // MÉTRICAS DERIVADAS
+  // --------------------------------------------------------------------------
 
   const handleDateChange = (newStartDate: string, newEndDate: string) => {
-    setStartDate(newStartDate);
-    setEndDate(newEndDate);
+    setDateRange({ startDate: newStartDate, endDate: newEndDate });
   };
 
-  const handleRefresh = () => {
-    fetchDashboardData(true);
-  };
-
-  const calculateMetrics = () => {
+  const derivedMetrics = useMemo(() => {
     if (!kpisData) return null;
 
     const completionRate =
@@ -151,102 +266,130 @@ export default function RelatoriosPage() {
       cancellationRate: cancellationRate.toFixed(1),
       reservationsPerSlot: reservationsPerSlot.toFixed(1),
     };
-  };
+  }, [kpisData]);
 
-  const derivedMetrics = calculateMetrics();
+  // --------------------------------------------------------------------------
+  // DADOS PARA GRÁFICOS
+  // --------------------------------------------------------------------------
 
-  const reservationStatusData = kpisData
-    ? [
-        {
-          name: 'Concluídas',
-          value: kpisData.completedReservations,
-          color: '#10b981',
-        },
-        {
-          name: 'Pendentes',
-          value: kpisData.pendingReservations,
-          color: '#f59e0b',
-        },
-        {
-          name: 'Ativas',
-          value: kpisData.activeReservations,
-          color: '#3b82f6',
-        },
-        {
-          name: 'Canceladas',
-          value: kpisData.canceledReservations,
-          color: '#ef4444',
-        },
-        {
-          name: 'Removidas',
-          value: kpisData.removedReservations,
-          color: '#6b7280',
-        },
-      ].filter((item) => item.value > 0)
-    : [];
+  const reservationStatusData = useMemo(
+    () =>
+      kpisData
+        ? [
+            {
+              name: 'Concluídas',
+              value: kpisData.completedReservations,
+              color: '#10b981',
+            },
+            {
+              name: 'Pendentes',
+              value: kpisData.pendingReservations,
+              color: '#f59e0b',
+            },
+            {
+              name: 'Ativas',
+              value: kpisData.activeReservations,
+              color: '#3b82f6',
+            },
+            {
+              name: 'Canceladas',
+              value: kpisData.canceledReservations,
+              color: '#ef4444',
+            },
+            {
+              name: 'Removidas',
+              value: kpisData.removedReservations,
+              color: '#6b7280',
+            },
+          ].filter((item) => item.value > 0)
+        : [],
+    [kpisData],
+  );
 
-  const reservationTypesData = kpisData
-    ? [
-        {
-          name: 'Reservas Normais',
-          value: kpisData.totalReservations - kpisData.multipleSlotReservations,
-          color: '#3b82f6',
-        },
-        {
-          name: 'Múltiplas Vagas',
-          value: kpisData.multipleSlotReservations,
-          color: '#8b5cf6',
-        },
-      ].filter((item) => item.value > 0)
-    : [];
+  const reservationTypesData = useMemo(
+    () =>
+      kpisData
+        ? [
+            {
+              name: 'Reservas Normais',
+              value:
+                kpisData.totalReservations - kpisData.multipleSlotReservations,
+              color: '#3b82f6',
+            },
+            {
+              name: 'Múltiplas Vagas',
+              value: kpisData.multipleSlotReservations,
+              color: '#8b5cf6',
+            },
+          ].filter((item) => item.value > 0)
+        : [],
+    [kpisData],
+  );
 
-  const topDistrictsData =
-    dashboardData?.districts?.slice(0, 5).map((item) => ({
-      name:
-        item.name.length > 15 ? item.name.substring(0, 12) + '...' : item.name,
-      fullName: item.name,
-      value: item.reservationCount,
-      color: '#10b981',
-    })) || [];
+  const topDistrictsData = useMemo(
+    () =>
+      dashboardData?.districts?.slice(0, 5).map((item) => ({
+        name:
+          item.name.length > 15
+            ? item.name.substring(0, 12) + '...'
+            : item.name,
+        fullName: item.name,
+        value: item.reservationCount,
+        color: '#10b981',
+      })) || [],
+    [dashboardData],
+  );
 
-  const stayDurationData = dashboardData?.stayDurationStats
-    ? [
-        {
-          name: 'Mínimo',
-          value: dashboardData.stayDurationStats.minMinutes || 0,
-          color: '#10b981',
-        },
-        {
-          name: 'Médio',
-          value: dashboardData.stayDurationStats.avgMinutes || 0,
-          color: '#3b82f6',
-        },
-        {
-          name: 'Máximo',
-          value: dashboardData.stayDurationStats.maxMinutes || 0,
-          color: '#f59e0b',
-        },
-      ].filter((item) => item.value > 0)
-    : [];
+  const stayDurationData = useMemo(
+    () =>
+      dashboardData?.stayDurationStats
+        ? [
+            {
+              name: 'Mínimo',
+              value: dashboardData.stayDurationStats.minMinutes || 0,
+              color: '#10b981',
+            },
+            {
+              name: 'Médio',
+              value: dashboardData.stayDurationStats.avgMinutes || 0,
+              color: '#3b82f6',
+            },
+            {
+              name: 'Máximo',
+              value: dashboardData.stayDurationStats.maxMinutes || 0,
+              color: '#f59e0b',
+            },
+          ].filter((item) => item.value > 0)
+        : [],
+    [dashboardData],
+  );
 
-  const lengthOccupancyData = dashboardData?.lengthOccupancyStats
-    ? [
-        {
-          name: 'Ocupado',
-          value: dashboardData.lengthOccupancyStats.occupiedLengthMeters,
-          color: '#10b981',
-        },
-        {
-          name: 'Disponível',
-          value: Math.max(
-            0,
-            dashboardData.lengthOccupancyStats.availableLengthMeters -
-              dashboardData.lengthOccupancyStats.occupiedLengthMeters,
-          ),
-          color: '#d1d5db',
-        },
-      ].filter((item) => item.value > 0)
-    : [];
+  const lengthOccupancyData = useMemo(
+    () =>
+      dashboardData?.lengthOccupancyStats
+        ? [
+            {
+              name: 'Ocupado',
+              value: dashboardData.lengthOccupancyStats.occupiedLengthMeters,
+              color: '#10b981',
+            },
+            {
+              name: 'Disponível',
+              value: Math.max(
+                0,
+                dashboardData.lengthOccupancyStats.availableLengthMeters -
+                  dashboardData.lengthOccupancyStats.occupiedLengthMeters,
+              ),
+              color: '#d1d5db',
+            },
+          ].filter((item) => item.value > 0)
+        : [],
+    [dashboardData],
+  );
+
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO CONDICIONAL
+  // --------------------------------------------------------------------------
 
   if (loading && !dashboardData && !kpisData) {
     return (
@@ -261,9 +404,12 @@ export default function RelatoriosPage() {
 
   return (
     <div className="p-3 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* HEADER */}
       <div className="mb-4 md:mb-6 lg:mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
+          {/* Título e menu mobile */}
           <div className="flex items-center justify-between md:justify-start gap-3">
+            {/* Menu mobile para filtros */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild className="md:hidden">
                 <Button variant="outline" size="icon">
@@ -278,6 +424,7 @@ export default function RelatoriosPage() {
               </SheetContent>
             </Sheet>
 
+            {/* Título e ícone */}
             <div className="flex items-center gap-2 md:gap-3">
               <BarChart3 className="h-6 w-6 md:h-8 md:w-8 text-blue-600 flex-shrink-0" />
               <div>
@@ -291,13 +438,15 @@ export default function RelatoriosPage() {
             </div>
           </div>
 
+          {/* Subtítulo mobile */}
           <p className="text-gray-600 text-sm md:hidden mt-2">
             Visualize métricas e estatísticas do sistema
           </p>
 
+          {/* Botão atualizar */}
           <div className="flex items-center gap-2 md:gap-3 mt-3 md:mt-0">
             <Button
-              onClick={handleRefresh}
+              onClick={fetchDashboardData}
               variant="outline"
               className="flex items-center gap-2 w-full md:w-auto"
               disabled={loading}
@@ -317,6 +466,7 @@ export default function RelatoriosPage() {
         </div>
       </div>
 
+      {/* ESTADO DE ERRO */}
       {error && (
         <Card className="mb-4 md:mb-6">
           <CardContent className="p-4 md:p-6">
@@ -332,7 +482,7 @@ export default function RelatoriosPage() {
                   {error}
                 </p>
                 <Button
-                  onClick={handleRefresh}
+                  onClick={fetchDashboardData}
                   className="flex items-center gap-2 w-full md:w-auto"
                   size="sm"
                 >
@@ -345,8 +495,10 @@ export default function RelatoriosPage() {
         </Card>
       )}
 
+      {/* DASHBOARD PRINCIPAL */}
       {!error && (dashboardData || kpisData) ? (
         <>
+          {/* FILTRO DE DATA (DESKTOP) */}
           <Card className="mb-4 md:mb-6 hidden md:block">
             <CardHeader className="p-4 md:p-6">
               <CardTitle className="flex items-center gap-2 text-base md:text-lg">
@@ -356,24 +508,28 @@ export default function RelatoriosPage() {
             </CardHeader>
             <CardContent className="p-4 md:p-6 pt-0">
               <DateRangePicker onDateChange={handleDateChange} />
-              {startDate && endDate && (
+              {dateRange.startDate && dateRange.endDate && (
                 <p className="text-xs md:text-sm text-gray-500 mt-3 md:mt-4">
                   Mostrando dados de{' '}
-                  {new Date(startDate.split('T')[0]).toLocaleDateString(
-                    'pt-BR',
-                  )}{' '}
+                  {new Date(
+                    dateRange.startDate.split('T')[0],
+                  ).toLocaleDateString('pt-BR')}{' '}
                   até{' '}
-                  {new Date(endDate.split('T')[0]).toLocaleDateString('pt-BR')}
+                  {new Date(dateRange.endDate.split('T')[0]).toLocaleDateString(
+                    'pt-BR',
+                  )}
                 </p>
               )}
             </CardContent>
           </Card>
 
+          {/* TABS DE NAVEGAÇÃO */}
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="space-y-4 md:space-y-6"
           >
+            {/* Lista de Tabs (responsiva com scroll) */}
             <div className="overflow-x-auto pb-2 md:pb-0">
               <TabsList className="inline-flex h-10 w-full min-w-[400px] md:w-auto md:grid md:grid-cols-4 md:max-w-xl">
                 <TabsTrigger value="overview" className="flex-1 min-w-[100px]">
@@ -391,7 +547,9 @@ export default function RelatoriosPage() {
               </TabsList>
             </div>
 
+            {/* TAB 1: VISÃO GERAL */}
             <TabsContent value="overview" className="space-y-4 md:space-y-6">
+              {/* KPIs Principais */}
               {kpisData && (
                 <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                   <KPICard
@@ -480,6 +638,7 @@ export default function RelatoriosPage() {
                 </div>
               )}
 
+              {/* Gráficos: Tipos de Veículo + Status das Reservas */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 {dashboardData?.vehicleTypes &&
                 dashboardData.vehicleTypes.length > 0 ? (
@@ -543,6 +702,7 @@ export default function RelatoriosPage() {
                 )}
               </div>
 
+              {/* Gráficos: Distribuição de Tipos + Top Bairros */}
               {reservationTypesData.length > 0 &&
                 topDistrictsData.length > 0 && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
@@ -626,6 +786,7 @@ export default function RelatoriosPage() {
                 )}
             </TabsContent>
 
+            {/* TAB 2: VEÍCULOS */}
             <TabsContent value="vehicles" className="space-y-4 md:space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 {dashboardData?.vehicleTypes &&
@@ -714,6 +875,7 @@ export default function RelatoriosPage() {
               </div>
             </TabsContent>
 
+            {/* TAB 3: LOCALIZAÇÕES */}
             <TabsContent value="locations" className="space-y-4 md:space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                 {dashboardData?.districts &&
@@ -788,13 +950,16 @@ export default function RelatoriosPage() {
                 )}
             </TabsContent>
 
+            {/* TAB 4: AVANÇADO */}
             <TabsContent value="advanced" className="space-y-4 md:space-y-6">
+              {/* Métricas avançadas (tempo e espaço) */}
               <DashboardMetricsSection
                 stayDurationStats={dashboardData?.stayDurationStats}
                 activeDuringPeriodStats={dashboardData?.activeDuringPeriodStats}
                 lengthOccupancyStats={dashboardData?.lengthOccupancyStats}
               />
 
+              {/* Gráficos: Tempo de Permanência + Utilização de Espaço */}
               {stayDurationData.length > 0 &&
                 lengthOccupancyData.length > 0 && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
@@ -894,6 +1059,7 @@ export default function RelatoriosPage() {
                   </div>
                 )}
 
+              {/* Tabela de rotas mais utilizadas */}
               {dashboardData?.vehicleRoutes &&
                 dashboardData.vehicleRoutes.length > 0 && (
                   <VehicleRoutesTable routes={dashboardData.vehicleRoutes} />
@@ -901,7 +1067,8 @@ export default function RelatoriosPage() {
             </TabsContent>
           </Tabs>
 
-          {kpisData && (
+          {/* RESUMO DO PERÍODO */}
+          {kpisData && derivedMetrics && (
             <Card className="mt-4 md:mt-6">
               <CardHeader className="p-4 md:p-6">
                 <CardTitle className="text-base md:text-lg">
@@ -932,12 +1099,7 @@ export default function RelatoriosPage() {
                       Reservas por vaga
                     </p>
                     <p className="font-semibold text-sm md:text-base">
-                      {kpisData.totalSlots
-                        ? (
-                            kpisData.totalReservations / kpisData.totalSlots
-                          ).toFixed(1)
-                        : 0}{' '}
-                      reservas/vaga
+                      {derivedMetrics.reservationsPerSlot} reservas/vaga
                     </p>
                   </div>
 
@@ -946,14 +1108,7 @@ export default function RelatoriosPage() {
                       Taxa de cancelamento
                     </p>
                     <p className="font-semibold text-sm md:text-base">
-                      {kpisData.totalReservations
-                        ? (
-                            (kpisData.canceledReservations /
-                              kpisData.totalReservations) *
-                            100
-                          ).toFixed(1)
-                        : 0}
-                      %
+                      {derivedMetrics.cancellationRate}%
                     </p>
                   </div>
 
@@ -962,14 +1117,7 @@ export default function RelatoriosPage() {
                       Taxa de conclusão
                     </p>
                     <p className="font-semibold text-sm md:text-base">
-                      {kpisData.totalReservations
-                        ? (
-                            (kpisData.completedReservations /
-                              kpisData.totalReservations) *
-                            100
-                          ).toFixed(1)
-                        : 0}
-                      %
+                      {derivedMetrics.completionRate}%
                     </p>
                   </div>
                 </div>
@@ -978,6 +1126,7 @@ export default function RelatoriosPage() {
           )}
         </>
       ) : !error && !loading ? (
+        // ESTADO SEM DADOS
         <Card className="mb-4 md:mb-6">
           <CardContent className="p-6 md:p-12 text-center min-h-[300px] flex flex-col items-center justify-center">
             <div className="flex flex-col items-center justify-center gap-3 md:gap-4">
