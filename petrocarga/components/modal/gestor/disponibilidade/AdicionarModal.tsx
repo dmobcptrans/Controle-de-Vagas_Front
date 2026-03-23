@@ -23,6 +23,73 @@ interface AdicionarModalProps {
   }) => void;
 }
 
+/**
+ * @component AdicionarModal
+ * @version 1.0.0
+ * 
+ * @description Modal para adicionar disponibilidade de vagas.
+ * Permite selecionar vagas por logradouro ou personalizado, e definir período.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 PROPRIEDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {boolean} open - Controla a visibilidade do modal
+ * @property {() => void} onClose - Função para fechar o modal
+ * @property {Record<string, Vaga[]>} vagasPorLogradouro - Vagas agrupadas por logradouro
+ * @property {string | null} [dataInicialPredefinida] - Data pré-definida para início
+ * @property {(data: { inicio, fim, modo, selecionados }) => void} onSalvar - Callback ao salvar
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. MODOS DE SELEÇÃO:
+ *    - Por Logradouro: seleciona todas vagas de um logradouro
+ *    - Personalizado: seleciona vagas individualmente
+ * 
+ * 2. DATA PRÉ-DEFINIDA:
+ *    - Se fornecida, define data de início automaticamente
+ *    - Calcula data de fim como início + 4 dias
+ * 
+ * 3. SELEÇÃO:
+ *    - Checkboxes para selecionar logradouros ou vagas
+ *    - Estado local gerencia os selecionados
+ * 
+ * 4. SALVAMENTO:
+ *    - Envia dados formatados (datas com horários)
+ *    - Limpa seleção após salvar
+ *    - Fecha modal
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - MODO: logradouro (IDs das vagas) vs personalizado (IDs das vagas)
+ * - DATA PRÉ-DEFINIDA: inicia com data selecionada + 4 dias
+ * - FORMATO: datass enviadas como "YYYY-MM-DDT00:00" e "YYYY-MM-DDT23:59"
+ * - CLEANUP: Limpa seleção após salvar
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Dialog: Componente de modal do shadcn/ui
+ * - Checkbox: Componente de checkbox
+ * - Vaga: Tipo de vaga
+ * 
+ * @example
+ * ```tsx
+ * <AdicionarModal
+ *   open={showModal}
+ *   onClose={() => setShowModal(false)}
+ *   vagasPorLogradouro={vagasPorLogradouro}
+ *   dataInicialPredefinida="2024-01-15"
+ *   onSalvar={handleSalvar}
+ * />
+ * ```
+ */
+
 export function AdicionarModal({
   open,
   onClose,
@@ -37,9 +104,7 @@ export function AdicionarModal({
   const [inicio, setInicio] = useState('');
   const [fim, setFim] = useState('');
 
-  /* ------------------------------------------------------------------ */
-  /*      QUANDO O MODAL ABRIR: SE TIVER dataInicialPredefinida → SETA  */
-  /* ------------------------------------------------------------------ */
+  // ==================== DATA PRÉ-DEFINIDA ====================
   useEffect(() => {
     if (open && dataInicialPredefinida) {
       const data =
@@ -55,6 +120,7 @@ export function AdicionarModal({
     }
   }, [open, dataInicialPredefinida]);
 
+  // ==================== HANDLERS ====================
   const toggle = (item: string) =>
     setSelecionados((prev) =>
       prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item],
@@ -68,7 +134,7 @@ export function AdicionarModal({
       selecionados,
     });
 
-    // limpar estado após salvar
+    // Limpa estado após salvar
     setSelecionados([]);
     setInicio('');
     setFim('');
@@ -79,11 +145,13 @@ export function AdicionarModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] overflow-auto w-[min(900px,95%)]">
+        
+        {/* ==================== HEADER ==================== */}
         <DialogHeader>
           <DialogTitle>Adicionar Disponibilidade</DialogTitle>
         </DialogHeader>
 
-        {/* Modo LOGRADOURO | PERSONALIZADO */}
+        {/* ==================== MODOS DE SELEÇÃO ==================== */}
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setModo('logradouro')}
@@ -104,7 +172,7 @@ export function AdicionarModal({
           </button>
         </div>
 
-        {/* Escolha por logradouro ------------------------------------------------ */}
+        {/* ==================== MODO: POR LOGRADOURO ==================== */}
         {modo === 'logradouro' ? (
           <div className="grid grid-cols-2 gap-3 max-h-[40vh] overflow-auto mb-4">
             {Object.keys(vagasPorLogradouro).map((log) => (
@@ -122,7 +190,7 @@ export function AdicionarModal({
             ))}
           </div>
         ) : (
-          /* Escolha personalizada  --------------------------------------- */
+          /* ==================== MODO: PERSONALIZADO ==================== */
           <div className="space-y-2 max-h-[40vh] overflow-auto mb-4">
             {Object.entries(vagasPorLogradouro).map(([log, lista]) => (
               <div key={log} className="border rounded p-2 bg-gray-50">
@@ -143,9 +211,8 @@ export function AdicionarModal({
           </div>
         )}
 
-        {/* Datas ----------------------------------------------------------------- */}
+        {/* ==================== DATAS ==================== */}
         <div className="space-y-4">
-          {/* Início */}
           <div>
             <label className="text-sm font-medium">Início</label>
             <input
@@ -156,7 +223,6 @@ export function AdicionarModal({
             />
           </div>
 
-          {/* Fim */}
           <div>
             <label className="text-sm font-medium">Fim</label>
             <input
@@ -168,11 +234,11 @@ export function AdicionarModal({
           </div>
         </div>
 
+        {/* ==================== FOOTER ==================== */}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-
           <Button onClick={salvar}>Salvar</Button>
         </DialogFooter>
       </DialogContent>
