@@ -17,6 +17,63 @@ interface ModalTermosProps {
   onClose: () => void;
 }
 
+/**
+ * @component ModalTermos
+ * @version 1.0.0
+ * 
+ * @description Modal exibindo os Termos de Uso e Política de Privacidade.
+ * Apresenta documentação legal completa com base na LGPD e Marco Civil da Internet.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 CONTEÚDO DO DOCUMENTO (16 SEÇÕES):
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. Informações importantes - Visão geral do serviço e bases legais
+ * 2. Base Legal - Leis federais aplicáveis
+ * 3. Princípios da LGPD (Art. 6º) - 10 princípios de proteção de dados
+ * 4. Aceitação dos Termos - Confirmação de leitura e concordância
+ * 5. Definições - Termos técnicos (Agentes, Titular, DPO, etc.)
+ * 6. Tratamento dos dados - Bases legais para coleta
+ * 7. Seus direitos - Direitos do titular sob a LGPD
+ * 8. Responsabilidades do usuário - Obrigações do usuário
+ * 9. Responsabilidades do órgão - Obrigações da CPTrans
+ * 10. Segurança da informação - Medidas de proteção adotadas
+ * 11. Cookies e tecnologia - Uso de cookies e rastreamento
+ * 12. Compartilhamento de dados - Quando os dados são compartilhados
+ * 13. Dados anonimizados - Uso de dados para estatísticas
+ * 14. Contato e DPO - Informações do Encarregado de Dados
+ * 15. Foro - Competência judicial
+ * 16. Alterações deste termo - Atualizações do documento
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - SCROLLÁVEL: ScrollArea para navegação em conteúdo extenso
+ * - ALTURA MÁXIMA: h-[60vh] para 60% da viewport
+ * - LARGURA: sm:max-w-3xl (768px) para melhor legibilidade
+ * - SEÇÕES: Estrutura organizada com títulos e listas
+ * - DESTAQUE: Seção azul com informações importantes
+ * - DATA: Última atualização exibida no rodapé
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Dialog: Componente de modal do shadcn/ui
+ * - ScrollArea: Área rolável do shadcn/ui
+ * - Button: Botão de fechar
+ * 
+ * @example
+ * ```tsx
+ * <ModalTermos
+ *   open={mostrarModalTermos}
+ *   onOpenChange={setMostrarModalTermos}
+ *   onClose={() => setMostrarModalTermos(false)}
+ * />
+ * ```
+ */
+
 export default function ModalTermos({
   open,
   onOpenChange,
@@ -25,6 +82,8 @@ export default function ModalTermos({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[80vh]">
+        
+        {/* ==================== HEADER ==================== */}
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-blue-600">
             Termos de Uso e Política de Privacidade
@@ -34,8 +93,11 @@ export default function ModalTermos({
           </DialogDescription>
         </DialogHeader>
 
+        {/* ==================== CONTEÚDO ROLÁVEL ==================== */}
         <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-6">
+            
+            {/* Seção 1: Informações importantes */}
             <section className="bg-blue-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-2 text-blue-800">
                 Informações importantes
@@ -49,6 +111,7 @@ export default function ModalTermos({
               </p>
             </section>
 
+            {/* Seção 2: Informações neste documento */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 1. Informações neste documento
@@ -69,6 +132,7 @@ export default function ModalTermos({
               </ul>
             </section>
 
+            {/* Seção 3: Base Legal */}
             <section>
               <h3 className="text-lg font-semibold mb-2">2. Base Legal</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
@@ -88,6 +152,7 @@ export default function ModalTermos({
               </ul>
             </section>
 
+            {/* Seção 4: Princípios da LGPD */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 3. Princípios da LGPD (Art. 6º)
@@ -139,6 +204,7 @@ export default function ModalTermos({
               </div>
             </section>
 
+            {/* Seção 5: Aceitação dos Termos */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 4. Aceitação dos Termos
@@ -149,6 +215,7 @@ export default function ModalTermos({
               </p>
             </section>
 
+            {/* Seção 6: Definições */}
             <section>
               <h3 className="text-lg font-semibold mb-2">5. Definições</h3>
               <div className="grid grid-cols-1 gap-3">
@@ -179,6 +246,7 @@ export default function ModalTermos({
               </div>
             </section>
 
+            {/* Seção 7: Tratamento dos dados */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 6. Tratamento dos dados
@@ -197,6 +265,7 @@ export default function ModalTermos({
               </ul>
             </section>
 
+            {/* Seção 8: Seus direitos */}
             <section>
               <h3 className="text-lg font-semibold mb-2">7. Seus direitos</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
@@ -229,6 +298,7 @@ export default function ModalTermos({
               </ul>
             </section>
 
+            {/* Seção 9: Responsabilidades do usuário */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 8. Responsabilidades do usuário
@@ -244,6 +314,7 @@ export default function ModalTermos({
               </ul>
             </section>
 
+            {/* Seção 10: Responsabilidades do órgão */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 9. Responsabilidades do órgão
@@ -265,6 +336,7 @@ export default function ModalTermos({
               </p>
             </section>
 
+            {/* Seção 11: Segurança da informação */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 10. Segurança da informação
@@ -281,6 +353,7 @@ export default function ModalTermos({
               </ul>
             </section>
 
+            {/* Seção 12: Cookies e tecnologia */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 11. Cookies e tecnologia
@@ -295,6 +368,7 @@ export default function ModalTermos({
               </ul>
             </section>
 
+            {/* Seção 13: Compartilhamento de dados */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 12. Compartilhamento de dados
@@ -315,6 +389,7 @@ export default function ModalTermos({
               </ul>
             </section>
 
+            {/* Seção 14: Dados anonimizados */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 13. Dados anonimizados
@@ -329,6 +404,7 @@ export default function ModalTermos({
               </ul>
             </section>
 
+            {/* Seção 15: Contato e DPO */}
             <section>
               <h3 className="text-lg font-semibold mb-2">14. Contato e DPO</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
@@ -356,6 +432,7 @@ export default function ModalTermos({
               </p>
             </section>
 
+            {/* Seção 16: Foro */}
             <section>
               <h3 className="text-lg font-semibold mb-2">15. Foro</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
@@ -369,6 +446,7 @@ export default function ModalTermos({
               </p>
             </section>
 
+            {/* Seção 17: Alterações deste termo */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 16. Alterações deste termo
@@ -383,6 +461,7 @@ export default function ModalTermos({
           </div>
         </ScrollArea>
 
+        {/* ==================== FOOTER ==================== */}
         <DialogFooter className="border-t pt-4">
           <p className="text-xs text-gray-500 text-left flex-1">
             Última atualização: 12 de Março de 2026
