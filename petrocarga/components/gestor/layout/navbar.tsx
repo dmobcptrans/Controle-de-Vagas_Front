@@ -15,6 +15,62 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown, User, Bell, Users, UserCircle, List } from 'lucide-react';
 
+/**
+ * @component Navbar
+ * @version 1.0.0
+ * 
+ * @description Barra de navegação principal para a área do gestor.
+ * Responsiva com menu mobile, notificações em tempo real e dropdowns de navegação.
+ * Suporte a permissão ADMIN (exibe seção de gestores).
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. NAVEGAÇÃO DESKTOP:
+ *    - Links principais: Relatório, Disponibilidade, Reservas, Consultar Reserva, Motoristas
+ *    - Dropdown "Vagas": Visualizar Vagas, Adicionar Vaga
+ *    - Dropdown "Agentes": Ver Agentes, Adicionar Agente
+ *    - Dropdown "Gestores" (apenas ADMIN): Ver Gestores, Adicionar Gestor
+ *    - Dropdown "Notificações": Enviar Notificações, Denúncias recebidas
+ *    - Ícone de notificações com contador em tempo real
+ *    - Dropdown "Perfil" (ou Logout para ADMIN)
+ * 
+ * 2. NAVEGAÇÃO MOBILE:
+ *    - Menu hambúrguer (☰) que expande/contrai
+ *    - Seções organizadas: Geral, Vagas, Motoristas, Agentes, Admin (se ADMIN), Perfil
+ *    - Botão de logout mobile
+ * 
+ * 3. NOTIFICAÇÕES:
+ *    - useNotifications: contexto global com WebSocket
+ *    - Contador de não lidas (unreadCount)
+ *    - Badge vermelho com número (9+ para muitos)
+ *    - Indicador de conexão (ponto amarelo piscando se offline)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - SUPRESS HYDRATION: suppressHydrationWarning nos triggers do dropdown
+ * - MOUNTED STATE: Evita renderização no servidor para isAdmin
+ * - MENU MOBILE: Controle com useState e transições CSS (max-height)
+ * - RESPONSIVIDADE: grid/flex adaptativo
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useAuth: Hook de autenticação (verifica permissão ADMIN)
+ * - useNotifications: Contexto de notificações (WebSocket)
+ * - LogoutButton: Botão de logout (aceita prop mobile)
+ * - DropdownMenu: Menu dropdown do shadcn/ui
+ * 
+ * @example
+ * ```tsx
+ * <Navbar />
+ * ```
+ */
+
 export function Navbar() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -31,7 +87,8 @@ export function Navbar() {
   return (
     <header className="bg-blue-800 text-white relative">
       <nav className="p-4 max-w-[1400px] mx-auto flex items-center justify-between">
-        {/* --- LADO ESQUERDO: SINO (MOBILE) / LOGO (DESKTOP/MOBILE) --- */}
+        
+        {/* ==================== LADO ESQUERDO ==================== */}
         <div className="flex items-center justify-start md:w-1/4">
           {/* Sino Mobile */}
           <Link href="/gestor/notificacoes" className="relative p-2 md:hidden">
@@ -43,15 +100,15 @@ export function Navbar() {
             )}
           </Link>
 
-          {/* Logo */}
+          {/* Logo Desktop */}
           <Link href="/gestor/relatorio" className="hidden md:block">
             <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
           </Link>
         </div>
 
-        {/* --- CENTRO: LOGO (MOBILE) / LINKS (DESKTOP) --- */}
+        {/* ==================== CENTRO: LOGO MOBILE / LINKS DESKTOP ==================== */}
         <div className="flex items-center justify-center flex-1">
-          {/* Logo no Mobile fica no centro */}
+          {/* Logo Mobile */}
           <Link href="/gestor/relatorio" className="md:hidden">
             <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
           </Link>
@@ -62,6 +119,7 @@ export function Navbar() {
               <Link href="/gestor/relatorio">Relatório</Link>
             </li>
 
+            {/* Dropdown Vagas */}
             <li>
               <DropdownMenu>
                 <DropdownMenuTrigger
@@ -72,9 +130,7 @@ export function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                   <DropdownMenuItem asChild>
-                    <Link href="/gestor/visualizar-vagas">
-                      Visualizar Vagas
-                    </Link>
+                    <Link href="/gestor/visualizar-vagas">Visualizar Vagas</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/gestor/adicionar-vagas">Adicionar Vaga</Link>
@@ -91,16 +147,15 @@ export function Navbar() {
               <Link href="/gestor/reservas">Reservas</Link>
             </li>
 
-            <li>
-              <Link href="/gestor/consulta" className="hover:text-gray-300">
-                Consultar Reserva
-              </Link>
+            <li className="hover:text-gray-300">
+              <Link href="/gestor/consulta">Consultar Reserva</Link>
             </li>
 
             <li className="hover:text-gray-300">
               <Link href="/gestor/motoristas">Motoristas</Link>
             </li>
 
+            {/* Dropdown Agentes */}
             <li>
               <DropdownMenu>
                 <DropdownMenuTrigger
@@ -111,18 +166,12 @@ export function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                   <DropdownMenuItem asChild>
-                    <Link
-                      href="/gestor/agentes"
-                      className="flex items-center gap-2"
-                    >
+                    <Link href="/gestor/agentes" className="flex items-center gap-2">
                       <Users className="h-4 w-4" /> Agentes
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link
-                      href="/gestor/adicionar-agente"
-                      className="flex items-center gap-2"
-                    >
+                    <Link href="/gestor/adicionar-agente" className="flex items-center gap-2">
                       <Users className="h-4 w-4" /> Adicionar
                     </Link>
                   </DropdownMenuItem>
@@ -130,6 +179,7 @@ export function Navbar() {
               </DropdownMenu>
             </li>
 
+            {/* Dropdown Gestores (apenas ADMIN) */}
             {isAdmin && (
               <li>
                 <DropdownMenu>
@@ -141,18 +191,12 @@ export function Navbar() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                     <DropdownMenuItem asChild>
-                      <Link
-                        href="/gestor/gestores"
-                        className="flex items-center gap-2"
-                      >
+                      <Link href="/gestor/gestores" className="flex items-center gap-2">
                         <User className="h-4 w-4" /> Gestores
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link
-                        href="/gestor/adicionar-gestores"
-                        className="flex items-center gap-2"
-                      >
+                      <Link href="/gestor/adicionar-gestores" className="flex items-center gap-2">
                         <User className="h-4 w-4" /> Adicionar
                       </Link>
                     </DropdownMenuItem>
@@ -161,6 +205,7 @@ export function Navbar() {
               </li>
             )}
 
+            {/* Dropdown Notificações */}
             <li>
               <DropdownMenu>
                 <DropdownMenuTrigger
@@ -171,18 +216,12 @@ export function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                   <DropdownMenuItem asChild>
-                    <Link
-                      href="/gestor/enviar-notificacoes"
-                      className="flex items-center gap-2"
-                    >
+                    <Link href="/gestor/enviar-notificacoes" className="flex items-center gap-2">
                       <List className="h-4 w-4" /> Enviar Notificações
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link
-                      href="/gestor/denuncias"
-                      className="flex items-center gap-2"
-                    >
+                    <Link href="/gestor/denuncias" className="flex items-center gap-2">
                       <List className="h-4 w-4" /> Denúncias recebidas
                     </Link>
                   </DropdownMenuItem>
@@ -192,7 +231,7 @@ export function Navbar() {
           </ul>
         </div>
 
-        {/* --- LADO DIREITO: SINO/PERFIL (DESKTOP) / HAMBURGUER (MOBILE) --- */}
+        {/* ==================== LADO DIREITO: SINO/PERFIL (DESKTOP) / HAMBURGUER (MOBILE) ==================== */}
         <div className="flex items-center justify-end md:w-1/4 gap-4">
           {/* Sino Desktop */}
           <Link
@@ -221,10 +260,7 @@ export function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                   <DropdownMenuItem asChild>
-                    <Link
-                      href="/gestor/perfil"
-                      className="flex items-center gap-2"
-                    >
+                    <Link href="/gestor/perfil" className="flex items-center gap-2">
                       <UserCircle className="h-4 w-4" /> Meu Perfil
                     </Link>
                   </DropdownMenuItem>
@@ -246,150 +282,89 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* --- MENU MOBILE EXPANSÍVEL --- */}
+      {/* ==================== MENU MOBILE EXPANSÍVEL ==================== */}
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}
       >
         <ul className="flex flex-col gap-4 bg-blue-500 p-4 shadow-md">
+          
+          {/* Seção: Geral */}
           <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
-              Geral
-            </span>
-            {/* Relatório */}
-            <Link
-              href="/gestor/relatorio"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <span className="font-bold text-sm text-blue-200 uppercase">Geral</span>
+            <Link href="/gestor/relatorio" onClick={() => setMenuAberto(false)} className="pl-2">
               Relatório
             </Link>
-
-            {/* Disponibilidade */}
-            <Link
-              href="/gestor/disponibilidade-vagas"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <Link href="/gestor/disponibilidade-vagas" onClick={() => setMenuAberto(false)} className="pl-2">
               Disponibilidade
             </Link>
-
-            {/* Disponibilidade */}
-            <Link
-              href="/gestor/reservas"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <Link href="/gestor/reservas" onClick={() => setMenuAberto(false)} className="pl-2">
               Reservas
             </Link>
-
-            {/* Consultar Reserva por Placa */}
-            <Link
-              href="/gestor/consulta"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <Link href="/gestor/consulta" onClick={() => setMenuAberto(false)} className="pl-2">
               Consultar Reserva
             </Link>
           </li>
+
+          {/* Seção: Vagas */}
           <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
-              Vagas
-            </span>
-            <Link
-              href="/gestor/visualizar-vagas"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <span className="font-bold text-sm text-blue-200 uppercase">Vagas</span>
+            <Link href="/gestor/visualizar-vagas" onClick={() => setMenuAberto(false)} className="pl-2">
               Visualizar Vagas
             </Link>
-            <Link
-              href="/gestor/adicionar-vagas"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <Link href="/gestor/adicionar-vagas" onClick={() => setMenuAberto(false)} className="pl-2">
               Adicionar Vaga
             </Link>
           </li>
+
+          {/* Seção: Motoristas */}
           <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
-              Motoristas
-            </span>
-            <Link
-              href="/gestor/motoristas"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <span className="font-bold text-sm text-blue-200 uppercase">Motoristas</span>
+            <Link href="/gestor/motoristas" onClick={() => setMenuAberto(false)} className="pl-2">
               Ver Motoristas
             </Link>
-            <Link
-              href="/gestor/denuncias"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <Link href="/gestor/denuncias" onClick={() => setMenuAberto(false)} className="pl-2">
               Denúncias
             </Link>
-            <Link
-              href="/gestor/enviar-notificacoes"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <Link href="/gestor/enviar-notificacoes" onClick={() => setMenuAberto(false)} className="pl-2">
               Enviar Notificações
             </Link>
           </li>
+
+          {/* Seção: Agentes */}
           <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
-              Agentes
-            </span>
-            <Link
-              href="/gestor/agentes"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <span className="font-bold text-sm text-blue-200 uppercase">Agentes</span>
+            <Link href="/gestor/agentes" onClick={() => setMenuAberto(false)} className="pl-2">
               Ver Agentes
             </Link>
-            <Link
-              href="/gestor/adicionar-agente"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
+            <Link href="/gestor/adicionar-agente" onClick={() => setMenuAberto(false)} className="pl-2">
               Adicionar Agente
             </Link>
           </li>
+
+          {/* Seção: Admin (apenas ADMIN) */}
           {isAdmin && (
             <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-              <span className="font-bold text-sm text-yellow-300 uppercase">
-                Admin
-              </span>
-              <Link
-                href="/gestor/gestores"
-                onClick={() => setMenuAberto(false)}
-                className="pl-2"
-              >
+              <span className="font-bold text-sm text-yellow-300 uppercase">Admin</span>
+              <Link href="/gestor/gestores" onClick={() => setMenuAberto(false)} className="pl-2">
                 Ver Gestores
               </Link>
-              <Link
-                href="/gestor/adicionar-gestores"
-                onClick={() => setMenuAberto(false)}
-                className="pl-2"
-              >
+              <Link href="/gestor/adicionar-gestores" onClick={() => setMenuAberto(false)} className="pl-2">
                 Adicionar Gestor
               </Link>
             </li>
           )}
+
+          {/* Seção: Perfil (apenas não ADMIN) */}
           {!isAdmin && (
             <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-              <span className="font-bold text-sm text-blue-200 uppercase">
-                Perfil
-              </span>
-              <Link
-                href="/gestor/perfil"
-                onClick={() => setMenuAberto(false)}
-                className="pl-2"
-              >
+              <span className="font-bold text-sm text-blue-200 uppercase">Perfil</span>
+              <Link href="/gestor/perfil" onClick={() => setMenuAberto(false)} className="pl-2">
                 Meu Perfil
               </Link>
             </li>
           )}
+
+          {/* Logout Mobile */}
           <li className="mt-2">
             <LogoutButton mobile={true} />
           </li>

@@ -9,47 +9,83 @@ interface DiaSemanaProps {
   operacoesVaga?: OperacoesVaga[];
 }
 
+/**
+ * @component DiaSemana
+ * @version 1.0.0
+ * 
+ * @description Componente de seleção de dias da semana com horários para operação de vagas.
+ * Permite ativar/desativar dias e definir horários de início e fim.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 PROPRIEDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {string} [name='diaSemana'] - Nome do campo hidden para envio do JSON
+ * @property {OperacoesVaga[]} [operacoesVaga=[]] - Lista de operações existentes para pré-carregamento
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. LISTA DE DIAS:
+ *    - Domingo, Segunda-feira, Terça-feira, Quarta-feira, Quinta-feira, Sexta-feira, Sábado
+ *    - Abreviação para mobile (Dom, Seg, Ter, Qua, Qui, Sex, Sáb)
+ * 
+ * 2. CHECKBOX:
+ *    - Ativa/desativa o dia
+ *    - Quando desativado, os inputs de horário são ocultados
+ * 
+ * 3. HORÁRIOS:
+ *    - Input type="time" para início e fim
+ *    - Formato HH:MM
+ * 
+ * 4. VALOR HIDDEN:
+ *    - Gera JSON com os dias ativos e seus horários
+ *    - Compatível com a action atualizarVaga
+ *    - Formato: [{ codigoDiaSemana, horaInicio, horaFim }]
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - CONFIGURAÇÃO INICIAL: getInitialConfig() pré-carrega operações existentes
+ * - ESTADO LOCAL: diasConfig gerencia ativo/horários de cada dia
+ * - MEMO: hiddenValue recalcula apenas quando diasConfig muda
+ * - RESPONSIVIDADE: labels com abreviação em mobile, texto completo em desktop
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Checkbox: Componente de checkbox do shadcn/ui
+ * - Label: Componente de label do shadcn/ui
+ * - Input: Componente de input do shadcn/ui
+ * 
+ * @example
+ * ```tsx
+ * // Criação de nova vaga (sem horários pré-definidos)
+ * <DiaSemana name="diaSemana" />
+ * 
+ * // Edição de vaga existente (com horários pré-carregados)
+ * <DiaSemana
+ *   name="diaSemana"
+ *   operacoesVaga={vaga.operacoesVaga}
+ * />
+ * ```
+ */
+
 export default function DiaSemana({
   name = 'diaSemana',
   operacoesVaga = [],
 }: DiaSemanaProps) {
+  // ==================== CONSTANTES ====================
   const diasDaSemana = [
     { id: 'dom', label: 'Domingo', value: '1', abrev: 'Dom', enum: 'DOMINGO' },
-    {
-      id: 'seg',
-      label: 'Segunda-feira',
-      value: '2',
-      abrev: 'Seg',
-      enum: 'SEGUNDA',
-    },
-    {
-      id: 'ter',
-      label: 'Terça-feira',
-      value: '3',
-      abrev: 'Ter',
-      enum: 'TERCA',
-    },
-    {
-      id: 'qua',
-      label: 'Quarta-feira',
-      value: '4',
-      abrev: 'Qua',
-      enum: 'QUARTA',
-    },
-    {
-      id: 'qui',
-      label: 'Quinta-feira',
-      value: '5',
-      abrev: 'Qui',
-      enum: 'QUINTA',
-    },
-    {
-      id: 'sex',
-      label: 'Sexta-feira',
-      value: '6',
-      abrev: 'Sex',
-      enum: 'SEXTA',
-    },
+    { id: 'seg', label: 'Segunda-feira', value: '2', abrev: 'Seg', enum: 'SEGUNDA' },
+    { id: 'ter', label: 'Terça-feira', value: '3', abrev: 'Ter', enum: 'TERCA' },
+    { id: 'qua', label: 'Quarta-feira', value: '4', abrev: 'Qua', enum: 'QUARTA' },
+    { id: 'qui', label: 'Quinta-feira', value: '5', abrev: 'Qui', enum: 'QUINTA' },
+    { id: 'sex', label: 'Sexta-feira', value: '6', abrev: 'Sex', enum: 'SEXTA' },
     { id: 'sab', label: 'Sábado', value: '7', abrev: 'Sáb', enum: 'SABADO' },
   ];
 
@@ -63,6 +99,7 @@ export default function DiaSemana({
     [key: string]: DiaConfig;
   };
 
+  // ==================== CONFIGURAÇÃO INICIAL ====================
   const getInitialConfig = () => {
     const config: DiasConfig = {};
 
@@ -93,6 +130,7 @@ export default function DiaSemana({
     getInitialConfig(),
   );
 
+  // ==================== HANDLERS ====================
   const handleDayToggle = (dayValue: string) => {
     setDiasConfig((prev) => ({
       ...prev,
@@ -117,7 +155,7 @@ export default function DiaSemana({
     }));
   };
 
-  // Gera o valor JSON para o input hidden, compatível com a action atualizarVaga
+  // ==================== VALOR HIDDEN (JSON) ====================
   const hiddenValue = useMemo(() => {
     return JSON.stringify(
       Object.entries(diasConfig)
@@ -138,6 +176,7 @@ export default function DiaSemana({
           className="border border-gray-300 rounded-md p-3 md:p-4 hover:bg-gray-50 transition-colors"
         >
           <div className="flex flex-col gap-3">
+            {/* ==================== CHECKBOX + LABEL ==================== */}
             <div className="flex items-center space-x-2">
               <Checkbox
                 className="border border-gray-500 flex-shrink-0"
@@ -154,6 +193,7 @@ export default function DiaSemana({
               </Label>
             </div>
 
+            {/* ==================== CAMPOS DE HORÁRIO (se ativo) ==================== */}
             {diasConfig[dia.value].ativo && (
               <div className="flex flex-col sm:flex-row gap-3 pl-0 sm:pl-6">
                 <div className="flex-1">
@@ -201,6 +241,7 @@ export default function DiaSemana({
         </div>
       ))}
 
+      {/* ==================== CAMPO HIDDEN PARA SUBMIT ==================== */}
       <input type="hidden" name={name} value={hiddenValue} />
     </div>
   );

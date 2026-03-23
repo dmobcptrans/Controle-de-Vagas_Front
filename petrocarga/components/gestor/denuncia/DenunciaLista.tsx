@@ -5,6 +5,10 @@ import { ChevronDown, ChevronUp, Archive, AlertTriangle } from 'lucide-react';
 import DenunciaCard from '@/components/gestor/cards/denuncia-card';
 import { Denuncia } from '@/lib/types/denuncias';
 
+/**
+ * Prioridade para ordenação das denúncias
+ * Quanto menor o número, maior a prioridade
+ */
 const PRIORIDADE: Record<string, number> = {
   ABERTA: 1,
   EM_ANALISE: 2,
@@ -12,9 +16,22 @@ const PRIORIDADE: Record<string, number> = {
   IMPROCEDENTE: 4,
 };
 
+/**
+ * Denúncias visíveis (não arquivadas)
+ * Exibidas na seção principal
+ */
 const VISIBLE_STATUSES = new Set(['ABERTA', 'EM_ANALISE']);
+
+/**
+ * Denúncias ocultas (arquivadas/histórico)
+ * Exibidas em seção colapsável
+ */
 const HIDDEN_STATUSES = new Set(['PROCEDENTE', 'IMPROCEDENTE']);
 
+/**
+ * @function sortDenuncias
+ * @description Ordena denúncias por prioridade (ABERTA > EM_ANALISE > PROCEDENTE > IMPROCEDENTE)
+ */
 const sortDenuncias = (a: Denuncia, b: Denuncia) => {
   const sa = (a.status || '').toUpperCase();
   const sb = (b.status || '').toUpperCase();
@@ -29,12 +46,66 @@ interface DenunciaListaProps {
   onRefresh?: () => void;
 }
 
+/**
+ * @component DenunciaLista
+ * @version 1.0.0
+ * 
+ * @description Lista de denúncias com separação entre ativas e histórico.
+ * Denúncias ativas (ABERTA/EM_ANALISE) são exibidas sempre.
+ * Denúncias encerradas (PROCEDENTE/IMPROCEDENTE) ficam em seção colapsável.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 ESTRUTURA:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. SEÇÃO PRINCIPAL (DENÚNCIAS ATIVAS):
+ *    - Exibe denúncias com status ABERTA ou EM_ANALISE
+ *    - Ordenadas por prioridade (ABERTA primeiro)
+ *    - Estado vazio: mensagem amigável
+ * 
+ * 2. SEÇÃO DE HISTÓRICO (COLAPSÁVEL):
+ *    - Exibe denúncias com status PROCEDENTE ou IMPROCEDENTE
+ *    - Mostra contador de itens no botão
+ *    - Pode ser expandido/recolhido
+ *    - Transição suave com grid-rows
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - SEPARAÇÃO POR STATUS: VISIBLE_STATUSES e HIDDEN_STATUSES definem onde cada status aparece
+ * - ORDENAÇÃO: PRIORIDADE mapeia ordem de exibição (ABERTA > EM_ANALISE > PROCEDENTE > IMPROCEDENTE)
+ * - COLLAPSE: grid-rows-[1fr]/[0fr] + transition-all para animação suave
+ * - MEMO: useMemo para processamento da lista (evita recálculos desnecessários)
+ * - EMPTY STATE: Exibido quando não há denúncias ativas
+ * - CALLBACK: onRefresh para atualizar lista após ações
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - DenunciaCard: Card individual de denúncia
+ * - Denuncia: Tipo de denúncia
+ * 
+ * @example
+ * ```tsx
+ * <DenunciaLista
+ *   denuncias={denuncias}
+ *   onRefresh={() => fetchDenuncias()}
+ * />
+ * ```
+ */
+
 export default function DenunciaLista({
   denuncias,
   onRefresh,
 }: DenunciaListaProps) {
   const [mostrarOcultas, setMostrarOcultas] = useState(false);
 
+  /**
+   * Separa denúncias em visíveis (ativas) e ocultas (histórico)
+   * Ordena ambas por prioridade
+   */
   const { visiveis, ocultas } = useMemo(() => {
     const buckets = denuncias.reduce(
       (acc, d) => {
@@ -54,6 +125,8 @@ export default function DenunciaLista({
 
   return (
     <div className="w-full max-w-3xl mx-auto flex flex-col gap-6">
+      
+      {/* ==================== SEÇÃO PRINCIPAL (DENÚNCIAS ATIVAS) ==================== */}
       <section className="flex flex-col gap-4 animate-in fade-in duration-500">
         {visiveis.length > 0 ? (
           visiveis.map((denuncia) => (
@@ -68,8 +141,11 @@ export default function DenunciaLista({
         )}
       </section>
 
+      {/* ==================== SEÇÃO DE HISTÓRICO (COLAPSÁVEL) ==================== */}
       {ocultas.length > 0 && (
         <div className="border-t border-gray-100 pt-6">
+          
+          {/* Botão de toggle */}
           <button
             type="button"
             onClick={() => setMostrarOcultas((s) => !s)}
@@ -93,6 +169,7 @@ export default function DenunciaLista({
             )}
           </button>
 
+          {/* Conteúdo colapsável (transição suave) */}
           <div
             id="denuncias-historico"
             className={`grid transition-[grid-template-rows] duration-300 ease-out ${
@@ -121,6 +198,10 @@ export default function DenunciaLista({
   );
 }
 
+/**
+ * @component EmptyState
+ * @description Componente exibido quando não há denúncias ativas
+ */
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 md:py-16 px-4 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">

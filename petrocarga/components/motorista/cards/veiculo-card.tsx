@@ -12,6 +12,64 @@ type VeiculoDetalhesProps = {
   onVeiculoAtualizado?: (veiculoAtualizado: Veiculo) => void;
 };
 
+/**
+ * @component VeiculoDetalhes
+ * @version 1.0.0
+ * 
+ * @description Componente de detalhes e edição de veículo.
+ * Exibe informações do veículo com modos de visualização e edição,
+ * permitindo atualização e exclusão.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 MODOS DE EXIBIÇÃO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. MODO VISUALIZAÇÃO (editando = false):
+ *    - Exibe marca, modelo, placa, tipo
+ *    - Exibe CPF ou CNPJ do proprietário (se houver)
+ *    - Botões: "Alterar" e "Excluir"
+ * 
+ * 2. MODO EDIÇÃO (editando = true):
+ *    - Campos editáveis: marca, modelo, placa, tipo, CPF, CNPJ
+ *    - Botões: "Cancelar" e "Salvar Alterações"
+ *    - Validações de campos obrigatórios
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 AÇÕES:
+ * ----------------------------------------------------------------------------
+ * 
+ * - EDITAR: Abre formulário de edição
+ * - SALVAR: Atualiza veículo via API e notifica componente pai
+ * - CANCELAR: Restaura dados originais e sai do modo edição
+ * - EXCLUIR: Abre modal de confirmação, deleta veículo e redireciona
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - SINCRONIZAÇÃO: useEffect sincroniza formData com veículo prop
+ * - FEEDBACK: AlertBox com ícones e cores (sucesso/erro)
+ * - MODAL DE EXCLUSÃO: Overlay com backdrop blur, responsivo
+ * - RESPONSIVIDADE: Grid adaptativa (1 coluna mobile, 2 colunas desktop)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - deleteVeiculo, atualizarVeiculo: APIs de veículo
+ * - Veiculo: Tipo de veículo
+ * 
+ * @example
+ * ```tsx
+ * <VeiculoDetalhes
+ *   veiculo={veiculo}
+ *   onVeiculoAtualizado={(veiculoAtualizado) => {
+ *     setVeiculo(veiculoAtualizado);
+ *   }}
+ * />
+ * ```
+ */
+
 export default function VeiculoDetalhes({
   veiculo,
   onVeiculoAtualizado,
@@ -51,6 +109,7 @@ export default function VeiculoDetalhes({
     });
   }, [veiculo]);
 
+  // ==================== HANDLERS ====================
   const handleInput = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -70,19 +129,22 @@ export default function VeiculoDetalhes({
         throw new Error(resultado.message);
       }
 
-      // Cria o objeto veículo atualizado
       const veiculoAtualizado: Veiculo = {
         id: formData.id,
         marca: formData.marca,
         modelo: formData.modelo,
         placa: formData.placa,
-        tipo: formData.tipo as 'AUTOMOVEL' | 'VUC' | 'CAMINHONETA' | 'CAMINHAO_MEDIO' | 'CAMINHAO_LONGO',
+        tipo: formData.tipo as
+          | 'AUTOMOVEL'
+          | 'VUC'
+          | 'CAMINHONETA'
+          | 'CAMINHAO_MEDIO'
+          | 'CAMINHAO_LONGO',
         usuarioId: formData.usuarioId || undefined,
         cpfProprietario: formData.cpfProprietario || null,
         cnpjProprietario: formData.cnpjProprietario || null,
       };
 
-      // Notifica o componente pai com os dados atualizados
       if (onVeiculoAtualizado) {
         onVeiculoAtualizado(veiculoAtualizado);
       }
@@ -114,6 +176,22 @@ export default function VeiculoDetalhes({
     }
   };
 
+  const handleCancelarEdicao = () => {
+    setFormData({
+      id: veiculo.id,
+      marca: veiculo.marca,
+      modelo: veiculo.modelo,
+      placa: veiculo.placa,
+      tipo: veiculo.tipo,
+      cpfProprietario: veiculo.cpfProprietario || '',
+      cnpjProprietario: veiculo.cnpjProprietario || '',
+      usuarioId: veiculo.usuarioId || '',
+    });
+    setEditando(false);
+    setMensagem({ tipo: null, texto: '' });
+  };
+
+  // ==================== COMPONENTES INTERNOS ====================
   const AlertBox = ({
     tipo,
     texto,
@@ -144,25 +222,11 @@ export default function VeiculoDetalhes({
     );
   };
 
-  // Função para cancelar edição (restaura os dados originais)
-  const handleCancelarEdicao = () => {
-    setFormData({
-      id: veiculo.id,
-      marca: veiculo.marca,
-      modelo: veiculo.modelo,
-      placa: veiculo.placa,
-      tipo: veiculo.tipo,
-      cpfProprietario: veiculo.cpfProprietario || '',
-      cnpjProprietario: veiculo.cnpjProprietario || '',
-      usuarioId: veiculo.usuarioId || '',
-    });
-    setEditando(false);
-    setMensagem({ tipo: null, texto: '' });
-  };
-
   return (
     <>
       <article className="relative bg-white p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl border-l-4 sm:border-l-8 border-blue-500 transition-all duration-300 w-full">
+        
+        {/* Mensagem de feedback */}
         {mensagem.tipo && (
           <div className="mb-4 sm:mb-6">
             <AlertBox tipo={mensagem.tipo} texto={mensagem.texto} />
@@ -191,8 +255,8 @@ export default function VeiculoDetalhes({
             )}
           </div>
 
-          {/* Botões responsivos */}
-          {!editando ? (
+          {/* Botões de ação (modo visualização) */}
+          {!editando && (
             <div className="flex flex-wrap gap-2 sm:gap-3 mt-2 sm:mt-0">
               <button
                 onClick={() => setEditando(true)}
@@ -209,10 +273,10 @@ export default function VeiculoDetalhes({
                 <span>Excluir</span>
               </button>
             </div>
-          ) : null}
+          )}
         </header>
 
-        {/* ===================== MODO DE VISUALIZAÇÃO ===================== */}
+        {/* ===================== MODO VISUALIZAÇÃO ===================== */}
         {!editando && (
           <section className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4 text-gray-700 text-sm sm:text-base mb-4 sm:mb-6">
             <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
@@ -246,7 +310,7 @@ export default function VeiculoDetalhes({
           </section>
         )}
 
-        {/* ===================== MODO DE EDIÇÃO ===================== */}
+        {/* ===================== MODO EDIÇÃO ===================== */}
         {editando && (
           <section className="grid grid-cols-1 xs:grid-cols-2 gap-3 sm:gap-4 text-gray-700 text-sm sm:text-base mb-4 sm:mb-6">
             <div className="space-y-1.5">
@@ -331,7 +395,7 @@ export default function VeiculoDetalhes({
           </section>
         )}
 
-        {/* ===================== BOTÕES DO MODO DE EDIÇÃO ===================== */}
+        {/* ===================== BOTÕES DO MODO EDIÇÃO ===================== */}
         {editando && (
           <div className="flex flex-col xs:flex-row justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
             <button
@@ -353,16 +417,14 @@ export default function VeiculoDetalhes({
         )}
       </article>
 
-      {/* ===================== MODAL DE EXCLUSÃO RESPONSIVO ===================== */}
+      {/* ===================== MODAL DE EXCLUSÃO ===================== */}
       {modalAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Overlay com backdrop blur */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => setModalAberto(false)}
           />
 
-          {/* Modal responsivo */}
           <div className="relative bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-md sm:max-w-lg shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
             <div className="mb-4 sm:mb-6">
               <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">

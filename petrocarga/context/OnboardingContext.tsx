@@ -55,6 +55,79 @@ interface OnboardingContextData {
 
 const OnboardingContext = createContext({} as OnboardingContextData);
 
+/**
+ * @component OnboardingProvider
+ * @version 1.0.0
+ * 
+ * @description Provider para gerenciamento do fluxo de onboarding (cadastro complementar).
+ * Gerencia abertura do modal, navegação entre etapas e envio de dados.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. VERIFICAÇÃO INICIAL:
+ *    - Verifica se usuário está autenticado
+ *    - Se user.cpf não existe → abre modal na etapa 1 (dados pessoais)
+ *    - Se veiculoCadastrado === false → abre modal na etapa 4 (veículo)
+ * 
+ * 2. ETAPAS:
+ *    - Etapa 1: Dados pessoais (CPF, telefone, senha)
+ *    - Etapa 2: Habilitação (CNH)
+ *    - Etapa 3: Termos e condições
+ *    - Etapa 4: Veículo (apenas se necessário)
+ * 
+ * 3. SUBMIT:
+ *    - submit(): Completa cadastro de usuário
+ *    - submitVeiculo(): Cadastra veículo
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 RETORNO DO HOOK useOnboarding:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {boolean} isOpen - Modal está aberto
+ * @property {number} step - Etapa atual (1-4)
+ * @property {OnboardingData} data - Dados do formulário
+ * @property {boolean} isVeiculoOnlyFlow - Apenas fluxo de veículo (sem etapas 1-3)
+ * @property {() => void} startOnboarding - Abre modal na etapa 1
+ * @property {() => void} nextStep - Avança para próxima etapa
+ * @property {() => void} prevStep - Volta para etapa anterior
+ * @property {(data: Partial<OnboardingData>) => void} updateData - Atualiza dados
+ * @property {() => Promise<void>} submit - Envia dados de cadastro
+ * @property {(veiculoData: VeiculoData) => Promise<void>} submitVeiculo - Envia dados do veículo
+ * @property {() => void} reset - Reseta todos os estados
+ * @property {() => void} close - Fecha modal
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - VERIFICAÇÃO AUTOMÁTICA: useEffect verifica se usuário precisa de onboarding
+ * - FLUXO DE VEÍCULO APENAS: Quando usuário já tem CPF mas falta veículo
+ * - REFRESH USER: Após submit, chama refreshUser para atualizar dados do usuário
+ * - FEEDBACK: Toast de sucesso/erro via react-hot-toast
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - OnboardingModal: Modal que utiliza este contexto
+ * - useAuth: Hook de autenticação
+ * - api: Instância Axios para requisições
+ * 
+ * @example
+ * ```tsx
+ * // Provider no layout
+ * <OnboardingProvider>
+ *   {children}
+ *   <OnboardingModal />
+ * </OnboardingProvider>
+ * 
+ * // Uso do hook
+ * const { isOpen, step, data, updateData, submit } = useOnboarding();
+ * ```
+ */
+
 export function OnboardingProvider({
   children,
 }: {
@@ -77,6 +150,7 @@ export function OnboardingProvider({
     dataValidadeCnh: '',
   });
 
+  // ==================== VERIFICAÇÃO AUTOMÁTICA ====================
   useEffect(() => {
     if (loading || checked) return;
     if (!user) return;
@@ -84,6 +158,7 @@ export function OnboardingProvider({
     const precisaCpf = !user.cpf;
     const precisaVeiculo = user.veiculoCadastrado === false;
 
+    // Se não precisa de cadastro complementar, não abre modal
     if (!precisaCpf && !precisaVeiculo) {
       setChecked(true);
       return;
@@ -91,15 +166,17 @@ export function OnboardingProvider({
 
     setIsOpen(true);
 
+    // Define etapa inicial baseada na necessidade
     if (precisaCpf) {
-      setStep(1);
+      setStep(1); // Começa do CPF
     } else if (precisaVeiculo) {
-      setStep(4);
+      setStep(4); // Vai direto para cadastro de veículo
     }
 
     setChecked(true);
   }, [user, loading, checked]);
 
+  // ==================== NAVEGAÇÃO ====================
   const startOnboarding = useCallback(() => {
     setIsOpen(true);
     setStep(1);
@@ -108,19 +185,21 @@ export function OnboardingProvider({
   const nextStep = useCallback(() => {
     setStep((prev) => {
       if (isVeiculoOnlyFlow) {
-        return 4;
+        return 4; // Fluxo apenas veículo
       }
 
       if (prev === 3) {
+        // Após termos, verifica se precisa de veículo
         if (user?.veiculoCadastrado === false) {
-          return 4;
+          return 4; // Vai para etapa de veículo
         }
-
+        // Se não precisa, fecha modal
         setIsOpen(false);
         return 1;
       }
 
       if (prev === 4) {
+        // Após veículo, fecha modal
         setIsOpen(false);
         return 1;
       }
@@ -134,6 +213,7 @@ export function OnboardingProvider({
     setStep((prev) => Math.max(prev - 1, 1));
   }, [isVeiculoOnlyFlow]);
 
+  // ==================== HANDLERS DE DADOS ====================
   const updateData = useCallback((newData: Partial<OnboardingData>) => {
     setData((prev) => ({
       ...prev,
@@ -141,6 +221,7 @@ export function OnboardingProvider({
     }));
   }, []);
 
+  // ==================== SUBMIT CADASTRO DE USUÁRIO ====================
   const submit = useCallback(async () => {
     try {
       await api.post('/petrocarga/auth/completarCadastro', data);
@@ -171,6 +252,7 @@ export function OnboardingProvider({
     }
   }, [data, refreshUser, user]);
 
+  // ==================== SUBMIT CADASTRO DE VEÍCULO ====================
   const submitVeiculo = useCallback(
     async (veiculoData: VeiculoData) => {
       try {
@@ -209,6 +291,7 @@ export function OnboardingProvider({
     [refreshUser, user],
   );
 
+  // ==================== RESET E CLOSE ====================
   const reset = useCallback(() => {
     setData({
       cpf: '',
@@ -227,6 +310,7 @@ export function OnboardingProvider({
     setIsOpen(false);
   }, []);
 
+  // ==================== MEMOIZED VALUE ====================
   const value = useMemo(
     () => ({
       isOpen,
@@ -265,6 +349,11 @@ export function OnboardingProvider({
   );
 }
 
+/**
+ * @hook useOnboarding
+ * @description Hook para acessar o contexto de onboarding
+ * @throws {Error} Se usado fora do OnboardingProvider
+ */
 export function useOnboarding() {
   const context = useContext(OnboardingContext);
 

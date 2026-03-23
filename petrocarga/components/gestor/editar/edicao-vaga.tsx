@@ -9,17 +9,79 @@ import Form from 'next/form';
 import { useActionState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import FormItem from '@/components/form/form-item';
-import React from 'react';
 import DiaSemana from '@/components/gestor/dia-semana/dia-semana';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import { Vaga } from '@/lib/types/vaga';
 
+/**
+ * @component EditarVaga
+ * @version 1.0.0
+ * 
+ * @description Formulário de edição de vaga para gestores.
+ * Permite atualizar todos os dados de uma vaga existente.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 CAMPOS EDITÁVEIS:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. DADOS DE ENDEREÇO:
+ *    - Código PMP
+ *    - Logradouro (nome da rua)
+ *    - Número Referência
+ *    - Bairro
+ * 
+ * 2. CARACTERÍSTICAS DA VAGA:
+ *    - Status (Disponível/Indisponível)
+ *    - Área (Vermelha, Amarela, Azul, Branca)
+ *    - Tipo (Paralela, Perpendicular)
+ *    - Comprimento (em metros)
+ * 
+ * 3. GEORREFERENCIAMENTO:
+ *    - Localização inicial (latitude, longitude)
+ *    - Localização final (latitude, longitude)
+ * 
+ * 4. DESCRIÇÃO:
+ *    - Descrição/referências
+ * 
+ * 5. OPERAÇÃO:
+ *    - Dias da semana com horários (componente DiaSemana)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useActionState: Gerencia estado da Server Action
+ * - Wrapper assíncrono: Para compatibilidade com useActionState
+ * - useEffect: Monitora resultado e exibe toast de feedback
+ * - Hidden input: Envia ID da vaga sem exibir na UI
+ * - Valores padrão: defaultValue preenche campos com dados existentes
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - atualizarVaga: Server Action de atualização
+ * - FormItem: Campo com label e descrição
+ * - DiaSemana: Seleção de dias e horários
+ * - SelecaoCustomizada: Select estilizado
+ * 
+ * @example
+ * ```tsx
+ * <EditarVaga vaga={vaga} />
+ * ```
+ * 
+ * @see /src/lib/api/vagaApi.ts - Função atualizarVaga
+ */
+
 export default function EditarVaga({ vaga }: { vaga: Vaga }) {
+  // ==================== SERVER ACTION ====================
   const atualizar = async (prevState: unknown, formData: FormData) => {
     return atualizarVaga(formData);
   };
 
   const [state, atualizarVagaAction, pending] = useActionState(atualizar, null);
+  
+  // ==================== FEEDBACK (TOAST) ====================
   useEffect(() => {
     if (!state) return;
 
@@ -33,12 +95,16 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">
       <Card className="w-full max-w-5xl mx-auto">
+        
+        {/* ==================== FORMULÁRIO ==================== */}
         <Form action={atualizarVagaAction}>
-          {/* Campo hidden com o ID da vaga */}
+          
+          {/* Campo oculto com ID da vaga */}
           <input type="hidden" name="id" value={vaga.id} />
 
           <CardContent className="p-4 md:p-6 lg:p-8">
-            {/* Mensagem de erro */}
+            
+            {/* ==================== MENSAGEM DE ERRO ==================== */}
             {state?.error && (
               <div className="flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-4 mb-6 text-red-900">
                 <CircleAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
@@ -46,7 +112,9 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
               </div>
             )}
 
-            {/* Código */}
+            {/* ==================== CAMPOS DO FORMULÁRIO ==================== */}
+            
+            {/* Código PMP */}
             <FormItem
               name="Código"
               description="Ponha o código PMP da rua. Exemplo: Md-1234"
@@ -75,7 +143,7 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
               />
             </FormItem>
 
-            {/* Número da Referência da Vaga  */}
+            {/* Número Referência */}
             <FormItem
               name="Número Referência"
               description="Números de locais por onde passa a área da vaga. Exemplo: 90 ao 130"
@@ -206,7 +274,7 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
               />
             </FormItem>
 
-            {/* Dias da semana */}
+            {/* Dias da semana (com horários pré-carregados) */}
             <FormItem
               name="Dias da semana"
               description="Selecione os dias em que a vaga estará disponível e defina os horários"
@@ -215,7 +283,7 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
             </FormItem>
           </CardContent>
 
-          {/* Footer com botão */}
+          {/* ==================== FOOTER COM BOTÃO ==================== */}
           <CardFooter className="px-4 md:px-6 lg:px-8 pb-6 pt-2">
             <Button
               type="submit"

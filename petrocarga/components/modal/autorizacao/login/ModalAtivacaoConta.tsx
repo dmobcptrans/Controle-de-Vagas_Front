@@ -23,12 +23,69 @@ interface ModalAtivacaoContaProps {
   cpfInicial?: string;
 }
 
+/**
+ * @component ModalAtivacaoConta
+ * @version 1.0.0
+ * 
+ * @description Modal para ativação de conta de usuário.
+ * Permite inserir CPF e código de ativação, reenviar código e aceitar termos.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. ATIVAÇÃO DE CONTA:
+ *    - Usuário insere CPF (apenas números, 11 dígitos)
+ *    - Usuário insere código de ativação (recebido por email)
+ *    - Usuário aceita os termos de uso
+ *    - Clique em "Ativar Conta" → chama API ativarConta
+ * 
+ * 2. REENVIO DE CÓDIGO:
+ *    - Usuário pode solicitar novo código via botão "Solicitar novo código"
+ *    - Valida CPF antes do envio
+ *    - Feedback visual com loading spinner
+ * 
+ * 3. TERMOS DE USO:
+ *    - Checkbox obrigatório para ativação
+ *    - Link para abrir modal com termos completos (ModalTermos)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - MÁSCARA CPF: Apenas números, máximo 11 caracteres
+ * - FEEDBACK: Mensagens de erro/sucesso com ícones e cores
+ * - LOADING: Estados separados para ativação e reenvio
+ * - AUTO-FECHAR: Após sucesso, modal fecha após 2 segundos
+ * - RESET: Ao fechar, limpa todos os campos e mensagens
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Dialog: Componente de modal do shadcn/ui
+ * - Checkbox: Componente de checkbox
+ * - ModalTermos: Modal com termos completos
+ * - ativarConta, reenviarCodigoAtivacao: APIs de ativação
+ * 
+ * @example
+ * ```tsx
+ * <ModalAtivacaoConta
+ *   open={mostrarModal}
+ *   onOpenChange={setMostrarModal}
+ *   onClose={handleCloseModal}
+ *   cpfInicial="12345678900"
+ * />
+ * ```
+ */
+
 export default function ModalAtivacaoConta({
   open,
   onOpenChange,
   onClose,
   cpfInicial = '',
 }: ModalAtivacaoContaProps) {
+  // ==================== ESTADOS ====================
   const [cpfAtivacao, setCpfAtivacao] = useState(cpfInicial);
   const [codigo, setCodigo] = useState('');
   const [modalError, setModalError] = useState('');
@@ -38,12 +95,22 @@ export default function ModalAtivacaoConta({
   const [aceitarTermos, setAceitarTermos] = useState(false);
   const [mostrarModalTermos, setMostrarModalTermos] = useState(false);
 
+  // ==================== HANDLERS ====================
+  
+  /**
+   * @function handleAtivarConta
+   * @description Processa a ativação da conta
+   * 
+   * Fluxo:
+   * 1. Valida CPF, código e aceitação dos termos
+   * 2. Chama API ativarConta
+   * 3. Se sucesso: exibe mensagem e fecha modal após 2s
+   * 4. Se erro: exibe mensagem de erro
+   */
   const handleAtivarConta = async () => {
-    // Limpar mensagens anteriores
     setModalError('');
     setModalSuccess('');
 
-    // Validações
     if (!cpfAtivacao.trim()) {
       setModalError('Por favor, insira seu CPF');
       return;
@@ -90,6 +157,15 @@ export default function ModalAtivacaoConta({
     }
   };
 
+  /**
+   * @function handleReenviarCodigo
+   * @description Solicita reenvio do código de ativação
+   * 
+   * Fluxo:
+   * 1. Valida CPF
+   * 2. Chama API reenviarCodigoAtivacao
+   * 3. Exibe mensagem de sucesso/erro
+   */
   const handleReenviarCodigo = async () => {
     if (!cpfAtivacao.trim()) {
       setModalError('Por favor, insira seu CPF');
@@ -128,6 +204,10 @@ export default function ModalAtivacaoConta({
     }
   };
 
+  /**
+   * @function handleCloseModal
+   * @description Fecha o modal e reseta todos os estados
+   */
   const handleCloseModal = () => {
     setCpfAtivacao('');
     setCodigo('');
@@ -150,6 +230,8 @@ export default function ModalAtivacaoConta({
         }}
       >
         <DialogContent className="sm:max-w-md">
+          
+          {/* ==================== HEADER ==================== */}
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <Key className="w-6 h-6 text-blue-600" />
@@ -160,7 +242,10 @@ export default function ModalAtivacaoConta({
             </DialogDescription>
           </DialogHeader>
 
+          {/* ==================== CONTEÚDO ==================== */}
           <div className="space-y-4 py-4">
+            
+            {/* Mensagem de erro */}
             {modalError && (
               <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg flex items-start gap-2">
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -168,6 +253,7 @@ export default function ModalAtivacaoConta({
               </div>
             )}
 
+            {/* Mensagem de sucesso */}
             {modalSuccess && (
               <div className="bg-green-50 border border-green-200 text-green-700 p-3 rounded-lg flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 flex-shrink-0" />
@@ -175,6 +261,7 @@ export default function ModalAtivacaoConta({
               </div>
             )}
 
+            {/* Campo CPF */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 CPF
@@ -198,6 +285,7 @@ export default function ModalAtivacaoConta({
               </p>
             </div>
 
+            {/* Campo Código com botão de reenvio */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700">
@@ -232,7 +320,7 @@ export default function ModalAtivacaoConta({
               />
             </div>
 
-            {/* Checkbox de aceitar dos termos */}
+            {/* Checkbox de aceitação dos termos */}
             <div className="flex items-start space-x-2 pt-2">
               <Checkbox
                 id="termos"
@@ -264,6 +352,7 @@ export default function ModalAtivacaoConta({
             </div>
           </div>
 
+          {/* ==================== FOOTER ==================== */}
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button
               type="button"
@@ -293,7 +382,7 @@ export default function ModalAtivacaoConta({
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Termos */}
+      {/* Modal de termos completos */}
       <ModalTermos
         open={mostrarModalTermos}
         onOpenChange={setMostrarModalTermos}

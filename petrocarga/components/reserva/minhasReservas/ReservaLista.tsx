@@ -7,7 +7,11 @@ import ReservaCard from './ReservaCard';
 import { ReservaGet } from '@/lib/types/reserva';
 import { Button } from '@/components/ui/button';
 
-// CONSTANTES (Fora do componente para não recriar na renderização)
+// ==================== CONSTANTES (Fora do componente) ====================
+/**
+ * Prioridade para ordenação das reservas
+ * Quanto menor o número, maior a prioridade
+ */
 const PRIORIDADE: Record<string, number> = {
   ATIVA: 1,
   RESERVADA: 2,
@@ -16,10 +20,22 @@ const PRIORIDADE: Record<string, number> = {
   REMOVIDA: 5,
 };
 
+/**
+ * Reservas visíveis (não arquivadas)
+ * Exibidas na seção principal
+ */
 const VISIBLE_STATUSES = new Set(['ATIVA', 'RESERVADA']);
+
+/**
+ * Reservas ocultas (arquivadas/histórico)
+ * Exibidas em seção colapsável
+ */
 const HIDDEN_STATUSES = new Set(['CONCLUIDA', 'CANCELADA', 'REMOVIDA']);
 
-// Função auxiliar de ordenação
+/**
+ * @function sortReservas
+ * @description Ordena reservas por prioridade (ATIVA > RESERVADA > CONCLUIDA > CANCELADA > REMOVIDA)
+ */
 const sortReservas = (a: ReservaGet, b: ReservaGet) => {
   const statusA = (a.status || '').toUpperCase();
   const statusB = (b.status || '').toUpperCase();
@@ -35,6 +51,57 @@ interface ReservaListaProps {
   onCheckout: (reserva: ReservaGet) => void;
 }
 
+/**
+ * @component ReservaLista
+ * @version 1.0.0
+ * 
+ * @description Lista de reservas com separação entre ativas e histórico.
+ * Reservas ativas (ATIVA/RESERVADA) são exibidas sempre.
+ * Reservas encerradas (CONCLUIDA/CANCELADA/REMOVIDA) ficam em seção colapsável.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 ESTRUTURA:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. SEÇÃO PRINCIPAL (RESERVAS ATIVAS):
+ *    - Exibe reservas com status ATIVA ou RESERVADA
+ *    - Ordenadas por prioridade (ATIVA primeiro)
+ *    - Estado vazio: botão "Fazer Reserva"
+ * 
+ * 2. SEÇÃO DE HISTÓRICO (COLAPSÁVEL):
+ *    - Exibe reservas com status CONCLUIDA, CANCELADA ou REMOVIDA
+ *    - Mostra contador de itens no botão
+ *    - Pode ser expandido/recolhido
+ *    - Transição suave com grid-rows
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - SEPARAÇÃO POR STATUS: VISIBLE_STATUSES e HIDDEN_STATUSES definem onde cada status aparece
+ * - ORDENAÇÃO: PRIORIDADE mapeia ordem de exibição (ATIVA > RESERVADA > CONCLUIDA > CANCELADA > REMOVIDA)
+ * - COLLAPSE: grid-rows-[1fr]/[0fr] + transition-all para animação suave
+ * - MEMO: useMemo para processamento da lista (evita recálculos desnecessários)
+ * - EMPTY STATE: Exibido quando não há reservas ativas, com botão para fazer nova reserva
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - ReservaCard: Card individual de reserva
+ * - ReservaGet: Tipo de reserva
+ * 
+ * @example
+ * ```tsx
+ * <ReservaLista
+ *   reservas={reservas}
+ *   onGerarDocumento={gerarComprovante}
+ *   onExcluir={excluirReserva}
+ *   onCheckout={checkoutReserva}
+ * />
+ * ```
+ */
+
 export default function ReservaLista({
   reservas,
   onGerarDocumento,
@@ -43,7 +110,10 @@ export default function ReservaLista({
 }: ReservaListaProps) {
   const [mostrarOcultas, setMostrarOcultas] = useState(false);
 
-  // Otimização: Separação em um único pass (Reduce) e ordenação individual
+  /**
+   * Separa reservas em visíveis (ativas) e ocultas (histórico)
+   * Ordena ambas por prioridade
+   */
   const { visiveis, ocultas } = useMemo(() => {
     const buckets = reservas.reduce(
       (acc, r) => {
@@ -66,7 +136,8 @@ export default function ReservaLista({
 
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
-      {/* --- SEÇÃO PRINCIPAL (Visíveis) --- */}
+      
+      {/* ==================== SEÇÃO PRINCIPAL (RESERVAS ATIVAS) ==================== */}
       <section className="flex flex-col gap-4 animate-in fade-in duration-500">
         {visiveis.length > 0 ? (
           visiveis.map((reserva) => (
@@ -83,9 +154,11 @@ export default function ReservaLista({
         )}
       </section>
 
-      {/* --- SEÇÃO SECUNDÁRIA (Ocultas/Histórico) --- */}
+      {/* ==================== SEÇÃO DE HISTÓRICO (COLAPSÁVEL) ==================== */}
       {ocultas.length > 0 && (
         <div className="border-t border-gray-100 pt-6">
+          
+          {/* Botão de toggle */}
           <button
             onClick={() => setMostrarOcultas((s) => !s)}
             className="group w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-all active:scale-[0.99]"
@@ -109,7 +182,7 @@ export default function ReservaLista({
             )}
           </button>
 
-          {/* Wrapper para animação suave de altura (Smooth Collapse) */}
+          {/* Conteúdo colapsável (transição suave) */}
           <div
             id="lista-ocultas"
             className={`grid transition-[grid-template-rows] duration-300 ease-out ${
@@ -139,20 +212,19 @@ export default function ReservaLista({
   );
 }
 
-// Componente visual para quando não há reservas
+/**
+ * @component EmptyState
+ * @description Componente exibido quando não há reservas ativas
+ */
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-      {/* Ícone de Destaque */}
       <div className="bg-white p-3 rounded-full shadow-sm mb-4">
         <CopyPlus className="w-8 h-8 text-gray-400" />
       </div>
-
-      {/* Título e Descrição */}
       <h3 className="text-gray-900 font-medium text-lg mb-2">
         Nenhuma Reserva Ativa
       </h3>
-      {/* Botão Principal com Melhorias de UI/UX */}
       <div className="flex flex-col sm:flex-row justify-center">
         <Link href="/motorista/reservar-vaga">
           <Button

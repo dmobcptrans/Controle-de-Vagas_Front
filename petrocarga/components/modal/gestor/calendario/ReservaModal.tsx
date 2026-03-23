@@ -41,6 +41,69 @@ interface ModalProps {
   goBack: () => void;
 }
 
+/**
+ * @component ReservaModal
+ * @version 1.0.0
+ * 
+ * @description Modal de navegação hierárquica para visualização de reservas do gestor.
+ * Permite navegar entre níveis: Dia → Logradouros → Vagas → Reserva.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO DE NAVEGAÇÃO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. GROUP (Nível 1 - Dia):
+ *    - Exibe lista de logradouros com reservas naquele dia
+ *    - Cada item mostra contagem de reservas ativas/finalizadas
+ *    - Clique abre nível "vagasLogradouro"
+ * 
+ * 2. VAGAS_LOGradouro (Nível 2 - Logradouro):
+ *    - Agrupa reservas por vaga no logradouro selecionado
+ *    - Cada vaga mostra indicador de atividade (verde/vermelho)
+ *    - Clique abre nível "vaga"
+ * 
+ * 3. VAGA (Nível 3 - Vaga):
+ *    - Lista todas as reservas da vaga selecionada
+ *    - Ordenadas por horário de início
+ *    - Clique abre nível "reserva"
+ * 
+ * 4. RESERVA (Nível 4 - Detalhes):
+ *    - Exibe informações completas da reserva
+ *    - Botão "Checkout Forçado" para reservas ativas
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - RENDERIZAÇÃO CONDICIONAL: switch case baseado no tipo do modalState
+ * - BOTÃO VOLTAR: Exibido em todos os níveis exceto o primeiro (group)
+ * - CHECKOUT FORÇADO: Disponível apenas para reservas com status diferente de:
+ *   - CONCLUIDA, RESERVADA, REMOVIDA, CANCELADA
+ * - DIÁLOGO: Componente Dialog do shadcn/ui
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - LogradouroItem: Item de logradouro com resumo de reservas
+ * - VagaItem: Item de vaga com indicador de atividade
+ * - ReservaItem: Item de reserva com horários e status
+ * 
+ * @example
+ * ```tsx
+ * <ReservaModal
+ *   modalState={modalState}
+ *   vagaCache={vagaCache}
+ *   close={closeModal}
+ *   openVagasLogradouro={openVagasLogradouro}
+ *   openVagaModal={openVagaModal}
+ *   openReservaModal={openReservaModal}
+ *   checkoutForcado={handleCheckoutForcado}
+ *   goBack={goBack}
+ * />
+ * ```
+ */
+
 export const ReservaModal = ({
   modalState,
   vagaCache,
@@ -51,8 +114,15 @@ export const ReservaModal = ({
   checkoutForcado,
   goBack,
 }: ModalProps) => {
+  
+  /**
+   * @function renderContent
+   * @description Renderiza o conteúdo do modal baseado no tipo do estado
+   */
   const renderContent = () => {
     switch (modalState.type) {
+      
+      // ==================== NÍVEL 1: DIA (GROUP) ====================
       case 'group':
         return (
           <>
@@ -77,7 +147,10 @@ export const ReservaModal = ({
             </div>
           </>
         );
+
+      // ==================== NÍVEL 2: LOGRADOURO ====================
       case 'vagasLogradouro': {
+        // Agrupa reservas por ID da vaga
         const reservasPorVaga = modalState.data.reservasDoLogradouro.reduce(
           (acc, reserva) => {
             const vagaId = reserva.vagaId;
@@ -111,6 +184,7 @@ export const ReservaModal = ({
         );
       }
 
+      // ==================== NÍVEL 3: VAGA ====================
       case 'vaga':
         return (
           <>
@@ -143,6 +217,8 @@ export const ReservaModal = ({
             </div>
           </>
         );
+
+      // ==================== NÍVEL 4: RESERVA (DETALHES) ====================
       case 'reserva':
         return (
           <>
@@ -151,7 +227,7 @@ export const ReservaModal = ({
             </DialogHeader>
 
             <div className="space-y-4 text-sm">
-              {/* Reserva */}
+              {/* Seção: Reserva */}
               <div className="space-y-1">
                 <p className="font-semibold text-base">Reserva</p>
                 <p>
@@ -180,7 +256,7 @@ export const ReservaModal = ({
 
               <hr />
 
-              {/* Motorista */}
+              {/* Seção: Motorista */}
               <div className="space-y-1">
                 <p className="font-semibold text-base">Motorista</p>
                 <p>
@@ -190,7 +266,7 @@ export const ReservaModal = ({
 
               <hr />
 
-              {/* Veículo */}
+              {/* Seção: Veículo */}
               <div className="space-y-1">
                 <p className="font-semibold text-base">Veículo</p>
                 <p>
@@ -211,24 +287,18 @@ export const ReservaModal = ({
 
               <hr />
 
-              {/* Origem */}
+              {/* Seção: Origem */}
               <div className="space-y-1">
-                <p className="font-semibold text-base">Origem</p>{' '}
-                {modalState.data.reserva.cidadeOrigem}
-                <p>
-                  {/* <strong>Nome:</strong> {' '} {modalState.data.reserva.origem} */}
-                </p>
+                <p className="font-semibold text-base">Origem</p>
+                <p>{modalState.data.reserva.cidadeOrigem}</p>
               </div>
 
               <hr />
 
-              {/* Entrada */}
+              {/* Seção: Entrada */}
               <div className="space-y-1">
-                <p className="font-semibold text-base">Entrada</p>{' '}
-                {modalState.data.reserva.entradaCidade}
-                <p>
-                  {/* <strong>Nome:</strong> {''} {modalState.data.reserva.entrada} */}
-                </p>
+                <p className="font-semibold text-base">Entrada</p>
+                <p>{modalState.data.reserva.entradaCidade}</p>
               </div>
             </div>
           </>
@@ -239,11 +309,16 @@ export const ReservaModal = ({
     }
   };
 
+  /**
+   * @function renderFooter
+   * @description Renderiza o rodapé do modal com botões de navegação
+   */
   const renderFooter = () => {
     if (!modalState.type) return null;
 
     return (
       <DialogFooter className="flex flex-row items-center justify-between gap-2">
+        {/* Botão Voltar (exceto no nível group) */}
         <div className="flex flex-row gap-2">
           {modalState.type !== 'group' && (
             <Button
@@ -255,6 +330,8 @@ export const ReservaModal = ({
             </Button>
           )}
         </div>
+
+        {/* Botão Checkout Forçado (apenas para reservas ativas) */}
         <div className="flex flex-row gap-2">
           {modalState.type === 'reserva' &&
             modalState.data.reserva.status !== 'CONCLUIDA' &&

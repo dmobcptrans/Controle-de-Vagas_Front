@@ -10,6 +10,10 @@ interface DenunciaCardProps {
   denuncia: Denuncia;
 }
 
+/**
+ * Mapeamento de estilos por status da denúncia
+ * Define cores e rótulos para cada status
+ */
 const statusStyles: Record<
   string,
   { label: string; class: string; border: string }
@@ -41,6 +45,64 @@ const statusStyles: Record<
   },
 };
 
+/**
+ * @component DenunciaCard
+ * @version 1.0.0
+ * 
+ * @description Card de exibição de denúncia.
+ * Exibe informações resumidas da denúncia e abre modal de detalhes ao clicar.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 INFORMAÇÕES EXIBIDAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. HEADER:
+ *    - ID da denúncia (primeiros 5 caracteres)
+ *    - Badge de status colorido
+ * 
+ * 2. INFORMAÇÕES PRINCIPAIS:
+ *    - Local: logradouro, número e bairro (com ícone MapPin)
+ *    - Tipo: descrição do tipo de denúncia (com ícone Tag)
+ *    - Descrição: texto resumido (com ícone FileText)
+ * 
+ * 3. AÇÃO:
+ *    - Botão "Detalhes" com ícone ChevronRight
+ *    - Ao clicar no card, abre modal de detalhes (DenunciaDetalhes)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - CORES POR STATUS:
+ *   - ABERTA: azul
+ *   - EM_ANALISE: amarelo
+ *   - PROCEDENTE: verde
+ *   - IMPROCEDENTE: vermelho
+ *   - DEFAULT: cinza (fallback)
+ * 
+ * - BORDA ESQUERDA: Cor diferenciada por status (border-l-[cor])
+ * 
+ * - INTERAÇÃO:
+ *   - Card inteiro é clicável (onClick no article)
+ *   - Abre modal de detalhes
+ * 
+ * - ANIMAÇÕES:
+ *   - Hover: shadow-md, border-slate-300
+ *   - Botão "Detalhes": translate-x-1 no hover do grupo
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - DenunciaDetalhes: Modal com informações completas
+ * - Denuncia: Tipo de denúncia
+ * 
+ * @example
+ * ```tsx
+ * <DenunciaCard denuncia={denuncia} />
+ * ```
+ */
+
 export default function DenunciaCard({ denuncia }: DenunciaCardProps) {
   const [isDetalhesModalOpen, setIsDetalhesModalOpen] = useState(false);
 
@@ -58,7 +120,8 @@ export default function DenunciaCard({ denuncia }: DenunciaCardProps) {
         )}
       >
         <div className="space-y-3 flex-1">
-          {/* Header do Card */}
+          
+          {/* ==================== HEADER ==================== */}
           <div className="flex items-center gap-3">
             <h2 className="text-base font-bold text-slate-900">
               Denúncia #{denuncia.id.slice(0, 5).toUpperCase()}
@@ -73,8 +136,10 @@ export default function DenunciaCard({ denuncia }: DenunciaCardProps) {
             </span>
           </div>
 
-          {/* Grid de Informações */}
+          {/* ==================== INFORMAÇÕES ==================== */}
           <div className="grid grid-cols-1 gap-2">
+            
+            {/* Localização */}
             <div className="flex items-start gap-2 text-sm text-slate-600">
               <MapPin className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" />
               <span>
@@ -83,6 +148,7 @@ export default function DenunciaCard({ denuncia }: DenunciaCardProps) {
               </span>
             </div>
 
+            {/* Tipo da denúncia */}
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <Tag className="w-4 h-4 text-slate-400 shrink-0" />
               <span className="capitalize">
@@ -90,6 +156,7 @@ export default function DenunciaCard({ denuncia }: DenunciaCardProps) {
               </span>
             </div>
 
+            {/* Descrição (resumida) */}
             <div className="flex items-start gap-2 text-sm text-slate-500 italic">
               <FileText className="w-4 h-4 mt-0.5 text-slate-400 shrink-0" />
               <p className="line-clamp-1 italic">{denuncia.descricao}</p>
@@ -97,7 +164,7 @@ export default function DenunciaCard({ denuncia }: DenunciaCardProps) {
           </div>
         </div>
 
-        {/* Botão de Ação Lateral */}
+        {/* ==================== BOTÃO DE AÇÃO ==================== */}
         <div className="flex items-center self-end sm:self-center">
           <div className="flex items-center gap-1 text-sm font-medium text-blue-600 group-hover:translate-x-1 transition-transform">
             Detalhes
@@ -106,6 +173,7 @@ export default function DenunciaCard({ denuncia }: DenunciaCardProps) {
         </div>
       </article>
 
+      {/* Modal de detalhes */}
       <DenunciaDetalhes
         isOpen={isDetalhesModalOpen}
         onClose={() => setIsDetalhesModalOpen(false)}

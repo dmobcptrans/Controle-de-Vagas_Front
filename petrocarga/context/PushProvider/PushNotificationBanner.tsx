@@ -3,6 +3,52 @@
 import { Bell, X } from 'lucide-react';
 import { usePushSetup } from './usePushSetup';
 
+/**
+ * @component PushNotificationBanner
+ * @version 1.0.0
+ * 
+ * @description Banner de solicitação de permissão para notificações push.
+ * Exibe um card flutuante solicitando ativação de notificações em tempo real.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 COMPORTAMENTO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. EXIBIÇÃO CONDICIONAL:
+ *    - Só aparece se showPrompt for true (via usePushSetup)
+ *    - Gerencia quando mostrar o banner baseado no estado da permissão
+ * 
+ * 2. AÇÕES:
+ *    - "Ativar notificações": Solicita permissão e registra push token
+ *    - "Agora não": Fecha o banner temporariamente
+ *    - Botão X: Mesmo comportamento que "Agora não"
+ * 
+ * 3. ESTADOS:
+ *    - status 'loading': Botão desabilitado com texto "Ativando…"
+ *    - status normal: Botão habilitado com texto "Ativar notificações"
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - POSIÇÃO: fixo no canto inferior central (bottom-4, left-1/2, -translate-x-1/2)
+ * - ANIMAÇÃO: slide-in-from-bottom-4 + fade-in (Tailwind)
+ * - ACESSIBILIDADE: role="dialog", aria-labelledby, aria-describedby
+ * - LOADING: Botão desabilitado com texto durante processo
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 HOOK RELACIONADO:
+ * ----------------------------------------------------------------------------
+ * 
+ * - usePushSetup: Gerencia estado de permissão e ações de push
+ * 
+ * @example
+ * ```tsx
+ * // Uso no layout principal
+ * <PushNotificationBanner />
+ * ```
+ */
+
 export function PushNotificationBanner() {
   const { showPrompt, status, onAccept, onDismiss } = usePushSetup();
 
@@ -21,12 +67,12 @@ export function PushNotificationBanner() {
         animate-in slide-in-from-bottom-4 fade-in duration-300
       "
     >
-      {/* Ícone */}
+      {/* ==================== ÍCONE ==================== */}
       <div className="shrink-0 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
         <Bell className="w-5 h-5 text-blue-600" />
       </div>
 
-      {/* Texto */}
+      {/* ==================== TEXTO E AÇÕES ==================== */}
       <div className="flex-1 min-w-0">
         <p id="push-banner-title" className="text-sm font-semibold text-gray-900 leading-snug">
           Acompanhe suas reservas em tempo real!
@@ -35,7 +81,7 @@ export function PushNotificationBanner() {
           Ative as notificações e receba atualizações de status da sua carga sem precisar abrir o app.
         </p>
 
-        {/* Ações */}
+        {/* Botões */}
         <div className="mt-3 flex gap-2">
           <button
             onClick={onAccept}
@@ -64,7 +110,7 @@ export function PushNotificationBanner() {
         </div>
       </div>
 
-      {/* Fechar */}
+      {/* ==================== BOTÃO FECHAR ==================== */}
       <button
         onClick={onDismiss}
         aria-label="Fechar"

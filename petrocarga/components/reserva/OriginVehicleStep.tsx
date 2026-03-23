@@ -19,6 +19,66 @@ interface OriginVehicleStepProps {
   onBack?: () => void;
 }
 
+/**
+ * @component OriginVehicleStep
+ * @version 1.0.0
+ * 
+ * @description Componente de etapa para seleção de origem e veículo no fluxo de reserva.
+ * Permite escolher entre origem local (Petrópolis) ou outro município,
+ * com sugestões de localidades via Mapbox e seleção de entrada da cidade.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. ORIGEM:
+ *    - "Sim, já está em Petrópolis": origem = "Petrópolis - RJ", entrada = null
+ *    - "Não, vem de outro local": exibe campos adicionais
+ * 
+ * 2. CAMPO DE ORIGEM (se "outro município"):
+ *    - Input com autocomplete via Mapbox Suggestions
+ *    - Sugestões aparecem ao focar/digitar
+ * 
+ * 3. ENTRADA NA CIDADE (se "outro município"):
+ *    - Select com 14 opções de entradas de Petrópolis:
+ *      - BR-040 (6 opções), BR-495, RJ-107, RJ-117, RJ-123, RJ-134, Est. União
+ * 
+ * 4. VEÍCULO:
+ *    - Select com lista de veículos do usuário
+ *    - Opção "Adicionar novo veículo" redireciona para página de cadastro
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - ESTADO LOCAL: Mantém valores durante edição antes de confirmar
+ * - MAPBOX SUGGESTIONS: Hook customizado para busca de localidades
+ * - REDIRECIONAMENTO: Opção "Adicionar novo veículo" redireciona via router.push
+ * - VALIDAÇÃO: Botão "Próximo" desabilitado até seleção completa
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useMapboxSuggestions: Hook para busca de localidades
+ * - VeiculoAPI: Tipo de veículo simplificado
+ * 
+ * @example
+ * ```tsx
+ * <OriginVehicleStep
+ *   vehicles={vehicles}
+ *   origin={origin}
+ *   entryCity={entryCity}
+ *   selectedVehicleId={selectedVehicleId}
+ *   onOriginChange={setOrigin}
+ *   onEntryCityChange={setEntryCity}
+ *   onVehicleChange={setSelectedVehicleId}
+ *   onNext={handleNext}
+ *   onBack={() => setStep(1)}
+ * />
+ * ```
+ */
+
 export default function OriginVehicleStep({
   vehicles,
   origin,
@@ -38,6 +98,7 @@ export default function OriginVehicleStep({
 
   const suggestions = useMapboxSuggestions(localOrigin);
 
+  // ==================== HANDLERS ====================
   const handleSelectSuggestion = (place: string) => {
     setLocalOrigin(place);
     onOriginChange(place);
@@ -71,7 +132,8 @@ export default function OriginVehicleStep({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Select de Origem */}
+      
+      {/* ==================== SELEÇÃO DE ORIGEM ==================== */}
       <div>
         <label className="block font-semibold mb-1">
           A carga vem de Petrópolis?
@@ -89,9 +151,10 @@ export default function OriginVehicleStep({
         </select>
       </div>
 
-      {/* Campo de origem com sugestões do Mapbox - só aparece se "Outro Município" */}
+      {/* ==================== CAMPOS PARA "OUTRO MUNICÍPIO" ==================== */}
       {origem === 'outro-municipio' && (
         <>
+          {/* Campo de origem com sugestões Mapbox */}
           <div className="relative">
             <label className="block font-semibold mb-1">Local de origem:</label>
             <input
@@ -120,7 +183,7 @@ export default function OriginVehicleStep({
             )}
           </div>
 
-          {/* Select de Entrada */}
+          {/* Select de entrada da cidade */}
           <div>
             <label className="block font-semibold mb-1">
               Qual entrada irá utilizar para chegar à Petrópolis?
@@ -166,7 +229,7 @@ export default function OriginVehicleStep({
         </>
       )}
 
-      {/* Select de veículos */}
+      {/* ==================== SELEÇÃO DE VEÍCULO ==================== */}
       <div>
         <label className="block font-semibold mb-1">Selecione o veículo:</label>
         <select
@@ -188,7 +251,7 @@ export default function OriginVehicleStep({
         </select>
       </div>
 
-      {/* Botões */}
+      {/* ==================== BOTÕES ==================== */}
       <div className="flex justify-between mt-4">
         {onBack && (
           <button

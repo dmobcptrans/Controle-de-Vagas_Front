@@ -15,6 +15,59 @@ type TipoDenuncia =
   | 'ATRASO_POR_MOTIVO_DE_FORCA_MAIOR'
   | 'OUTROS';
 
+/**
+ * @component ReservaDenuncia
+ * @version 1.0.0
+ * 
+ * @description Modal para envio de denúncia sobre uma reserva.
+ * Permite selecionar o tipo da denúncia e fornecer uma descrição detalhada.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. SELEÇÃO DO TIPO:
+ *    - USO_INDEVIDO_DA_VAGA
+ *    - ATRASO_POR_MOTIVO_DE_FORCA_MAIOR
+ *    - OUTROS
+ * 
+ * 2. DESCRIÇÃO:
+ *    - Campo texto obrigatório
+ *    - Limite de 300 caracteres
+ *    - Contador visual de caracteres
+ * 
+ * 3. ENVIO:
+ *    - Validação: descrição não vazia
+ *    - Chama API Denunciar com FormData
+ *    - Loading state durante envio
+ *    - Em sucesso: fecha modal
+ *    - Em erro: exibe mensagem
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - LIMITE DE CARACTERES: 300 caracteres (constante LIMITE_CARACTERES)
+ * - CONTADOR: Exibe "X/300 caracteres" no rodapé do textarea
+ * - VALIDAÇÃO: Botão desabilitado se descrição vazia
+ * - FEEDBACK: Erro exibido em card vermelho
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Denunciar: API de envio de denúncia
+ * - AlertTriangle: Ícone de alerta do Lucide
+ * 
+ * @example
+ * ```tsx
+ * <ReservaDenuncia
+ *   reserva={reserva}
+ *   onClose={() => setAbrirModal(false)}
+ * />
+ * ```
+ */
+
 export default function ReservaDenuncia({
   reserva,
   onClose,
@@ -26,6 +79,7 @@ export default function ReservaDenuncia({
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  // ==================== HANDLER DE ENVIO ====================
   const handleSubmit = async () => {
     if (!descricao.trim()) return;
 
@@ -54,12 +108,14 @@ export default function ReservaDenuncia({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-3">
-      {/* Overlay */}
+      
+      {/* Overlay (fundo escuro) */}
       <div onClick={onClose} />
 
-      {/* Modal */}
+      {/* Modal principal */}
       <div className="relative bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-        {/* Header */}
+        
+        {/* ==================== HEADER ==================== */}
         <div className="p-5 border-b flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-red-500" />
           <div>
@@ -70,9 +126,10 @@ export default function ReservaDenuncia({
           </div>
         </div>
 
-        {/* Conteúdo */}
+        {/* ==================== CONTEÚDO ==================== */}
         <div className="p-5 flex flex-col gap-4 text-sm">
-          {/* Tipo */}
+          
+          {/* Tipo da denúncia (select) */}
           <div className="flex flex-col gap-1">
             <label className="font-medium text-gray-700">
               Tipo da denúncia
@@ -91,7 +148,7 @@ export default function ReservaDenuncia({
             </select>
           </div>
 
-          {/* Descrição */}
+          {/* Descrição (textarea com contador) */}
           <div className="flex flex-col gap-1">
             <label className="font-medium text-gray-700">Descrição</label>
 
@@ -110,7 +167,7 @@ export default function ReservaDenuncia({
             </div>
           </div>
 
-          {/* Erro */}
+          {/* Mensagem de erro */}
           {erro && (
             <div className="text-sm text-red-600 bg-red-50 p-2 rounded-lg">
               {erro}
@@ -118,8 +175,10 @@ export default function ReservaDenuncia({
           )}
         </div>
 
-        {/* Ações */}
+        {/* ==================== AÇÕES ==================== */}
         <div className="p-5 border-t flex flex-col gap-2">
+          
+          {/* Botão principal - Enviar denúncia */}
           <button
             onClick={handleSubmit}
             disabled={loading || !descricao.trim()}
@@ -128,6 +187,7 @@ export default function ReservaDenuncia({
             {loading ? 'Enviando denúncia...' : 'Enviar denúncia'}
           </button>
 
+          {/* Botão secundário - Cancelar */}
           <button
             onClick={onClose}
             className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition"

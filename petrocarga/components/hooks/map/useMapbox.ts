@@ -25,8 +25,69 @@ interface GeocoderResultEvent {
   };
 }
 
-// Mapa global persistente
+// Mapa global persistente (singleton)
 let globalMap: mapboxgl.Map | null = null;
+
+/**
+ * @hook useMapbox
+ * @version 1.0.0
+ * 
+ * @description Hook customizado para gerenciamento de instância do mapa Mapbox GL.
+ * Implementa padrão singleton para reutilizar a mesma instância do mapa em múltiplos componentes.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 PROPRIEDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {MutableRefObject<HTMLDivElement | null>} containerRef - Referência ao container do mapa
+ * @property {(place: MapboxFeature) => void} [onSelectPlace] - Callback ao selecionar local no geocoder
+ * @property {boolean} [enableSearch=true] - Habilita campo de busca (geocoder)
+ * @property {boolean} [enableNavigation=true] - Habilita controles de navegação (zoom, etc.)
+ * @property {boolean} [expandSearch=false] - Expande campo de busca horizontalmente (centralizado)
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 RETORNO:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {mapboxgl.Map | null} map - Instância do mapa
+ * @property {boolean} mapLoaded - Indica se o estilo do mapa foi carregado
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - SINGLETON: globalMap evita múltiplas instâncias do mapa
+ * - REUTILIZAÇÃO: Reconecta o mapa ao novo container quando necessário
+ * - EXPANSÃO: Campo de busca centralizado e com largura 80% quando expandSearch é true
+ * - CLEANUP: Remove event listeners de resize na desmontagem
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - MapboxGeocoder: Componente de busca de endereços
+ * - MapboxGL: Biblioteca de mapas
+ * 
+ * @example
+ * ```tsx
+ * const mapContainer = useRef<HTMLDivElement>(null);
+ * const { map, mapLoaded } = useMapbox({
+ *   containerRef: mapContainer,
+ *   onSelectPlace: (place) => console.log('Local selecionado:', place),
+ *   enableSearch: true,
+ *   enableNavigation: true,
+ *   expandSearch: true
+ * });
+ * 
+ * useEffect(() => {
+ *   if (map && mapLoaded) {
+ *     // Adicionar marcadores ou camadas
+ *   }
+ * }, [map, mapLoaded]);
+ * 
+ * return <div ref={mapContainer} style={{ width: '100%', height: '500px' }} />;
+ * ```
+ */
 
 export function useMapbox({
   containerRef,
@@ -46,7 +107,7 @@ export function useMapbox({
     const container = containerRef.current;
     if (!container) return;
 
-    // Reutiliza o mapa global já existente
+    // ==================== REUTILIZAR MAPA GLOBAL ====================
     if (globalMap) {
       const mapContainer = globalMap.getContainer();
 
@@ -76,7 +137,7 @@ export function useMapbox({
       return;
     }
 
-    // Cria o mapa apenas uma vez
+    // ==================== CRIAR NOVA INSTÂNCIA DO MAPA ====================
     globalMap = new mapboxgl.Map({
       container,
       style: 'mapbox://styles/jusenx/cmg9pmy5d006b01s2959hdkmb',
@@ -84,12 +145,12 @@ export function useMapbox({
       zoom: 13,
     });
 
-    //  Controles de navegação
+    // ==================== CONTROLES DE NAVEGAÇÃO ====================
     if (enableNavigation) {
       globalMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
     }
 
-    //  Campo de busca (Geocoder)
+    // ==================== CAMPO DE BUSCA (GEOCODER) ====================
     if (enableSearch) {
       const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
@@ -100,6 +161,7 @@ export function useMapbox({
 
       globalMap.addControl(geocoder, 'top-left');
 
+      // Expansão do campo de busca (centralizado, largura 80%)
       if (expandSearch) {
         const adjustGeocoder = () => {
           const wrapper = document.querySelector(
@@ -140,7 +202,7 @@ export function useMapbox({
         };
         window.addEventListener('resize', handleResize);
 
-        // Cleanup do resize
+        // Cleanup do resize (apenas para o caso expandSearch)
         return () => window.removeEventListener('resize', handleResize);
       }
 
@@ -166,9 +228,11 @@ export function useMapbox({
       });
     }
 
+    // ==================== EVENTO DE CARREGAMENTO ====================
     globalMap.on('load', () => setMapLoaded(true));
     setMap(globalMap);
 
+    // ==================== REDIMENSIONAMENTO ====================
     const handleResize = () => globalMap?.resize();
     window.addEventListener('resize', handleResize);
 
