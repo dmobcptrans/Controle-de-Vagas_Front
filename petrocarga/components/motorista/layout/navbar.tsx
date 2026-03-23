@@ -79,6 +79,7 @@ export function Navbar() {
         <Link
           href="/motorista/notificacoes"
           className="md:hidden flex items-center justify-start"
+          onClick={fecharMenu}
         >
           <div className="relative w-8 h-8 flex items-center justify-center">
             <Bell className="h-6 w-6" />
@@ -92,8 +93,9 @@ export function Navbar() {
 
         {/* LOGO */}
         <Link
-          href="/motorista/reservar-vaga"
+          href="/motorista/dashboard"
           className="flex justify-center md:justify-start"
+          onClick={fecharMenu}
         >
           <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
         </Link>
@@ -108,6 +110,9 @@ export function Navbar() {
 
         {/* MENU DESKTOP — sem alterações */}
         <ul className="hidden md:flex gap-6 text-lg items-center">
+          <li className="hover:text-gray-300">
+            <Link href="/motorista/dashboard">Dashboard</Link>
+          </li>
           <li className="hover:text-gray-300">
             <Link href="/motorista/reservar-vaga">Reservar Vaga</Link>
           </li>
@@ -202,8 +207,9 @@ export function Navbar() {
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
           }`}
+          style={{marginTop: '-1px'}}
       >
-        <div className="bg-blue-500 p-4 shadow-md space-y-5">
+        <div className="bg-blue-800 p-4  space-y-5">
 
           {/* Seção: Reservas */}
           <div>
@@ -287,7 +293,7 @@ export function Navbar() {
           </div>
 
           {/* Logout */}
-          <div className="border-t border-gray-200 pt-3 flex justify-end">
+          <div className=" border-gray-200 pt-3 flex justify-end">
             <LogoutButton mobile={true} />
           </div>
         </div>
