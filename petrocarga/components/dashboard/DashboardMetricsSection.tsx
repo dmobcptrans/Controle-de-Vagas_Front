@@ -27,11 +27,82 @@ interface DashboardMetricsSectionProps {
   lengthOccupancyStats?: LengthOccupancyStats;
 }
 
+/**
+ * @component DashboardMetricsSection
+ * @version 1.0.0
+ * 
+ * @description Seção de métricas avançadas do dashboard.
+ * Exibe gráficos e estatísticas sobre tempo de permanência,
+ * reservas ativas e ocupação por comprimento.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 MÉTRICAS EXIBIDAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. TEMPO DE PERMANÊNCIA:
+ *    - Gráfico de barras: mínimo, médio, máximo
+ *    - Valor destacado: tempo médio formatado
+ *    - Ícone: Clock (azul)
+ * 
+ * 2. RESERVAS ATIVAS NO PERÍODO:
+ *    - Gráfico de barras: normais vs rápidas
+ *    - Valor destacado: total de reservas ativas
+ *    - Ícone: Users (verde)
+ * 
+ * 3. OCUPAÇÃO POR COMPRIMENTO:
+ *    - Gráfico de pizza: ocupado vs disponível
+ *    - Valor destacado: taxa de ocupação percentual
+ *    - Ícone: Ruler (roxo)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - formatMinutes: Formata minutos para exibição amigável
+ *   - < 60 min → exibe "X min"
+ *   - >= 60 min → exibe "Xh Ymin"
+ * 
+ * - DADOS OPCIONAIS: Verifica se há dados antes de renderizar cada card
+ *   - hasStayDurationData: verifica se há valores positivos
+ *   - hasActivePeriodData: verifica total > 0
+ *   - hasLengthOccupancyData: verifica disponibilidade
+ * 
+ * - FALLBACK: Cards "vazios" com opacidade e mensagem "Nenhum dado"
+ * 
+ * - GRÁFICOS:
+ *   - Barras: Recharts BarChart (tempo e reservas)
+ *   - Pizza: Recharts PieChart (ocupação)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Recharts: Biblioteca de gráficos
+ * - Lucide icons: Clock, Users, Ruler, BarChart3
+ * 
+ * @example
+ * ```tsx
+ * <DashboardMetricsSection
+ *   stayDurationStats={dashboard.stayDurationStats}
+ *   activeDuringPeriodStats={dashboard.activeDuringPeriodStats}
+ *   lengthOccupancyStats={dashboard.lengthOccupancyStats}
+ * />
+ * ```
+ * 
+ * @see /src/lib/types/dashboard.ts - Tipos de métricas
+ */
+
 export function DashboardMetricsSection({
   stayDurationStats,
   activeDuringPeriodStats,
   lengthOccupancyStats,
 }: DashboardMetricsSectionProps) {
+  /**
+   * @function formatMinutes
+   * @description Formata minutos para exibição legível
+   * @param minutes - Número de minutos ou null
+   * @returns String formatada (ex: "2h 30min", "45min", "N/A")
+   */
   const formatMinutes = (minutes: number | null): string => {
     if (!minutes || minutes === null) return 'N/A';
     if (minutes < 60) return `${Math.round(minutes)} min`;
@@ -40,6 +111,7 @@ export function DashboardMetricsSection({
     return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
   };
 
+  // Verifica se há dados válidos para cada métrica
   const hasStayDurationData =
     stayDurationStats &&
     ((stayDurationStats.avgMinutes ?? 0) > 0 ||
@@ -52,47 +124,50 @@ export function DashboardMetricsSection({
   const hasLengthOccupancyData =
     lengthOccupancyStats && lengthOccupancyStats.availableLengthMeters > 0;
 
+  // Dados para gráfico de tempo de permanência
   const stayDurationChartData = stayDurationStats
     ? [
         {
           name: 'Mínimo',
           value: stayDurationStats.minMinutes || 0,
-          color: '#10b981',
+          color: '#10b981', // verde
         },
         {
           name: 'Médio',
           value: stayDurationStats.avgMinutes || 0,
-          color: '#3b82f6',
+          color: '#3b82f6', // azul
         },
         {
           name: 'Máximo',
           value: stayDurationStats.maxMinutes || 0,
-          color: '#f59e0b',
+          color: '#f59e0b', // laranja
         },
       ].filter((item) => item.value > 0)
     : [];
 
+  // Dados para gráfico de reservas ativas
   const activePeriodChartData = activeDuringPeriodStats
     ? [
         {
           name: 'Normais',
           value: activeDuringPeriodStats.reserva,
-          color: '#3b82f6',
+          color: '#3b82f6', // azul
         },
         {
           name: 'Rápidas',
           value: activeDuringPeriodStats.reservaRapida,
-          color: '#f59e0b',
+          color: '#f59e0b', // laranja
         },
       ].filter((item) => item.value > 0)
     : [];
 
+  // Dados para gráfico de ocupação por comprimento
   const lengthOccupancyChartData = lengthOccupancyStats
     ? [
         {
           name: 'Ocupado',
           value: lengthOccupancyStats.occupiedLengthMeters,
-          color: '#8b5cf6',
+          color: '#8b5cf6', // roxo
         },
         {
           name: 'Disponível',
@@ -101,19 +176,24 @@ export function DashboardMetricsSection({
             lengthOccupancyStats.availableLengthMeters -
               lengthOccupancyStats.occupiedLengthMeters,
           ),
-          color: '#d1d5db',
+          color: '#d1d5db', // cinza
         },
       ].filter((item) => item.value > 0)
     : [];
 
   return (
     <div className="space-y-4 md:space-y-6">
+      
+      {/* Header da seção */}
       <div className="flex items-center gap-2">
         <BarChart3 className="h-6 w-6 text-blue-600" />
         <h2 className="text-xl font-bold text-gray-900">Métricas Avançadas</h2>
       </div>
 
+      {/* Grid de 3 cards (responsivo) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        
+        {/* ==================== CARD 1: TEMPO DE PERMANÊNCIA ==================== */}
         {hasStayDurationData ? (
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -124,6 +204,7 @@ export function DashboardMetricsSection({
               <span className="text-xs text-gray-500">Média</span>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Gráfico de barras */}
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stayDurationChartData}>
@@ -139,6 +220,7 @@ export function DashboardMetricsSection({
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              {/* Valor destacado */}
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600">
                   {formatMinutes(stayDurationStats?.avgMinutes)}
@@ -150,6 +232,7 @@ export function DashboardMetricsSection({
             </CardContent>
           </Card>
         ) : (
+          // Card vazio (sem dados)
           <Card className="hover:shadow-lg transition-shadow opacity-50">
             <CardContent className="flex flex-col items-center justify-center h-full p-6 min-h-[200px]">
               <Clock className="h-10 w-10 text-gray-300 mb-3" />
@@ -160,6 +243,7 @@ export function DashboardMetricsSection({
           </Card>
         )}
 
+        {/* ==================== CARD 2: RESERVAS ATIVAS ==================== */}
         {hasActivePeriodData ? (
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -170,6 +254,7 @@ export function DashboardMetricsSection({
               <span className="text-xs text-gray-500">Overlap</span>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Gráfico de barras */}
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={activePeriodChartData}>
@@ -185,6 +270,7 @@ export function DashboardMetricsSection({
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              {/* Valor destacado */}
               <div className="text-center">
                 <div className="text-3xl font-bold text-green-600">
                   {activeDuringPeriodStats?.total}
@@ -196,6 +282,7 @@ export function DashboardMetricsSection({
             </CardContent>
           </Card>
         ) : (
+          // Card vazio (sem dados)
           <Card className="hover:shadow-lg transition-shadow opacity-50">
             <CardContent className="flex flex-col items-center justify-center h-full p-6 min-h-[200px]">
               <Users className="h-10 w-10 text-gray-300 mb-3" />
@@ -206,6 +293,7 @@ export function DashboardMetricsSection({
           </Card>
         )}
 
+        {/* ==================== CARD 3: OCUPAÇÃO POR COMPRIMENTO ==================== */}
         {hasLengthOccupancyData ? (
           <Card className="hover:shadow-lg transition-shadow md:col-span-2 lg:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -215,6 +303,7 @@ export function DashboardMetricsSection({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Gráfico de pizza */}
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -239,6 +328,7 @@ export function DashboardMetricsSection({
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+              {/* Taxa de ocupação */}
               <div className="pt-4 border-t">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Taxa de ocupação:</span>
@@ -250,6 +340,7 @@ export function DashboardMetricsSection({
             </CardContent>
           </Card>
         ) : (
+          // Card vazio (sem dados)
           <Card className="hover:shadow-lg transition-shadow md:col-span-2 lg:col-span-1 opacity-50">
             <CardContent className="flex flex-col items-center justify-center h-full p-6 min-h-[200px]">
               <Ruler className="h-10 w-10 text-gray-300 mb-3" />

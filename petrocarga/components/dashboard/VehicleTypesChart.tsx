@@ -32,9 +32,65 @@ interface CustomTooltipProps {
   label?: string;
 }
 
+/**
+ * @component VehicleTypesChart
+ * @version 1.0.0
+ * 
+ * @description Gráfico de barras que exibe a distribuição de reservas por tipo de veículo.
+ * Mostra total de reservas, veículos únicos e média por veículo.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 MÉTRICAS EXIBIDAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. GRÁFICO DE BARRAS:
+ *    - Total de reservas (barras coloridas)
+ *    - Veículos únicos (barras verdes)
+ * 
+ * 2. ESTATÍSTICAS RESUMIDAS:
+ *    - Tipo de veículo mais comum
+ *    - Média geral de reservas por veículo
+ *    - Detalhes por tipo com percentuais
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - CÁLCULOS DERIVADOS:
+ *   - total: soma de todas as reservas
+ *   - percentual: (count / total) * 100
+ *   - média: count / uniqueVehicles
+ * 
+ * - CORES: Paleta pré-definida com 6 cores (azul, verde, amarelo, vermelho, roxo, rosa)
+ * 
+ * - TOOLTIP PERSONALIZADO: Exibe informações completas ao passar o mouse
+ * 
+ * - ÍCONES DINÂMICOS:
+ *   - 'automovel' → Car
+ *   - 'vuc' → Truck
+ *   - 'moto' → Bike
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Recharts: BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend
+ * - VehicleType: Tipo de dados de veículo
+ * 
+ * @example
+ * ```tsx
+ * <VehicleTypesChart data={dashboard.vehicleTypes} />
+ * ```
+ */
+
 export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
+  // ==================== CÁLCULOS ====================
   const total = data.reduce((sum, item) => sum + item.count, 0);
 
+  /**
+   * Dados formatados para o gráfico
+   * Adiciona percentual e média calculados
+   */
   const chartData = data.map((item) => ({
     name: item.type,
     total: item.count,
@@ -47,6 +103,7 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
       total > 0 ? parseFloat(((item.count / total) * 100).toFixed(1)) : 0,
   }));
 
+  // ==================== CORES ====================
   const getColor = (index: number) => {
     const colors = [
       '#3b82f6', // blue-500
@@ -59,6 +116,7 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
     return colors[index % colors.length];
   };
 
+  // ==================== ÍCONES ====================
   const getIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'automovel':
@@ -72,6 +130,7 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
     }
   };
 
+  // ==================== TOOLTIP PERSONALIZADO ====================
   const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       return (
@@ -89,6 +148,7 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
     return null;
   };
 
+  // ==================== ESTADO VAZIO ====================
   if (!data || data.length === 0) {
     return (
       <Card className="h-full">
@@ -104,6 +164,8 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
 
   return (
     <Card className="h-full">
+      
+      {/* Header com título e total */}
       <CardHeader>
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           Tipos de Veículos
@@ -112,7 +174,10 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
           </span>
         </CardTitle>
       </CardHeader>
+
       <CardContent>
+        
+        {/* ==================== GRÁFICO DE BARRAS ==================== */}
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -130,11 +195,15 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
+              
+              {/* Barras: Total de Reservas (coloridas por tipo) */}
               <Bar dataKey="total" name="Total Reservas" radius={[4, 4, 0, 0]}>
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={getColor(index)} />
                 ))}
               </Bar>
+              
+              {/* Barras: Veículos Únicos (cor verde fixa) */}
               <Bar
                 dataKey="únicos"
                 name="Veículos Únicos"
@@ -145,7 +214,10 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
           </ResponsiveContainer>
         </div>
 
+        {/* ==================== RESUMO ESTATÍSTICO ==================== */}
         <div className="mt-6 grid grid-cols-2 gap-4">
+          
+          {/* Card: Tipo mais comum */}
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-sm font-medium text-blue-900">Tipo mais comum</p>
             <p className="text-lg font-bold text-blue-700">
@@ -155,6 +227,8 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
               {chartData[0]?.total || 0} reservas
             </p>
           </div>
+          
+          {/* Card: Média geral de reservas por veículo */}
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-sm font-medium text-green-900">Média geral</p>
             <p className="text-lg font-bold text-green-700">
@@ -169,6 +243,7 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
           </div>
         </div>
 
+        {/* ==================== DETALHES POR TIPO ==================== */}
         <div className="mt-4 space-y-2">
           <p className="text-sm font-medium text-gray-700">
             Detalhes por tipo:
@@ -180,6 +255,7 @@ export function VehicleTypesChart({ data }: VehicleTypesChartProps) {
                 className="flex items-center justify-between p-2 bg-gray-50 rounded"
               >
                 <div className="flex items-center gap-2">
+                  {/* Bolinha colorida */}
                   <div
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: getColor(index) }}
