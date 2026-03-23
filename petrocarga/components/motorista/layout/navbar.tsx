@@ -17,9 +17,50 @@ import {
   Bell,
   TriangleAlert,
   Archive,
+  CalendarPlus,
+  PlusCircle,
+  LogOut,
 } from 'lucide-react';
 import { LogoutButton } from '@/components/logoutButton/logoutButton';
 import { useNotifications } from '@/context/NotificationContext';
+
+type CardLinkProps = {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  iconBg: string;
+  iconColor: string;
+  onClick?: () => void;
+};
+
+function CardLink({
+  href,
+  icon,
+  label,
+  description,
+  iconBg,
+  iconColor,
+  onClick,
+}: CardLinkProps) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 p-3 hover:bg-gray-50 hover:border-gray-200 transition-colors"
+    >
+      <div
+        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg} ${iconColor}`}
+      >
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-800 leading-tight">{label}</p>
+        <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+      </div>
+    </Link>
+  );
+}
 
 export function Navbar() {
   const [menuAberto, setMenuAberto] = useState(false);
@@ -29,7 +70,7 @@ export function Navbar() {
     (notification) => !notification.lida,
   ).length;
 
-  const links = [{ href: '/motorista/reservar-vaga', label: 'Reservar Vaga' }];
+  const fecharMenu = () => setMenuAberto(false);
 
   return (
     <header className="bg-blue-800 text-white relative">
@@ -41,9 +82,8 @@ export function Navbar() {
         >
           <div className="relative w-8 h-8 flex items-center justify-center">
             <Bell className="h-6 w-6" />
-
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center ">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -57,6 +97,7 @@ export function Navbar() {
         >
           <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
         </Link>
+
         {/* BOTÃO MENU - MOBILE */}
         <button
           className="md:hidden text-2xl hover:text-gray-300 flex justify-end"
@@ -65,14 +106,12 @@ export function Navbar() {
           ☰
         </button>
 
-        {/* MENU DESKTOP */}
+        {/* MENU DESKTOP — sem alterações */}
         <ul className="hidden md:flex gap-6 text-lg items-center">
-          {links.map(({ href, label }) => (
-            <li key={href} className="hover:text-gray-300">
-              <Link href={href}>{label}</Link>
-            </li>
-          ))}
-          {/* Dropdown Veículo */}
+          <li className="hover:text-gray-300">
+            <Link href="/motorista/reservar-vaga">Reservar Vaga</Link>
+          </li>
+
           <li>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
@@ -81,19 +120,13 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                 <DropdownMenuItem asChild>
-                  <Link
-                    href="/motorista/reservas"
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
+                  <Link href="/motorista/reservas" className="flex items-center gap-2 cursor-pointer w-full">
                     <Archive className="h-4 w-4" />
                     Minhas Reservas
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link
-                    href="/motorista/reservas/minhas-denuncias"
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
+                  <Link href="/motorista/reservas/minhas-denuncias" className="flex items-center gap-2 cursor-pointer w-full">
                     <TriangleAlert className="h-4 w-4" />
                     Minhas Denúncias
                   </Link>
@@ -102,7 +135,6 @@ export function Navbar() {
             </DropdownMenu>
           </li>
 
-          {/* Dropdown Veículo */}
           <li>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
@@ -111,19 +143,13 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                 <DropdownMenuItem asChild>
-                  <Link
-                    href="/motorista/veiculos/meus-veiculos"
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
+                  <Link href="/motorista/veiculos/meus-veiculos" className="flex items-center gap-2 cursor-pointer w-full">
                     <CarIcon className="h-4 w-4" />
                     Meu Veículo
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link
-                    href="/motorista/veiculos/cadastrar-veiculos"
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
+                  <Link href="/motorista/veiculos/cadastrar-veiculos" className="flex items-center gap-2 cursor-pointer w-full">
                     <CarIcon className="h-4 w-4" />
                     Adicionar Veículo
                   </Link>
@@ -132,7 +158,6 @@ export function Navbar() {
             </DropdownMenu>
           </li>
 
-          {/* Dropdown Meu Perfil */}
           <li>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
@@ -141,10 +166,7 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                 <DropdownMenuItem asChild>
-                  <Link
-                    href="/motorista/perfil"
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
+                  <Link href="/motorista/perfil" className="flex items-center gap-2 cursor-pointer w-full">
                     <User className="h-4 w-4" />
                     Meu Perfil
                   </Link>
@@ -156,128 +178,119 @@ export function Navbar() {
             </DropdownMenu>
           </li>
 
-          {/* BOTÃO DE NOTIFICAÇÕES - DESKTOP */}
           <li>
             <Link
               href="/motorista/notificacoes"
               className="relative flex items-center gap-1 hover:text-gray-300 p-2 rounded-lg hover:bg-blue-700 transition-colors"
-              aria-label={`Notificações${
-                unreadCount > 0 ? `, ${unreadCount} não lidas` : ''
-              }`}
+              aria-label={`Notificações${unreadCount > 0 ? `, ${unreadCount} não lidas` : ''}`}
             >
               <Bell className="h-5 w-5" />
-
-              {/* Badge de contador */}
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
-
-              {/* Indicador de conexão (opcional) */}
               {!isConnected && (
-                <span
-                  className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full h-2 w-2 animate-pulse"
-                  title="Reconectando..."
-                />
+                <span className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full h-2 w-2 animate-pulse" title="Reconectando..." />
               )}
             </Link>
           </li>
         </ul>
       </nav>
 
-      {/* MENU MOBILE COM ANIMAÇÃO */}
+      {/* MENU MOBILE COM CARDS */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
-        }`}
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+          }`}
       >
-        <ul className="flex flex-col gap-4 bg-blue-500 p-4 shadow-md">
-          <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
+        <div className="bg-blue-500 p-4 shadow-md space-y-5">
+
+          {/* Seção: Reservas */}
+          <div>
+            <p className="text-xs font-semibold text-wite uppercase tracking-widest mb-2 px-1">
               Reservas
-            </span>
-            {/* Reservar Vagas no Mobile */}
-            <Link
-              href="/motorista/reservar-vaga"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
-              Reservar Vaga
-            </Link>
-
-            {/* Minhas Reservas no Mobile */}
-            <Link
-              href="/motorista/reservas"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
-              Minhas Reservas
-            </Link>
-          </li>
-          <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
-              Veículos
-            </span>
-            {/* Meus Veículos no Mobile */}
-            <Link
-              href="/motorista/veiculos/meus-veiculos"
-              onClick={() => setMenuAberto(false)}
-              className="block px-2 py-1 w-full"
-            >
-              Meus Veículos
-            </Link>
-
-            {/* Adicionar Veículo no Mobile */}
-            <Link
-              href="/motorista/veiculos/cadastrar-veiculos"
-              onClick={() => setMenuAberto(false)}
-              className="block px-2 py-1 w-full"
-            >
-              Adicionar Veículo
-            </Link>
-          </li>
-          <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
-              Notificações
-            </span>
-            {/* Notificações no Mobile */}
-            <Link
-              href="/motorista/notificacoes"
-              onClick={() => setMenuAberto(false)}
-              className="block px-2 py-1 w-full"
-            >
-              Ver Notificações
-            </Link>
-
-            {/* Minhas Denuncias no Mobile */}
-            <Link
-              href="/motorista/reservas/minhas-denuncias"
-              onClick={() => setMenuAberto(false)}
-              className="block px-2 py-1 w-full"
-            >
-              Minhas Denúncias
-            </Link>
-          </li>
-          <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
-              Perfil
-            </span>
-            {/* Meu Perfil no Mobile */}
-            <Link
-              href="/motorista/perfil"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
-              Perfil
-            </Link>
-
-            {/* Logout no Mobile */}
-            <div className="pl-2">
-              <LogoutButton mobile={true} />
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <CardLink
+                href="/motorista/reservar-vaga"
+                label="Reservar vaga"
+                description="Nova reserva"
+                iconBg="bg-blue-100"
+                iconColor="text-blue-700"
+                icon={<CalendarPlus className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+              <CardLink
+                href="/motorista/reservas"
+                label="Minhas reservas"
+                description="Histórico"
+                iconBg="bg-amber-100"
+                iconColor="text-amber-700"
+                icon={<Archive className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
             </div>
-          </li>
-        </ul>
+          </div>
+
+          {/* Seção: Veículos */}
+          <div>
+            <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
+              Veículos
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <CardLink
+                href="/motorista/veiculos/meus-veiculos"
+                label="Meu veículo"
+                description="Ver cadastro"
+                iconBg="bg-green-100"
+                iconColor="text-green-700"
+                icon={<CarIcon className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+              <CardLink
+                href="/motorista/veiculos/cadastrar-veiculos"
+                label="Adicionar veículo"
+                description="Novo cadastro"
+                iconBg="bg-gray-100"
+                iconColor="text-gray-500"
+                icon={<PlusCircle className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+            </div>
+          </div>
+
+          {/* Seção: Denúncias & Perfil */}
+          <div>
+            <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
+              Mais opções
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <CardLink
+                href="/motorista/reservas/minhas-denuncias"
+                label="Minhas denúncias"
+                description="Ver ocorrências"
+                iconBg="bg-red-100"
+                iconColor="text-red-700"
+                icon={<TriangleAlert className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+              <CardLink
+                href="/motorista/perfil"
+                label="Meu perfil"
+                description="Dados pessoais"
+                iconBg="bg-purple-100"
+                iconColor="text-purple-700"
+                icon={<User className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+            </div>
+          </div>
+
+          {/* Logout */}
+          <div className="border-t border-gray-200 pt-3 flex justify-end">
+            <LogoutButton mobile={true} />
+          </div>
+        </div>
       </div>
     </header>
   );
