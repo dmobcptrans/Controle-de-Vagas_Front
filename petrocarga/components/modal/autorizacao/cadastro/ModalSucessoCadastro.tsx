@@ -10,12 +10,73 @@ interface ModalSucessoCadastroProps {
   userEmail?: string;
 }
 
+/**
+ * @component ModalSucessoCadastro
+ * @version 1.0.0
+ * 
+ * @description Modal de sucesso exibido após o cadastro do usuário.
+ * Informa que a conta foi criada e orienta sobre a ativação por email.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 PROPRIEDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {boolean} isOpen - Controla a visibilidade do modal
+ * @property {() => void} onClose - Função para fechar o modal
+ * @property {string} [userEmail] - Email do usuário cadastrado (exibe no modal)
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. FECHAR COM ESC:
+ *    - Pressionar ESC fecha o modal (cleanup no useEffect)
+ * 
+ * 2. FECHAR COM BOTÃO X:
+ *    - Botão no canto superior direito
+ * 
+ * 3. FECHAR COM BOTÃO "Fechar":
+ *    - Botão secundário no rodapé
+ * 
+ * 4. REDIRECIONAMENTOS:
+ *    - "Ir para Ativar Conta": abre página de login com parâmetro ?ativar-conta=true
+ *    - "Faça login agora": link para página de login
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - BACKDROP: Fundo escuro com blur (bg-black/50 backdrop-blur-sm)
+ * - ANIMAÇÃO: animate-in fade-in-0 zoom-in-95 (Tailwind)
+ * - PREVENÇÃO DE PROPAGAÇÃO: onClick={(e) => e.stopPropagation()}
+ * - CLEANUP: Remove event listener de tecla ESC na desmontagem
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Button: Componente de botão do shadcn/ui
+ * - Lucide icons: CheckCircle, Mail, X
+ * 
+ * @example
+ * ```tsx
+ * <ModalSucessoCadastro
+ *   isOpen={showSuccessModal}
+ *   onClose={closeModal}
+ *   userEmail={userEmail}
+ * />
+ * ```
+ */
+
 export default function ModalSucessoCadastro({
   isOpen,
   onClose,
   userEmail = '',
 }: ModalSucessoCadastroProps) {
-  // Fechar modal ao pressionar ESC
+  /**
+   * @effect Fechar modal com tecla ESC
+   * Adiciona listener e faz cleanup na desmontagem
+   */
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
@@ -35,7 +96,7 @@ export default function ModalSucessoCadastro({
         className="relative w-full max-w-md bg-white rounded-xl shadow-2xl animate-in fade-in-0 zoom-in-95 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Botão de fechar */}
+        {/* ==================== BOTÃO DE FECHAR ==================== */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10"
@@ -44,8 +105,9 @@ export default function ModalSucessoCadastro({
           <X className="h-5 w-5 text-gray-500" />
         </button>
 
-        {/* Conteúdo do Modal */}
+        {/* ==================== CONTEÚDO DO MODAL ==================== */}
         <div className="p-6 sm:p-8">
+          
           {/* Ícone de sucesso */}
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
@@ -88,8 +150,10 @@ export default function ModalSucessoCadastro({
             </div>
           </div>
 
-          {/* Botões */}
+          {/* ==================== BOTÕES ==================== */}
           <div className="flex flex-col gap-3">
+            
+            {/* Botão principal - Ativar Conta */}
             <Button
               onClick={() => {
                 window.location.href = '/autorizacao/login?ativar-conta=true';
@@ -112,6 +176,7 @@ export default function ModalSucessoCadastro({
               Ir para Ativar Conta
             </Button>
 
+            {/* Botão secundário - Fechar */}
             <Button
               onClick={onClose}
               variant="outline"
@@ -120,6 +185,7 @@ export default function ModalSucessoCadastro({
               Fechar
             </Button>
 
+            {/* Link alternativo para login */}
             <p className="text-center text-gray-500 text-sm mt-2">
               Já ativou sua conta?{' '}
               <a

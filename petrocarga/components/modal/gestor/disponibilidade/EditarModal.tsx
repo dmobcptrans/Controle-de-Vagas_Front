@@ -9,7 +9,14 @@ import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
 
-// Definindo o estado interno do modal para controlar a navegação
+/**
+ * Estados do modal para navegação hierárquica
+ * - GRUPO_LISTA: Lista de logradouros agrupados
+ * - VAGAS_LISTA: Lista de vagas de um logradouro
+ * - EDITAR_INDIVIDUAL: Formulário de edição de vaga específica
+ * - EDITAR_GRUPO: Formulário de edição em lote para logradouro
+ * - INICIAL: Estado inicial padrão
+ */
 type ModalStep =
   | { type: 'GRUPO_LISTA'; data: Record<string, Disponibilidade[]> }
   | {
@@ -24,7 +31,7 @@ type ModalStep =
       type: 'EDITAR_GRUPO';
       data: { logradouro: string; vagas: Disponibilidade[] };
     }
-  | { type: 'INICIAL'; data: null }; // Estado inicial padrão
+  | { type: 'INICIAL'; data: null };
 
 interface EditarModalProps {
   open: boolean;
@@ -41,6 +48,65 @@ interface EditarModalProps {
   onRemoverVaga: (id: string) => void;
 }
 
+/**
+ * @component EditarModal
+ * @version 1.0.0
+ * 
+ * @description Modal de edição de disponibilidades com navegação hierárquica.
+ * Permite visualizar logradouros, vagas, editar individualmente ou em grupo.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO DE NAVEGAÇÃO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. GRUPO_LISTA (Nível 1 - Logradouros):
+ *    - Exibe lista de logradouros com disponibilidades
+ *    - Cada item mostra contagem de vagas
+ *    - Botão "Ver Vagas" navega para VAGAS_LISTA
+ * 
+ * 2. VAGAS_LISTA (Nível 2 - Vagas do logradouro):
+ *    - Exibe todas as vagas do logradouro selecionado
+ *    - Cada vaga tem botões "Editar" e "Remover"
+ *    - "Editar" navega para EDITAR_INDIVIDUAL
+ *    - "Remover" chama onRemoverVaga e fecha modal
+ * 
+ * 3. EDITAR_INDIVIDUAL (Nível 3 - Edição de vaga):
+ *    - Formulário com campos de data (início e fim)
+ *    - Botão "Salvar" chama onEditarIntervalo e volta para GRUPO_LISTA
+ * 
+ * 4. EDITAR_GRUPO (Nível 3 - Edição em lote):
+ *    - Formulário para editar todas as vagas do logradouro
+ *    - Aviso sobre aplicação das datas em todas as vagas
+ *    - Botão "Salvar Grupo" chama onEditarIntervalo para cada vaga
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - NAVEGAÇÃO HIERÁRQUICA: ModalState controla qual tela está visível
+ * - GO BACK: Volta para nível anterior (GRUPO_LISTA)
+ * - FORMATO DE DATA: Converte ISO para YYYY-MM-DD para inputs type="date"
+ * - CLEANUP: Reseta estado ao abrir/fechar modal
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Dialog: Componente de modal do shadcn/ui
+ * - Disponibilidade: Tipo de disponibilidade
+ * 
+ * @example
+ * ```tsx
+ * <EditarModal
+ *   open={showModal}
+ *   onClose={() => setShowModal(false)}
+ *   gruposAgrupados={disponibilidadesAgrupadas}
+ *   onEditarIntervalo={editarIntervalo}
+ *   onRemoverVaga={removerVaga}
+ * />
+ * ```
+ */
+
 export function EditarModal({
   open,
   onClose,
@@ -48,13 +114,12 @@ export function EditarModal({
   onEditarIntervalo,
   onRemoverVaga,
 }: EditarModalProps) {
-  // O estado interno controla qual tela estamos vendo dentro do modal
+  // ==================== ESTADOS ====================
   const [modalState, setModalState] = useState<ModalStep>({
     type: 'INICIAL',
     data: null,
   });
 
-  // Estado para armazenar os valores de data sendo editados
   const [editing, setEditing] = useState({
     id: '',
     vagaId: '',
@@ -64,20 +129,13 @@ export function EditarModal({
 
   const formatDateForInput = (iso: string) => iso.split('T')[0];
 
-  /** ------------------------------------------------------------------
-   * FUNÇÃO DE CONDICIONAL DE NOME VAGA OU VAGAS
-   * ------------------------------------------------------------------ */
+  // ==================== FUNÇÃO AUXILIAR ====================
   const nomeVagaouVagas = (quantidade: number): string => {
-    if (quantidade > 1) {
-      return 'VAGAS';
-    }
+    if (quantidade > 1) return 'VAGAS';
     return 'VAGA';
   };
 
-  /** ------------------------------------------------------------------
-   * INICIALIZAÇÃO/RESET
-   * Define o estado inicial com base no que foi passado (Agrupado vs. Único)
-   * ------------------------------------------------------------------ */
+  // ==================== INICIALIZAÇÃO/RESET ====================
   useEffect(() => {
     if (open) {
       if (gruposAgrupados && Object.keys(gruposAgrupados).length > 0) {
@@ -89,7 +147,7 @@ export function EditarModal({
     }
   }, [open, gruposAgrupados]);
 
-  /** Atualiza os inputs ao entrar no modo editar */
+  // Atualiza os inputs ao entrar no modo editar
   useEffect(() => {
     if (modalState.type === 'EDITAR_INDIVIDUAL' && modalState.data) {
       setEditing({
@@ -109,9 +167,7 @@ export function EditarModal({
     }
   }, [modalState]);
 
-  /** ------------------------------------------------------------------
-   * NAVEGAÇÃO INTERNA E AÇÃO DE VOLTAR
-   * ------------------------------------------------------------------ */
+  // ==================== NAVEGAÇÃO INTERNA ====================
   const goBack = () => {
     if (
       modalState.type === 'VAGAS_LISTA' ||
@@ -123,9 +179,7 @@ export function EditarModal({
     }
   };
 
-  /** ------------------------------------------------------------------
-   * FUNÇÃO DE SALVAMENTO DE DATAS
-   * ------------------------------------------------------------------ */
+  // ==================== FUNÇÕES DE SALVAMENTO ====================
   const salvarEdicaoIndividual = () => {
     if (modalState.type !== 'EDITAR_INDIVIDUAL') return;
 
@@ -150,12 +204,10 @@ export function EditarModal({
     goBack();
   };
 
-  /** ------------------------------------------------------------------
-   * RENDERIZAÇÃO DINÂMICA
-   * ------------------------------------------------------------------ */
+  // ==================== RENDERIZAÇÃO DINÂMICA ====================
   const renderContent = () => {
     switch (modalState.type) {
-      /** GRUPO_LISTA: Lista os logradouros agrupados */
+      // ==================== NÍVEL 1: GRUPO_LISTA ====================
       case 'GRUPO_LISTA':
         if (!modalState.data) return <p>Nenhum dado de grupo encontrado.</p>;
 
@@ -172,12 +224,11 @@ export function EditarModal({
                   className="border p-3 flex flex-col sm:flex-row justify-between rounded items-start sm:items-center"
                 >
                   <p className="font-medium mb-2 sm:mb-0">
-                    {logradouro} ({vagas.length} {nomeVagaouVagas(vagas.length)}
-                    )
+                    {logradouro} ({vagas.length}{' '}
+                    {nomeVagaouVagas(vagas.length)})
                   </p>
 
                   <div className="flex gap-2">
-                    {/* Ver vagas individuais */}
                     <Button
                       size="sm"
                       onClick={() =>
@@ -189,24 +240,6 @@ export function EditarModal({
                     >
                       Ver Vagas
                     </Button>
-
-                    {/* Editar todas as vagas do grupo
-                    
-                     <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() =>
-                        setModalState({
-                          type: "EDITAR_GRUPO",
-                          data: { logradouro, vagas },
-                        })
-                      }
-                    >
-                      Editar Grupo
-                    </Button>
-                    
-                    
-                    */}
                   </div>
                 </div>
               ))}
@@ -214,7 +247,7 @@ export function EditarModal({
           </>
         );
 
-      /** VAGAS_LISTA: Lista as disponibilidades dentro de um logradouro */
+      // ==================== NÍVEL 2: VAGAS_LISTA ====================
       case 'VAGAS_LISTA':
         return (
           <>
@@ -233,7 +266,6 @@ export function EditarModal({
                   </p>
 
                   <div className="flex gap-2">
-                    {/* Editar individual */}
                     <Button
                       size="sm"
                       onClick={() =>
@@ -251,7 +283,6 @@ export function EditarModal({
                       Editar
                     </Button>
 
-                    {/* Remover */}
                     <Button
                       size="sm"
                       variant="destructive"
@@ -269,7 +300,7 @@ export function EditarModal({
           </>
         );
 
-      /** EDITAR_INDIVIDUAL: Formulário para editar uma única vaga */
+      // ==================== NÍVEL 3: EDITAR_INDIVIDUAL ====================
       case 'EDITAR_INDIVIDUAL':
         const disp = modalState.data;
         return (
@@ -311,14 +342,12 @@ export function EditarModal({
           </>
         );
 
-      /** EDITAR_GRUPO: Formulário para editar todas as vagas de um logradouro */
+      // ==================== NÍVEL 3: EDITAR_GRUPO ====================
       case 'EDITAR_GRUPO':
         return (
           <>
             <DialogHeader>
-              <DialogTitle>
-                Editar Grupo — {modalState.data.logradouro}
-              </DialogTitle>
+              <DialogTitle>Editar Grupo — {modalState.data.logradouro}</DialogTitle>
             </DialogHeader>
 
             <p className="text-sm text-red-600 font-semibold mb-2">
@@ -358,7 +387,6 @@ export function EditarModal({
         );
 
       default:
-        // Se o modal for aberto sem dados válidos, ele deve fechar ou mostrar um erro
         return (
           <div className="p-4 text-center">
             <p className="text-lg font-medium text-gray-700">Carregando...</p>
@@ -373,7 +401,7 @@ export function EditarModal({
         {renderContent()}
 
         <DialogFooter className="flex justify-between items-center mt-4">
-          {/* Botão Voltar: visível em todos os estados exceto o inicial (GRUPO_LISTA) */}
+          {/* Botão Voltar: visível em todos os estados exceto o inicial */}
           {modalState.type === 'VAGAS_LISTA' ||
           modalState.type.startsWith('EDITAR') ? (
             <Button variant="outline" onClick={goBack}>

@@ -22,6 +22,67 @@ interface ReservaEditarProps {
 
 type EditField = null | 'horario' | 'veiculo-origem';
 
+/**
+ * @component ReservaEditarModal
+ * @version 1.0.0
+ * 
+ * @description Modal de edição de reserva para motoristas.
+ * Permite alterar veículo, origem e horários da reserva.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. MODO RESUMO (editField = null):
+ *    - Exibe Resumo da reserva atual
+ *    - Botões para editar: "Veículo/Origem" e "Horário"
+ *    - Botão "Salvar alterações"
+ * 
+ * 2. MODO EDIÇÃO DE VEÍCULO/ORIGEM (editField = 'veiculo-origem'):
+ *    - Exibe OriginVehicleStep (seleção de veículo, cidade de origem)
+ *    - Após confirmar, atualiza form e volta para resumo
+ * 
+ * 3. MODO EDIÇÃO DE HORÁRIO (editField = 'horario'):
+ *    - Exibe EditTimeForm com 2 etapas:
+ *      - Etapa 3: Seleção de horário inicial
+ *      - Etapa 4: Seleção de horário final (filtrado)
+ *    - Após selecionar, atualiza form e volta para resumo
+ * 
+ * 4. SALVAMENTO:
+ *    - Chama API atualizarReserva
+ *    - Feedback: toast/sucesso/erro
+ *    - Fecha modal após sucesso (delay 800ms)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useReservaData: Busca veículo e vaga da reserva
+ * - useReserva: Gerencia estado do formulário de horários
+ * - ESTADO DE REFERÊNCIA: initialForm guarda valores originais
+ * - ESTADO EDITÁVEL: form armazena valores em edição
+ * - RENDERIZAÇÃO CONDICIONAL: Três modos (resumo, veículo/origem, horário)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useReservaData: Hook de dados da reserva
+ * - useReserva: Hook de formulário de reserva
+ * - ReservaSummary: Resumo da reserva com ações
+ * - OriginVehicleStep: Formulário de veículo/origem
+ * - EditTimeForm: Formulário de edição de horários
+ * 
+ * @example
+ * ```tsx
+ * <ReservaEditarModal
+ *   reserva={reserva}
+ *   onClose={() => setModalAberto(false)}
+ *   onSuccess={(reservaAtualizada) => fetchReservas()}
+ * />
+ * ```
+ */
+
 export default function ReservaEditarModal({
   reserva,
   onClose,
@@ -30,9 +91,7 @@ export default function ReservaEditarModal({
   const router = useRouter();
   const { user } = useAuth();
 
-  /* =====================
-     ESTADOS DE REFERÊNCIA
-  ====================== */
+  // ==================== ESTADOS DE REFERÊNCIA ====================
   const [initialForm] = useState({
     veiculoId: reserva.veiculoId,
     cidadeOrigem: reserva.cidadeOrigem,
@@ -40,22 +99,16 @@ export default function ReservaEditarModal({
     fim: reserva.fim,
   });
 
-  /* =====================
-     ESTADO EDITÁVEL
-  ====================== */
+  // ==================== ESTADO EDITÁVEL ====================
   const [form, setForm] = useState({ ...initialForm });
 
-  /* =====================
-     UI
-  ====================== */
+  // ==================== UI ====================
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [editField, setEditField] = useState<EditField>(null);
 
-  /* =====================
-     DADOS
-  ====================== */
+  // ==================== DADOS ====================
   const {
     veiculo,
     vaga,
@@ -90,6 +143,7 @@ export default function ReservaEditarModal({
     plate: v.placa,
   }));
 
+  // ==================== INICIALIZAÇÃO ====================
   useEffect(() => {
     if (!origin) {
       setOrigin(initialForm.cidadeOrigem);
@@ -98,12 +152,9 @@ export default function ReservaEditarModal({
     if (!selectedVehicleId) {
       setSelectedVehicleId(initialForm.veiculoId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* =====================
-     AÇÕES
-  ====================== */
+  // ==================== HANDLER DE SALVAMENTO ====================
   const handleSave = async () => {
     if (!user?.id) {
       setError('Sessão expirada');
@@ -149,6 +200,7 @@ export default function ReservaEditarModal({
     setIsSaving(false);
   };
 
+  // ==================== HANDLER DE SELEÇÃO DE HORÁRIO FINAL ====================
   const handleTimeSelectEnd = (t: string) => {
     if (!startHour) return;
 
@@ -173,9 +225,7 @@ export default function ReservaEditarModal({
     setStep(1);
   };
 
-  /* =====================
-     RENDER
-  ====================== */
+  // ==================== RENDER ====================
   if (loading) {
     return (
       <div className="flex flex-col gap-3 items-center justify-center min-h-[320px]">
@@ -187,7 +237,8 @@ export default function ReservaEditarModal({
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
-      {/* Header */}
+      
+      {/* ==================== HEADER ==================== */}
       <header className="flex items-center justify-between border-b">
         <h1 className="font-semibold text-gray-900">
           {editField === 'horario'
@@ -205,8 +256,10 @@ export default function ReservaEditarModal({
         </button>
       </header>
 
-      {/* Conteúdo */}
+      {/* ==================== CONTEÚDO ==================== */}
       <div className="flex-1 overflow-y-auto">
+        
+        {/* Mensagens de feedback */}
         <div className="px-5 pt-4 space-y-3">
           {(error || dataError) && (
             <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm flex gap-2">
@@ -224,6 +277,7 @@ export default function ReservaEditarModal({
         </div>
 
         <main className="">
+          {/* MODO RESUMO */}
           {!editField && (
             <ReservaSummary
               form={form}
@@ -252,6 +306,7 @@ export default function ReservaEditarModal({
             />
           )}
 
+          {/* MODO EDIÇÃO DE VEÍCULO/ORIGEM */}
           {editField === 'veiculo-origem' && (
             <OriginVehicleStep
               vehicles={vehiclesForStep}
@@ -276,6 +331,7 @@ export default function ReservaEditarModal({
             />
           )}
 
+          {/* MODO EDIÇÃO DE HORÁRIO */}
           {editField === 'horario' && (
             <EditTimeForm
               step={step}

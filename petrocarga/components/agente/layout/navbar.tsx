@@ -14,15 +14,72 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown, User, Bell } from 'lucide-react';
 
+/**
+ * @component Navbar
+ * @version 1.0.0
+ * 
+ * @description Barra de navegação principal para a área do agente.
+ * Responsiva com menu mobile, notificações em tempo real e dropdown de perfil.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. NAVEGAÇÃO DESKTOP:
+ *    - Links principais: Reserva Rápida, Lista de Reservas, Denúncias, Consultar Placa
+ *    - Dropdown de perfil: "Meu Perfil" e "Sair"
+ *    - Ícone de notificações com contador em tempo real
+ * 
+ * 2. NAVEGAÇÃO MOBILE:
+ *    - Menu hambúrguer (☰) que expande/contrai
+ *    - Seções organizadas: Reservas, Consultas, Notificações, Perfil
+ *    - Botão de logout mobile
+ * 
+ * 3. NOTIFICAÇÕES:
+ *    - useNotifications: contexto global com WebSocket
+ *    - Contador de não lidas (unreadCount)
+ *    - Badge vermelho com número (9+ para muitos)
+ *    - Indicador de conexão (ponto amarelo piscando se offline)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - MENU MOBILE: Controle com useState e transições CSS (max-height)
+ * - NOTIFICAÇÕES: Integração com contexto global para contagem em tempo real
+ * - RESPONSIVIDADE: grid-cols-3 no mobile, flex no desktop
+ * - ACESSIBILIDADE: aria-label com contador de notificações
+ * - ANIMAÇÕES: pulsação no badge de notificações e no indicador de conexão
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useNotifications: Contexto de notificações (WebSocket)
+ * - LogoutButton: Botão de logout (aceita prop mobile)
+ * - DropdownMenu: Menu dropdown do shadcn/ui
+ * 
+ * @example
+ * ```tsx
+ * <Navbar />
+ * ```
+ */
+
 export function Navbar() {
   const [menuAberto, setMenuAberto] = useState(false);
   const { notifications, isConnected } = useNotifications();
 
-  // 🔴 Contador de notificações NÃO lidas
+  /**
+   * Contador de notificações não lidas
+   * Usado para exibir o badge vermelho no ícone do sino
+   */
   const unreadCount = notifications.filter(
     (notification) => !notification.lida,
   ).length;
 
+  /**
+   * Links principais da navegação desktop
+   */
   const links = [
     { href: '/agente/reserva-rapida', label: 'Reserva Rápida' },
     { href: '/agente/lista-reserva', label: 'Lista de Reservas' },
@@ -33,6 +90,7 @@ export function Navbar() {
   return (
     <header className="bg-blue-800 text-white relative">
       <nav className="grid grid-cols-3 items-center p-4 max-w-6xl mx-auto md:flex md:justify-between">
+        
         {/* 🔔 SINO - MOBILE */}
         <Link
           href="/agente/notificacoes"
@@ -73,7 +131,7 @@ export function Navbar() {
             </li>
           ))}
 
-          {/* PERFIL */}
+          {/* PERFIL (Dropdown) */}
           <li>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
@@ -108,12 +166,14 @@ export function Navbar() {
             >
               <Bell className="h-5 w-5" />
 
+              {/* Badge de contador de não lidas */}
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
 
+              {/* Indicador de conexão offline */}
               {!isConnected && (
                 <span
                   className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full h-2 w-2 animate-pulse"
@@ -125,18 +185,19 @@ export function Navbar() {
         </ul>
       </nav>
 
-      {/* MENU MOBILE */}
+      {/* MENU MOBILE (expansível) */}
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         <ul className="flex flex-col gap-4 bg-blue-500 p-4 shadow-md">
+          
+          {/* Seção: Reservas */}
           <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
             <span className="font-bold text-sm text-blue-200 uppercase">
               Reservas
             </span>
-            {/* Reservas Rápidas Criadas */}
             <Link
               href="/agente/reserva-rapida"
               onClick={() => setMenuAberto(false)}
@@ -144,8 +205,6 @@ export function Navbar() {
             >
               Reservar Vaga
             </Link>
-
-            {/* Lista de Reservas Rápidas */}
             <Link
               href="/agente/lista-reserva"
               onClick={() => setMenuAberto(false)}
@@ -155,11 +214,11 @@ export function Navbar() {
             </Link>
           </li>
 
+          {/* Seção: Consultas */}
           <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
             <span className="font-bold text-sm text-blue-200 uppercase">
               Consultas
             </span>
-            {/* Consulta de Placa */}
             <Link
               href="/agente/consulta"
               onClick={() => setMenuAberto(false)}
@@ -169,12 +228,11 @@ export function Navbar() {
             </Link>
           </li>
 
+          {/* Seção: Notificações */}
           <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
             <span className="font-bold text-sm text-blue-200 uppercase">
               Notificações
             </span>
-
-            {/* Denúncias */}
             <Link
               href="/agente/denuncias"
               onClick={() => setMenuAberto(false)}
@@ -184,12 +242,11 @@ export function Navbar() {
             </Link>
           </li>
 
+          {/* Seção: Perfil */}
           <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
             <span className="font-bold text-sm text-blue-200 uppercase">
               Perfil
             </span>
-
-            {/* Meu Perfil */}
             <Link
               href="/agente/perfil"
               onClick={() => setMenuAberto(false)}
@@ -197,7 +254,6 @@ export function Navbar() {
             >
               Meu Perfil
             </Link>
-            {/* LOGOUT MOBILE */}
             <div className="pl-2">
               <LogoutButton mobile={true} />
             </div>

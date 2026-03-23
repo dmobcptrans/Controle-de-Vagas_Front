@@ -19,11 +19,14 @@ import {
   Archive,
   CalendarPlus,
   PlusCircle,
-  LogOut,
 } from 'lucide-react';
 import { LogoutButton } from '@/components/logoutButton/logoutButton';
 import { useNotifications } from '@/context/NotificationContext';
 
+/**
+ * @component CardLink
+ * @description Componente de link em formato de card para menu mobile
+ */
 type CardLinkProps = {
   href: string;
   icon: React.ReactNode;
@@ -62,6 +65,61 @@ function CardLink({
   );
 }
 
+/**
+ * @component Navbar
+ * @version 1.0.0
+ * 
+ * @description Barra de navegação principal para a área do motorista.
+ * Responsiva com menu mobile em formato de cards, notificações em tempo real e dropdowns.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. NAVEGAÇÃO DESKTOP:
+ *    - Link principal: "Reservar Vaga"
+ *    - Dropdown "Reservas": Minhas Reservas, Minhas Denúncias
+ *    - Dropdown "Veículo": Meu Veículo, Adicionar Veículo
+ *    - Dropdown "Perfil": Meu Perfil, Sair
+ *    - Ícone de notificações com contador
+ * 
+ * 2. NAVEGAÇÃO MOBILE (CARDS):
+ *    - Seções: Reservas, Veículos, Mais Opções
+ *    - Cada link em formato de card com ícone, título e descrição
+ *    - Cores diferenciadas por seção (azul, âmbar, verde, vermelho, roxo)
+ * 
+ * 3. NOTIFICAÇÕES:
+ *    - Contador de não lidas (unreadCount)
+ *    - Badge vermelho com número (9+)
+ *    - Indicador de conexão (ponto amarelo)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🎨 CORES DOS CARDS MOBILE:
+ * ----------------------------------------------------------------------------
+ * 
+ * | Seção       | Link               | Ícone       | Cor             |
+ * |-------------|--------------------|-------------|-----------------|
+ * | Reservas    | Reservar vaga      | CalendarPlus| 🔵 Azul         |
+ * | Reservas    | Minhas reservas    | Archive     | 🟡 Amarelo      |
+ * | Veículos    | Meu veículo        | CarIcon     | 🟢 Verde        |
+ * | Veículos    | Adicionar veículo  | PlusCircle  | ⚪ Cinza        |
+ * | Mais Opções | Minhas denúncias   | TriangleAlert| 🔴 Vermelho     |
+ * | Mais Opções | Meu perfil         | User        | 🟣 Roxo         |
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - LogoutButton: Botão de logout
+ * - useNotifications: Contexto de notificações
+ * - DropdownMenu: Menu dropdown do shadcn/ui
+ * 
+ * @example
+ * ```tsx
+ * <Navbar />
+ * ```
+ */
+
 export function Navbar() {
   const [menuAberto, setMenuAberto] = useState(false);
   const { notifications, isConnected } = useNotifications();
@@ -75,7 +133,8 @@ export function Navbar() {
   return (
     <header className="bg-blue-800 text-white relative">
       <nav className="grid grid-cols-3 items-center p-4 max-w-6xl mx-auto md:flex md:justify-between">
-        {/* SINO - MOBILE */}
+        
+        {/* ==================== SINO - MOBILE ==================== */}
         <Link
           href="/motorista/notificacoes"
           className="md:hidden flex items-center justify-start"
@@ -91,7 +150,7 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* LOGO */}
+        {/* ==================== LOGO ==================== */}
         <Link
           href="/motorista/dashboard"
           className="flex justify-center md:justify-start"
@@ -100,7 +159,7 @@ export function Navbar() {
           <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
         </Link>
 
-        {/* BOTÃO MENU - MOBILE */}
+        {/* ==================== BOTÃO MENU - MOBILE ==================== */}
         <button
           className="md:hidden text-2xl hover:text-gray-300 flex justify-end"
           onClick={() => setMenuAberto(!menuAberto)}
@@ -108,7 +167,7 @@ export function Navbar() {
           ☰
         </button>
 
-        {/* MENU DESKTOP — sem alterações */}
+        {/* ==================== MENU DESKTOP ==================== */}
         <ul className="hidden md:flex gap-6 text-lg items-center">
           <li className="hover:text-gray-300">
             <Link href="/motorista/dashboard">Dashboard</Link>
@@ -117,6 +176,7 @@ export function Navbar() {
             <Link href="/motorista/reservar-vaga">Reservar Vaga</Link>
           </li>
 
+          {/* Dropdown Reservas */}
           <li>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
@@ -140,6 +200,7 @@ export function Navbar() {
             </DropdownMenu>
           </li>
 
+          {/* Dropdown Veículo */}
           <li>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
@@ -163,6 +224,7 @@ export function Navbar() {
             </DropdownMenu>
           </li>
 
+          {/* Dropdown Perfil */}
           <li>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
@@ -183,6 +245,7 @@ export function Navbar() {
             </DropdownMenu>
           </li>
 
+          {/* Notificações Desktop */}
           <li>
             <Link
               href="/motorista/notificacoes"
@@ -203,17 +266,17 @@ export function Navbar() {
         </ul>
       </nav>
 
-      {/* MENU MOBILE COM CARDS */}
+      {/* ==================== MENU MOBILE (CARDS) ==================== */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
-          }`}
-          style={{marginTop: '-1px'}}
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+        }`}
       >
         <div className="bg-blue-800 p-4  space-y-5">
 
           {/* Seção: Reservas */}
           <div>
-            <p className="text-xs font-semibold text-wite uppercase tracking-widest mb-2 px-1">
+            <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
               Reservas
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -265,7 +328,7 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Seção: Denúncias & Perfil */}
+          {/* Seção: Mais Opções */}
           <div>
             <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
               Mais opções

@@ -34,9 +34,80 @@ interface VehicleRoutesTableProps {
   routes?: VehicleRouteReport[];
 }
 
+/**
+ * @component VehicleRoutesTable
+ * @version 1.0.0
+ * 
+ * @description Tabela expansível de rotas de veículos.
+ * Exibe informações detalhadas sobre trajetos, paradas e tempos de permanência.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 INFORMAÇÕES EXIBIDAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. LINHA PRINCIPAL (COLAPSADA):
+ *    - Placa do veículo
+ *    - Período (início e fim)
+ *    - Número de paradas
+ *    - Tipos de reserva (Normal/Rápida)
+ *    - Vaga mais utilizada
+ * 
+ * 2. DETALHES EXPANDIDOS:
+ *    - Lista de paradas com linha temporal
+ *    - Para cada parada:
+ *      - Tipo de reserva (Normal/Rápida)
+ *      - Nome/identificador da vaga
+ *      - Duração da parada
+ *      - Data/hora de início e término
+ *      - Cidade de origem (se disponível)
+ *      - Ponto de entrada na cidade (se disponível)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - COLLAPSIBLE: Componente expansível do shadcn/ui
+ * - EXPANSÃO: Estado gerenciado por Set<string> (placas expandidas)
+ * - FORMATAÇÃO: Funções auxiliares para datas, horários e duração
+ * - TIMELINE VISUAL: Linha vertical conectando as paradas
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 FUNÇÕES AUXILIARES:
+ * ----------------------------------------------------------------------------
+ * 
+ * - formatDateTime: dd/MM/yyyy HH:MM
+ * - formatDuration: Calcula duração entre duas datas
+ * 
+ * ----------------------------------------------------------------------------
+ * 🎨 CORES:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Reserva Normal: 🔵 Azul
+ * - Reserva Rápida: 🟠 Laranja
+ * - Linha temporal: ⚪ Cinza
+ * 
+ * @example
+ * ```tsx
+ * <VehicleRoutesTable routes={dashboard.vehicleRoutes} />
+ * ```
+ */
+
 export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
+  // --------------------------------------------------------------------------
+  // ESTADO - PLACAS EXPANDIDAS
+  // --------------------------------------------------------------------------
+  
+  /**
+   * Set contendo as placas que estão expandidas
+   * Ex: Set { 'ABC1234', 'XYZ5678' }
+   */
   const [expandedPlates, setExpandedPlates] = useState<Set<string>>(new Set());
 
+  /**
+   * @function togglePlate
+   * @description Alterna a expansão de uma placa específica
+   * @param placa - Placa do veículo
+   */
   const togglePlate = (placa: string) => {
     const newExpanded = new Set(expandedPlates);
     if (newExpanded.has(placa)) {
@@ -47,6 +118,16 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
     setExpandedPlates(newExpanded);
   };
 
+  // --------------------------------------------------------------------------
+  // FUNÇÕES DE FORMATAÇÃO
+  // --------------------------------------------------------------------------
+  
+  /**
+   * @function formatDateTime
+   * @description Formata data ISO para "dd/MM/yyyy HH:MM"
+   * @param dateString - Data em formato ISO string
+   * @returns Data formatada (ex: "15/01/2024 08:30")
+   */
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
     return (
@@ -59,6 +140,13 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
     );
   };
 
+  /**
+   * @function formatDuration
+   * @description Calcula e formata a duração entre duas datas
+   * @param start - Data de início (ISO string)
+   * @param end - Data de fim (ISO string)
+   * @returns Duração formatada (ex: "2h 30min", "45min", "3h")
+   */
   const formatDuration = (start: string, end: string) => {
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -71,6 +159,7 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
     return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
   };
 
+  // ==================== ESTADO VAZIO ====================
   if (routes.length === 0) {
     return (
       <Card>
@@ -89,6 +178,8 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
 
   return (
     <Card className="overflow-hidden">
+      
+      {/* Header com título e contador */}
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Navigation className="h-5 w-5" />
@@ -98,9 +189,11 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
           </Badge>
         </CardTitle>
       </CardHeader>
+
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
+            {/* Cabeçalho da tabela */}
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]"></TableHead>
@@ -111,6 +204,7 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
                 <TableHead className="min-w-[150px]">Vaga mais usada</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {routes.map((route) => (
                 <Collapsible
@@ -119,6 +213,7 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
                   open={expandedPlates.has(route.placa)}
                 >
                   <>
+                    {/* ==================== LINHA PRINCIPAL ==================== */}
                     <TableRow className="hover:bg-gray-50">
                       <TableCell>
                         <CollapsibleTrigger asChild>
@@ -176,7 +271,7 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
                       </TableCell>
                     </TableRow>
 
-                    {/* Detalhes expandidos */}
+                    {/* ==================== DETALHES EXPANDIDOS ==================== */}
                     <CollapsibleContent asChild>
                       <TableRow className="bg-gray-50/50">
                         <TableCell colSpan={6} className="p-0">
@@ -186,13 +281,16 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
                               Detalhes do Trajeto
                             </h4>
 
+                            {/* Container com linha vertical (timeline) */}
                             <div className="space-y-3 ml-8 relative">
-                              {/* Linha vertical */}
+                              
+                              {/* Linha vertical conectando as paradas */}
                               <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-300" />
 
                               {route.stops.map((stop, index) => (
                                 <div key={index} className="relative">
-                                  {/* Ponto na linha */}
+                                  
+                                  {/* Ponto na linha vertical */}
                                   <div
                                     className={cn(
                                       'absolute left-3 w-2 h-2 rounded-full transform -translate-x-1',
@@ -202,7 +300,10 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
                                     )}
                                   />
 
+                                  {/* Card da parada */}
                                   <div className="ml-8 bg-white p-3 rounded-lg border shadow-sm">
+                                    
+                                    {/* Header da parada: tipo + vaga + duração */}
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
                                       <div className="flex items-center gap-2">
                                         <Badge
@@ -233,7 +334,10 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
                                       </div>
                                     </div>
 
+                                    {/* Grid com detalhes adicionais */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                      
+                                      {/* Início */}
                                       <div>
                                         <div className="flex items-center gap-1 mb-1">
                                           <Calendar className="h-3 w-3 text-gray-500" />
@@ -246,6 +350,7 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
                                         </p>
                                       </div>
 
+                                      {/* Término */}
                                       <div>
                                         <div className="flex items-center gap-1 mb-1">
                                           <Calendar className="h-3 w-3 text-gray-500" />
@@ -258,6 +363,7 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
                                         </p>
                                       </div>
 
+                                      {/* Cidade de origem (opcional) */}
                                       {stop.cidadeOrigem && (
                                         <div>
                                           <div className="flex items-center gap-1 mb-1">
@@ -272,6 +378,7 @@ export function VehicleRoutesTable({ routes = [] }: VehicleRoutesTableProps) {
                                         </div>
                                       )}
 
+                                      {/* Entrada na cidade (opcional) */}
                                       {stop.entradaCidade && (
                                         <div>
                                           <div className="flex items-center gap-1 mb-1">

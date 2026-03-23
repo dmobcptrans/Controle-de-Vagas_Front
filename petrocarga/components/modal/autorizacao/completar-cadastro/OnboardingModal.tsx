@@ -5,8 +5,73 @@ import { useState } from 'react';
 import ModalTermos from '../login/ModalTermos';
 import { Checkbox } from '@/components/ui/checkbox';
 
-// Lista expandida de categorias
+// Lista expandida de categorias de CNH
 const CNH_CATS = ['B', 'AB', 'C', 'AC', 'D', 'AD', 'E', 'AE'];
+
+/**
+ * @component OnboardingModal
+ * @version 1.0.0
+ * 
+ * @description Modal de cadastro em 4 etapas para novos usuários (motoristas).
+ * Gerencia coleta de dados pessoais, CNH, termos e cadastro de veículo.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO (4 ETAPAS):
+ * ----------------------------------------------------------------------------
+ * 
+ * ETAPA 1 - DADOS PESSOAIS:
+ *    - CPF (máscara automática)
+ *    - Telefone (máscara automática)
+ *    - Senha (com validação de 5 requisitos)
+ *    - Confirmar senha
+ *    - Lista de requisitos da senha (tamanho, minúscula, maiúscula, número, especial)
+ * 
+ * ETAPA 2 - HABILITAÇÃO:
+ *    - Categoria da CNH (seleção via drawer/gaveta)
+ *    - Número da CNH (máscara numérica)
+ *    - Data de validade
+ * 
+ * ETAPA 3 - TERMOS E CONDIÇÕES:
+ *    - Aceitação dos Termos de Uso
+ *    - Modal com termos completos (ModalTermos)
+ * 
+ * ETAPA 4 - VEÍCULO:
+ *    - Placa, Marca, Modelo
+ *    - Tipo (select com 5 opções)
+ *    - Tipo de proprietário (CPF/CNPJ)
+ *    - CPF ou CNPJ do proprietário (com máscara)
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 VALIDAÇÃO DE SENHA (5 REQUISITOS):
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. Mínimo de 6 caracteres
+ * 2. Pelo menos uma letra minúscula
+ * 3. Pelo menos uma letra maiúscula
+ * 4. Pelo menos um número
+ * 5. Pelo menos um caractere especial (!@#...)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - VALIDAÇÃO DE SENHA: 5 requisitos com feedback visual (✓ verde / ○ cinza)
+ * - MÁSCARAS: CPF (000.000.000-00), CNPJ (00.000.000/0000-00), Telefone ((00) 00000-0000)
+ * - DETALHAMENTO DE REQUISITOS: Lista completa dos requisitos de senha
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useOnboarding: Contexto de cadastro
+ * - ModalTermos: Modal com termos completos
+ * - Checkbox: Componente de checkbox do shadcn/ui
+ * 
+ * @example
+ * ```tsx
+ * <OnboardingModal />
+ * ```
+ */
 
 export default function OnboardingModal({
   lockInitialSteps = false,

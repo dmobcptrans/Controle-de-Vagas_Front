@@ -163,7 +163,7 @@ export default function NotificacoesMotoristaPage() {
    * - MOTORISTA: Auto-notificação (não faria sentido)
    */
   const motoristaNotifications = notifications.filter((n) =>
-    ['RESERVA', 'VEICULO', 'SISTEMA'].includes(n.tipo),
+    ['RESERVA', 'VEICULO', 'SISTEMA', 'MOTORISTA', 'VAGA'].includes(n.tipo),
   );
 
   return (

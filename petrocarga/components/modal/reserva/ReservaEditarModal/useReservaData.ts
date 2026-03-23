@@ -25,8 +25,7 @@ export function useReservaData(veiculoId: string, vagaId: string) {
           if (veiculoRes && !veiculoRes.error) setVeiculo(veiculoRes.veiculo);
           if (vagaRes) setVaga(vagaRes);
         }
-      } catch (err) {
-        console.error(err);
+      } catch {
         if (mounted) setError('Falha ao carregar detalhes da reserva.');
       } finally {
         if (mounted) setLoading(false);

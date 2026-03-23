@@ -17,7 +17,7 @@ export default function ModalConfirmacaoExclusao({
   onClose,
   onConfirm,
   titulo = 'Confirmar exclusão',
-  mensagem = 'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão permanentemente removidos.',
+  mensagem = 'Tem certeza que deseja excluir esta conta?',
   textoCancelar = 'Cancelar',
   textoConfirmar = 'Excluir',
 }: ModalConfirmacaoExclusaoProps) {

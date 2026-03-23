@@ -21,18 +21,79 @@ interface MapProps {
   onSelectPlace?: (place: MapboxFeature) => void;
 }
 
+/**
+ * @component ViewMap
+ * @version 1.0.0
+ * 
+ * @description Mapa de visualização com marcadores de vagas e suporte a seleção de localização.
+ * Exibe marcadores para todas as vagas e permite centralizar em locais selecionados via geocoder.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. CARREGAMENTO DE VAGAS:
+ *    - Hook useVagas busca todas as vagas disponíveis
+ *    - Estados: loading, error, vagas
+ * 
+ * 2. MAPA:
+ *    - Hook useMapbox gerencia instância do mapa com geocoder
+ *    - Geocoder para busca de endereços
+ *    - onSelectPlace callback para localizações selecionadas
+ * 
+ * 3. MARCADORES:
+ *    - addVagaMarkers adiciona marcadores azuis para todas as vagas
+ *    - Atualização automática quando vagas mudam
+ * 
+ * 4. SELEÇÃO DE LOCAL:
+ *    - Quando selectedPlace muda, centraliza o mapa no local
+ *    - Adiciona marcador temporário no local selecionado
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - DOIS MARCADORES: markersRef (vagas) + markerRef (local selecionado)
+ * - FLY TO: Animação suave ao centralizar em local selecionado (zoom 14)
+ * - CLEANUP: Remove marcadores na desmontagem
+ * - OVERLAY: Mensagens de loading e erro sobrepostas ao mapa
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 HOOKS RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useVagas: Busca todas as vagas
+ * - useMapbox: Gerencia instância do Mapbox (com geocoder)
+ * - addVagaMarkers: Utilitário de marcadores de vagas
+ * 
+ * @example
+ * ```tsx
+ * <ViewMap
+ *   selectedPlace={selectedPlace}
+ *   onSelectPlace={(place) => setSelectedPlace(place)}
+ * />
+ * ```
+ */
+
 export function ViewMap({ selectedPlace, onSelectPlace }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
-  // Hooks
+  // ==================== HOOKS ====================
   const { vagas, loading, error } = useVagas();
   const { map, mapLoaded } = useMapbox({
     containerRef: mapContainer,
     onSelectPlace,
   });
 
+  // ==================== EFEITO: SELEÇÃO DE LOCAL ====================
+  /**
+   * Quando um local é selecionado no geocoder:
+   * - Centraliza o mapa no local com animação flyTo
+   * - Adiciona um marcador temporário no local
+   * - Remove o marcador anterior se existir
+   */
   useEffect(() => {
     if (!map || !selectedPlace || !map.isStyleLoaded()) return;
 
@@ -43,7 +104,11 @@ export function ViewMap({ selectedPlace, onSelectPlace }: MapProps) {
     markerRef.current = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
   }, [selectedPlace, map]);
 
-  // Cria marcadores das vagas
+  // ==================== EFEITO: MARCADORES DE VAGAS ====================
+  /**
+   * Adiciona marcadores para todas as vagas quando o mapa carrega
+   * e quando a lista de vagas é atualizada
+   */
   useEffect(() => {
     if (!map || !mapLoaded || vagas.length === 0) return;
     addVagaMarkers(map, vagas as Vaga[], markersRef);
@@ -56,11 +121,15 @@ export function ViewMap({ selectedPlace, onSelectPlace }: MapProps) {
         className="w-full h-full rounded-lg shadow-md overflow-visible"
         style={{ minHeight: '300px' }}
       />
+      
+      {/* Overlay de Loading */}
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
           Carregando vagas...
         </div>
       )}
+      
+      {/* Overlay de Erro */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-red-100 text-red-600 z-10">
           Erro: {error}

@@ -5,12 +5,78 @@ import { getReservas, finalizarForcado } from '@/lib/api/reservaApi';
 import { Reserva } from '@/lib/types/reserva';
 import { toast } from 'sonner';
 
+/**
+ * @hook useReservas
+ * @version 1.0.0
+ * 
+ * @description Hook customizado para gerenciamento de reservas no dashboard do gestor.
+ * Fornece funcionalidades para carregar reservas e realizar checkout forçado.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 RETORNO:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {Reserva[]} reservas - Lista de reservas carregadas
+ * @property {boolean} loading - Estado de carregamento inicial
+ * @property {boolean} actionLoading - Estado de carregamento durante ações (checkout)
+ * @property {() => Promise<void>} carregarReservas - Função para recarregar reservas
+ * @property {(reservaId: string, reservaData?: Reserva) => Promise<{ error: boolean; message: string }>} finalizarReservaForcada - Função para checkout forçado
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. CARREGAMENTO INICIAL:
+ *    - useEffect dispara carregarReservas na montagem
+ *    - Chama API getReservas
+ *    - Atualiza estado reservas
+ *    - Trata erros com toast
+ * 
+ * 2. FINALIZAÇÃO FORÇADA:
+ *    - Recebe ID da reserva (e opcionalmente dados completos)
+ *    - Se dados não fornecidos, busca na lista de reservas
+ *    - Exibe modal de confirmação com detalhes da reserva
+ *    - Se confirmado, chama API finalizarForcado
+ *    - Atualiza estado local (status = 'CONCLUIDA')
+ *    - Feedback com toast de sucesso/erro
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useCallback: Memoização das funções para evitar re-renders
+ * - Estados separados: loading (carregamento inicial) vs actionLoading (ações)
+ * - Atualização otimista: Altera status localmente sem recarregar lista
+ * - Confirmação nativa: window.confirm com dados detalhados da reserva
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - getReservas: API de listagem de reservas
+ * - finalizarForcado: API de checkout forçado
+ * - toast: Feedback visual (sonner)
+ * - ReservaModal: Modal que utiliza este hook
+ * 
+ * @example
+ * ```tsx
+ * const { reservas, loading, finalizarReservaForcada } = useReservas();
+ * 
+ * const handleCheckoutForcado = async (reservaId: string) => {
+ *   const result = await finalizarReservaForcada(reservaId);
+ *   if (!result.error) {
+ *     console.log('Checkout realizado');
+ *   }
+ * };
+ * ```
+ */
+
 export default function useReservas() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Carregar reservas
+  // ==================== CARREGAR RESERVAS ====================
   const carregarReservas = useCallback(async () => {
     setLoading(true);
     try {
@@ -24,16 +90,18 @@ export default function useReservas() {
     }
   }, []);
 
+  // Carrega reservas na montagem
   useEffect(() => {
     carregarReservas();
   }, [carregarReservas]);
 
+  // ==================== CHECKOUT FORÇADO ====================
   const finalizarReservaForcada = useCallback(
     async (reservaID: string, reservaData?: Reserva) => {
       setActionLoading(true);
 
       try {
-        // 1. Encontrar a reserva completa
+        // 1. Encontrar a reserva completa (se não fornecida)
         let reserva = reservaData;
         if (!reserva) {
           reserva = reservas.find((r) => r.id === reservaID);
@@ -43,7 +111,7 @@ export default function useReservas() {
           }
         }
 
-        // 2. Confirmar ação
+        // 2. Confirmar ação com modal nativo
         const confirmar = window.confirm(
           `CONFIRMAR CHECKOUT FORÇADO\n\n` +
             `Motorista: ${reserva.motoristaNome}\n` +
@@ -65,7 +133,7 @@ export default function useReservas() {
           return resultado;
         }
 
-        // 4. Atualizar estado local
+        // 4. Atualizar estado local (otimista)
         setReservas((prev) =>
           prev.map((r) =>
             r.id === reservaID ? { ...r, status: 'CONCLUIDA' } : r,
@@ -93,7 +161,6 @@ export default function useReservas() {
     [reservas],
   );
 
-  // RETORNAR um objeto com todas as propriedades
   return {
     reservas,
     loading,

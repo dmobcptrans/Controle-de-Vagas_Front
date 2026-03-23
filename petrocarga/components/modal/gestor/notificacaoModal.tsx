@@ -14,6 +14,74 @@ interface NotificacaoModalProps {
   tipoUsuario: 'MOTORISTA' | 'AGENTE' | 'GESTOR';
 }
 
+/**
+ * @component NotificacaoModal
+ * @version 1.0.0
+ * 
+ * @description Modal para envio de notificações individuais para usuários.
+ * Permite que gestores enviem notificações personalizadas com título, mensagem e tipo.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 PROPRIEDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {boolean} isOpen - Controla a visibilidade do modal
+ * @property {() => void} onClose - Função para fechar o modal
+ * @property {string} usuarioId - ID do destinatário
+ * @property {string} usuarioNome - Nome do destinatário
+ * @property {'MOTORISTA' | 'AGENTE' | 'GESTOR'} tipoUsuario - Tipo/perfil do destinatário
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 CAMPOS DO FORMULÁRIO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. TÍTULO:
+ *    - Campo obrigatório
+ *    - Máximo 100 caracteres
+ *    - Placeholder: "Digite o título da notificação"
+ * 
+ * 2. MENSAGEM:
+ *    - Campo obrigatório
+ *    - Máximo 500 caracteres
+ *    - Textarea com 4 linhas
+ *    - Placeholder: "Digite a mensagem da notificação"
+ * 
+ * 3. TIPO:
+ *    - Select com 5 opções:
+ *      - SISTEMA (padrão)
+ *      - RESERVA
+ *      - VAGA
+ *      - VEICULO
+ *      - MOTORISTA
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - METADADOS: Envia informações de remetente/destinatário no campo 'metada'
+ * - AUTO-FECHAR: Após sucesso, fecha modal em 2 segundos
+ * - LOADING: Botão desabilitado com spinner durante envio
+ * - VALIDAÇÃO: Botão desabilitado se título ou mensagem vazios
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - enviarNotificacaoParaUsuario: API de envio de notificação
+ * - useAuth: Hook de autenticação (para dados do remetente)
+ * 
+ * @example
+ * ```tsx
+ * <NotificacaoModal
+ *   isOpen={showModal}
+ *   onClose={() => setShowModal(false)}
+ *   usuarioId="user123"
+ *   usuarioNome="João Silva"
+ *   tipoUsuario="MOTORISTA"
+ * />
+ * ```
+ */
+
 export function NotificacaoModal({
   isOpen,
   onClose,
@@ -31,6 +99,7 @@ export function NotificacaoModal({
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // ==================== HANDLER DE ENVIO ====================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -86,7 +155,8 @@ export function NotificacaoModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-lg p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
+        
+        {/* ==================== HEADER ==================== */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-full">
@@ -109,9 +179,10 @@ export function NotificacaoModal({
           </button>
         </div>
 
-        {/* Form */}
+        {/* ==================== FORMULÁRIO ==================== */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Título */}
+          
+          {/* Campo Título */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Título
@@ -127,7 +198,7 @@ export function NotificacaoModal({
             />
           </div>
 
-          {/* Mensagem */}
+          {/* Campo Mensagem */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Mensagem
@@ -143,7 +214,7 @@ export function NotificacaoModal({
             />
           </div>
 
-          {/* Tipo */}
+          {/* Campo Tipo */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Tipo
@@ -170,7 +241,7 @@ export function NotificacaoModal({
             </select>
           </div>
 
-          {/* Status */}
+          {/* Mensagens de status */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
               {error}
@@ -183,7 +254,7 @@ export function NotificacaoModal({
             </div>
           )}
 
-          {/* Actions */}
+          {/* Botões de ação */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"

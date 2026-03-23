@@ -19,6 +19,66 @@ interface DateRangePickerProps {
   defaultEndDate?: Date;
 }
 
+/**
+ * @component DateRangePicker
+ * @version 1.0.0
+ * 
+ * @description Componente de seleção de intervalo de datas.
+ * Permite escolher data inicial e final via calendário ou botões rápidos.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. BOTÕES RÁPIDOS:
+ *    - Hoje: seleciona a data atual
+ *    - Ontem: seleciona o dia anterior
+ *    - Últimos 7 dias: intervalo dos últimos 7 dias
+ * 
+ * 2. SELETORES DE DATA:
+ *    - Data inicial (popover com calendário)
+ *    - Data final (popover com calendário)
+ *    - Calendário com locale pt-BR
+ * 
+ * 3. FEEDBACK:
+ *    - Botões com labels atualizados em tempo real
+ *    - Formato brasileiro (dd/MM/yyyy)
+ *    - Indicador "até" entre os seletores
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useCallback: Memoiza handleDateChangeCallback para evitar re-renders
+ * - useEffect: Dispara onDateChange sempre que datas mudam
+ * - Responsividade: 
+ *   - Desktop: seletores lado a lado com "até" entre eles
+ *   - Mobile: seletores empilhados com "até" separado
+ * 
+ * - FORMATO DAS DATAS:
+ *   - Exibição: dd/MM/yyyy (pt-BR)
+ *   - Envio: ISO string (toISOString())
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Calendar: Componente de calendário (shadcn/ui)
+ * - Popover: Menu flutuante (shadcn/ui)
+ * - date-fns: Formatação de datas com locale pt-BR
+ * 
+ * @example
+ * ```tsx
+ * <DateRangePicker
+ *   onDateChange={(start, end) => {
+ *     console.log('Período:', start, end);
+ *   }}
+ *   defaultStartDate={new Date('2024-01-01')}
+ *   defaultEndDate={new Date('2024-01-31')}
+ * />
+ * ```
+ */
+
 export function DateRangePicker({
   onDateChange,
   defaultStartDate = new Date(),
@@ -27,6 +87,15 @@ export function DateRangePicker({
   const [dateFrom, setDateFrom] = useState<Date>(defaultStartDate);
   const [dateTo, setDateTo] = useState<Date>(defaultEndDate);
 
+  // --------------------------------------------------------------------------
+  // CALLBACK DE NOTIFICAÇÃO
+  // --------------------------------------------------------------------------
+  
+  /**
+   * @function handleDateChangeCallback
+   * @description Dispara onDateChange com as datas selecionadas
+   * Memorizado com useCallback para evitar re-renders desnecessários
+   */
   const handleDateChangeCallback = useCallback(() => {
     if (dateFrom && dateTo) {
       const startDate = dateFrom.toISOString();
@@ -35,10 +104,18 @@ export function DateRangePicker({
     }
   }, [dateFrom, dateTo, onDateChange]);
 
+  // --------------------------------------------------------------------------
+  // EFEITO - NOTIFICA MUDANÇAS
+  // --------------------------------------------------------------------------
+  
   useEffect(() => {
     handleDateChangeCallback();
   }, [handleDateChangeCallback]);
 
+  // --------------------------------------------------------------------------
+  // HANDLERS DOS BOTÕES RÁPIDOS
+  // --------------------------------------------------------------------------
+  
   const handleToday = () => {
     const today = new Date();
     setDateFrom(today);
@@ -62,7 +139,8 @@ export function DateRangePicker({
 
   return (
     <div className="space-y-3">
-      {/* Botões rápidos responsivos */}
+      
+      {/* ==================== BOTÕES RÁPIDOS ==================== */}
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
@@ -90,8 +168,10 @@ export function DateRangePicker({
         </Button>
       </div>
 
-      {/* Seletor de datas responsivo */}
+      {/* ==================== SELETORES DE DATA ==================== */}
       <div className="flex flex-col sm:flex-row gap-2">
+        
+        {/* Seletor de data inicial */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -121,10 +201,12 @@ export function DateRangePicker({
           </PopoverContent>
         </Popover>
 
+        {/* Separador "até" (desktop) */}
         <div className="hidden sm:flex items-center justify-center text-gray-500">
           até
         </div>
 
+        {/* Seletor de data final */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
