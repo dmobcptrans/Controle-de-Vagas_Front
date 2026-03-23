@@ -27,6 +27,89 @@ const NotificationContext = createContext<NotificationContextData | undefined>(
   undefined,
 );
 
+/**
+ * @component NotificationProvider
+ * @version 1.0.0
+ * 
+ * @description Provider para gerenciamento de notificações em tempo real via SSE.
+ * Gerencia conexão WebSocket (EventSource), histórico, ações CRUD e reconexão automática.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. HISTÓRICO:
+ *    - loadHistorico: Carrega notificações passadas do backend
+ *    - Ordena por data decrescente (mais recentes primeiro)
+ *    - Limita ao máximo configurado (maxNotifications)
+ * 
+ * 2. CONEXÃO EM TEMPO REAL (SSE):
+ *    - Connect: Estabelece conexão EventSource com o backend
+ *    - Recebe notificações em tempo real via onmessage
+ *    - Reconexão automática com backoff exponencial
+ * 
+ * 3. AÇÕES CRUD:
+ *    - addNotification: Adiciona notificação à lista (fifo)
+ *    - removeNotification: Remove notificação (API + estado local)
+ *    - markAsRead: Marca notificação como lida
+ *    - markSelectedAsRead: Marca múltiplas como lidas
+ *    - deleteSelectedNotifications: Remove múltiplas
+ * 
+ * 4. RECONEXÃO:
+ *    - Auto-reconnect: Tentativas com backoff exponencial
+ *    - Limite de tentativas (reconnectMaxAttempts)
+ *    - Delay máximo (reconnectMaxDelayMs)
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 RETORNO DO HOOK useNotifications:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {Notification[]} notifications - Lista de notificações
+ * @property {boolean} isConnected - Status da conexão SSE
+ * @property {boolean} isLoading - Carregando histórico
+ * @property {string | null} error - Mensagem de erro
+ * @property {(notification: Notification) => void} addNotification - Adiciona notificação
+ * @property {(id: string) => Promise<void>} removeNotification - Remove notificação
+ * @property {(id: string) => Promise<void>} markAsRead - Marca como lida
+ * @property {(ids: string[]) => Promise<void>} markSelectedAsRead - Marca múltiplas
+ * @property {(ids: string[]) => Promise<void>} deleteSelectedNotifications - Remove múltiplas
+ * @property {() => Promise<void>} loadHistorico - Carrega histórico
+ * @property {() => Promise<void>} refreshNotifications - Atualiza lista
+ * @property {() => void} reconnect - Reconecta ao servidor SSE
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - SSE (EventSource): Conexão unidirecional para receber notificações
+ * - BACKOFF EXPONENCIAL: Reconexão com delays crescentes (1s, 2s, 4s...)
+ * - FALLBACK: useNotifications retorna objeto padrão se usado fora do provider
+ * - LIMITE DE NOTIFICAÇÕES: Mantém apenas as X mais recentes (maxNotifications)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Notification: Tipo de notificação
+ * - useNotifications: Hook para acessar o contexto
+ * 
+ * @example
+ * ```tsx
+ * // Provider no layout
+ * <NotificationProvider
+ *   usuarioId={user.id}
+ *   maxNotifications={50}
+ *   enableSSE={true}
+ *   autoReconnect={true}
+ * >
+ *   {children}
+ * </NotificationProvider>
+ * 
+ * // Uso do hook
+ * const { notifications, markAsRead, reconnect } = useNotifications();
+ * ```
+ */
+
 export function NotificationProvider({
   children,
   usuarioId,
@@ -48,45 +131,44 @@ export function NotificationProvider({
   const retryCountRef = useRef(0);
   const reconnectTimerRef = useRef<number | null>(null);
 
- // CARREGAR HISTÓRICO
-const loadHistorico = useCallback(
-  async (silent = false) => {
-    if (!usuarioId) return;
+  // ==================== CARREGAR HISTÓRICO ====================
+  const loadHistorico = useCallback(
+    async (silent = false) => {
+      if (!usuarioId) return;
 
-    if (!silent) setIsLoading(true);
+      if (!silent) setIsLoading(true);
 
-    try {
-      const result = await getNotificacoesUsuario(usuarioId);
+      try {
+        const result = await getNotificacoesUsuario(usuarioId);
 
-      if (result.error) {
-        setError(result.message || 'Erro ao carregar notificações');
-        return;
+        if (result.error) {
+          setError(result.message || 'Erro ao carregar notificações');
+          return;
+        }
+
+        const novasNotificacoes = result.notificacoes || [];
+
+        setNotifications(
+          novasNotificacoes
+            .sort(
+              (a: Notification, b: Notification) =>
+                new Date(b.criadaEm).getTime() -
+                new Date(a.criadaEm).getTime(),
+            )
+            .slice(0, maxNotifications),
+        );
+
+        setError(null);
+      } catch {
+        setError('Erro ao carregar notificações');
+      } finally {
+        if (!silent) setIsLoading(false);
       }
+    },
+    [usuarioId, maxNotifications],
+  );
 
-      const novasNotificacoes = result.notificacoes || [];
-
-      setNotifications(
-        novasNotificacoes
-          .sort(
-            (a: Notification, b: Notification) =>
-              new Date(b.criadaEm).getTime() -
-              new Date(a.criadaEm).getTime(),
-          )
-          .slice(0, maxNotifications),
-      );
-
-      setError(null);
-    } catch {
-      setError('Erro ao carregar notificações');
-    } finally {
-      if (!silent) setIsLoading(false);
-    }
-  },
-  [usuarioId, maxNotifications],
-);
-
-
-  // ADICIONAR NOTIFICAÇÃO
+  // ==================== ADICIONAR NOTIFICAÇÃO ====================
   const addNotification = useCallback(
     (notification: Notification) => {
       setNotifications((prev) => {
@@ -97,7 +179,7 @@ const loadHistorico = useCallback(
     [maxNotifications],
   );
 
-  // REMOVER NOTIFICAÇÃO
+  // ==================== REMOVER NOTIFICAÇÃO ====================
   const removeNotification = useCallback(
     async (id: string) => {
       try {
@@ -110,7 +192,7 @@ const loadHistorico = useCallback(
     [usuarioId],
   );
 
-  // DELETAR SELECIONADAS
+  // ==================== DELETAR SELECIONADAS ====================
   const deleteSelectedNotifications = useCallback(
     async (ids: string[]) => {
       if (ids.length === 0) return;
@@ -125,7 +207,7 @@ const loadHistorico = useCallback(
     [usuarioId],
   );
 
-  // MARCAR COMO LIDA
+  // ==================== MARCAR COMO LIDA ====================
   const markAsRead = useCallback(async (id: string) => {
     const result = await marcarNotificacaoComoLida(id);
     if (!result.error) {
@@ -135,7 +217,7 @@ const loadHistorico = useCallback(
     }
   }, []);
 
-  // MARCAR SELECIONADAS COMO LIDAS
+  // ==================== MARCAR SELECIONADAS COMO LIDAS ====================
   const markSelectedAsRead = useCallback(
     async (ids: string[]) => {
       if (ids.length === 0) return;
@@ -152,7 +234,7 @@ const loadHistorico = useCallback(
     [usuarioId],
   );
 
-  // CONECTAR SSE
+  // ==================== CONECTAR SSE ====================
   const connect = useCallback(() => {
     if (
       eventSourceRef.current?.readyState === EventSource.OPEN ||
@@ -228,7 +310,7 @@ const loadHistorico = useCallback(
     loadHistorico,
   ]);
 
-  // DESCONECTAR SSE
+  // ==================== DESCONECTAR SSE ====================
   const disconnect = useCallback(() => {
     eventSourceRef.current?.close();
     eventSourceRef.current = null;
@@ -242,6 +324,7 @@ const loadHistorico = useCallback(
     setIsConnected(false);
   }, []);
 
+  // ==================== EFEITO INICIAL (CARREGAR HISTÓRICO) ====================
   useEffect(() => {
     if (usuarioId && !hasLoadedInitialRef.current) {
       hasLoadedInitialRef.current = true;
@@ -249,6 +332,7 @@ const loadHistorico = useCallback(
     }
   }, [usuarioId, loadHistorico]);
 
+  // ==================== EFEITO (CONECTAR SSE) ====================
   useEffect(() => {
     if (!usuarioId) return;
 
@@ -256,16 +340,19 @@ const loadHistorico = useCallback(
     return disconnect;
   }, [usuarioId, connect, disconnect]);
 
+  // ==================== REFRESH NOTIFICAÇÕES ====================
   const refreshNotifications = useCallback(
     async () => loadHistorico(),
     [loadHistorico],
   );
 
+  // ==================== RECONECTAR ====================
   const reconnect = useCallback(() => {
     disconnect();
     setTimeout(connect, 500);
   }, [connect, disconnect]);
 
+  // ==================== MEMOIZED VALUE ====================
   const contextValue = useMemo(
     () => ({
       notifications,
@@ -304,7 +391,11 @@ const loadHistorico = useCallback(
   );
 }
 
-// Hook
+/**
+ * @hook useNotifications
+ * @description Hook para acessar o contexto de notificações
+ * Retorna objeto padrão se usado fora do provider (não lança erro)
+ */
 export function useNotifications() {
   return (
     useContext(NotificationContext) ?? {

@@ -22,6 +22,12 @@ interface UserData {
   veiculoCadastrado: boolean;
 }
 
+/**
+ * @function normalizeUserData
+ * @description Normaliza os dados do usuário recebidos da API
+ * @param data - Dados brutos da API
+ * @returns UserData normalizado
+ */
 function normalizeUserData(data: Record<string, unknown>): UserData {
   return {
     id: String(data.id ?? ''),
@@ -51,11 +57,91 @@ type ApiError = {
 
 export const AuthContext = createContext({} as AuthContextData);
 
+/**
+ * @component AuthProvider
+ * @version 1.0.0
+ * 
+ * @description Provider para gerenciamento de autenticação.
+ * Gerencia login, logout, refresh de token e estado do usuário.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. AUTENTICAÇÃO:
+ *    - login: Autenticação com email ou CPF
+ *    - loginWithGoogle: Autenticação via Google OAuth
+ *    - logout: Desconecta usuário e remove token
+ * 
+ * 2. GESTÃO DE ESTADO:
+ *    - user: Dados do usuário logado
+ *    - isAuthenticated: Flag de autenticação
+ *    - loading: Estado de carregamento
+ * 
+ * 3. REFRESH:
+ *    - refreshUser: Atualiza dados do usuário após login
+ *    - Carregamento inicial: useEffect busca dados do usuário
+ * 
+ * 4. TIPOS DE LOGIN:
+ *    - Identificação automática (email ou CPF)
+ *    - Validação de formato
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 RETORNO DO HOOK useAuth:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {boolean} isAuthenticated - Indica se usuário está autenticado
+ * @property {UserData | null} user - Dados do usuário
+ * @property {boolean} loading - Estado de carregamento
+ * @property {(data: { login: string; senha: string }) => Promise<UserData>} login - Função de login
+ * @property {(token: string) => Promise<UserData>} loginWithGoogle - Login com Google
+ * @property {() => void} logout - Função de logout
+ * @property {() => Promise<void>} refreshUser - Atualiza dados do usuário
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - AUTO DETECÇÃO: identifica se input é email ou CPF
+ * - TOKEN EM LOCALSTORAGE: Armazena token JWT
+ * - REFRESH AUTOMÁTICO: useEffect carrega usuário na montagem
+ * - CLEANUP: Remove token e notifica backend no logout
+ * - TRATAMENTO DE ERRO: Mensagens amigáveis por status HTTP
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useAuth: Hook para acessar o contexto
+ * - api: Instância Axios com interceptors
+ * - PrivateRoute: Componente de proteção de rotas
+ * 
+ * @example
+ * ```tsx
+ * // Provider no layout
+ * <AuthProvider>
+ *   <App />
+ * </AuthProvider>
+ * 
+ * // Uso do hook
+ * const { user, login, logout } = useAuth();
+ * 
+ * const handleLogin = async () => {
+ *   try {
+ *     await login({ login: 'joao@email.com', senha: '123456' });
+ *   } catch (error) {
+ *     toast.error(error.message);
+ *   }
+ * };
+ * ```
+ */
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // ==================== REFRESH USUÁRIO ====================
   const refreshUser = useCallback(async () => {
     try {
       const response = await api.get('/petrocarga/auth/me');
@@ -67,10 +153,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // ==================== CARREGAMENTO INICIAL ====================
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
 
+  // ==================== IDENTIFICAR TIPO DE LOGIN ====================
   const identificarTipoLogin = useCallback(
     (identificador: string): 'email' | 'cpf' | 'invalido' => {
       if (!identificador.trim()) return 'invalido';
@@ -91,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  // ==================== LOGIN ====================
   const login = useCallback(
     async ({
       login: identificador,
@@ -182,6 +271,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [identificarTipoLogin, refreshUser],
   );
 
+  // ==================== LOGIN COM GOOGLE ====================
   const loginWithGoogle = useCallback(
     async (googleToken: string) => {
       try {
@@ -219,6 +309,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [refreshUser],
   );
 
+  // ==================== LOGOUT ====================
   const logout = useCallback(async () => {
     const pushToken = localStorage.getItem('pushToken');
 
@@ -236,6 +327,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [router, user]);
 
+  // ==================== MEMOIZED VALUE ====================
   const value = useMemo(
     () => ({
       isAuthenticated: !!user,
@@ -252,6 +344,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/**
+ * @hook useAuth
+ * @description Hook para acessar o contexto de autenticação
+ * @throws {Error} Se usado fora do AuthProvider
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
 
