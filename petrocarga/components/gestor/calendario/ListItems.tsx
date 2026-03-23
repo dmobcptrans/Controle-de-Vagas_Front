@@ -5,6 +5,10 @@ import { Vaga } from '@/lib/types/vaga';
 import { Veiculo } from '@/lib/types/veiculo';
 import { formatTime } from '../../utils/gestor/calendario/utils';
 
+/**
+ * Configuração de status para reservas
+ * Define cores, rótulos e comportamento de cada status
+ */
 const STATUS_CONFIG = {
   ATIVA: {
     label: 'Ativa',
@@ -45,8 +49,26 @@ const STATUS_CONFIG = {
 
 type StatusType = keyof typeof STATUS_CONFIG;
 
-// --- COMPONENTES ---
+// ============================================================================
+// COMPONENTE: LOGADOURO ITEM
+// ============================================================================
 
+/**
+ * @component LogradouroItem
+ * @description Item de logradouro (rua) com resumo de reservas agrupadas.
+ * Exibe contagem de reservas em andamento e finalizadas.
+ * 
+ * @param {string} logradouro - Nome da rua
+ * @param {Reserva[]} reservas - Lista de reservas associadas
+ * @param {() => void} onClick - Função para expandir e ver vagas
+ * 
+ * @example
+ * <LogradouroItem
+ *   logradouro="Rua do Imperador"
+ *   reservas={reservas}
+ *   onClick={() => setLogradouroSelecionado(logradouro)}
+ * />
+ */
 export const LogradouroItem = ({
   logradouro,
   reservas,
@@ -56,6 +78,7 @@ export const LogradouroItem = ({
   reservas: Reserva[];
   onClick: () => void;
 }) => {
+  // Conta reservas ativas (ATIVA/RESERVADA) vs finalizadas
   const counts = useMemo(() => {
     return reservas.reduce(
       (acc, r) => {
@@ -73,9 +96,10 @@ export const LogradouroItem = ({
 
   return (
     <div className="flex items-center justify-between p-3 rounded-md border border-gray-200 hover:border-gray-300 transition-colors bg-white">
+      
+      {/* Informações do logradouro */}
       <div>
         <div className="font-medium text-gray-900">{logradouro}</div>
-
         <div className="flex gap-2 mt-2 text-xs">
           {counts.emAndamento > 0 && (
             <span className="px-2 py-1 rounded-md bg-green-100 text-green-800 font-semibold">
@@ -93,6 +117,7 @@ export const LogradouroItem = ({
         </div>
       </div>
 
+      {/* Botão para ver vagas */}
       <Button variant="outline" size="sm" onClick={onClick}>
         Ver vagas
       </Button>
@@ -100,6 +125,28 @@ export const LogradouroItem = ({
   );
 };
 
+// ============================================================================
+// COMPONENTE: VAGA ITEM
+// ============================================================================
+
+/**
+ * @component VagaItem
+ * @description Item de vaga com indicador visual de atividade.
+ * Mostra se há reservas ativas na vaga.
+ * 
+ * @param {string} vagaId - ID da vaga
+ * @param {Record<string, Vaga | null>} vagasCache - Cache de informações das vagas
+ * @param {Reserva[]} reservas - Lista de reservas associadas
+ * @param {() => void} onClick - Função para ver detalhes das reservas
+ * 
+ * @example
+ * <VagaItem
+ *   vagaId="vaga123"
+ *   vagasCache={vagasCache}
+ *   reservas={reservas}
+ *   onClick={() => setVagaSelecionada(vagaId)}
+ * />
+ */
 export const VagaItem = ({
   vagaId,
   vagasCache,
@@ -113,6 +160,7 @@ export const VagaItem = ({
 }) => {
   const vagaInfo = vagasCache[vagaId] ?? null;
 
+  // Verifica se há alguma reserva ativa
   const temAtividade = reservas.some((r) => {
     const s = r.status as StatusType;
     return STATUS_CONFIG[s]?.isActive;
@@ -123,6 +171,7 @@ export const VagaItem = ({
   return (
     <div className="flex items-center justify-between p-3 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors">
       <div className="flex items-center gap-3">
+        {/* Indicador visual de atividade */}
         <div className={`w-3 h-3 rounded-full shadow-sm ${dotClass}`} />
 
         <div>
@@ -135,6 +184,7 @@ export const VagaItem = ({
           </div>
         </div>
       </div>
+      
       <Button variant="outline" size="sm" onClick={onClick}>
         Ver reservas
       </Button>
@@ -142,6 +192,26 @@ export const VagaItem = ({
   );
 };
 
+// ============================================================================
+// COMPONENTE: RESERVA ITEM
+// ============================================================================
+
+/**
+ * @component ReservaItem
+ * @description Item de reserva individual com status visual.
+ * Exibe horário, status, bairro e placa do veículo.
+ * 
+ * @param {Reserva} reserva - Dados da reserva
+ * @param {Veiculo} [veiculo] - Dados do veículo (opcional)
+ * @param {() => void} onClick - Função para ver detalhes da reserva
+ * 
+ * @example
+ * <ReservaItem
+ *   reserva={reserva}
+ *   veiculo={veiculo}
+ *   onClick={() => setReservaSelecionada(reserva.id)}
+ * />
+ */
 export const ReservaItem = ({
   reserva,
   onClick,
@@ -158,6 +228,7 @@ export const ReservaItem = ({
       className={`flex items-center justify-between p-3 rounded-md border-l-4 bg-white shadow-sm mb-2 ${config.border}`}
     >
       <div className="flex flex-col gap-1">
+        {/* Horário e status */}
         <div className="flex items-center gap-2">
           <span className="font-semibold text-gray-900 text-sm">
             {formatTime(reserva.inicio)} — {formatTime(reserva.fim)}
@@ -169,6 +240,7 @@ export const ReservaItem = ({
           </span>
         </div>
 
+        {/* Localização e placa */}
         <div className="text-xs text-muted-foreground flex items-center gap-2">
           <span>{reserva.enderecoVaga.bairro}</span>
           <span className="w-1 h-1 bg-gray-300 rounded-full" />
