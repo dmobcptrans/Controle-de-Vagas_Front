@@ -15,10 +15,84 @@ interface ReservaAgenteProps {
   onBack?: () => void;
 }
 
+/**
+ * @component ReservaAgente
+ * @version 1.0.0
+ * 
+ * @description Componente de reserva rápida para agentes em 6 etapas.
+ * Gerencia o fluxo completo de reserva: dados do veículo, seleção de dia, horários e confirmação.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO (6 ETAPAS):
+ * ----------------------------------------------------------------------------
+ * 
+ * STEP 1 - DADOS DO VEÍCULO:
+ *    - Tipo de veículo (select com 5 opções)
+ *    - Placa (obrigatória, 7 caracteres)
+ * 
+ * STEP 2 - SELEÇÃO DO DIA:
+ *    - Exibe dias disponíveis (DaySelection)
+ *    - Busca horários disponíveis após seleção
+ * 
+ * STEP 3 - HORÁRIO INICIAL:
+ *    - Lista de horários disponíveis
+ *    - Considera reservas já existentes
+ * 
+ * STEP 4 - HORÁRIO FINAL:
+ *    - Apenas horários posteriores ao início
+ *    - Filtro automático
+ * 
+ * STEP 5 - CONFIRMAÇÃO:
+ *    - Resumo da reserva
+ *    - Botão "Confirmar" com loading state
+ * 
+ * STEP 6 - FEEDBACK:
+ *    - Sucesso: ícone verde com mensagem
+ *    - Erro: ícone vermelho com opção "Tentar novamente"
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - HOOK PERSONALIZADO: useReserva gerencia toda a lógica de negócio
+ *   - Busca de horários disponíveis via API
+ *   - Controle de seleção de dia/horário
+ *   - Submissão da reserva
+ * 
+ * - PREVENÇÃO DE CLIQUE DUPLO: isSubmitting bloqueia envios múltiplos
+ * 
+ * - FILTRO DE HORÁRIOS FINAIS: toMinutes() converte string "HH:MM" para minutos
+ * 
+ * - FEEDBACK COM TOAST: Mensagens adicionais além da tela de feedback
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useReserva: Hook com lógica de reserva
+ * - DaySelection: Seleção de dias disponíveis
+ * - TimeSelection: Seleção de horários
+ * - StepIndicator: Indicador visual de progresso
+ * - Confirmation: Tela de resumo e confirmação
+ * 
+ * @example
+ * ```tsx
+ * <ReservaAgente 
+ *   selectedVaga={vaga}
+ *   onBack={() => setStep('mapa')}
+ * />
+ * ```
+ * 
+ * @see /src/components/hooks/reserva/useReserva.ts - Lógica de reserva
+ */
+
 export default function ReservaAgente({
   selectedVaga,
   onBack,
 }: ReservaAgenteProps) {
+  // --------------------------------------------------------------------------
+  // HOOK DE RESERVA
+  // --------------------------------------------------------------------------
   const reserva = useReserva(selectedVaga);
   const {
     tipoVeiculoAgente,
@@ -39,18 +113,35 @@ export default function ReservaAgente({
     availableDates,
   } = reserva;
 
+  // --------------------------------------------------------------------------
+  // ESTADOS LOCAIS
+  // --------------------------------------------------------------------------
   const [step, setStep] = useState(1);
   const [success, setSuccess] = useState<boolean | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false); // 👈 NOVO: Estado de loading
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ==========================
-  // CONFIRMAR RESERVA
-  // ==========================
+  // --------------------------------------------------------------------------
+  // HANDLER DE CONFIRMAÇÃO
+  // --------------------------------------------------------------------------
+  
+  /**
+   * @function onConfirm
+   * @description Processa a confirmação da reserva
+   * 
+   * Fluxo:
+   * 1. Verifica se já está em andamento (isSubmitting)
+   * 2. Ativa estado de loading
+   * 3. Chama handleConfirm do hook useReserva
+   * 4. Exibe toast de sucesso/erro
+   * 5. Atualiza estados de feedback
+   * 6. Avança para etapa 6 (feedback)
+   * 7. Sempre desativa loading ao final
+   */
   const onConfirm = async () => {
-    if (isSubmitting) return; // 👈 NOVO: Previne clique duplo
+    if (isSubmitting) return;
 
-    setIsSubmitting(true); // 👈 NOVO: Ativa o loading
+    setIsSubmitting(true);
 
     try {
       const result = await handleConfirm();
@@ -65,10 +156,16 @@ export default function ReservaAgente({
       setFeedbackMessage(result.message ?? null);
       setStep(6);
     } finally {
-      setIsSubmitting(false); // 👈 NOVO: Desativa o loading (sempre executa)
+      setIsSubmitting(false);
     }
   };
 
+  /**
+   * @function toMinutes
+   * @description Converte string de hora para minutos (para filtro de horários)
+   * @param h - Hora no formato "HH:MM"
+   * @returns Total de minutos desde meia-noite
+   */
   const toMinutes = (h: string) => {
     const [hh, mm] = h.split(':').map(Number);
     return hh * 60 + mm;
@@ -76,6 +173,8 @@ export default function ReservaAgente({
 
   return (
     <div className="p-4 sm:p-6 border rounded-xl shadow-lg max-w-2xl mx-auto bg-white min-h-[80vh] flex flex-col gap-4">
+      
+      {/* Botão Voltar (antes da etapa de feedback) */}
       {onBack && step < 6 && (
         <button
           onClick={onBack}
@@ -85,13 +184,12 @@ export default function ReservaAgente({
         </button>
       )}
 
-      {/* LOCAL DA RESERVA */}
+      {/* Local da Reserva (antes do feedback) */}
       {step < 6 && (
         <div className="flex flex-col items-center gap-1">
           <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
             Reservando vaga em
           </span>
-
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center leading-tight">
             {selectedVaga.endereco.logradouro}
             <span className="block text-base sm:text-lg font-medium text-gray-500 mt-1">
@@ -101,15 +199,19 @@ export default function ReservaAgente({
         </div>
       )}
 
+      {/* Indicador de Progresso (antes do feedback) */}
       {step < 6 && <StepIndicator step={step} />}
 
       <div className="flex-1 flex flex-col overflow-y-auto pb-4">
-        {/* STEP 1 - Cadastro veículo */}
+        
+        {/* ===================== STEP 1 - DADOS DO VEÍCULO ===================== */}
         {step === 1 && (
           <div className="flex flex-col gap-5 p-2">
             <h3 className="text-md font-semibold text-gray-700">
               1. Informações do Veículo
             </h3>
+            
+            {/* Tipo de veículo */}
             <div>
               <p className="font-medium mb-1">Tipo de veículo</p>
               <select
@@ -127,6 +229,8 @@ export default function ReservaAgente({
                 <option value="CAMINHAO_LONGO">Caminhão longo</option>
               </select>
             </div>
+            
+            {/* Placa */}
             <div>
               <p className="font-medium mb-1">Placa</p>
               <input
@@ -137,6 +241,8 @@ export default function ReservaAgente({
                 maxLength={7}
               />
             </div>
+            
+            {/* Botão próximo */}
             <button
               onClick={() => setStep(2)}
               disabled={!tipoVeiculoAgente || placaAgente.length < 7}
@@ -151,7 +257,7 @@ export default function ReservaAgente({
           </div>
         )}
 
-        {/* STEP 2 - Seleção do dia */}
+        {/* ===================== STEP 2 - SELEÇÃO DO DIA ===================== */}
         {step === 2 && (
           <div className="p-2">
             <h3 className="text-md font-semibold text-gray-700 mb-4">
@@ -161,17 +267,12 @@ export default function ReservaAgente({
               selected={selectedDay}
               onSelect={async (day) => {
                 setSelectedDay(day);
-
-                // --- CORREÇÃO IMPORTANTE AQUI ---
-                // No ReservaComponent você passa o 'vehicleId'.
-                // Aqui, como é agente, passamos o 'tipoVeiculoAgente' como 3º argumento.
-                // Verifique se o seu hook 'fetchHorariosDisponiveis' aceita (string | null) nesse argumento.
+                // Busca horários disponíveis para o tipo de veículo selecionado
                 await fetchHorariosDisponiveis(
                   day,
                   selectedVaga,
                   tipoVeiculoAgente,
                 );
-
                 setStep(3);
               }}
               availableDays={availableDates}
@@ -185,7 +286,7 @@ export default function ReservaAgente({
           </div>
         )}
 
-        {/* STEP 3 - Seleção do horário inicial */}
+        {/* ===================== STEP 3 - HORÁRIO INICIAL ===================== */}
         {step === 3 && selectedDay && (
           <div className="p-2">
             <h3 className="text-md font-semibold text-gray-700 mb-4">
@@ -206,16 +307,15 @@ export default function ReservaAgente({
           </div>
         )}
 
-        {/* STEP 4 - Seleção do horário final */}
+        {/* ===================== STEP 4 - HORÁRIO FINAL ===================== */}
         {step === 4 && startHour && (
           <div className="p-2">
             <h3 className="text-md font-semibold text-gray-700 mb-4">
               4. Horário Final
             </h3>
             <TimeSelection
-              // Filtra garantindo que só mostre horários POSTERIORES ao início
               times={availableTimes.filter(
-                (t) => toMinutes(t) > toMinutes(startHour),
+                (t) => toMinutes(t) > toMinutes(startHour)
               )}
               reserved={reservedTimesEnd}
               selected={endHour}
@@ -229,7 +329,7 @@ export default function ReservaAgente({
           </div>
         )}
 
-        {/* STEP 5 - Resumo e confirmação */}
+        {/* ===================== STEP 5 - CONFIRMAÇÃO ===================== */}
         {step === 5 && startHour && endHour && (
           <Confirmation
             day={selectedDay!}
@@ -243,65 +343,38 @@ export default function ReservaAgente({
           />
         )}
 
-        {/* STEP 6 - FEEDBACK */}
+        {/* ===================== STEP 6 - FEEDBACK ===================== */}
         {step === 6 && (
           <div className="flex-1 flex items-center justify-center w-full animate-in fade-in zoom-in duration-300">
             {success ? (
+              // Tela de Sucesso
               <div className="flex flex-col items-center text-center">
-                {/* Ícone de Sucesso */}
                 <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 shadow-sm animate-scale">
-                  <svg
-                    className="w-10 h-10"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M5 13l4 4L19 7"
-                    />
+                  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
                   Reserva confirmada!
                 </h2>
-
                 <p className="text-gray-600 max-w-sm mb-8 leading-relaxed">
-                  {feedbackMessage ??
-                    'Sua solicitação foi processada com sucesso.'}
+                  {feedbackMessage ?? 'Sua solicitação foi processada com sucesso.'}
                 </p>
               </div>
             ) : (
+              // Tela de Erro
               <div className="flex flex-col items-center text-center">
-                {/* Ícone de Erro */}
                 <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6 shadow-sm animate-scale">
-                  <svg
-                    className="w-10 h-10"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
-
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
                   Ops! Algo deu errado
                 </h2>
-
                 <p className="text-gray-600 max-w-sm mb-8 leading-relaxed">
-                  {feedbackMessage ??
-                    'Não foi possível confirmar sua reserva. Tente novamente.'}
+                  {feedbackMessage ?? 'Não foi possível confirmar sua reserva. Tente novamente.'}
                 </p>
-
                 <button
                   onClick={() => {
                     setStep(5);
