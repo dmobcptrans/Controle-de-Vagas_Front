@@ -16,6 +16,77 @@ interface NotificationCardProps {
   showActions?: boolean;
 }
 
+/**
+ * @component NotificationCard
+ * @version 1.0.0
+ * 
+ * @description Card de exibição de notificação individual.
+ * Exibe título, mensagem, tipo, tempo decorrido e oferece ações de marcar como lida e remover.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 PROPRIEDADES:
+ * ----------------------------------------------------------------------------
+ * 
+ * @property {Notification} notification - Dados da notificação
+ * @property {boolean} selected - Indica se a notificação está selecionada
+ * @property {(id: string) => void} onSelect - Callback para selecionar/desselecionar
+ * @property {(id: string) => void} onMarkAsRead - Callback para marcar como lida
+ * @property {(id: string) => void} onRemove - Callback para remover notificação
+ * @property {boolean} [showCheckbox=true] - Exibe checkbox de seleção
+ * @property {boolean} [showActions=true] - Exibe botões de ação
+ * 
+ * ----------------------------------------------------------------------------
+ * 🎨 COMPORTAMENTO:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. CORES POR TIPO:
+ *    - RESERVA: azul (border-l-blue-500, bg-blue-50)
+ *    - VAGA: verde (border-l-green-500, bg-green-50)
+ *    - VEICULO: roxo (border-l-purple-500, bg-purple-50)
+ *    - MOTORISTA: amarelo (border-l-yellow-500, bg-yellow-50)
+ *    - SISTEMA: cinza (border-l-gray-500, bg-gray-50)
+ * 
+ * 2. ÍCONES POR TIPO:
+ *    - RESERVA: 🚗
+ *    - VAGA: 🅿️
+ *    - VEICULO: 🔧
+ *    - MOTORISTA: 👤
+ *    - SISTEMA: 📢
+ * 
+ * 3. INDICADORES:
+ *    - Não lida: ponto azul pulsante (animate-pulse)
+ *    - Lida: badge verde "Lida" com ícone Check
+ *    - Selecionada: anel azul (ring-2 ring-blue-500)
+ *    - Lida: opacidade reduzida (opacity-60)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useCallback: Memoização das funções de ícone, cor e formatação
+ * - formatDistanceToNow: Exibe tempo relativo (ex: "há 5 minutos")
+ * - Prevenção de propagação: Botões impedem clique no card pai
+ * - Responsividade: Textos e tamanhos adaptativos (xs, sm, md)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Notification: Tipo de notificação
+ * - formatDistanceToNow: date-fns para formatação de tempo
+ * 
+ * @example
+ * ```tsx
+ * <NotificationCard
+ *   notification={notification}
+ *   selected={selectedIds.includes(notification.id)}
+ *   onSelect={toggleSelect}
+ *   onMarkAsRead={markAsRead}
+ *   onRemove={removeNotification}
+ * />
+ * ```
+ */
+
 export function NotificationCard({
   notification,
   selected,
@@ -25,6 +96,11 @@ export function NotificationCard({
   showCheckbox = true,
   showActions = true,
 }: NotificationCardProps) {
+  
+  /**
+   * @function getIconeNotificacao
+   * @description Retorna o ícone emoji baseado no tipo da notificação
+   */
   const getIconeNotificacao = useCallback((tipo: Notification['tipo']) => {
     switch (tipo) {
       case 'RESERVA':
@@ -42,6 +118,10 @@ export function NotificationCard({
     }
   }, []);
 
+  /**
+   * @function getCorNotificacao
+   * @description Retorna classes CSS baseadas no tipo da notificação
+   */
   const getCorNotificacao = useCallback((tipo: Notification['tipo']) => {
     switch (tipo) {
       case 'RESERVA':
@@ -59,6 +139,10 @@ export function NotificationCard({
     }
   }, []);
 
+  /**
+   * @function formatarTempo
+   * @description Formata o timestamp para tempo relativo (ex: "há 5 minutos")
+   */
   const formatarTempo = useCallback((timestamp: string) => {
     try {
       return formatDistanceToNow(new Date(timestamp), {
@@ -78,11 +162,14 @@ export function NotificationCard({
         notification.lida ? 'opacity-60' : ''
       } ${selected ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}`}
       onClick={(e) => {
+        // Impede clique no card quando clicar em botões
         if ((e.target as HTMLElement).closest('button')) return;
         onSelect(notification.id);
       }}
     >
       <div className="flex items-start justify-between gap-3 sm:gap-4">
+        
+        {/* ==================== CHECKBOX ==================== */}
         {showCheckbox && (
           <div className="flex-shrink-0 pt-1">
             <div
@@ -101,10 +188,14 @@ export function NotificationCard({
           </div>
         )}
 
+        {/* ==================== CONTEÚDO PRINCIPAL ==================== */}
         <div className="flex items-start gap-3 flex-1 min-w-0">
+          
+          {/* Ícone emoji */}
           <span className="text-xl sm:text-2xl flex-shrink-0">
             {getIconeNotificacao(notification.tipo)}
           </span>
+          
           <div className="flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
               <div className="min-w-0">
@@ -115,11 +206,13 @@ export function NotificationCard({
                   {notification.mensagem}
                 </p>
               </div>
+              {/* Indicador de não lida (ponto azul pulsante) */}
               {!notification.lida && !selected && (
                 <span className="inline-block h-2 w-2 rounded-full bg-blue-500 flex-shrink-0 self-start sm:self-center animate-pulse"></span>
               )}
             </div>
 
+            {/* Metadados: tipo, tempo, status lida */}
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded whitespace-nowrap">
                 {notification.tipo}
@@ -137,6 +230,7 @@ export function NotificationCard({
           </div>
         </div>
 
+        {/* ==================== BOTÕES DE AÇÃO ==================== */}
         {showActions && (
           <div className="flex flex-row sm:flex-col gap-1 sm:gap-2">
             {!notification.lida && (

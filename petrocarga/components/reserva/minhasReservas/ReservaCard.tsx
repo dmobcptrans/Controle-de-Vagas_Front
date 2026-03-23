@@ -24,20 +24,83 @@ interface ReservaCardProps {
   onCheckout?: (reserva: ReservaGet) => void;
 }
 
+/**
+ * @component ReservaCard
+ * @version 1.0.0
+ * 
+ * @description Card de exibição de reserva com ações contextuais.
+ * Exibe informações da reserva e botões de ação conforme status e horário.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 AÇÕES DISPONÍVEIS:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. GERAR DOCUMENTO:
+ *    - Disponível sempre
+ *    - Gera comprovante PDF da reserva
+ * 
+ * 2. CANCELAR (EXCLUIR):
+ *    - Disponível apenas para status "RESERVADA"
+ *    - Modal de confirmação
+ * 
+ * 3. EDITAR:
+ *    - Disponível quando: status "RESERVADA" E minutosParaInicio > 30
+ *    - Modal de edição
+ * 
+ * 4. CHECK-IN:
+ *    - Disponível quando: status "RESERVADA" E
+ *      agora >= (início - 5 min) E agora <= fim
+ *    - Modal de confirmação
+ * 
+ * 5. CHECKOUT:
+ *    - Disponível quando: status "ATIVA" E agora < fim
+ *    - Modal de confirmação
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useTransition: Gerencia loading de cada ação separadamente
+ * - TEMPO REAL: Intervalo de 60s para atualizar verificação de disponibilidade
+ * - CORES POR STATUS:
+ *   - ATIVA: border-green-900
+ *   - RESERVADA: border-green-500
+ *   - CONCLUIDA: border-b-blue-300
+ *   - REMOVIDA: border-red-500
+ *   - CANCELADA: border-b-blue-200
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - ReservaEditarModal: Modal de edição
+ * - ReservaCheckinModal: Modal de check-in
+ * 
+ * @example
+ * ```tsx
+ * <ReservaCard
+ *   reserva={reserva}
+ *   onGerarDocumento={gerarComprovante}
+ *   onExcluir={excluirReserva}
+ *   onCheckout={checkoutReserva}
+ * />
+ * ```
+ */
+
 export default function ReservaCard({
   reserva: reservaInicial,
   onGerarDocumento,
   onExcluir,
   onCheckout,
 }: ReservaCardProps) {
-  // Estados para loading com useTransition
+  // ==================== LOADING POR AÇÃO (useTransition) ====================
   const [isGeneratingDoc, startDocGeneration] = useTransition();
   const [isCheckingIn, startCheckIn] = useTransition();
   const [isCheckingOut, startCheckOut] = useTransition();
   const [isOpeningEdit, startOpenEdit] = useTransition();
   const [isOpeningDelete, startOpenDelete] = useTransition();
 
-  // Estados existentes
+  // ==================== ESTADOS ====================
   const [currentReserva, setCurrentReserva] =
     useState<ReservaGet>(reservaInicial);
   const [modalAberto, setModalAberto] = useState(false);
@@ -46,41 +109,46 @@ export default function ReservaCard({
   const [modalCheckinAberto, setModalCheckinAberto] = useState(false);
   const [agora, setAgora] = useState(new Date());
 
-  // Atualizar o EDITAR e o CHECKIN
+  // ==================== ATUALIZAÇÃO DE TEMPO ====================
   useEffect(() => {
     const interval = setInterval(() => {
       setAgora(new Date());
-    }, 60000);
+    }, 60000); // atualiza a cada 1 minuto
 
     return () => clearInterval(interval);
   }, []);
 
+  // ==================== CÁLCULOS ====================
   const inicioReserva = new Date(currentReserva.inicio);
   const fimReserva = new Date(currentReserva.fim);
   const minutosParaInicio =
     (inicioReserva.getTime() - agora.getTime()) / 1000 / 60;
 
+  // ==================== REGRAS DE VISIBILIDADE ====================
   const podeEditar =
     currentReserva.status === 'RESERVADA' && minutosParaInicio > 30;
+
   const podeFazerCheckin =
     currentReserva.status === 'RESERVADA' &&
     agora >= new Date(inicioReserva.getTime() - 5 * 60 * 1000) &&
     agora <= fimReserva;
+
   const podeFazerCheckout =
     currentReserva.status === 'ATIVA' && agora < fimReserva;
 
-  // Sincroniza se a lista pai atualizar
+  // ==================== SINCRONIZAÇÃO ====================
   useEffect(() => {
     setCurrentReserva(reservaInicial);
   }, [reservaInicial]);
 
+  // ==================== FUNÇÕES AUXILIARES ====================
   const formatarData = (data: string) =>
     new Date(data).toLocaleString('pt-BR', {
       dateStyle: 'short',
       timeStyle: 'short',
     });
 
-  // Handlers protegidos com useTransition
+  // ==================== HANDLERS (COM useTransition) ====================
   const handleGerarDocumento = () => {
     if (!onGerarDocumento || isGeneratingDoc) return;
 
@@ -131,21 +199,27 @@ export default function ReservaCard({
     setModalEditarAberto(false);
   };
 
+  // ==================== CORES POR STATUS ====================
+  const statusColors = {
+    ATIVA: 'border-green-900',
+    CONCLUIDA: 'border-b-blue-300',
+    RESERVADA: 'border-green-500',
+    REMOVIDA: 'border-red-500',
+    CANCELADA: 'border-b-blue-200',
+  };
+
   return (
     <article
       className={cn(
         'flex flex-col bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow border-l-4 gap-4 w-full',
         'sm:flex-row sm:justify-between',
         'max-sm:gap-3 max-sm:p-3',
-        currentReserva.status === 'ATIVA' && 'border-green-900',
-        currentReserva.status === 'CONCLUIDA' && 'border-b-blue-300',
-        currentReserva.status === 'RESERVADA' && 'border-green-500',
-        currentReserva.status === 'REMOVIDA' && 'border-red-500',
-        currentReserva.status === 'CANCELADA' && 'border-b-blue-200',
+        statusColors[currentReserva.status as keyof typeof statusColors],
       )}
     >
-      {/* Conteúdo principal */}
+      {/* ==================== CONTEÚDO PRINCIPAL ==================== */}
       <div className="flex-1 flex flex-col gap-2 min-w-0">
+        {/* Header: logradouro/bairro + status (desktop) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h3 className="text-base sm:text-lg font-semibold text-gray-800 truncate leading-tight">
             {`${currentReserva.logradouro} - ${currentReserva.bairro}` ||
@@ -171,11 +245,13 @@ export default function ReservaCard({
           </span>
         </div>
 
+        {/* Origem */}
         <p className="text-sm sm:text-base text-gray-500 flex items-center gap-1 truncate leading-tight">
           <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
           {`Local de Origem: ${currentReserva.cidadeOrigem}`}
         </p>
 
+        {/* Datas */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs sm:text-sm text-gray-600">
           <span className="flex items-center gap-1 truncate">
             <Clock className="w-4 h-4 text-gray-400 shrink-0" />
@@ -188,8 +264,10 @@ export default function ReservaCard({
         </div>
       </div>
 
-      {/* Container botão + status mobile */}
+      {/* ==================== AÇÕES ==================== */}
       <div className="flex flex-col items-stretch sm:items-end gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
+        
+        {/* Status (mobile) */}
         <span
           className={cn(
             'sm:hidden px-3 py-1 rounded-full text-xs font-semibold shadow-sm text-center',
@@ -200,7 +278,7 @@ export default function ReservaCard({
           {currentReserva.status}
         </span>
 
-        {/* Botão Gerar Documento com transition */}
+        {/* Botão Gerar Documento */}
         <button
           onClick={handleGerarDocumento}
           disabled={isGeneratingDoc}
@@ -224,9 +302,10 @@ export default function ReservaCard({
           )}
         </button>
 
-        {/* Botões Editar / Excluir / Check-in / Checkout */}
+        {/* Botões de ação (grid) */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2 w-full sm:w-auto">
-          {/* EXCLUIR */}
+          
+          {/* Excluir (apenas RESERVADA) */}
           {currentReserva.status === 'RESERVADA' && (
             <button
               onClick={handleOpenDeleteModal}
@@ -251,7 +330,7 @@ export default function ReservaCard({
             </button>
           )}
 
-          {/* EDITAR */}
+          {/* Editar (apenas RESERVADA e > 30 min antes) */}
           {podeEditar && (
             <button
               onClick={handleOpenEditModal}
@@ -276,7 +355,7 @@ export default function ReservaCard({
             </button>
           )}
 
-          {/* CHECK-IN */}
+          {/* Check-in (5 min antes até o fim) */}
           {podeFazerCheckin && (
             <button
               onClick={handleOpenCheckinModal}
@@ -301,7 +380,7 @@ export default function ReservaCard({
             </button>
           )}
 
-          {/* CHECK-OUT */}
+          {/* Check-out (apenas ATIVA) */}
           {podeFazerCheckout && (
             <button
               onClick={handleOpenCheckoutModal}
@@ -328,6 +407,8 @@ export default function ReservaCard({
         </div>
       </div>
 
+      {/* ==================== MODAIS ==================== */}
+      
       {/* Modal de Exclusão */}
       {modalAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -335,17 +416,14 @@ export default function ReservaCard({
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setModalAberto(false)}
           />
-
           <div className="relative bg-white rounded-2xl p-6 w-96 max-w-full shadow-2xl">
             <h3 className="text-xl font-semibold text-gray-800 mb-3 text-center">
               Confirmar exclusão
             </h3>
-
             <p className="text-gray-600 mb-6 text-center">
               Tem certeza que deseja excluir esta Reserva? Esta ação não pode
               ser desfeita.
             </p>
-
             <div className="flex justify-center gap-3 w-full">
               <button
                 onClick={() => setModalAberto(false)}
@@ -353,7 +431,6 @@ export default function ReservaCard({
               >
                 Cancelar
               </button>
-
               <button
                 onClick={handleExcluir}
                 className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
@@ -372,17 +449,14 @@ export default function ReservaCard({
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setModalAbertoCheckout(false)}
           />
-
           <div className="relative bg-white rounded-2xl p-6 w-96 max-w-full shadow-2xl flex flex-col items-center">
             <h3 className="text-xl font-semibold text-gray-800 mb-3 text-center">
               Confirmar Checkout
             </h3>
-
             <p className="text-gray-600 mb-6 text-center">
               Tem certeza que deseja fazer Checkout? Esta ação não pode ser
               desfeita.
             </p>
-
             <div className="flex justify-center gap-3 w-full">
               <button
                 onClick={() => setModalAbertoCheckout(false)}
@@ -390,7 +464,6 @@ export default function ReservaCard({
               >
                 Cancelar
               </button>
-
               <button
                 onClick={() => {
                   onCheckout?.(currentReserva);
@@ -412,24 +485,7 @@ export default function ReservaCard({
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setModalEditarAberto(false)}
           />
-
-          <div
-            className="
-              relative
-              bg-white
-              rounded-2xl
-              overflow-hidden
-              animate-in
-              fade-in
-              zoom-in-95
-              duration-200
-              w-full
-              sm:w-[600px]
-              max-h-[90vh]
-              flex
-              flex-col
-            "
-          >
+          <div className="relative bg-white rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 w-full sm:w-[600px] max-h-[90vh] flex flex-col">
             <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6">
               <ReservaEditarModal
                 reserva={currentReserva}
@@ -441,7 +497,7 @@ export default function ReservaCard({
         </div>
       )}
 
-      {/* Modal de Checkin */}
+      {/* Modal de Check-in */}
       {modalCheckinAberto && (
         <ReservaCheckinModal
           reserva={currentReserva}
