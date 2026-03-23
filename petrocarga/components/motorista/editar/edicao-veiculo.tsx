@@ -17,8 +17,58 @@ import FormItem from '@/components/form/form-item';
 import { Veiculo } from '@/lib/types/veiculo';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 
+/**
+ * @component EditarVeiculo
+ * @version 1.0.0
+ * 
+ * @description Formulário de edição de veículo para motoristas.
+ * Permite atualizar dados do veículo e proprietário.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 CAMPOS EDITÁVEIS:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. DADOS DO VEÍCULO:
+ *    - Placa (obrigatório)
+ *    - Marca (obrigatório)
+ *    - Modelo (obrigatório)
+ *    - Tipo (obrigatório) - select com 5 opções
+ * 
+ * 2. DADOS DO PROPRIETÁRIO:
+ *    - CPF (opcional, 11 dígitos)
+ *    - CNPJ (opcional, 14 dígitos)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useActionState: Gerencia estado da Server Action
+ * - Wrapper assíncrono: Para compatibilidade com useActionState
+ * - Máscaras: CPF e CNPJ com remoção de caracteres não numéricos
+ * - Hidden inputs: IDs do veículo e usuário (não mostrados no código atual)
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - atualizarVeiculo: Server Action de atualização
+ * - FormItem: Campo com label e descrição
+ * - SelecaoCustomizada: Select estilizado para tipo de veículo
+ * 
+ * @example
+ * ```tsx
+ * <EditarVeiculo veiculo={veiculo} />
+ * ```
+ * 
+ * @see /src/lib/api/veiculoApi.ts - Função atualizarVeiculo
+ */
+
 export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
-  // Wrapper para passar o token na action
+  // ==================== SERVER ACTION ====================
+  /**
+   * Wrapper assíncrono para atualizarVeiculo
+   * Permite uso com useActionState
+   */
   const atualizarComToken = async (prevState: unknown, formData: FormData) => {
     return atualizarVeiculo(formData);
   };
@@ -31,6 +81,8 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">
       <Card className="w-full max-w-5xl mx-auto">
+        
+        {/* Header do card */}
         <CardHeader className="space-y-3 text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
             <TruckIcon className="w-8 h-8 text-white" />
@@ -42,9 +94,12 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
             Altere os dados para editar as Informações do veículo.
           </CardDescription>
         </CardHeader>
+
+        {/* Formulário */}
         <Form action={atualizarVeiculoAction}>
           <CardContent className="p-4 md:p-6 lg:p-8">
-            {/* Mensagem de erro */}
+            
+            {/* ==================== MENSAGEM DE ERRO ==================== */}
             {state?.error && (
               <div className="flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-4 mb-6 text-red-900">
                 <CircleAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
@@ -52,11 +107,12 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
               </div>
             )}
 
+            {/* ==================== SEÇÃO DADOS DO VEÍCULO ==================== */}
             <CardDescription className="text-base text-center mb-6 text-blue-800 font-bold">
               Primeiro, cheque os dados do veículo
             </CardDescription>
 
-            {/* Placa */}
+            {/* Campo Placa */}
             <FormItem
               name="Placa do Veículo"
               description="Digite a placa do veículo no formato ABC1D23. Exemplo: KLD2J19"
@@ -70,7 +126,7 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
               />
             </FormItem>
 
-            {/* Marca */}
+            {/* Campo Marca */}
             <FormItem
               name="Marca do Veículo"
               description="Insira a marca do veículo. Exemplo: Ford, Volkswagen, Chevrolet"
@@ -84,7 +140,7 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
               />
             </FormItem>
 
-            {/* Modelo */}
+            {/* Campo Modelo */}
             <FormItem
               name="Modelo do Veículo"
               description="Ponha o modelo do veículo. Exemplo: Fiesta, Gol, Onix"
@@ -98,7 +154,7 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
               />
             </FormItem>
 
-            {/* Tipo do Veículo */}
+            {/* Campo Tipo do Veículo (select) */}
             <FormItem
               name="Tipo do Veículo"
               description="Selecione o tipo do veículo"
@@ -123,12 +179,13 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
               />
             </FormItem>
 
+            {/* ==================== SEÇÃO DADOS DO PROPRIETÁRIO ==================== */}
             <CardDescription className="text-base text-center mb-6 text-blue-800 font-bold">
               Se houver necessidade, altere apenas um dos campos com os novos
               dados do proprietário do veículo, e apague o outro.
             </CardDescription>
 
-            {/* CPF do Proprietário */}
+            {/* Campo CPF do Proprietário */}
             <FormItem
               name="CPF do Proprietário"
               description="Insira o CPF (apenas números). Exemplo: 12345678900"
@@ -143,33 +200,33 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
                 inputMode="numeric"
                 onInput={(e) => {
                   const target = e.target as HTMLInputElement;
-                  target.value = target.value.replace(/\D/g, ''); // Remove tudo que não é número
+                  target.value = target.value.replace(/\D/g, '');
                 }}
               />
             </FormItem>
 
-            {/* CNPJ do Proprietário */}
+            {/* Campo CNPJ do Proprietário */}
             <FormItem
               name="CNPJ do Proprietário"
               description="Insira o CNPJ (apenas números). Exemplo: 12345678000190"
             >
               <Input
                 className="rounded-sm border-gray-400 text-sm md:text-base"
-                id="cpf"
-                name="cpf"
+                id="cnpj"
+                name="cnpj"
                 placeholder="12345678000190"
                 maxLength={14}
                 type="text"
                 inputMode="numeric"
                 onInput={(e) => {
                   const target = e.target as HTMLInputElement;
-                  target.value = target.value.replace(/\D/g, ''); // Remove tudo que não é número
+                  target.value = target.value.replace(/\D/g, '');
                 }}
               />
             </FormItem>
           </CardContent>
 
-          {/* Footer com botão */}
+          {/* ==================== FOOTER COM BOTÃO ==================== */}
           <CardFooter className="px-4 md:px-6 lg:px-8 pb-6 pt-2">
             <Button
               type="submit"
