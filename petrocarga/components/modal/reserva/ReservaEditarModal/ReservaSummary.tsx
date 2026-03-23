@@ -31,6 +31,73 @@ interface ReservaSummaryProps {
   hasUser: boolean;
 }
 
+/**
+ * @component ReservaSummary
+ * @version 1.0.0
+ * 
+ * @description Componente de resumo da reserva para edição.
+ * Exibe as informações atuais da reserva com botões de edição e salvar.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 INFORMAÇÕES EXIBIDAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * 1. CARD VEÍCULO/ORIGEM:
+ *    - Ícone Car (azul)
+ *    - Veículo: modelo e placa
+ *    - Origem: cidade com ícone MapPin
+ *    - Botão de edição (Pencil)
+ * 
+ * 2. CARD HORÁRIO:
+ *    - Ícone Clock (índigo)
+ *    - Data formatada (ex: "segunda, 15 de janeiro")
+ *    - Horário de início e fim
+ *    - Botão de edição (desabilitado se não houver vaga)
+ * 
+ * 3. BOTÃO SALVAR:
+ *    - Só aparece se houver alterações
+ *    - Estado de loading com spinner
+ *    - Desabilitado se saving ou sem usuário
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - FORMAÇÃO DE DATAS:
+ *   - formatDate: "segunda, 15 de janeiro" (short weekday, day, long month)
+ *   - formatTime: "HH:MM"
+ * 
+ * - DETECÇÃO DE ALTERAÇÕES:
+ *   - hasChanges compara form com initialForm e veiculo.id com initialVeiculoId
+ *   - Botão salvar só aparece se houver mudanças
+ * 
+ * - ANIMAÇÕES: fade-in, slide-in (Tailwind)
+ * - DISABLED: Botão de editar horário desabilitado se vaga for null
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - Veiculo: Tipo de veículo
+ * - Vaga: Tipo de vaga
+ * 
+ * @example
+ * ```tsx
+ * <ReservaSummary
+ *   form={form}
+ *   initialForm={initialForm}
+ *   veiculo={veiculo}
+ *   initialVeiculoId={initialForm.veiculoId}
+ *   vaga={vaga}
+ *   isSaving={isSaving}
+ *   onEditVehicle={() => setEditField('veiculo-origem')}
+ *   onEditTime={() => setEditField('horario')}
+ *   onSave={handleSave}
+ *   hasUser={!!user}
+ * />
+ * ```
+ */
+
 export function ReservaSummary({
   form,
   initialForm,
@@ -43,6 +110,8 @@ export function ReservaSummary({
   onSave,
   hasUser,
 }: ReservaSummaryProps) {
+  
+  // ==================== FORMATAÇÃO DE DATAS ====================
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString('pt-BR', {
       weekday: 'short',
@@ -56,9 +125,7 @@ export function ReservaSummary({
       minute: '2-digit',
     });
 
-  /* =====================
-     DETECTA ALTERAÇÕES
-  ====================== */
+  // ==================== DETECÇÃO DE ALTERAÇÕES ====================
   const hasChanges =
     form.inicio !== initialForm.inicio ||
     form.fim !== initialForm.fim ||
@@ -67,7 +134,8 @@ export function ReservaSummary({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-300">
-      {/* Card Veículo / Origem */}
+      
+      {/* ==================== CARD VEÍCULO / ORIGEM ==================== */}
       <div className="rounded-xl border border-gray-100 bg-white p-5 flex justify-between gap-4 hover:border-gray-200 transition">
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-gray-900 font-medium">
@@ -76,6 +144,7 @@ export function ReservaSummary({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            {/* Veículo */}
             <div>
               <p className="text-gray-500">Veículo</p>
               <p className="text-gray-800 font-medium">
@@ -85,6 +154,7 @@ export function ReservaSummary({
               </p>
             </div>
 
+            {/* Origem */}
             <div>
               <p className="text-gray-500">Origem</p>
               <div className="flex items-center gap-1 text-gray-800 font-medium">
@@ -95,6 +165,7 @@ export function ReservaSummary({
           </div>
         </div>
 
+        {/* Botão editar veículo/origem */}
         <button
           onClick={onEditVehicle}
           className="shrink-0 h-9 w-9 flex items-center justify-center rounded-full text-gray-400 hover:text-blue-600 hover:bg-gray-100 transition"
@@ -103,7 +174,7 @@ export function ReservaSummary({
         </button>
       </div>
 
-      {/* Card Horário */}
+      {/* ==================== CARD HORÁRIO ==================== */}
       <div className="rounded-xl border border-gray-100 bg-white p-5 flex justify-between gap-4 hover:border-gray-200 transition">
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-gray-900 font-medium">
@@ -121,6 +192,7 @@ export function ReservaSummary({
           </div>
         </div>
 
+        {/* Botão editar horário (desabilitado se não houver vaga) */}
         <button
           disabled={!vaga}
           onClick={onEditTime}
@@ -134,7 +206,7 @@ export function ReservaSummary({
         </button>
       </div>
 
-      {/* Botão Salvar — só aparece se houve alteração */}
+      {/* ==================== BOTÃO SALVAR ==================== */}
       {hasChanges && (
         <div className="pt-6 animate-in fade-in slide-in-from-bottom-2">
           <button

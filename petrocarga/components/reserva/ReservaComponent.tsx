@@ -16,6 +16,77 @@ interface ReservaComponentProps {
   onBack?: () => void;
 }
 
+/**
+ * @component ReservaComponent
+ * @version 1.0.0
+ * 
+ * @description Componente principal de reserva de vagas para motoristas em 6 etapas.
+ * Gerencia o fluxo completo de reserva: seleção de dia, veículo/origem, horários e confirmação.
+ * 
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO (6 ETAPAS):
+ * ----------------------------------------------------------------------------
+ * 
+ * STEP 1 - SELEÇÃO DO DIA:
+ *    - Exibe dias disponíveis (DaySelection)
+ *    - Avança para etapa 2
+ * 
+ * STEP 2 - ORIGEM E VEÍCULO:
+ *    - Cidade de origem
+ *    - Ponto de entrada na cidade (opcional)
+ *    - Seleção do veículo (lista do usuário)
+ *    - Avança para etapa 3
+ * 
+ * STEP 3 - HORÁRIO INICIAL:
+ *    - Carregamento de horários disponíveis
+ *    - Lista de horários (TimeSelection)
+ *    - Avança para etapa 4
+ * 
+ * STEP 4 - HORÁRIO FINAL:
+ *    - Filtra horários posteriores ao início
+ *    - Lista de horários (TimeSelection)
+ *    - Avança para etapa 5
+ * 
+ * STEP 5 - CONFIRMAÇÃO:
+ *    - Resumo da reserva (Confirmation)
+ *    - Botão "Confirmar" com loading
+ * 
+ * STEP 6 - FEEDBACK:
+ *    - Sucesso: ícone verde, mensagem, botão "Ir para minhas reservas"
+ *    - Erro: ícone vermelho, mensagem, botão "Tentar novamente"
+ * 
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - HOOK PERSONALIZADO: useReserva gerencia toda a lógica de negócio
+ * - LOADING HORÁRIOS: Exibe spinner enquanto carrega
+ * - SEM HORÁRIOS: Mensagem amigável com botão "Voltar"
+ * - FILTRO DE HORÁRIOS FINAIS: toMinutes() para comparação
+ * - REDIRECIONAMENTO: Após sucesso, botão leva para página de reservas
+ * 
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * - useReserva: Hook com lógica de reserva
+ * - StepIndicator: Indicador de progresso (5 etapas)
+ * - DaySelection: Seleção de dias disponíveis
+ * - OriginVehicleStep: Formulário de origem e veículo
+ * - TimeSelection: Seleção de horários
+ * - Confirmation: Tela de resumo e confirmação
+ * 
+ * @example
+ * ```tsx
+ * <ReservaComponent
+ *   selectedVaga={vaga}
+ *   onBack={() => setStep('mapa')}
+ * />
+ * ```
+ * 
+ * @see /src/components/hooks/reserva/useReserva.ts - Lógica de reserva
+ */
+
 export default function ReservaComponent({
   selectedVaga,
   onBack,
@@ -23,6 +94,7 @@ export default function ReservaComponent({
   const router = useRouter();
   const reserva = useReserva(selectedVaga);
 
+  // ==================== DESTRUTURAÇÃO DO HOOK ====================
   const {
     step,
     availableDates,
@@ -52,15 +124,20 @@ export default function ReservaComponent({
   const [success, setSuccess] = useState<boolean | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
+  // ==================== FORMATAR VEÍCULOS ====================
   const vehiclesForStep = vehicles.map((v) => ({
     id: v.id,
     name: `${v.marca} ${v.modelo}`,
     plate: v.placa,
   }));
 
-  // ==========================
-  // CONFIRMAR RESERVA
-  // ==========================
+  // ==================== FUNÇÃO AUXILIAR ====================
+  const toMinutes = (h: string) => {
+    const [hh, mm] = h.split(':').map(Number);
+    return hh * 60 + mm;
+  };
+
+  // ==================== HANDLER DE CONFIRMAÇÃO ====================
   const onConfirm = async () => {
     const result = await handleConfirm();
 
@@ -75,13 +152,10 @@ export default function ReservaComponent({
     setStep(6);
   };
 
-  const toMinutes = (h: string) => {
-    const [hh, mm] = h.split(':').map(Number);
-    return hh * 60 + mm;
-  };
-
   return (
     <div className="p-4 sm:p-6 border rounded-xl shadow-lg max-w-2xl mx-auto bg-white min-h-[80vh] flex flex-col gap-4">
+      
+      {/* ==================== BOTÃO VOLTAR ==================== */}
       {onBack && step < 6 && (
         <button
           onClick={onBack}
@@ -90,6 +164,8 @@ export default function ReservaComponent({
           Voltar ao mapa
         </button>
       )}
+
+      {/* ==================== LOCAL DA RESERVA ==================== */}
       <div className="flex flex-col items-center gap-1">
         <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
           Reservando Vaga Em
@@ -102,10 +178,12 @@ export default function ReservaComponent({
         </h2>
       </div>
 
+      {/* ==================== INDICADOR DE PROGRESSO ==================== */}
       {step < 6 && <StepIndicator step={step} />}
 
       <div className="flex-1 flex flex-col overflow-y-auto pb-4">
-        {/* STEP 1 - Seleção do dia */}
+        
+        {/* ==================== STEP 1: SELEÇÃO DO DIA ==================== */}
         {step === 1 && (
           <DaySelection
             selected={selectedDay}
@@ -117,7 +195,7 @@ export default function ReservaComponent({
           />
         )}
 
-        {/* STEP 2 - Origem e veículo */}
+        {/* ==================== STEP 2: ORIGEM E VEÍCULO ==================== */}
         {step === 2 && (
           <OriginVehicleStep
             vehicles={vehiclesForStep}
@@ -139,10 +217,11 @@ export default function ReservaComponent({
           />
         )}
 
-        {/* STEP 3 - Seleção do horário inicial */}
+        {/* ==================== STEP 3: HORÁRIO INICIAL ==================== */}
         {step === 3 &&
           selectedDay &&
           (loadingHorarios || !horariosCarregados ? (
+            // Loading
             <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
               <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
               <p className="text-sm text-gray-600">
@@ -150,6 +229,7 @@ export default function ReservaComponent({
               </p>
             </div>
           ) : availableTimes.length === 0 ? (
+            // Sem horários
             <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
               <p className="text-sm text-gray-600">
                 Nenhum horário disponível para o dia selecionado.
@@ -176,7 +256,7 @@ export default function ReservaComponent({
             />
           ))}
 
-        {/* STEP 4 - Seleção do horário final */}
+        {/* ==================== STEP 4: HORÁRIO FINAL ==================== */}
         {step === 4 && startHour && (
           <TimeSelection
             times={availableTimes.filter(
@@ -193,7 +273,7 @@ export default function ReservaComponent({
           />
         )}
 
-        {/* STEP 5 - Confirmação */}
+        {/* ==================== STEP 5: CONFIRMAÇÃO ==================== */}
         {step === 5 && (
           <Confirmation
             day={selectedDay!}
@@ -212,12 +292,12 @@ export default function ReservaComponent({
           />
         )}
 
-        {/* STEP 6 - FEEDBACK */}
+        {/* ==================== STEP 6: FEEDBACK ==================== */}
         {step === 6 && (
           <div className="flex-1 flex items-center justify-center w-full animate-in fade-in zoom-in duration-300">
             {success ? (
+              // Tela de Sucesso
               <div className="flex flex-col items-center text-center">
-                {/* Ícone de Sucesso */}
                 <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 shadow-sm animate-scale">
                   <svg
                     className="w-10 h-10"
@@ -233,16 +313,13 @@ export default function ReservaComponent({
                     />
                   </svg>
                 </div>
-
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
                   Reserva confirmada!
                 </h2>
-
                 <p className="text-gray-600 max-w-sm mb-8 leading-relaxed">
                   {feedbackMessage ??
                     'Sua solicitação foi processada com sucesso.'}
                 </p>
-
                 <button
                   onClick={() => router.push('/motorista/reservas')}
                   className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all shadow-lg active:scale-95"
@@ -251,8 +328,8 @@ export default function ReservaComponent({
                 </button>
               </div>
             ) : (
+              // Tela de Erro
               <div className="flex flex-col items-center text-center">
-                {/* Ícone de Erro */}
                 <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6 shadow-sm animate-scale">
                   <svg
                     className="w-10 h-10"
@@ -268,16 +345,13 @@ export default function ReservaComponent({
                     />
                   </svg>
                 </div>
-
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
                   Ops! Algo deu errado
                 </h2>
-
                 <p className="text-gray-600 max-w-sm mb-8 leading-relaxed">
                   {feedbackMessage ??
                     'Não foi possível confirmar sua reserva. Tente novamente.'}
                 </p>
-
                 <button
                   onClick={() => {
                     setStep(5);
