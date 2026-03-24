@@ -106,10 +106,10 @@ export default function Confirmation({
   };
 
   return (
-    <div className="p-4 border rounded shadow-md">
+    <div className="flex flex-col gap-2">
       
       {/* ==================== TÍTULO ==================== */}
-      <h3 className="text-lg font-semibold mb-2">Resumo da Reserva</h3>
+      <p className="font-semibold mb-3 text-center">Resumo da Reserva</p>
       
       {/* ==================== DADOS DA RESERVA ==================== */}
       <p>

@@ -78,7 +78,7 @@ export default function StepIndicator({ step }: StepIndicatorProps) {
   const ratio = segments > 0 ? (step - 1) / segments : 0; // 0..1
 
   return (
-    <div className="relative mb-10 w-full">
+    <div className="relative mb-4 w-full">
       
       {/* ==================== LINHA DE PROGRESSO (FUNDO) ==================== */}
       <div className="absolute top-5 left-0 right-0 px-5">

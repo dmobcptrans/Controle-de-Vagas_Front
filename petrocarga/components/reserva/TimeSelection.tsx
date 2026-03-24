@@ -101,7 +101,7 @@ export default function TimeSelection({
 
   return (
     <div className="w-full">
-      <p className="font-semibold mb-3">Escolha o horário:</p>
+      <p className="font-semibold mb-3 text-center">Escolha o horário</p>
 
       <div className="grid grid-cols-3 gap-3 w-full">
         {times.map((time) => {

@@ -304,7 +304,7 @@ export default function Dashboard() {
 
                 {/* Tutorial */}
                 <Link
-                    href="/motorista/tutorial"
+                    href="/motorista/guia"
                     className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"
                 >
                     <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
