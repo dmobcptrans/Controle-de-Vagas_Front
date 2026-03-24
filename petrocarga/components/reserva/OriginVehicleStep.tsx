@@ -96,7 +96,7 @@ export default function OriginVehicleStep({
   const [isFocused, setIsFocused] = useState(false);
   const [origem, setOrigem] = useState('');
 
-  const suggestions = useMapboxSuggestions(localOrigin);
+  const suggestions = useMapboxSuggestions(localOrigin, true) as { label: string }[];
 
   // ==================== HANDLERS ====================
   const handleSelectSuggestion = (place: string) => {
@@ -174,9 +174,9 @@ export default function OriginVehicleStep({
                   <li
                     key={index}
                     className="p-2 hover:bg-blue-100 cursor-pointer"
-                    onMouseDown={() => handleSelectSuggestion(place)}
+                    onMouseDown={() => handleSelectSuggestion(place.label)}
                   >
-                    {place}
+                    {place.label}
                   </li>
                 ))}
               </ul>
