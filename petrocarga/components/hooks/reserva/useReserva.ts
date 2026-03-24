@@ -329,7 +329,11 @@ export function useReserva(selectedVaga: Vaga | null) {
         return false;
       });
     },
-    [reservaState],
+    [
+      reservaState.selectedDay,
+      reservaState.availableTimes,
+      reservaState.reservedTimesStart
+    ],
   );
 
   // Atualiza horários finais quando horário inicial muda
@@ -363,7 +367,7 @@ export function useReserva(selectedVaga: Vaga | null) {
       try {
         const r = await getVeiculosUsuario(user.id);
         if (!r.error) setVehicles(r.veiculos);
-      } catch {}
+      } catch { }
     };
     loadVehicles();
   }, [user, isAgente]);
