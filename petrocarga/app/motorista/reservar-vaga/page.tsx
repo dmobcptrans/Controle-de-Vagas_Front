@@ -5,7 +5,7 @@ import { MapReserva } from '@/components/map/MapReserva';
 import ReservaComponent from '@/components/reserva/ReservaComponent';
 import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
 import { Vaga } from '@/lib/types/vaga';
-import { Search, MapPin, X } from 'lucide-react';
+import { Search, MapPin, X, MapIcon } from 'lucide-react';
 
 
 type Suggestion = {
@@ -198,7 +198,7 @@ export default function ReservaPage() {
 
               {/* Ícone */}
               <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
-                <MapPin className="h-5 w-5 text-white" />
+                <MapIcon className="h-5 w-5 text-white" onClick={handleBackToMap}/>
               </div>
 
             </div>

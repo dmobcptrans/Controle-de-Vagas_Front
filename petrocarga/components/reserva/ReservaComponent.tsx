@@ -155,28 +155,8 @@ export default function ReservaComponent({
   return (
     <div className="p-4 sm:p-6 border rounded-xl shadow-lg max-w-2xl mx-auto bg-white min-h-[80vh] flex flex-col gap-4">
       
-      {/* ==================== BOTÃO VOLTAR ==================== */}
-      {onBack && step < 6 && (
-        <button
-          onClick={onBack}
-          className="px-3 py-2 w-fit bg-gray-200 rounded-lg text-sm sm:text-base"
-        >
-          Voltar ao mapa
-        </button>
-      )}
 
-      {/* ==================== LOCAL DA RESERVA ==================== */}
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
-          Reservando Vaga Em
-        </span>
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center leading-tight">
-          {selectedVaga.endereco.logradouro}
-          <span className="block text-base sm:text-lg font-medium text-gray-500 mt-1">
-            {selectedVaga.endereco.bairro}
-          </span>
-        </h2>
-      </div>
+
 
       {/* ==================== INDICADOR DE PROGRESSO ==================== */}
       {step < 6 && <StepIndicator step={step} />}
