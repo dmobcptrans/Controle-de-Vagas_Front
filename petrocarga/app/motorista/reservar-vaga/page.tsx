@@ -63,7 +63,7 @@ export default function ReservaPage() {
     <div className="min-h-screen bg-[#f5f5f0]">
 
       {/* ── Header ── */}
-      <header className="bg-blue-800 px-4 pt-5 pb-7 sm:px-8">
+      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
             Reservar Vaga
