@@ -120,9 +120,7 @@ export default function DaySelection({
   return (
     <div className="flex justify-center">
       <div>
-        <p className="font-semibold mb-4 text-center text-lg">
-          Selecione o dia:
-        </p>
+        <p className="font-semibold mb-3 text-center">Selecione um dia</p>
 
         <DayPicker
           mode="single"

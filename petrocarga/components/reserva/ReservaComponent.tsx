@@ -153,7 +153,7 @@ export default function ReservaComponent({
   };
 
   return (
-    <div className="p-4 sm:p-6 border rounded-xl shadow-lg max-w-2xl mx-auto bg-white min-h-[80vh] flex flex-col gap-4">
+    <div className="p-4 sm:p-6 border rounded-xl shadow-lg max-w-2xl mx-auto bg-white min-h-[60vh] flex flex-col">
       
 
 

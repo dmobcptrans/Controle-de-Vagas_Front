@@ -5,7 +5,8 @@ import { MapReserva } from '@/components/map/MapReserva';
 import ReservaComponent from '@/components/reserva/ReservaComponent';
 import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
 import { Vaga } from '@/lib/types/vaga';
-import { Search, MapPin, X, MapIcon } from 'lucide-react';
+import { Search, MapPin, X, MapIcon, Info } from 'lucide-react';
+import Link from 'next/link';
 
 
 type Suggestion = {
@@ -198,7 +199,7 @@ export default function ReservaPage() {
 
               {/* Ícone */}
               <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
-                <MapIcon className="h-5 w-5 text-white" onClick={handleBackToMap}/>
+                <MapIcon className="h-5 w-5 text-white" onClick={handleBackToMap} />
               </div>
 
             </div>
@@ -210,7 +211,7 @@ export default function ReservaPage() {
         ══════════════════════════════════════════ */}
         {step === 'mapa' && (
           <div className="flex flex-col items-center justify-center">
-            <div className="w-full h-[calc(88vh-120px)] md:h-[70vh] lg:h-[75vh] rounded-lg overflow-hidden shadow-md mb-4">
+            <div className="w-full h-[calc(75vh-120px)] md:h-[70vh] lg:h-[75vh] rounded-xl overflow-hidden shadow-md mb-4">
               <MapReserva onClickVaga={handleSelectVaga} selectedLocation={selectedLocation} />
             </div>
           </div>
@@ -220,11 +221,30 @@ export default function ReservaPage() {
             ETAPA 2: FORMULÁRIO
         ══════════════════════════════════════════ */}
         {step === 'reserva' && selectedVaga && (
-          <ReservaComponent
-            selectedVaga={selectedVaga}
-            onBack={handleBackToMap}
-          />
+          <div className='mb-4'>
+            <ReservaComponent
+              selectedVaga={selectedVaga}
+              onBack={handleBackToMap}
+            />
+          </div>
+
         )}
+
+        {/* Tutorial */}
+        <Link
+          href="/motorista/guia"
+          className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"
+        >
+          <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+            <Info className="h-5 w-5 text-[#1351B4]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#071D41]">Novo por aqui?</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Veja como usar o sistema em 3 passos simples
+            </p>
+          </div>
+        </Link>
       </main>
     </div>
   );

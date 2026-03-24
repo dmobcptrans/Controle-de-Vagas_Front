@@ -132,9 +132,10 @@ export default function OriginVehicleStep({
 
   return (
     <div className="flex flex-col gap-4">
-      
+      <p className="font-semibold mb-3 text-center">Preencha os dados de origem</p>
       {/* ==================== SELEÇÃO DE ORIGEM ==================== */}
       <div>
+        
         <label className="block font-semibold mb-1">
           A carga vem de Petrópolis?
         </label>
