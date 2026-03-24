@@ -28,13 +28,12 @@ import ReservaPlacaCard from '@/components/agente/cards/reservaPlaca-card';
  * ----------------------------------------------------------------------------
  *
  * 1. USUÁRIO DIGITA PLACA:
- *    - Formatação automática (ex: ABC-1234)
- *    - Maiúsculas automáticas
- *    - Limite de 8 caracteres (AAA-1234)
+ *    - Caixa alta automática
+ *    - Limite de 7 caracteres
  *
  * 2. VALIDAÇÃO:
  *    - Placa não pode estar vazia
- *    - Mínimo de caracteres (formatados automaticamente)
+ *    - Mínimo de caracteres
  *
  * 3. BUSCA NA API:
  *    - Chama endpoint de reservas por placa
@@ -50,8 +49,8 @@ import ReservaPlacaCard from '@/components/agente/cards/reservaPlaca-card';
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
  *
- * - FORMATAÇÃO AUTOMÁTICA: função formatarPlaca aplica máscara AAA-1234
- *   em tempo real, melhorando UX e garantindo formato consistente.
+ * - FORMATAÇÃO AUTOMÁTICA: função formatarPlaca remove caracteres não
+ *   alfanuméricos, aplica caixa alta e limita a 7 caracteres.
  *
  * - ESTADOS DE UI CONTROLADOS:
  *   - searched: controla se busca já foi realizada (exibe mensagens diferentes)
@@ -80,7 +79,8 @@ import ReservaPlacaCard from '@/components/agente/cards/reservaPlaca-card';
  * ----------------------------------------------------------------------------
  *
  * - Placa não vazia
- * - Formato automático garante consistência
+ * - Caixa alta automática
+ * - Limite de 7 caracteres
  * - Tratamento de erros da API
  *
  * ----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ import ReservaPlacaCard from '@/components/agente/cards/reservaPlaca-card';
  * ----------------------------------------------------------------------------
  *
  * - Feedback visual para todos os estados (loading, erro, vazio, sucesso)
- * - Formatação automática da placa em maiúsculas com hífen
+ * - Formatação automática da placa em maiúsculas sem hífen
  * - Cards de informações antes da primeira busca
  * - Contador de reservas por status
  * - Design responsivo (mobile/desktop)
@@ -123,9 +123,7 @@ const STATUS_RESERVA = [
  * Configurações de formatação da placa
  */
 const PLACA_CONFIG = {
-  MAX_LENGTH: 7, // AAA1234 (sem hífen)
-  DISPLAY_LENGTH: 8, // AAA-1234 (com hífen)
-  FORMAT_POSITION: 3, // Posição para inserir o hífen
+  MAX_LENGTH: 7,
 } as const;
 
 /**
@@ -143,7 +141,7 @@ const INFO_MESSAGES = {
   TITULO: 'Consultar Reservas por Placa',
   DESCRICAO:
     'Busque todas as reservas ativas ou reservadas de um motorista através da placa do veículo',
-  PLACA_HINT: 'Placa no formato AAA-0000',
+  PLACA_HINT: 'Placa no formato AAA0000 ou AAA0A00',
   STATUS_HINT: 'Mostra reservas ativas e reservadas',
   LOCAL_HINT: 'Inclui localização da vaga',
   SEM_RESULTADOS: (placa: string) =>
@@ -156,39 +154,23 @@ const INFO_MESSAGES = {
 
 /**
  * @function formatarPlaca
- * @description Formata uma string para o padrão de placa brasileira (AAA-1234)
+ * @description Formata uma string para o padrão de placa sem hífen
  *
  * Regras:
  * 1. Remove caracteres não alfanuméricos
  * 2. Converte para maiúsculas
- * 3. Limita a 7 caracteres (sem contar o hífen)
- * 4. Insere hífen após o terceiro caractere
+ * 3. Limita a 7 caracteres
  *
  * @param value - String a ser formatada
- * @returns String formatada como placa (ex: ABC-1234)
+ * @returns String formatada como placa (ex: ABC1234)
  *
  * @example
- * formatarPlaca('abc1234') // 'ABC-1234'
- * formatarPlaca('abc-123') // 'ABC-123'
+ * formatarPlaca('abc1234') // 'ABC1234'
+ * formatarPlaca('abc-1234') // 'ABC1234'
  * formatarPlaca('abc') // 'ABC'
  */
 function formatarPlaca(value: string): string {
-  // Remove caracteres especiais e converte para maiúsculas
-  const formatted = value
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .toUpperCase()
-    .slice(0, PLACA_CONFIG.MAX_LENGTH);
-
-  // Insere hífen após o terceiro caractere se houver mais de 3
-  if (formatted.length > PLACA_CONFIG.FORMAT_POSITION) {
-    return (
-      formatted.slice(0, PLACA_CONFIG.FORMAT_POSITION) +
-      '-' +
-      formatted.slice(PLACA_CONFIG.FORMAT_POSITION)
-    );
-  }
-
-  return formatted;
+  return value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, PLACA_CONFIG.MAX_LENGTH);
 }
 
 export default function ConsultarPlacaPage() {
@@ -336,7 +318,7 @@ export default function ConsultarPlacaPage() {
                 ⚡ Busca rápida
               </h4>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Formato automático da placa</li>
+                <li>• Caixa alta automática</li>
                 <li>• Busca com Enter</li>
                 <li>• Filtro por status</li>
                 <li>• Resultados em tempo real</li>
@@ -423,7 +405,6 @@ export default function ConsultarPlacaPage() {
   return (
     <div className="p-4 md:p-6 lg:p-8 flex flex-col items-center w-full min-h-screen bg-gray-50">
       <div className="w-full max-w-6xl">
-        {/* Header da página */}
         <div className="mb-6 md:mb-8 text-center">
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
             {INFO_MESSAGES.TITULO}
@@ -450,12 +431,12 @@ export default function ConsultarPlacaPage() {
                   <Input
                     id="placa"
                     type="text"
-                    placeholder="Digite a placa (ex: ABC-1234)"
+                    placeholder="Digite a placa (ex: ABC1234)"
                     value={placa}
                     onChange={handlePlacaChange}
                     onKeyDown={handleKeyDown}
                     className="pl-10 text-lg font-mono uppercase"
-                    maxLength={PLACA_CONFIG.DISPLAY_LENGTH}
+                    maxLength={PLACA_CONFIG.MAX_LENGTH}
                     disabled={loading}
                   />
                 </div>
