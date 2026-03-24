@@ -6,11 +6,18 @@ interface MapboxContext {
   text: string;
 }
 
+interface SuggestionWithCoords {
+  label: string;
+  lat: number;
+  lng: number;
+}
+
 interface MapboxFeature {
   id: string;
   text: string;
   place_name: string;
   context?: MapboxContext[];
+  center: [number, number];
 }
 
 interface MapboxResponse {
@@ -98,8 +105,13 @@ interface MapboxResponse {
  * ```
  */
 
-export function useMapboxSuggestions(query: string) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+export function useMapboxSuggestions(
+  query: string,
+  withCoords: boolean = false
+) {
+  const [suggestions, setSuggestions] = useState<
+    string[] | SuggestionWithCoords[]
+  >([]);
   const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   useEffect(() => {
@@ -122,22 +134,48 @@ export function useMapboxSuggestions(query: string) {
         const data: MapboxResponse = await response.json();
 
         // Formata os resultados para exibição amigável
-        const places =
-          data.features?.map((f) => {
-            const context = f.context ?? [];
+        let places: string[] | SuggestionWithCoords[] = [];
 
-            // Extrai cidade e estado do contexto
-            const city = context.find((c) => c.id.includes('place'))?.text;
-            const state = context.find((c) => c.id.includes('region'))?.text;
-            const street = f.text; // nome da rua/avenida
+        if (withCoords) {
+          places =
+            data.features?.map((f) => {
+              const context = f.context ?? [];
 
-            // Formatação: prioriza rua + cidade + estado
-            if (street && city && state) return `${street}, ${city} - ${state}`;
-            if (city && state) return `${city} - ${state}`;
-            
-            // Fallback: place_name original
-            return f.place_name;
-          }) ?? [];
+              const city = context.find((c) => c.id.includes('place'))?.text;
+              const state = context.find((c) => c.id.includes('region'))?.text;
+              const street = f.text;
+
+              let label = f.place_name;
+
+              if (street && city && state) {
+                label = `${street}, ${city} - ${state}`;
+              } else if (city && state) {
+                label = `${city} - ${state}`;
+              }
+
+              const [lng, lat] = f.center;
+
+              return {
+                label,
+                lat,
+                lng,
+              };
+            }) ?? [];
+        } else {
+          places =
+            data.features?.map((f) => {
+              const context = f.context ?? [];
+
+              const city = context.find((c) => c.id.includes('place'))?.text;
+              const state = context.find((c) => c.id.includes('region'))?.text;
+              const street = f.text;
+
+              if (street && city && state) return `${street}, ${city} - ${state}`;
+              if (city && state) return `${city} - ${state}`;
+
+              return f.place_name;
+            }) ?? [];
+        }
 
         setSuggestions(places);
       } catch (err) {
@@ -147,7 +185,7 @@ export function useMapboxSuggestions(query: string) {
 
     // Debounce de 400ms para evitar chamadas excessivas
     const timeout = setTimeout(fetchSuggestions, 400);
-    
+
     return () => clearTimeout(timeout);
   }, [query, MAPBOX_TOKEN]);
 
