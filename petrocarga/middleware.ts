@@ -30,7 +30,7 @@ function isPublicRoute(pathname: string) {
 function getHomeByRole(role: string): string {
   const homes: Record<string, string> = {
     gestor: '/gestor/visualizar-vagas',
-    motorista: '/motorista/reservar-vaga',
+    motorista: '/motorista/dashboard',
     agente: '/agente/home',
     admin: '/gestor/visualizar-vagas',
   };
