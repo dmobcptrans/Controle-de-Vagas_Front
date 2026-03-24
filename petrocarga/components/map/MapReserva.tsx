@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useEffect, useCallback } from 'react';
-import mapboxgl from 'mapbox-gl';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -12,6 +11,10 @@ import { Vaga } from '@/lib/types/vaga';
 
 interface MapReservaProps {
   onClickVaga?: (vaga: Vaga) => void;
+  selectedLocation?: {
+    lat: number;
+    lng: number;
+  } | null;
 }
 
 /**
@@ -63,15 +66,16 @@ interface MapReservaProps {
  * ```
  */
 
-export function MapReserva({ onClickVaga }: MapReservaProps) {
+export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   // ==================== HOOKS ====================
   const { vagas, loading, error } = useVagasReserva();
+
   const { map } = useMapbox({
     containerRef: mapContainer,
-    enableSearch: true,
+    enableSearch: false,
     enableNavigation: false,
     expandSearch: true,
     onSelectPlace: (place) => console.log(place),
@@ -81,16 +85,15 @@ export function MapReserva({ onClickVaga }: MapReservaProps) {
   const renderMarkers = useCallback(() => {
     if (!map || !vagas || vagas.length === 0) return;
 
-    // 1. Remove todos os marcadores antigos
+    // Remove antigos
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
-    // 2. Adiciona os novos marcadores (vagas atualizadas)
+    // Adiciona novos
     addVagaMarkersReserva(map, vagas, markersRef, onClickVaga);
-    console.log(`Marcadores renderizados: ${vagas.length}`);
   }, [map, vagas, onClickVaga]);
 
-  // ==================== EFEITO: RENDERIZAÇÃO CONDICIONAL ====================
+  // ==================== EFFECT 1: INIT MAP (RODA 1x) ====================
   useEffect(() => {
     if (!map) return;
 
@@ -101,14 +104,30 @@ export function MapReserva({ onClickVaga }: MapReservaProps) {
     }
 
     return () => {
-      if (map && map.isStyleLoaded()) {
+      if (map) {
         map.off('load', renderMarkers);
       }
-
-      markersRef.current.forEach((marker) => marker.remove());
-      markersRef.current = [];
     };
-  }, [map, vagas, renderMarkers]);
+  }, [map, renderMarkers]);
+
+  // ==================== EFFECT 2: ATUALIZA MARCADORES ====================
+  useEffect(() => {
+    if (!map || !vagas) return;
+
+    renderMarkers();
+  }, [vagas, map, renderMarkers]);
+
+  // ==================== EFFECT 3: ZOOM NA BUSCA ====================
+  useEffect(() => {
+    if (!map || !selectedLocation) return;
+
+    map.flyTo({
+      center: [selectedLocation.lng, selectedLocation.lat],
+      zoom: 16,
+      duration: 1200,
+      essential: true,
+    });
+  }, [selectedLocation?.lat, selectedLocation?.lng, map]);
 
   return (
     <div className="w-full h-full rounded-lg overflow-visible relative">
@@ -117,15 +136,15 @@ export function MapReserva({ onClickVaga }: MapReservaProps) {
         className="w-full h-full rounded-lg shadow-md overflow-visible"
         style={{ minHeight: '300px' }}
       />
-      
-      {/* Overlay de Loading */}
+
+      {/* Loading */}
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
           Carregando vagas...
         </div>
       )}
-      
-      {/* Overlay de Erro */}
+
+      {/* Error */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-red-100 text-red-600 z-10">
           Erro: {error}
