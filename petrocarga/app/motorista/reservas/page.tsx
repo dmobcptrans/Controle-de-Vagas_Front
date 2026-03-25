@@ -235,7 +235,7 @@ export default function MinhasReservas() {
           Suas Reservas, {user?.nome?.split(' ')[0] || 'motorista'}
         </h1>
         <p className="text-xs text-white/50">
-          gerencie e acompanhe
+          Gerencie e Acompanhe
         </p>
       </div>
     </header>
