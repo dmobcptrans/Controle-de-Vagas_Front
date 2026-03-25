@@ -10,69 +10,83 @@ import toast from 'react-hot-toast';
 /**
  * @component NotificacoesMotoristaPage
  * @version 1.0.0
- *
+ * 
  * @description Página de notificações específica para motoristas.
  * Filtra e exibe apenas notificações relevantes para o perfil de motorista.
- *
+ * 
  * ----------------------------------------------------------------------------
  * 📋 FLUXO COMPLETO:
  * ----------------------------------------------------------------------------
- *
+ * 
  * 1. CONTEXTO DE NOTIFICAÇÕES:
  *    - useNotifications() fornece estado global das notificações
  *    - Gerencia conexão WebSocket em tempo real
  *    - Oferece funções CRUD para notificações
- *
- * 2. FILTRO POR TIPO:
- *    - Motoristas só veem notificações dos tipos: RESERVA, VEICULO, SISTEMA
- *    - Notificações de VAGA e MOTORISTA são filtradas (não relevantes)
- *
+ * 
+ * 2. FILTRO POR TIPO (ATUALIZADO):
+ *    - Motoristas visualizam notificações dos seguintes tipos:
+ *      - RESERVA: Sobre reservas do motorista
+ *      - VEICULO: Sobre veículos cadastrados
+ *      - SISTEMA: Comunicados gerais do sistema
+ *      - MOTORISTA: Informações relacionadas ao perfil do motorista
+ *      - VAGA: Atualizações sobre vagas de estacionamento
+ *      - DENUNCIA: Atualizações sobre denúncias realizadas
+ * 
  * 3. SELEÇÃO EM LOTE:
  *    - toggleSelectNotification: Seleciona/desseleciona individual
  *    - toggleSelectAll: Seleciona todas as notificações filtradas
  *    - allSelected: Calcula se todas estão selecionadas
- *
+ * 
  * 4. AÇÕES EM LOTE:
  *    - Marcar como lidas (com modal de confirmação)
  *    - Excluir notificações (com modal de confirmação)
  *    - Feedback com toast para sucesso/erro
- *
+ * 
  * 5. PERSONALIZAÇÃO:
  *    - Título: "Minhas Notificações"
  *    - Subtítulo: "Fique por dentro das suas reservas e atualizações do veículo"
  *    - Mensagem vazia: "Você não tem notificações no momento. Fique tranquilo!"
- *
+ * 
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- *
- * - FILTRO POR PERFIL: motoristaNotifications filtra apenas tipos relevantes:
+ * 
+ * - FILTRO POR PERFIL: motoristaNotifications filtra os seguintes tipos:
  *   - RESERVA: Confirmações, lembretes, alterações de reserva
  *   - VEICULO: Atualizações sobre veículos cadastrados
  *   - SISTEMA: Comunicados gerais do sistema
- *
- * - EXCLUSÃO DE TIPOS:
- *   - VAGA: Não relevante (gestão de vagas é do gestor)
- *   - MOTORISTA: Não faria sentido (auto-notificação)
- *
- * - CONTEXTO COMPARTILHADO: Mesmo hook useNotifications do agente/gestor,
- *   mas com visualização filtrada para o perfil
- *
+ *   - MOTORISTA: Informações relacionadas ao perfil do motorista
+ *   - VAGA: Atualizações sobre vagas de estacionamento
+ *   - DENUNCIA: Atualizações sobre o status de denúncias realizadas
+ * 
+ * ----------------------------------------------------------------------------
+ * 📊 TIPOS DE NOTIFICAÇÃO EXIBIDOS:
+ * ----------------------------------------------------------------------------
+ * 
+ * | Tipo       | Descrição                                    |
+ * |------------|----------------------------------------------|
+ * | RESERVA    | Confirmações, lembretes, alterações          |
+ * | VEICULO    | Atualizações sobre veículos                  |
+ * | SISTEMA    | Comunicados gerais do sistema                |
+ * | MOTORISTA  | Informações do perfil do motorista           |
+ * | VAGA       | Atualizações sobre vagas                     |
+ * | DENUNCIA   | Status de denúncias realizadas               |
+ * 
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- *
+ * 
  * - NotificationContext: Contexto global de notificações
  * - NotificationHeader: Barra superior com título e ações
  * - NotificationList: Lista de notificações
  * - NotificationModals: Modais de confirmação
- *
+ * 
  * @example
  * ```tsx
  * // Uso em rota de motorista
  * <NotificacoesMotoristaPage />
  * ```
- *
+ * 
  * @see /src/context/NotificationContext.tsx - Contexto de notificações
  * @see /src/components/notification/notificationHeader.tsx - Header
  * @see /src/components/notification/notificationList.tsx - Lista
@@ -156,14 +170,13 @@ export default function NotificacoesMotoristaPage() {
    * Filtra notificações para mostrar apenas as relevantes ao motorista:
    * - RESERVA: Sobre reservas do motorista
    * - VEICULO: Sobre veículos cadastrados
-   * - SISTEMA: Comunicados gerais
-   *
-   * Exclui:
-   * - VAGA: Gestão de vagas (não relevante)
-   * - MOTORISTA: Auto-notificação (não faria sentido)
+   * - SISTEMA: Comunicados gerais do sistema
+   * - MOTORISTA: Informações relacionadas ao perfil do motorista
+   * - VAGA: Atualizações sobre vagas de estacionamento
+   * - DENUNCIA: Atualizações sobre denúncias realizadas
    */
   const motoristaNotifications = notifications.filter((n) =>
-    ['RESERVA', 'VEICULO', 'SISTEMA', 'MOTORISTA', 'VAGA'].includes(n.tipo),
+    ['RESERVA', 'VEICULO', 'SISTEMA', 'MOTORISTA', 'VAGA', 'DENUNCIA'].includes(n.tipo),
   );
 
   return (
