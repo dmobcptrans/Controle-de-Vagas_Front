@@ -135,67 +135,53 @@ export default function MinhasDenuncias() {
   // RENDERIZAÇÃO CONDICIONAL
   // --------------------------------------------------------------------------
 
-  /**
-   * ESTADO 1: LOADING
-   * Exibido durante a busca inicial
-   */
-  if (loading) {
-    return (
-      <div className="p-4 flex flex-col items-center justify-center min-h-[60vh] gap-2 text-center">
-        <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
-        <span className="text-gray-600">Carregando denúncias...</span>
-      </div>
-    );
-  }
-
-  /**
-   * ESTADO 2: ERRO
-   * Exibido quando a requisição falha
-   * Oferece botão para tentar novamente
-   */
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-          <AlertCircle className="w-8 h-8 text-red-600" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">
-          Erro ao carregar denúncias
-        </h3>
-        <p className="text-gray-500 text-sm max-w-md mx-auto mb-6">{error}</p>
-        <Button onClick={fetchDenuncias} variant="outline">
-          Tentar novamente
-        </Button>
-      </div>
-    );
-  }
-
-  /**
-   * ESTADO 3: LISTA VAZIA
-   * Exibido quando não há denúncias cadastradas
-   */
-  if (denuncias.length === 0) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <p className="text-gray-500 text-lg">
-          Você ainda não possui nenhuma denúncia cadastrada.
-        </p>
-      </div>
-    );
-  }
-
-  /**
-   * ESTADO 4: LISTA COM DADOS
-   * Renderiza o título e a lista de denúncias
-   */
   return (
-    <section className="min-h-screen bg-gray-50 py-8">
-      <div className="w-full max-w-2xl mx-auto px-4 flex flex-col gap-6">
-        <h1 className="text-2xl font-bold text-gray-800 text-center">
-          Denúncias
-        </h1>
-        <DenunciaLista denuncias={denuncias} />
-      </div>
-    </section>
+    <div className="min-h-screen bg-gray-50">
+
+      {/* ── HEADER FIXO ── */}
+      <header className="bg-blue-800 px-4 pt-1 pb-3 sm:px-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
+            Suas Denúncias, {user?.nome?.split(' ')[0] || 'motorista'}
+          </h1>
+          <p className="text-xs text-white/50">
+            Acompanhe Suas Denúncias Registradas
+          </p>
+        </div>
+      </header>
+
+      <main className="px-4 sm:px-8 py-6 max-w-4xl mx-auto flex flex-col items-center">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center min-h-[50vh] gap-2 text-center">
+            <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
+            <span className="text-gray-600">Carregando denúncias...</span>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              Erro ao carregar denúncias
+            </h3>
+            <p className="text-gray-500 text-sm mb-6">{error}</p>
+            <Button onClick={fetchDenuncias} variant="outline">
+              Tentar novamente
+            </Button>
+          </div>
+        ) : denuncias.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
+            <p className="text-gray-500 text-lg">
+              Você ainda não possui nenhuma denúncia cadastrada.
+            </p>
+          </div>
+        ) : (
+          <div className="w-full max-w-2xl flex flex-col gap-6">
+            <DenunciaLista denuncias={denuncias} />
+          </div>
+        )}
+
+      </main>
+    </div>
   );
 }
