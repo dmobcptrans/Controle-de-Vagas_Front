@@ -126,21 +126,33 @@ export function AdicionarModal({
       prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item],
     );
 
-  function salvar() {
-    onSalvar({
-      inicio: `${inicio}T00:00`,
-      fim: `${fim}T23:59`,
-      modo,
-      selecionados,
-    });
+function salvar() {
+  let idsFinais: string[] = [];
 
-    // Limpa estado após salvar
-    setSelecionados([]);
-    setInicio('');
-    setFim('');
+  if (modo === 'logradouro') {
+    // Converte logradouros em IDs de vagas
+    idsFinais = selecionados.flatMap((log) =>
+      vagasPorLogradouro[log]?.map((vaga) => vaga.id) || []
+    );
+  } else {
 
-    onClose();
+    idsFinais = selecionados;
   }
+
+  const idsUnicos = Array.from(new Set(idsFinais));
+
+  onSalvar({
+    inicio: `${inicio}T00:00`,
+    fim: `${fim}T23:59`,
+    modo,
+    selecionados: idsUnicos,
+  });
+
+  setSelecionados([]);
+  setInicio('');
+  setFim('');
+  onClose();
+}
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

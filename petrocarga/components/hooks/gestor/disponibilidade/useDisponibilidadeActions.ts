@@ -113,7 +113,7 @@ export function useDisponibilidadeActions({
   disponibilidadesAgrupadas,
   setDisponibilidades,
 }: UseDisponibilidadeActionsProps) {
-  
+
   // ==================== SALVAR NOVA DISPONIBILIDADE ====================
   async function salvar({
     inicio,
@@ -121,7 +121,6 @@ export function useDisponibilidadeActions({
     modo,
     selecionados,
   }: SalvarDisponibilidadeData) {
-    // Validação básica
     if (!inicio || !fim) {
       toast('Preencha início e fim.', { icon: '⚠️' });
       return;
@@ -138,18 +137,28 @@ export function useDisponibilidadeActions({
     try {
       let vagaIds: string[] = [];
 
-      // Determina IDs das vagas conforme o modo
-      if (modo === 'logradouro') {
-        vagaIds = selecionados.flatMap(
-          (log) => vagasPorLogradouro[log]?.map((v) => v.id) ?? [],
-        );
-      } else {
-        vagaIds = selecionados;
+      const idsConvertidos = selecionados.flatMap((item) => {
+        if (vagasPorLogradouro[item]) {
+          return vagasPorLogradouro[item].map((v) => v.id);
+        }
+
+        return item;
+      });
+
+      vagaIds = Array.from(new Set(idsConvertidos)).filter(
+        (id) =>
+          typeof id === 'string' &&
+          id.includes('-') &&
+          id.length > 30
+      );
+
+      if (vagaIds.length === 0) {
+        toast.error('Selecione ao menos uma vaga válida.');
+        return;
       }
 
       const novas = await postDisponibilidade(vagaIds, inicio, fim);
 
-      // Atualização otimista
       setDisponibilidades((prev) => [
         ...prev,
         ...(Array.isArray(novas) ? novas : [novas]),
