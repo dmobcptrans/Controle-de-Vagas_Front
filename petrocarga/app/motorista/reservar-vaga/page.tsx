@@ -198,7 +198,7 @@ export default function ReservaPage() {
               </div>
 
               {/* Ícone */}
-              <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+              <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-white/30">
                 <MapIcon className="h-5 w-5 text-white" onClick={handleBackToMap} />
               </div>
 
