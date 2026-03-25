@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, CarIcon, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import { Veiculo } from '@/lib/types/veiculo';
 import VeiculoCard from '@/components/motorista/cards/veiculo-item';
 import { Button } from '@/components/ui/button';
@@ -120,52 +121,76 @@ export default function VeiculosPage() {
   // RENDERIZAÇÃO CONDICIONAL
   // --------------------------------------------------------------------------
 
-  if (loading) {
-    return (
-      <div className="p-4 flex flex-col items-center justify-center min-h-[60vh] gap-2 text-center">
-        <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
-        <span className="text-gray-600">Carregando seus veículos...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-          <AlertCircle className="w-8 h-8 text-red-600" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">
-          Erro ao carregar veículos
-        </h3>
-        <p className="text-gray-500 text-sm max-w-md mx-auto mb-6">{error}</p>
-        <Button onClick={fetchVeiculos} variant="outline">
-          Tentar novamente
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 flex flex-col items-center w-full min-h-screen bg-gray-50">
-      {/* Saudação personalizada */}
-      <h1 className="text-2xl font-bold mb-2 text-center">
-        Olá, {user?.nome || 'Motorista'}!
-      </h1>
-      <p className="text-gray-600 mb-6 text-center">
-        Aqui estão seus veículos cadastrados.
-      </p>
+    <div className="min-h-screen bg-gray-50">
 
-      {/* Lista de veículos ou mensagem vazia */}
-      {veiculos.length === 0 ? (
-        <p className="text-gray-500 text-center">Nenhum veículo encontrado.</p>
-      ) : (
-        <div className="grid gap-4 w-full max-w-2xl">
-          {veiculos.map((veiculo) => (
-            <VeiculoCard key={veiculo.id} veiculo={veiculo} />
-          ))}
+      {/* ── HEADER FIXO ── */}
+      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
+            Seus Veículos, {user?.nome?.split(' ')[0] || 'motorista'}
+          </h1>
+          <p className="text-xs text-white/50">
+            Aqui Estão Seus Veículos Cadastrados
+          </p>
         </div>
-      )}
+      </header>
+
+      <div className="-mt-4 mb-5 px-4 sm:px-8 max-w-4xl mx-auto">
+        <Link
+          href="/motorista/veiculos/cadastrar-veiculos"
+          className="flex items-center justify-between bg-[#071D41] hover:bg-[#0C3D8A] transition-colors rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]"
+        >
+          <div>
+            <p className="text-white font-semibold text-[15px] mb-0.5">
+              Adicionar novo veículo
+            </p>
+            <p className="text-white/70 text-xs">
+              Cadastre um veículo
+            </p>
+          </div>
+
+          <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+            <CarIcon className="h-5 w-5 text-white" />
+          </div>
+        </Link>
+      </div>
+
+      <main className="p-4 flex flex-col items-center w-full">
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center min-h-[50vh] gap-2 text-center">
+            <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
+            <span className="text-gray-600">
+              Carregando seus veículos...
+            </span>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              Erro ao carregar veículos
+            </h3>
+            <p className="text-gray-500 text-sm mb-6">{error}</p>
+            <Button onClick={fetchVeiculos} variant="outline">
+              Tentar novamente
+            </Button>
+          </div>
+        ) : veiculos.length === 0 ? (
+          <p className="text-gray-500 text-center mt-10">
+            Nenhum veículo encontrado.
+          </p>
+        ) : (
+          <div className="grid gap-4 w-full max-w-2xl mt-4">
+            {veiculos.map((veiculo) => (
+              <VeiculoCard key={veiculo.id} veiculo={veiculo} />
+            ))}
+          </div>
+        )}
+
+      </main>
     </div>
   );
 }
