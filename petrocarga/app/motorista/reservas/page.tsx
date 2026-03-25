@@ -8,11 +8,12 @@ import {
   checkoutReserva,
   getGerarComprovanteReserva,
 } from '@/lib/api/reservaApi';
-import { AlertCircle, Loader2, WifiOff } from 'lucide-react';
+import { AlertCircle, Info, Loader2, WifiOff } from 'lucide-react';
 import ReservaLista from '@/components/reserva/minhasReservas/ReservaLista';
 import { ReservaGet } from '@/lib/types/reserva';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
+import Link from "next/link";
 
 /**
  * @function updateOnlineStatus
@@ -224,59 +225,47 @@ export default function MinhasReservas() {
   // RENDERIZAÇÃO CONDICIONAL
   // --------------------------------------------------------------------------
 
-  if (loading) {
-    return (
-      <div className="p-4 flex flex-col items-center justify-center min-h-[60vh] gap-2 text-center">
-        <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
-        <span className="text-gray-600">Carregando reservas...</span>
+ return (
+  <div className="min-h-screen bg-[#f5f5f0]">
+    
+    {/* HEADER SEMPRE FIXO */}
+    <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
+          Suas Reservas, {user?.nome?.split(' ')[0] || 'motorista'}
+        </h1>
+        <p className="text-xs text-white/50">
+          gerencie e acompanhe
+        </p>
       </div>
-    );
-  }
+    </header>
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-          <AlertCircle className="w-8 h-8 text-red-600" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">
-          Erro ao carregar reservas
-        </h3>
-        <p className="text-gray-500 text-sm max-w-md mx-auto mb-6">{error}</p>
-        <Button onClick={fetchReservas} variant="outline">
-          Tentar novamente
-        </Button>
-      </div>
-    );
-  }
+    <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
 
-  return (
-    <div className="p-4 flex flex-col items-center w-full min-h-screen bg-gray-50">
-      {/* Banner de modo offline */}
+      {/* OFFLINE */}
       {isOffline && (
         <div className="w-full max-w-md mb-4 p-3 bg-amber-100 border border-amber-300 text-amber-800 rounded-lg flex items-center gap-2 text-sm">
           <WifiOff size={18} />
           <span>
-            Você está visualizando dados salvos. Conecte-se para atualizar ou
-            excluir.
+            Você está visualizando dados salvos. Conecte-se para atualizar ou excluir.
           </span>
         </div>
       )}
 
-      {/* Título personalizado com nome do motorista */}
-      <h1 className="text-2xl font-bold mb-6 text-center">
-        Suas Reservas, {user?.nome || 'motorista'}!
-      </h1>
-
-      {/* Lista de reservas ou mensagem vazia */}
-      {reservas.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-2 text-center">
+          <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
+          <span className="text-gray-600">Carregando reservas...</span>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
+          <AlertCircle className="w-8 h-8 text-red-600 mb-2" />
+          <p className="text-gray-500 mb-4">{error}</p>
+          <Button onClick={fetchReservas}>Tentar novamente</Button>
+        </div>
+      ) : reservas.length === 0 ? (
         <div className="text-center py-10">
           <p className="text-gray-500">Nenhuma reserva encontrada.</p>
-          {isOffline && (
-            <p className="text-xs text-gray-400">
-              Pode haver dados não carregados por estar offline.
-            </p>
-          )}
         </div>
       ) : (
         <ReservaLista
@@ -286,6 +275,24 @@ export default function MinhasReservas() {
           onCheckout={handleCheckoutReserva}
         />
       )}
-    </div>
-  );
+
+       {/* Tutorial */}
+                <Link
+                    href="/motorista/guia"
+                    className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"
+                >
+                    <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+                        <Info className="h-5 w-5 text-[#1351B4]" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-[#071D41]">Novo por aqui?</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                            Veja como usar o sistema em 3 passos simples
+                        </p>
+                    </div>
+                </Link>
+
+    </main>
+  </div>
+);
 }

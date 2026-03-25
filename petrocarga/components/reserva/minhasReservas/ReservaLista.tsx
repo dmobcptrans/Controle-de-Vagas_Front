@@ -5,7 +5,6 @@ import { ChevronDown, ChevronUp, Archive, CopyPlus } from 'lucide-react';
 import Link from 'next/link';
 import ReservaCard from './ReservaCard';
 import { ReservaGet } from '@/lib/types/reserva';
-import { Button } from '@/components/ui/button';
 
 // ==================== CONSTANTES (Fora do componente) ====================
 /**
@@ -108,7 +107,7 @@ export default function ReservaLista({
   onExcluir,
   onCheckout,
 }: ReservaListaProps) {
-  const [mostrarOcultas, setMostrarOcultas] = useState(false);
+  const [mostrarOcultas, setMostrarOcultas] = useState(true);
 
   /**
    * Separa reservas em visíveis (ativas) e ocultas (histórico)
@@ -135,10 +134,10 @@ export default function ReservaLista({
   }, [reservas]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
-      
+    <div className="-mt-4 mb-5">
+
       {/* ==================== SEÇÃO PRINCIPAL (RESERVAS ATIVAS) ==================== */}
-      <section className="flex flex-col gap-4 animate-in fade-in duration-500">
+      <section className="flex flex-col gap-4 animate-in fade-in duration-200">
         {visiveis.length > 0 ? (
           visiveis.map((reserva) => (
             <ReservaCard
@@ -157,7 +156,7 @@ export default function ReservaLista({
       {/* ==================== SEÇÃO DE HISTÓRICO (COLAPSÁVEL) ==================== */}
       {ocultas.length > 0 && (
         <div className="border-t border-gray-100 pt-6">
-          
+
           {/* Botão de toggle */}
           <button
             onClick={() => setMostrarOcultas((s) => !s)}
@@ -185,9 +184,8 @@ export default function ReservaLista({
           {/* Conteúdo colapsável (transição suave) */}
           <div
             id="lista-ocultas"
-            className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-              mostrarOcultas ? 'grid-rows-[1fr] mt-4' : 'grid-rows-[0fr]'
-            }`}
+            className={`grid transition-[grid-template-rows] duration-300 ease-out ${mostrarOcultas ? 'grid-rows-[1fr] mt-4' : 'grid-rows-[0fr]'
+              }`}
           >
             <div className="overflow-hidden min-h-0">
               <div className="flex flex-col gap-3 pb-2">
@@ -218,23 +216,19 @@ export default function ReservaLista({
  */
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-      <div className="bg-white p-3 rounded-full shadow-sm mb-4">
-        <CopyPlus className="w-8 h-8 text-gray-400" />
+
+    <Link href="/motorista/reservar-vaga" className="flex items-center justify-between bg-[#071D41] hover:bg-[#0C3D8A] transition-colors rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]">
+      <div>
+        <p className="text-white font-semibold text-[15px] mb-0.5">
+          Nenhuma Reserva Ativa
+        </p>
+        <p className="text-white/60 text-xs">
+          Fazer Reserva
+        </p>
       </div>
-      <h3 className="text-gray-900 font-medium text-lg mb-2">
-        Nenhuma Reserva Ativa
-      </h3>
-      <div className="flex flex-col sm:flex-row justify-center">
-        <Link href="/motorista/reservar-vaga">
-          <Button
-            size="lg"
-            className="bg-blue-600 hover:bg-blue-700 text-sm md:text-base"
-          >
-            Fazer Reserva
-          </Button>
-        </Link>
+      <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+        <CopyPlus className="h-5 w-5 text-white" />
       </div>
-    </div>
+    </Link>
   );
 }
