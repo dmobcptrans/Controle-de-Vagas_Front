@@ -351,7 +351,7 @@ export default function PerfilMotorista() {
               )}
             >
               <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Excluir Conta</span>
+              <span>Desativar Conta</span>
             </button>
           </div>
         </div>
@@ -362,6 +362,7 @@ export default function PerfilMotorista() {
         isOpen={modalAberto}
         onClose={() => setModalAberto(false)}
         onConfirm={handleExcluir}
+        mensagem='Deseja mesmo desativar sua conta? Para reativar, basta ir em "Ativa Conta" no login.'
       />
     </main>
   );
