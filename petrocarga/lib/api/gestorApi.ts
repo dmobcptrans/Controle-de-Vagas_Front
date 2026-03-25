@@ -67,23 +67,20 @@ export async function addGestor(_: unknown, formData: FormData) {
     email: formData.get('email') as string,
   };
 
-  const res = await clientApi(`/petrocarga/gestores`, {
-    method: 'POST',
-    json: payload,
-  });
+  try {
+    await clientApi(`/petrocarga/gestores`, {
+      method: 'POST',
+      json: payload,
+    });
 
-  if (!res.ok) {
-    let msg = 'Erro ao cadastrar gestor';
-
-    try {
-      const data = await res.json();
-      msg = data.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg, valores: payload };
+    return { error: false, message: 'Gestor cadastrado com sucesso!' };
+  } catch (err) {
+    return {
+      error: true,
+      message: err instanceof Error ? err.message : 'Erro ao cadastrar gestor',
+      valores: payload,
+    };
   }
-
-  return { error: false, message: 'Gestor cadastrado com sucesso!' };
 }
 
 // ----------------------
