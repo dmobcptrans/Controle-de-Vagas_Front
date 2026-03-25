@@ -213,6 +213,7 @@ export default function CadastroGestores() {
   const [state, action, pending] = useActionState(addGestor, null);
 
   // Estados para validação em tempo real
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [confirmarEmail, setConfirmarEmail] = useState('');
   const [cpf, setCpf] = useState('');
@@ -437,6 +438,8 @@ export default function CadastroGestores() {
                         name="nome"
                         placeholder="Exemplo: Maria da Silva Souza"
                         required
+                        value={nome}
+                        onChange={(e) => setNome(e.target.value)}
                         autoComplete="name"
                       />
                       {/* Indicador de campo obrigatório */}
