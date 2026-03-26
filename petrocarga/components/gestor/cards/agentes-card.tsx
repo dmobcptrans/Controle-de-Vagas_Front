@@ -98,7 +98,7 @@ export default function AgenteCard({ agente }: AgenteCardProps) {
               
               <div className="min-w-0">
                 <h3 className="text-base font-semibold text-gray-800 truncate">
-                  {agente.usuario.nome}
+                  {agente.usuario.nome.split(' ')[0]} {agente.usuario.nome.split(' ')[agente.usuario.nome.split(' ').length - 1]}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
                   <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -172,6 +172,7 @@ export default function AgenteCard({ agente }: AgenteCardProps) {
         isOpen={modalExcluirAberto}
         onClose={() => setModalExcluirAberto(false)}
         onConfirm={handleExcluir}
+        mensagem= 'Quer mesmo excluir este(a) agente? Essa ação não poderá ser desfeita.'
       />
     </>
   );

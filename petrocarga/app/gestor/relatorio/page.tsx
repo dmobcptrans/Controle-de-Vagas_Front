@@ -239,9 +239,17 @@ export default function RelatoriosPage() {
   // MÉTRICAS DERIVADAS
   // --------------------------------------------------------------------------
 
-  const handleDateChange = (newStartDate: string, newEndDate: string) => {
-    setDateRange({ startDate: newStartDate, endDate: newEndDate });
-  };
+  const handleDateChange = useCallback((newStartDate: string, newEndDate: string) => {
+    setDateRange((prev) => {
+        if (prev.startDate === newStartDate && prev.endDate === newEndDate) {
+            return prev;
+        }
+        return {
+            startDate: newStartDate,
+            endDate: newEndDate,
+        };
+    });
+  }, []);
 
   const derivedMetrics = useMemo(() => {
     if (!kpisData) return null;

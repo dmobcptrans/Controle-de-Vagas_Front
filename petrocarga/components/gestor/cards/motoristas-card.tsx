@@ -29,11 +29,7 @@ export default function MotoristaCard({ motorista }: MotoristaCardProps) {
               <UserCircle className="w-9 h-9 text-blue-500 flex-shrink-0" />
               <div className="min-w-0">
                 <h3 className="text-base font-semibold text-gray-800 truncate">
-                  {motorista.usuario.nome
-                    .toLowerCase()
-                    .split(' ')
-                    .slice(0, 2)
-                    .join(' ')}
+                  {motorista.usuario.nome.split(' ')[0]} {motorista.usuario.nome.split(' ')[motorista.usuario.nome.split(' ').length - 1]}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
                   <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />

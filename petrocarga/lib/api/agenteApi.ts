@@ -77,23 +77,20 @@ export async function addAgente(_: unknown, formData: FormData) {
     matricula: formData.get('matricula') as string,
   };
 
-  const res = await clientApi(`/petrocarga/agentes`, {
-    method: 'POST',
-    json: payload,
-  });
+  try {
+    await clientApi(`/petrocarga/agentes`, {
+      method: 'POST',
+      json: payload,
+    });
 
-  if (!res.ok) {
-    let msg = 'Erro ao cadastrar agente';
-
-    try {
-      const data = await res.json();
-      msg = data.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg, valores: payload };
+    return { error: false, message: 'Agente cadastrado com sucesso!' };
+  } catch (err) {
+    return {
+      error: true,
+      message: err instanceof Error ? err.message : 'Erro ao cadastrar agente',
+      valores: payload,
+    };
   }
-
-  return { error: false, message: 'Agente cadastrado com sucesso!' };
 }
 
 // ----------------------

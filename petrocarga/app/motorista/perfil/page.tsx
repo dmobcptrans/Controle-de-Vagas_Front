@@ -346,28 +346,29 @@ export default function PerfilMotorista() {
                 <span>Editar Perfil</span>
               </Link>
 
-              {/* Botão Excluir Conta */}
-              <button
-                onClick={() => setModalAberto(true)}
-                className={cn(
-                  buttonVariants({ variant: 'destructive' }),
-                  'flex items-center justify-center gap-2 px-8 py-3 h-12 text-sm sm:text-base w-full sm:w-auto min-w-[150px] font-medium',
-                )}
-              >
-                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>Excluir Conta</span>
-              </button>
-            </div>
+            {/* Botão Excluir Conta */}
+            <button
+              onClick={() => setModalAberto(true)}
+              className={cn(
+                buttonVariants({ variant: 'destructive' }),
+                'flex items-center justify-center gap-2 px-8 py-3 h-12 text-sm sm:text-base w-full sm:w-auto min-w-[150px] font-medium',
+              )}
+            >
+              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Desativar Conta</span>
+            </button>
           </div>
-        </Card>
+        </div>
+      </Card>
 
-        {/* Modal de confirmação de exclusão */}
-        <ModalConfirmacaoExclusao
-          isOpen={modalAberto}
-          onClose={() => setModalAberto(false)}
-          onConfirm={handleExcluir}
-        />
-      </main>
+      {/* Modal de confirmação de exclusão */}
+      <ModalConfirmacaoExclusao
+        isOpen={modalAberto}
+        onClose={() => setModalAberto(false)}
+        onConfirm={handleExcluir}
+        mensagem='Deseja mesmo desativar sua conta? Para reativar, basta ir em "Ativa Conta" no login.'
+      />
+    </main>
     </div>
   );
 }

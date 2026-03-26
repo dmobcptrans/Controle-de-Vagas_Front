@@ -109,8 +109,9 @@ export function DateRangePicker({
   // --------------------------------------------------------------------------
   
   useEffect(() => {
-    handleDateChangeCallback();
-  }, [handleDateChangeCallback]);
+    if (!dateFrom || !dateTo) return;
+    onDateChange(dateFrom.toISOString(), dateTo.toISOString());
+  }, [dateFrom, dateTo]);
 
   // --------------------------------------------------------------------------
   // HANDLERS DOS BOTÕES RÁPIDOS

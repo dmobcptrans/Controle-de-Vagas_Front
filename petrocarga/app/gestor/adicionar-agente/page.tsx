@@ -191,10 +191,12 @@ export default function CadastroAgentes() {
   const [state, action, pending] = useActionState(addAgente, null);
 
   // Estados para validação em tempo real
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [confirmarEmail, setConfirmarEmail] = useState('');
   const [cpf, setCpf] = useState('');
   const [telefone, setTelefone] = useState('');
+  const [matricula, setMatricula] = useState('');
 
   // --------------------------------------------------------------------------
   // VALORES DERIVADOS (VALIDAÇÕES)
@@ -404,6 +406,8 @@ export default function CadastroAgentes() {
                         className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base py-3 px-4"
                         id="nome"
                         name="nome"
+                        value={nome}
+                        onChange={(e) => setNome(e.target.value)}
                         placeholder="Exemplo: Eduardo Silva Dantas"
                         required
                         autoComplete="name"
@@ -554,6 +558,8 @@ export default function CadastroAgentes() {
                         name="matricula"
                         placeholder="Ex: MSD20231"
                         required
+                        value={matricula}
+                        onChange={(e) => setMatricula(e.target.value)}
                         autoComplete="off"
                       />
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
