@@ -174,7 +174,6 @@ export default function DenunciaLista({ denuncias }: DenunciaListaProps) {
                 {ocultas.map((denuncia) => (
                   <div
                     key={denuncia.id}
-                    className="opacity-75 hover:opacity-100 transition-opacity"
                   >
                     <DenunciaCard denuncia={denuncia} />
                   </div>
