@@ -174,7 +174,7 @@ export function Navbar() {
 
         {/* ==================== LOGO ==================== */}
         <Link
-          href="/agente/consulta"
+          href="/agente/dashboard"
           className="flex justify-center md:justify-start"
         >
           <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />

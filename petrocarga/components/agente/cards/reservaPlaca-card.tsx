@@ -134,7 +134,7 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold text-gray-800 truncate">
-            {reserva.motoristaNome}
+            {reserva.motoristaNome || "Criado por Agente"}
           </CardTitle>
           <Badge className={`font-medium ${getStatusColor(reserva.status)}`}>
             {reserva.status}
@@ -217,7 +217,7 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
             <User className="w-4 h-4 text-blue-600" />
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-500">Motorista</p>
-              <p className="text-sm text-gray-900">{reserva.motoristaNome}</p>
+              <p className="text-sm text-gray-900">{reserva.motoristaNome || "Motorista não especificado"}</p>
             </div>
           </div>
           
