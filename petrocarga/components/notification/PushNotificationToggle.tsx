@@ -192,13 +192,13 @@ export function PushNotificationToggle({ usuarioId }: Props) {
       {/* ==================== ÍCONE E DESCRIÇÃO ==================== */}
       <div className="flex items-center gap-3">
         <div
-          className={`w-9 h-9 rounded-xl flex items-center justify-center
-          ${ativo ? 'bg-blue-50' : 'bg-gray-100'}`}
+          className={`w-9 h-9 rounded-2xl flex items-center justify-center
+          ${ativo ? 'bg-blue-800' : 'bg-gray-400'}`}
         >
           {ativo ? (
-            <Bell className="w-4 h-4 text-blue-600" />
+            <Bell className="w-4 h-4 text-white" />
           ) : (
-            <BellOff className="w-4 h-4 text-gray-400" />
+            <BellOff className="w-4 h-4 text-black" />
           )}
         </div>
 
@@ -223,7 +223,7 @@ export function PushNotificationToggle({ usuarioId }: Props) {
           aria-checked={ativo}
           onClick={handleToggle}
           className={`relative inline-flex w-[46px] h-[26px] rounded-full transition-colors
-          ${ativo ? 'bg-blue-600' : 'bg-gray-300'}`}
+          ${ativo ? 'bg-blue-800' : 'bg-gray-900'}`}
         >
           <span
             className={`absolute top-[2px] w-[22px] h-[22px] bg-white rounded-full shadow transition-all
