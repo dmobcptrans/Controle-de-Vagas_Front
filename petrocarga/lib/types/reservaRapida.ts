@@ -82,5 +82,5 @@ export interface ReservaRapida {
   inicio: string;
   fim: string;
   triadoEm: string;
-  status: 'RESERVADA' | 'CANCELADA' | 'EXPIRADA';
+  status: 'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'CANCELADA' | 'REMOVIDA';
 }
