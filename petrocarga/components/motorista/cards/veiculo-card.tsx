@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { deleteVeiculo, atualizarVeiculo } from '@/lib/api/veiculoApi';
 import { CheckCircle2, AlertCircle, Edit, Trash2, Save, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
 
 type VeiculoDetalhesProps = {
   veiculo: Veiculo;
@@ -418,48 +419,13 @@ export default function VeiculoDetalhes({
       </article>
 
       {/* ===================== MODAL DE EXCLUSÃO ===================== */}
-      {modalAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-            onClick={() => setModalAberto(false)}
-          />
-
-          <div className="relative bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-md sm:max-w-lg shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
-            <div className="mb-4 sm:mb-6">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <Trash2 className="w-6 h-6 sm:w-7 sm:h-7 text-red-600" />
-              </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 text-center">
-                Confirmar exclusão
-              </h3>
-              <p className="text-gray-600 text-sm sm:text-base text-center">
-                Tem certeza que deseja excluir o veículo{' '}
-                <span className="font-semibold">
-                  {veiculo.marca} {veiculo.modelo}
-                </span>
-                ? Esta ação não pode ser desfeita.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
-              <button
-                onClick={() => setModalAberto(false)}
-                className="px-4 sm:px-5 py-2.5 sm:py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 font-medium flex-1"
-              >
-                Cancelar
-              </button>
-
-              <button
-                onClick={handleExcluir}
-                className="px-4 sm:px-5 py-2.5 sm:py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all duration-200 font-medium flex-1"
-              >
-                Sim, Excluir
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal de confirmação de exclusão */}
+      <ModalConfirmacaoExclusao
+        isOpen={modalAberto}
+        onClose={() => setModalAberto(false)}
+        onConfirm={handleExcluir}
+        mensagem='Deseja mesmo excluir este veículo? Essa ação não poderá ser desfeita.'
+      />
     </>
   );
 }

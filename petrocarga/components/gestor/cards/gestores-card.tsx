@@ -100,7 +100,7 @@ export default function GestorCard({ gestor }: GestorCardProps) {
               
               <div className="min-w-0">
                 <h3 className="text-base font-semibold text-gray-800 truncate">
-                  {gestor.nome}
+                  {gestor.nome.split(' ')[0]} {gestor.nome.split(' ')[gestor.nome.split(' ').length - 1]}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
                   <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -172,6 +172,7 @@ export default function GestorCard({ gestor }: GestorCardProps) {
         isOpen={modalExcluirAberto}
         onClose={() => setModalExcluirAberto(false)}
         onConfirm={handleExcluir}
+        mensagem='Quer mesmo excluir este(a) gestor(a)? Essa ação não poderá ser desfeita.'
       />
     </>
   );
