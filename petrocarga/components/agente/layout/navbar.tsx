@@ -12,53 +12,117 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, User, Bell } from 'lucide-react';
+import {
+  ChevronDown,
+  User,
+  Bell,
+  TriangleAlert,
+  CarIcon,
+  Archive,
+  CalendarPlus,
+} from 'lucide-react';
+
+type CardLinkProps = {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  iconBg: string;
+  iconColor: string;
+  onClick?: () => void;
+};
+
+function CardLink({
+  href,
+  icon,
+  label,
+  description,
+  iconBg,
+  iconColor,
+  onClick,
+}: CardLinkProps) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 p-3 hover:bg-gray-50 hover:border-gray-200 transition-colors"
+    >
+      <div
+        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg} ${iconColor}`}
+      >
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-800 leading-tight">
+          {label}
+        </p>
+        <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+      </div>
+    </Link>
+  );
+}
 
 /**
  * @component Navbar
  * @version 1.0.0
- * 
+ *
  * @description Barra de navegação principal para a área do agente.
- * Responsiva com menu mobile, notificações em tempo real e dropdown de perfil.
- * 
+ * Responsiva com menu mobile em formato de cards, notificações em tempo real e dropdown de perfil.
+ *
  * ----------------------------------------------------------------------------
  * 📋 FUNCIONALIDADES:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. NAVEGAÇÃO DESKTOP:
  *    - Links principais: Reserva Rápida, Lista de Reservas, Denúncias, Consultar Placa
  *    - Dropdown de perfil: "Meu Perfil" e "Sair"
  *    - Ícone de notificações com contador em tempo real
- * 
- * 2. NAVEGAÇÃO MOBILE:
+ *
+ * 2. NAVEGAÇÃO MOBILE (CARDS):
  *    - Menu hambúrguer (☰) que expande/contrai
- *    - Seções organizadas: Reservas, Consultas, Notificações, Perfil
- *    - Botão de logout mobile
- * 
+ *    - Seções organizadas em cards:
+ *      - Reservas: Reservar vaga, Lista de reservas
+ *      - Análise: Consultar reserva, Denúncias
+ *      - Mais opções: Meu perfil
+ *    - Botão de logout mobile destacado
+ *
  * 3. NOTIFICAÇÕES:
  *    - useNotifications: contexto global com WebSocket
  *    - Contador de não lidas (unreadCount)
  *    - Badge vermelho com número (9+ para muitos)
  *    - Indicador de conexão (ponto amarelo piscando se offline)
- * 
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 CORES DOS CARDS MOBILE:
+ * ----------------------------------------------------------------------------
+ *
+ * | Seção       | Link               | Ícone       | Cor             |
+ * |-------------|--------------------|-------------|-----------------|
+ * | Reservas    | Reservar vaga      | CalendarPlus| 🔵 Azul         |
+ * | Reservas    | Lista de reservas  | Archive     | 🟡 Amarelo      |
+ * | Análise     | Consultar reserva  | CarIcon     | 🟢 Verde        |
+ * | Análise     | Denúncias          | TriangleAlert| ⚪ Cinza        |
+ * | Mais opções | Meu perfil         | User        | 🟣 Roxo         |
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
- * - MENU MOBILE: Controle com useState e transições CSS (max-height)
+ *
+ * - MENU MOBILE: Controlado por useState, transição CSS com max-height
  * - NOTIFICAÇÕES: Integração com contexto global para contagem em tempo real
  * - RESPONSIVIDADE: grid-cols-3 no mobile, flex no desktop
  * - ACESSIBILIDADE: aria-label com contador de notificações
  * - ANIMAÇÕES: pulsação no badge de notificações e no indicador de conexão
- * 
+ * - CARDS: Menu mobile organizado em cards com ícones, títulos e descrições
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - useNotifications: Contexto de notificações (WebSocket)
  * - LogoutButton: Botão de logout (aceita prop mobile)
  * - DropdownMenu: Menu dropdown do shadcn/ui
- * 
+ *
  * @example
  * ```tsx
  * <Navbar />
@@ -77,6 +141,8 @@ export function Navbar() {
     (notification) => !notification.lida,
   ).length;
 
+  const fecharMenu = () => setMenuAberto(false);
+
   /**
    * Links principais da navegação desktop
    */
@@ -90,8 +156,7 @@ export function Navbar() {
   return (
     <header className="bg-blue-800 text-white relative">
       <nav className="grid grid-cols-3 items-center p-4 max-w-6xl mx-auto md:flex md:justify-between">
-        
-        {/* 🔔 SINO - MOBILE */}
+        {/* ==================== SINO - MOBILE ==================== */}
         <Link
           href="/agente/notificacoes"
           className="md:hidden flex items-center justify-start"
@@ -107,7 +172,7 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* LOGO */}
+        {/* ==================== LOGO ==================== */}
         <Link
           href="/agente/consulta"
           className="flex justify-center md:justify-start"
@@ -115,7 +180,7 @@ export function Navbar() {
           <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
         </Link>
 
-        {/* BOTÃO MENU - MOBILE */}
+        {/* ==================== BOTÃO MENU - MOBILE ==================== */}
         <button
           className="md:hidden text-2xl hover:text-gray-300 flex justify-end"
           onClick={() => setMenuAberto(!menuAberto)}
@@ -123,7 +188,7 @@ export function Navbar() {
           ☰
         </button>
 
-        {/* MENU DESKTOP */}
+        {/* ==================== MENU DESKTOP ==================== */}
         <ul className="hidden md:flex gap-6 text-lg items-center">
           {links.map(({ href, label }) => (
             <li key={href} className="hover:text-gray-300">
@@ -131,7 +196,7 @@ export function Navbar() {
             </li>
           ))}
 
-          {/* PERFIL (Dropdown) */}
+          {/* Dropdown Perfil */}
           <li>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
@@ -155,7 +220,7 @@ export function Navbar() {
             </DropdownMenu>
           </li>
 
-          {/* 🔔 SINO - DESKTOP */}
+          {/* Ícone de Notificações (Desktop) */}
           <li>
             <Link
               href="/agente/notificacoes"
@@ -166,14 +231,12 @@ export function Navbar() {
             >
               <Bell className="h-5 w-5" />
 
-              {/* Badge de contador de não lidas */}
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
 
-              {/* Indicador de conexão offline */}
               {!isConnected && (
                 <span
                   className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full h-2 w-2 animate-pulse"
@@ -185,80 +248,90 @@ export function Navbar() {
         </ul>
       </nav>
 
-      {/* MENU MOBILE (expansível) */}
+      {/* ==================== MENU MOBILE (CARDS) ==================== */}
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
           menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <ul className="flex flex-col gap-4 bg-blue-500 p-4 shadow-md">
-          
+        <div className="bg-blue-800 p-4 space-y-5">
           {/* Seção: Reservas */}
-          <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
+          <div>
+            <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
               Reservas
-            </span>
-            <Link
-              href="/agente/reserva-rapida"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
-              Reservar Vaga
-            </Link>
-            <Link
-              href="/agente/lista-reserva"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
-              Lista de Reservas
-            </Link>
-          </li>
-
-          {/* Seção: Consultas */}
-          <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
-              Consultas
-            </span>
-            <Link
-              href="/agente/consulta"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
-              Consultar Placa
-            </Link>
-          </li>
-
-          {/* Seção: Notificações */}
-          <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
-              Notificações
-            </span>
-            <Link
-              href="/agente/denuncias"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
-              Ver Denúncias
-            </Link>
-          </li>
-
-          {/* Seção: Perfil */}
-          <li className="flex flex-col gap-2 border-b border-blue-400 pb-2">
-            <span className="font-bold text-sm text-blue-200 uppercase">
-              Perfil
-            </span>
-            <Link
-              href="/agente/perfil"
-              onClick={() => setMenuAberto(false)}
-              className="pl-2"
-            >
-              Meu Perfil
-            </Link>
-            <div className="pl-2">
-              <LogoutButton mobile={true} />
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <CardLink
+                href="/agente/reserva-rapida"
+                label="Reservar vaga"
+                description="Nova reserva"
+                iconBg="bg-blue-100"
+                iconColor="text-blue-700"
+                icon={<CalendarPlus className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+              <CardLink
+                href="/agente/lista-reserva"
+                label="Lista de reservas"
+                description="Histórico"
+                iconBg="bg-amber-100"
+                iconColor="text-amber-700"
+                icon={<Archive className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
             </div>
-          </li>
-        </ul>
+          </div>
+
+          {/* Seção: Análise */}
+          <div>
+            <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
+              Análise
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <CardLink
+                href="/agente/consulta"
+                label="Consultar reserva"
+                description="Verificação"
+                iconBg="bg-green-100"
+                iconColor="text-green-700"
+                icon={<CarIcon className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+              <CardLink
+                href="/agente/denuncias"
+                label="Denuncias"
+                description="Ver denuncias"
+                iconBg="bg-gray-100"
+                iconColor="text-gray-500"
+                icon={<TriangleAlert className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+            </div>
+          </div>
+
+          {/* Seção: Mais Opções */}
+          <div>
+            <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
+              Mais opções
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <CardLink
+                href="/agente/perfil"
+                label="Meu perfil"
+                description="Dados pessoais"
+                iconBg="bg-purple-100"
+                iconColor="text-purple-700"
+                icon={<User className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+            </div>
+          </div>
+
+          {/* Logout */}
+          <div className="border-gray-200 pt-3 flex justify-end">
+            <LogoutButton mobile={true} />
+          </div>
+        </div>
       </div>
     </header>
   );
