@@ -101,8 +101,8 @@ export default function Dashboard() {
             if (resReservas.status === "fulfilled") setReservas(resReservas.value || []);
             else toast.error("Não foi possível carregar suas reservas.");
 
-            if (resDenuncias.status === "fulfilled") setDenuncias(resDenuncias.value ?? []);
-            else toast.error("Não foi possível carregar suas denúncias.");
+           // if (resDenuncias.status === "fulfilled") setDenuncias(resDenuncias.value ?? []);
+           // else toast.error("Não foi possível carregar suas denúncias.");
         } finally {
             setLoading(false);
         }
