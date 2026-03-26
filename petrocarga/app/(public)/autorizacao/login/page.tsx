@@ -122,7 +122,7 @@ const ROUTES_BY_PERMISSION = {
   ADMIN: '/gestor/visualizar-vagas',
   GESTOR: '/gestor/visualizar-vagas',
   MOTORISTA: '/motorista/dashboard',
-  AGENTE: '/agente/consulta',
+  AGENTE: '/agente/dashboard',
 } as const;
 
 /**
