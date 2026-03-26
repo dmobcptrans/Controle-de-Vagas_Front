@@ -6,12 +6,8 @@ import {
   Loader2,
   Car,
   AlertCircle,
-  Calendar,
-  MapPin,
+  X,
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { getReservasPorPlaca } from '@/lib/api/reservaApi';
 import { ReservaPlaca } from '@/lib/types/reservaPlaca';
 import ReservaPlacaCard from '@/components/agente/cards/reservaPlaca-card';
@@ -138,9 +134,9 @@ const ERROR_MESSAGES = {
  * Mensagens de informação/hint
  */
 const INFO_MESSAGES = {
-  TITULO: 'Consultar Reservas por Placa',
+  TITULO: 'Consultar Placa',
   DESCRICAO:
-    'Busque todas as reservas ativas ou reservadas de um motorista através da placa do veículo',
+    'Busque reservas ativas ou reservadas de um veículo',
   PLACA_HINT: 'Placa no formato AAA0000 ou AAA0A00',
   STATUS_HINT: 'Mostra reservas ativas e reservadas',
   LOCAL_HINT: 'Inclui localização da vaga',
@@ -183,6 +179,7 @@ export default function ConsultarPlacaPage() {
   const [loading, setLoading] = useState(false); // Estado de loading
   const [error, setError] = useState<string | null>(null); // Mensagem de erro
   const [searched, setSearched] = useState(false); // Se busca já foi realizada
+  const [searchFocused, setSearchFocused] = useState(false);
 
   // --------------------------------------------------------------------------
   // HANDLERS PRINCIPAIS
@@ -255,233 +252,214 @@ export default function ConsultarPlacaPage() {
    * 4. reservas.length === 0: Mensagem de nenhum resultado
    * 5. reservas.length > 0: Grid com resultados
    */
-  const renderResultado = () => {
-    // Estado de loading
-    if (loading) {
-      return (
-        <div className="flex flex-col items-center justify-center py-12 md:py-16 gap-2 text-center">
-          <Loader2 className="animate-spin w-8 h-8 md:w-12 md:h-12 text-blue-600" />
-          <span className="text-gray-600 text-sm md:text-base">
-            Buscando reservas para a placa {placa}...
-          </span>
-        </div>
-      );
-    }
+const renderResultado = () => {
+  // Loading
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+        <Loader2 className="animate-spin w-8 h-8 text-[#1351B4]" />
+        <span className="text-gray-500 text-sm">
+          Buscando reservas para a placa{" "}
+          <span className="font-semibold text-gray-700">{placa}</span>...
+        </span>
+      </div>
+    );
+  }
 
-    // Estado de erro
-    if (error) {
-      return (
-        <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-red-100 flex items-center justify-center mb-4">
-            <AlertCircle className="w-8 h-8 md:w-10 md:h-10 text-red-600" />
-          </div>
-          <h3 className="text-lg md:text-xl font-semibold text-gray-700 mb-2">
-            Erro na busca
-          </h3>
-          <p className="text-gray-500 max-w-md mx-auto text-sm md:text-base">
-            {error}
-          </p>
-          <Button onClick={handleSearch} variant="outline" className="mt-4">
-            Tentar Novamente
-          </Button>
+  // Erro
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
+        <div className="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center">
+          <AlertCircle className="w-7 h-7 text-red-600" />
         </div>
-      );
-    }
+        <div>
+          <h3 className="text-sm font-semibold text-gray-800 mb-1">Erro na busca</h3>
+          <p className="text-xs text-gray-400 max-w-xs mx-auto">{error}</p>
+        </div>
+        <button
+          onClick={handleSearch}
+          className="text-xs font-medium text-[#1351B4] border border-[#1351B4] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
-    // Estado inicial (antes da primeira busca)
-    if (!searched) {
-      return (
-        <div className="flex flex-col items-center justify-center py-12 md:py-24 text-center">
-          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-blue-50 flex items-center justify-center mb-6">
-            <Search className="w-10 h-10 md:w-12 md:h-12 text-blue-600" />
-          </div>
-          <h3 className="text-lg md:text-xl font-semibold text-gray-700 mb-3">
+  // Estado inicial
+  if (!searched) {
+    return (
+      <div className="flex flex-col items-center py-10 text-center gap-5 w-full">
+        <div className="w-14 h-14 rounded-xl bg-blue-50 flex items-center justify-center">
+          <Search className="w-7 h-7 text-[#1351B4]" />
+        </div>
+        <div>
+          <h3 className="text-base font-semibold text-gray-800 mb-1">
             {INFO_MESSAGES.TITULO}
           </h3>
-          <p className="text-gray-500 max-w-md mx-auto text-sm md:text-base mb-6">
+          <p className="text-sm text-gray-400 max-w-xs mx-auto">
             {INFO_MESSAGES.DESCRICAO}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
-            <div className="text-left p-4 bg-white rounded-lg border border-gray-200">
-              <h4 className="font-semibold text-gray-800 mb-2">
-                ✓ Informações incluídas
-              </h4>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Detalhes do motorista</li>
-                <li>• Informações do veículo</li>
-                <li>• Localização da vaga</li>
-                <li>• Datas de início e fim</li>
-              </ul>
-            </div>
-            <div className="text-left p-4 bg-white rounded-lg border border-gray-200">
-              <h4 className="font-semibold text-gray-800 mb-2">
-                ⚡ Busca rápida
-              </h4>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Caixa alta automática</li>
-                <li>• Busca com Enter</li>
-                <li>• Filtro por status</li>
-                <li>• Resultados em tempo real</li>
-              </ul>
-            </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mt-1">
+          <div className="bg-white border border-gray-100 rounded-xl p-5 text-left">
+            <p className="text-sm font-semibold text-gray-700 mb-3">
+              ✓ Informações incluídas
+            </p>
+            <ul className="text-sm text-gray-400 space-y-2">
+              <li>• Detalhes do motorista</li>
+              <li>• Informações do veículo</li>
+              <li>• Localização da vaga</li>
+              <li>• Datas de início e fim</li>
+            </ul>
           </div>
-        </div>
-      );
-    }
-
-    // Estado sem resultados
-    if (reservas.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-            <Car className="w-8 h-8 md:w-10 md:h-10 text-gray-400" />
+          <div className="bg-white border border-gray-100 rounded-xl p-5 text-left">
+            <p className="text-sm font-semibold text-gray-700 mb-3">
+              ⚡ Busca rápida
+            </p>
+            <ul className="text-sm text-gray-400 space-y-2">
+              <li>• Caixa alta automática</li>
+              <li>• Busca com Enter</li>
+              <li>• Filtro por status</li>
+              <li>• Resultados em tempo real</li>
+            </ul>
           </div>
-          <h3 className="text-lg md:text-xl font-semibold text-gray-700 mb-2">
-            Nenhuma reserva encontrada
-          </h3>
-          <p className="text-gray-500 max-w-md mx-auto text-sm md:text-base">
-            {INFO_MESSAGES.SEM_RESULTADOS(placa)}
-          </p>
-        </div>
-      );
-    }
-
-    // Estado com resultados
-    return (
-      <div className="space-y-6">
-        {/* Card de resumo com contagem por status */}
-        <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <h3 className="font-semibold text-gray-900 text-base md:text-lg">
-                Resultados da busca
-              </h3>
-              <p className="text-gray-600 text-sm md:text-base">
-                {INFO_MESSAGES.RESULTADOS_ENCONTRADOS(reservas.length, placa)}
-              </p>
-            </div>
-
-            {/* Badges de contagem por status */}
-            <div className="flex flex-wrap gap-2">
-              {STATUS_RESERVA.map((status) => {
-                const count = reservas.filter(
-                  (r) => r.status === status,
-                ).length;
-                if (count === 0) return null;
-
-                return (
-                  <div
-                    key={status}
-                    className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium"
-                  >
-                    {count} {status.toLowerCase()}
-                    {count !== 1 ? 's' : ''}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Grid de cards de reserva */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-          {reservas.map((reserva) => (
-            <ReservaPlacaCard key={reserva.id} reserva={reserva} />
-          ))}
-        </div>
-
-        {/* Contador de resultados */}
-        <div className="text-center text-gray-500 text-sm">
-          {INFO_MESSAGES.MOSTRANDO_RESULTADOS(reservas.length)}
         </div>
       </div>
     );
-  };
+  }
+
+  // Sem resultados
+  if (reservas.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+        <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center">
+          <Car className="w-7 h-7 text-gray-300" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-700 mb-1">
+            Nenhuma reserva encontrada
+          </h3>
+          <p className="text-xs text-gray-400 max-w-xs mx-auto">
+            {INFO_MESSAGES.SEM_RESULTADOS(placa)}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Com resultados
+  return (
+    <div className="space-y-4">
+
+      {/* Resumo */}
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          Resultados
+        </p>
+      </div>
+
+      <p className="text-xs text-gray-400 -mt-2">
+        {INFO_MESSAGES.RESULTADOS_ENCONTRADOS(reservas.length, placa)}
+      </p>
+
+      {/* Cards */}
+      <div className="flex flex-col gap-1.5">
+        {reservas.map((reserva) => (
+          <ReservaPlacaCard key={reserva.id} reserva={reserva} />
+        ))}
+      </div>
+
+      {/* Rodapé */}
+      <p className="text-center text-[11px] text-gray-400 pt-2">
+        {INFO_MESSAGES.MOSTRANDO_RESULTADOS(reservas.length)}
+      </p>
+    </div>
+  );
+};
 
   // --------------------------------------------------------------------------
   // RENDERIZAÇÃO PRINCIPAL
   // --------------------------------------------------------------------------
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 flex flex-col items-center w-full min-h-screen bg-gray-50">
-      <div className="w-full max-w-6xl">
-        <div className="mb-6 md:mb-8 text-center">
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-            {INFO_MESSAGES.TITULO}
-          </h1>
-          <p className="text-gray-600 text-sm md:text-base">
-            {INFO_MESSAGES.DESCRICAO}
-          </p>
-        </div>
 
-        {/* Card de busca */}
-        <Card className="mb-8 shadow-sm">
-          <CardContent className="p-6">
-            {/* Campo de busca */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center">
-              <div className="flex-1 w-full">
-                <label
-                  htmlFor="placa"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+    <div className="min-h-screen bg-[#f5f5f0]">
+      {/* ── Header ── */}
+      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
+            {INFO_MESSAGES.TITULO}!
+          </h1>
+          <p className="text-xs text-white/50 capitalize">{INFO_MESSAGES.DESCRICAO}</p>
+        </div>
+      </header>
+      <div className="w-full max-w-6xl">
+
+        <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
+
+          <div className="-mt-4 mb-5">
+            <div
+              className="bg-[#071D41] rounded-2xl border-l-4 border-[#FFCD07] px-5 py-4 "
+              style={{ boxShadow: '0 4px 16px rgba(7,29,65,0.18)' }}
+            >
+              <div className="relative">
+
+                {/* Input row */}
+                <div
+                  className="flex items-center gap-2 rounded-xl px-3 py-2.5"
+                  style={{
+                    background: searchFocused
+                      ? 'rgba(255,255,255,0.15)'
+                      : 'rgba(255,255,255,0.10)',
+                    border: searchFocused
+                      ? '1.5px solid rgba(255,205,7,0.6)'
+                      : '1.5px solid rgba(255,255,255,0.12)',
+                  }}
                 >
-                  Placa do Veículo
-                </label>
-                <div className="relative">
-                  <Car className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="placa"
+                  <Search
+                    className="h-4 w-4 flex-shrink-0 transition-colors"
+                    style={{ color: searchFocused ? '#FFCD07' : 'rgba(255,255,255,0.45)' }}
+                  />
+
+                  <input
                     type="text"
-                    placeholder="Digite a placa (ex: ABC1234)"
                     value={placa}
                     onChange={handlePlacaChange}
                     onKeyDown={handleKeyDown}
-                    className="pl-10 text-lg font-mono uppercase"
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
+                    placeholder="Digite a placa (ABC1234)"
                     maxLength={PLACA_CONFIG.MAX_LENGTH}
-                    disabled={loading}
+                    className="flex-1 bg-transparent text-sm text-white placeholder:text-white/35 outline-none min-w-0"
+                    style={{ caretColor: '#FFCD07' }}
                   />
+
+                  {placa && (
+                    <button
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setPlaca('');
+                      }}
+                      className="flex-shrink-0 rounded-full p-0.5 transition-colors hover:bg-white/20"
+                      style={{ background: 'rgba(255,255,255,0.12)' }}
+                      aria-label="Limpar"
+                    >
+                      <X className="h-3 w-3 text-white/70" />
+                    </button>
+                  )}
                 </div>
-              </div>
 
-              {/* Botão de busca */}
-              <Button
-                onClick={handleSearch}
-                disabled={loading || !placa.trim()}
-                className="w-full sm:w-auto min-w-[140px] mt-2 sm:mt-6"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Buscando...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4 mr-2" />
-                    Buscar Reservas
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* Hints/Informações adicionais */}
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <AlertCircle className="w-4 h-4" />
-                <span>{INFO_MESSAGES.PLACA_HINT}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Calendar className="w-4 h-4" />
-                <span>{INFO_MESSAGES.STATUS_HINT}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <MapPin className="w-4 h-4" />
-                <span>{INFO_MESSAGES.LOCAL_HINT}</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Área de resultados (renderização condicional) */}
-        {renderResultado()}
+
+          {/* Área de resultados (renderização condicional) */}
+          {renderResultado()}
+        </main>
       </div>
     </div>
   );
