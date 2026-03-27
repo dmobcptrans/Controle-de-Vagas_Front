@@ -126,7 +126,7 @@ export function useMapboxSuggestions(
         const response = await fetch(
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
             query,
-          )}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&country=BR&types=address,place&limit=5`,
+          )}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&country=BR&types=address,place&limit=5&proximity=-43.178,-22.505`,
         );
 
         if (!response.ok) throw new Error('Erro na requisição ao Mapbox');
