@@ -1,16 +1,24 @@
 interface StepIndicatorProps {
   step: number;
+  isReservaRapida?: boolean;
 }
 
 /**
  * Etapas do fluxo de reserva
  */
-const steps = [
+const stepsMotorista = [
   { number: 1, label: 'Escolher dia' },
   { number: 2, label: 'Informações' },
   { number: 3, label: 'Selecionar início' },
   { number: 4, label: 'Selecionar fim' },
   { number: 5, label: 'Confirmar reserva' },
+];
+
+const stepsRapida = [
+  { number: 1, label: 'Informações' },
+  { number: 2, label: 'Status' },
+  { number: 3, label: 'Selecionar fim' },
+  { number: 4, label: 'Confirmar reserva' },
 ];
 
 /**
@@ -73,13 +81,15 @@ const steps = [
  * ```
  */
 
-export default function StepIndicator({ step }: StepIndicatorProps) {
-  const segments = steps.length - 1;
-  const ratio = segments > 0 ? (step - 1) / segments : 0; // 0..1
+export default function StepIndicator({ step, isReservaRapida = false }: StepIndicatorProps) {
+  const currentSteps = isReservaRapida ? stepsRapida : stepsMotorista;
+  const totalSteps = currentSteps.length;
+  const segments = totalSteps - 1;
+  const ratio = segments > 0 ? (step - 1) / segments : 0;
 
   return (
     <div className="relative mb-4 w-full">
-      
+
       {/* ==================== LINHA DE PROGRESSO (FUNDO) ==================== */}
       <div className="absolute top-5 left-0 right-0 px-5">
         <div className="relative w-full">
@@ -96,7 +106,7 @@ export default function StepIndicator({ step }: StepIndicatorProps) {
 
       {/* ==================== BOLINHAS E LABELS ==================== */}
       <div className="flex justify-between w-full relative z-10">
-        {steps.map((s) => {
+        {currentSteps.map((s) => {
           const isCurrent = step === s.number;
           const isCompleted = step > s.number;
 
@@ -108,13 +118,12 @@ export default function StepIndicator({ step }: StepIndicatorProps) {
               {/* Bolinha */}
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold border-4 relative z-20
-                ${
-                  isCurrent
+                ${isCurrent
                     ? 'bg-blue-600 border-blue-600 text-white'
                     : isCompleted
                       ? 'bg-green-600 border-green-600 text-white'
                       : 'bg-white border-gray-300 text-gray-600'
-                }`}
+                  }`}
               >
                 {s.number}
               </div>

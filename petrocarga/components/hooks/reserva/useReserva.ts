@@ -15,6 +15,7 @@ import {
   gerarHorariosOcupados,
   getOperacaoDia,
   formatDateTime,
+  formatDateTimeLocal,
   removerHorariosPassadosDeHoje,
 } from './reservaHelpers';
 
@@ -428,6 +429,8 @@ export function useReserva(selectedVaga: Vaga | null) {
       }
       formData.append('tipoVeiculo', tipoVeiculoAgente);
       formData.append('placa', placaAgente);
+      formData.append('inicio', formatDateTimeLocal(selectedDay, startHour));
+      formData.append('fim', formatDateTimeLocal(selectedDay, endHour!));
     } else {
       if (!motoristaId || !selectedVehicleId || !origin) {
         return { success: false, message: 'Dados do motorista incompletos.' };
@@ -436,10 +439,9 @@ export function useReserva(selectedVaga: Vaga | null) {
       formData.append('veiculoId', selectedVehicleId);
       formData.append('cidadeOrigem', origin);
       if (entryCity) formData.append('entradaCidade', entryCity);
+      formData.append('inicio', formatDateTime(selectedDay, startHour));
+      formData.append('fim', formatDateTime(selectedDay, endHour));
     }
-
-    formData.append('inicio', formatDateTime(selectedDay, startHour));
-    formData.append('fim', formatDateTime(selectedDay, endHour));
 
     const result = isAgente ? await confirmarReservaAgente(formData) : await confirmarReserva(formData);
 
