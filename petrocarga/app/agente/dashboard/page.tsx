@@ -95,14 +95,14 @@ export default function Dashboard() {
         try {
             const [resReservas, resDenuncias] = await Promise.allSettled([
                 getReservasRapidas(user.id),
-                getDenuncias(),
+                getDenuncias('ABERTA'),
             ]);
 
             if (resReservas.status === "fulfilled") setReservas(resReservas.value || []);
             else toast.error("Não foi possível carregar suas reservas.");
 
-           // if (resDenuncias.status === "fulfilled") setDenuncias(resDenuncias.value ?? []);
-           // else toast.error("Não foi possível carregar suas denúncias.");
+            if (resDenuncias.status === "fulfilled") setDenuncias(resDenuncias.value ?? []);
+           else toast.error("Não foi possível carregar suas denúncias.");
         } finally {
             setLoading(false);
         }
