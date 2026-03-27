@@ -63,6 +63,13 @@ import { ConfirmResult } from '../types/confirmResult';
  * }
  * ```
  */
+
+type StatusDenuncia = 
+  | 'ABERTA'
+  | 'EM_ANALISE'
+  | 'PROCEDENTE'
+  | 'IMPROCEDENTE';
+
 export async function Denunciar(formData: FormData): Promise<ConfirmResult> {
   const body = {
     descricao: formData.get('descricao'),
@@ -107,13 +114,20 @@ export async function Denunciar(formData: FormData): Promise<ConfirmResult> {
  * }
  * ```
  */
-export async function getDenuncias() {
+export async function getDenuncias(status?: StatusDenuncia) {
   try {
-    const res = await clientApi('/petrocarga/denuncias/all');
+    // monta a URL dinamicamente
+    const url = status
+      ? `/petrocarga/denuncias/all?listaStatus=${status}`
+      : '/petrocarga/denuncias/all';
+
+    const res = await clientApi(url);
     return res.json();
   } catch (err: unknown) {
     const message =
-      err instanceof Error ? err.message : 'Erro ao buscar todas as denuncias.';
+      err instanceof Error
+        ? err.message
+        : 'Erro ao buscar denúncias.';
     throw new Error(message);
   }
 }
