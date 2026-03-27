@@ -14,6 +14,7 @@ interface UseMapboxProps {
   onSelectPlace?: (place: MapboxFeature) => void;
   enableSearch?: boolean;
   enableNavigation?: boolean;
+  enableGeolocate?: boolean;
   expandSearch?: boolean;
 }
 
@@ -94,6 +95,7 @@ export function useMapbox({
   onSelectPlace,
   enableSearch = true,
   enableNavigation = true,
+  enableGeolocate = false,
   expandSearch = false,
 }: UseMapboxProps) {
   const [map, setMap] = useState<mapboxgl.Map | null>(null);
@@ -148,6 +150,17 @@ export function useMapbox({
     // ==================== CONTROLES DE NAVEGAÇÃO ====================
     if (enableNavigation) {
       globalMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    }
+
+    if (enableGeolocate) {
+      const geolocateControl = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+        },
+        trackUserLocation: true,
+        showUserHeading: true,
+      });
+      globalMap.addControl(geolocateControl, 'top-right');
     }
 
     // ==================== CAMPO DE BUSCA (GEOCODER) ====================
@@ -245,6 +258,7 @@ export function useMapbox({
     enableSearch,
     enableNavigation,
     expandSearch,
+    enableGeolocate,
     mapLoaded,
   ]);
 

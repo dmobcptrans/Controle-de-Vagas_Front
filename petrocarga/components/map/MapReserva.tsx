@@ -77,6 +77,7 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
     containerRef: mapContainer,
     enableSearch: false,
     enableNavigation: false,
+    enableGeolocate: true,
     expandSearch: true,
     onSelectPlace: (place) => console.log(place),
   });
