@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import { DIAS_SEMANA } from './reservaHelpers';
 import { Veiculo } from '@/lib/types/veiculo';
@@ -12,7 +12,8 @@ import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
 
 import {
   gerarHorariosDia,
-  gerarHorariosOcupados,
+  gerarHorariosOcupadosInicio,
+  gerarHorariosOcupadosFim,
   getOperacaoDia,
   formatDateTime,
   removerHorariosPassadosDeHoje,
@@ -148,6 +149,7 @@ export function useReserva(selectedVaga: Vaga | null) {
   const [loadingMotorista, setLoadingMotorista] = useState(true);
   const [loadingHorarios, setLoadingHorarios] = useState(false);
   const [horariosCarregados, setHorariosCarregados] = useState(false);
+  const reservedTimesEndBaseRef = useRef<string[]>([]);
 
   // ==================== RESET ====================
   const reset = useCallback(() => {
@@ -267,9 +269,8 @@ export function useReserva(selectedVaga: Vaga | null) {
           tipoVeiculo,
         );
 
-        const horariosOcupadosReais = bloqueios.flatMap((reserva: Reserva) =>
-          gerarHorariosOcupados(reserva),
-        );
+        const horariosOcupadosInicio = gerarHorariosOcupadosInicio(bloqueios);
+        const horariosOcupadosFim = gerarHorariosOcupadosFim(bloqueios);
 
         const todosHorarios = gerarHorariosDia(operacao);
         const horariosFiltradosHoje = removerHorariosPassadosDeHoje(
@@ -277,10 +278,11 @@ export function useReserva(selectedVaga: Vaga | null) {
           todosHorarios,
         );
 
+        reservedTimesEndBaseRef.current = horariosOcupadosFim;
         setReservaState((prev) => ({
           ...prev,
           availableTimes: horariosFiltradosHoje,
-          reservedTimesStart: horariosOcupadosReais,
+          reservedTimesStart: horariosOcupadosInicio,
           reservedTimesEnd: [],
         }));
 
@@ -318,7 +320,8 @@ export function useReserva(selectedVaga: Vaga | null) {
           reservaState.availableTimes.indexOf(start),
       );
 
-      const ocupados = [...reservaState.reservedTimesStart];
+      // ✅ Lê do ref (dados brutos da API), nunca do estado que ele mesmo escreve
+      const ocupados = reservedTimesEndBaseRef.current;
 
       return horariosPossiveis.filter((h) => {
         const d = new Date(
@@ -332,9 +335,19 @@ export function useReserva(selectedVaga: Vaga | null) {
     [
       reservaState.selectedDay,
       reservaState.availableTimes,
-      reservaState.reservedTimesStart
+      // ✅ ref removida das dependências — refs não causam re-render
     ],
   );
+
+  // useEffect sem loop: só depende de startHour e da função de cálculo
+  useEffect(() => {
+    if (!reservaState.startHour || !selectedVaga) return;
+    const bloqueados = calcularReservedTimesEnd(reservaState.startHour, selectedVaga);
+    setReservaState((prev) => ({
+      ...prev,
+      reservedTimesEnd: bloqueados,
+    }));
+  }, [reservaState.startHour, selectedVaga?.id, calcularReservedTimesEnd]);
 
   // Atualiza horários finais quando horário inicial muda
   useEffect(() => {
