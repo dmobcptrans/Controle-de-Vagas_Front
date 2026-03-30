@@ -9,16 +9,19 @@ import {
   Search,
   X,
   Users,
-  Filter,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
 import { Agente } from '@/lib/types/agente';
 import AgenteCard from '@/components/gestor/cards/agentes-card';
 
 const ITENS_POR_PAGINA = 9;
+
+type FiltroStatus = 'ativos' | 'inativos' | 'todos';
 
 /**
  * @component AgentesPage
@@ -26,18 +29,27 @@ const ITENS_POR_PAGINA = 9;
  *
  * @description Página de listagem e gerenciamento de agentes para gestores.
  *
+ * ALTERAÇÕES REALIZADAS:
+ * - Estado inicial padrão: mostrar apenas agentes ATIVOS
+ * - Botões separados para filtros: Todos / Ativos / Inativos
+ * - UI mais clara para indicar o filtro atual
+ * - Paginação mantém estado durante mudanças de filtro
+ *
  * ----------------------------------------------------------------------------
  * 📋 FLUXO COMPLETO:
  * ----------------------------------------------------------------------------
  *
  * 1. CARREGAMENTO INICIAL:
  *    - Verifica autenticação (user?.id)
- *    - Busca agentes via getAgentes()
+ *    - Busca APENAS agentes ATIVOS (filtro padrão)
  *    - Estados: loading → erro → sucesso
  *
  * 2. FILTROS:
  *    - Busca textual (nome, email, matrícula, telefone)
- *    - Filtro por status (todos/ativos/inativos) com toggle cíclico
+ *    - Filtro por status com botões separados:
+ *      * "Todos" - mostra todos os agentes
+ *      * "Ativos" - mostra apenas agentes ativos (PADRÃO)
+ *      * "Inativos" - mostra apenas agentes inativos
  *    - Botão "Limpar Filtros" quando ativos
  *
  * 3. PAGINAÇÃO:
@@ -52,24 +64,6 @@ const ITENS_POR_PAGINA = 9;
  *    - Vazio (sem filtros): mensagem sem agentes
  *    - Vazio (com filtros): mensagem com opção "Ver todos"
  *    - Sucesso: grid de cards + paginação
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - useCallback + useEffect: Padrão para busca de dados
- * - useMemo: Filtragem e paginação otimizadas
- * - Filtro por status cíclico: null → true → false → null
- * - Paginação mantém estado mesmo durante recarregamentos
- * - Grid responsivo: 1 (mobile) / 2 (tablet) / 3 (desktop) colunas
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - AgenteCard: Card individual de agente
- * - getAgentes: API de busca com filtros
- * - useAuth: Hook de autenticação
  *
  * @example
  * <AgentesPage />
@@ -86,21 +80,30 @@ export default function AgentesPage() {
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const [mostrarAtivos, setMostrarAtivos] = useState<boolean | null>(null);
+
+  // ALTERAÇÃO: Estado inicial como 'ativos' (filtro padrão)
+  const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('ativos');
 
   // --------------------------------------------------------------------------
   // BUSCA DE DADOS
   // --------------------------------------------------------------------------
 
   const fetchAgentes = useCallback(
-    async (ativo?: boolean | null) => {
+    async (status: FiltroStatus) => {
       if (!user?.id) return;
       setIsLoadingAgentes(true);
       setError(null);
 
       try {
         const filtros: FiltrosAgente = {};
-        if (ativo !== null && ativo !== undefined) filtros.ativo = ativo;
+
+        // Aplica o filtro de status baseado na seleção
+        if (status === 'ativos') {
+          filtros.ativo = true;
+        } else if (status === 'inativos') {
+          filtros.ativo = false;
+        }
+        // Se for 'todos', não aplica filtro de status
 
         const result = await getAgentes(filtros);
         if (result.error) {
@@ -119,29 +122,33 @@ export default function AgentesPage() {
     [user?.id],
   );
 
-  // Carrega dados iniciais
+  // Carrega dados iniciais (com filtro padrão: ativos)
   useEffect(() => {
-    fetchAgentes();
-  }, [fetchAgentes]);
+    fetchAgentes(filtroStatus);
+  }, [fetchAgentes, filtroStatus]);
 
-  // Recarrega quando filtro de status muda
+  // Reseta página quando muda o filtro de status
   useEffect(() => {
     setPaginaAtual(1);
-    fetchAgentes(mostrarAtivos);
-  }, [mostrarAtivos]);
+  }, [filtroStatus]);
 
   // --------------------------------------------------------------------------
   // FILTROS
   // --------------------------------------------------------------------------
 
-  const toggleAtivos = () => {
-    if (mostrarAtivos === null) setMostrarAtivos(true);
-    else if (mostrarAtivos === true) setMostrarAtivos(false);
-    else setMostrarAtivos(null);
+  // Função para alterar o filtro de status
+  const handleFiltroStatus = (status: FiltroStatus) => {
+    setFiltroStatus(status);
   };
 
   const mostrarTodos = () => {
-    setMostrarAtivos(null);
+    setFiltroStatus('todos');
+    setBusca('');
+    setPaginaAtual(1);
+  };
+
+  // Função para limpar apenas a busca textual
+  const limparBusca = () => {
     setBusca('');
     setPaginaAtual(1);
   };
@@ -221,7 +228,7 @@ export default function AgentesPage() {
             </h2>
             <p className="text-gray-600 mb-6 text-sm sm:text-base">{error}</p>
             <button
-              onClick={() => fetchAgentes(mostrarAtivos)}
+              onClick={() => fetchAgentes(filtroStatus)}
               className="inline-flex items-center justify-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-sm sm:text-base"
             >
               Tentar novamente
@@ -248,7 +255,7 @@ export default function AgentesPage() {
             </div>
           </div>
 
-          {/* BARRA DE FILTROS */}
+          {/* BARRA DE FILTROS - ALTERADA */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               {/* Campo de busca */}
@@ -269,7 +276,7 @@ export default function AgentesPage() {
                   />
                   {busca && (
                     <button
-                      onClick={() => setBusca('')}
+                      onClick={limparBusca}
                       className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-100 rounded-r-lg p-1 transition-colors"
                       title="Limpar busca"
                     >
@@ -279,38 +286,55 @@ export default function AgentesPage() {
                 </div>
               </div>
 
-              {/* Controles de filtro */}
+              {/* Controles de filtro - ALTERADOS */}
               <div className="flex items-center gap-3">
-                {/* Filtro de status (cíclico) */}
-                <button
-                  onClick={toggleAtivos}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors ${
-                    mostrarAtivos === true
-                      ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
-                      : mostrarAtivos === false
-                        ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Filter className="h-4 w-4" />
-                  <span className="text-sm font-medium">
-                    {mostrarAtivos === true
-                      ? 'Ativos'
-                      : mostrarAtivos === false
-                        ? 'Inativos'
-                        : 'Todos'}
-                  </span>
-                  {mostrarAtivos !== null && (
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        mostrarAtivos === true ? 'bg-green-600' : 'bg-red-600'
-                      }`}
-                    ></span>
-                  )}
-                </button>
+                {/* Botões de filtro de status */}
+                <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+                  <button
+                    onClick={() => handleFiltroStatus('todos')}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md transition-all ${
+                      filtroStatus === 'todos'
+                        ? 'bg-white shadow-sm text-gray-900'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm font-medium">Todos</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleFiltroStatus('ativos')}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md transition-all ${
+                      filtroStatus === 'ativos'
+                        ? 'bg-green-50 shadow-sm text-green-700'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Ativos</span>
+                    {filtroStatus === 'ativos' && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleFiltroStatus('inativos')}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md transition-all ${
+                      filtroStatus === 'inativos'
+                        ? 'bg-red-50 shadow-sm text-red-700'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Inativos</span>
+                    {filtroStatus === 'inativos' && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                    )}
+                  </button>
+                </div>
 
                 {/* Botão limpar filtros */}
-                {(busca || mostrarAtivos !== null) && (
+                {(busca || filtroStatus !== 'todos') && (
                   <button
                     onClick={mostrarTodos}
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
@@ -330,31 +354,35 @@ export default function AgentesPage() {
               </div>
             </div>
 
-            {/* Resumo dos filtros aplicados */}
-            {(busca || mostrarAtivos !== null) && (
+            {/* Resumo dos filtros aplicados - ALTERADO */}
+            {(busca || filtroStatus !== 'todos') && (
               <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="text-sm text-gray-600">
                   {busca ? (
                     <>
                       Resultados para{' '}
                       <span className="font-medium text-blue-600">{busca}</span>
-                      {mostrarAtivos !== null && (
+                      {filtroStatus !== 'todos' && (
                         <>
                           {' '}
                           |{' '}
                           <span className="font-medium">
-                            {mostrarAtivos === true ? 'Ativos' : 'Inativos'}
+                            {filtroStatus === 'ativos'
+                              ? 'Apenas ativos'
+                              : 'Apenas inativos'}
                           </span>
                         </>
                       )}
                     </>
                   ) : (
                     <>
-                      Filtrando por:{' '}
+                      Mostrando{' '}
                       <span className="font-medium text-blue-600">
-                        {mostrarAtivos === true
-                          ? 'Apenas ativos'
-                          : 'Apenas inativos'}
+                        {filtroStatus === 'ativos'
+                          ? 'apenas agentes ativos'
+                          : filtroStatus === 'inativos'
+                            ? 'apenas agentes inativos'
+                            : 'todos os agentes'}
                       </span>
                     </>
                   )}
@@ -394,7 +422,7 @@ export default function AgentesPage() {
           {agentesFiltrados.length === 0 ? (
             // Estado vazio (com ou sem filtros)
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 sm:p-12 text-center">
-              {busca || mostrarAtivos !== null ? (
+              {busca || filtroStatus !== 'todos' ? (
                 <div className="max-w-md mx-auto">
                   <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <Search className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
@@ -406,7 +434,7 @@ export default function AgentesPage() {
                     {busca
                       ? `Não encontramos agentes para "${busca}".`
                       : `Não encontramos agentes ${
-                          mostrarAtivos === true ? 'ativos' : 'inativos'
+                          filtroStatus === 'ativos' ? 'ativos' : 'inativos'
                         }.`}
                   </p>
                   <button
@@ -464,8 +492,11 @@ export default function AgentesPage() {
                     </span>{' '}
                     agente(s)
                     {busca && ' encontrados'}
-                    {mostrarAtivos !== null && !busca && (
-                      <> ({mostrarAtivos === true ? 'ativos' : 'inativos'})</>
+                    {filtroStatus !== 'todos' && !busca && (
+                      <>
+                        {' '}
+                        ({filtroStatus === 'ativos' ? 'ativos' : 'inativos'})
+                      </>
                     )}
                   </div>
 
