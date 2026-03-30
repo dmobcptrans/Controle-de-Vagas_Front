@@ -35,6 +35,13 @@ export const DIAS_SEMANA: DiaSemana[] = [
 
 export const INTERVALO_MINUTOS = 30;
 
+const formatarHora = (dateString: string): string => {
+  const d = new Date(dateString);
+  const h = padNumber(d.getHours());
+  const m = d.getMinutes() >= 30 ? '30' : '00';
+  return `${h}:${m}`;
+};
+
 /**
  * @function padNumber
  * @description Preenche um número com zero à esquerda (ex: 5 → "05")
@@ -56,27 +63,56 @@ export const formatDateTime = (day: Date, hour: string): string => {
  * @function gerarHorariosOcupados
  * @description Gera todos os horários ocupados por uma reserva (intervalo de 30 min)
  */
-export const gerarHorariosOcupados = (reserva: Reserva): string[] => {
-  const horariosOcupados: string[] = [];
 
-  const inicio = new Date(reserva.inicio);
-  const fim = new Date(reserva.fim);
+export const gerarHorariosOcupadosInicio = (reservas: Reserva[]): string[] => {
+  const resultado = new Set<string>();
 
-  if (fim <= inicio) {
-    fim.setDate(fim.getDate() + 1);
-  }
+  reservas.forEach((reserva) => {
+    const inicio = new Date(reserva.inicio);
+    const fim = new Date(reserva.fim);
 
-  const current = new Date(inicio);
+    if (fim <= inicio) {
+      fim.setDate(fim.getDate() + 1);
+    }
 
-  while (current <= fim) {
-    const h = padNumber(current.getHours());
-    const m = current.getMinutes() >= 30 ? '30' : '00';
+    // Começa 30min antes do início (buffer)
+    const current = new Date(inicio);
+    current.setMinutes(current.getMinutes() - INTERVALO_MINUTOS);
 
-    horariosOcupados.push(`${h}:${m}`);
-    current.setMinutes(current.getMinutes() + INTERVALO_MINUTOS);
-  }
+    while (current <= fim) {
+      const h = padNumber(current.getHours());
+      const m = current.getMinutes() >= 30 ? '30' : '00';
+      resultado.add(`${h}:${m}`);
+      current.setMinutes(current.getMinutes() + INTERVALO_MINUTOS);
+    }
+  });
 
-  return horariosOcupados;
+  return Array.from(resultado);
+};
+
+export const gerarHorariosOcupadosFim = (reservas: Reserva[]): string[] => {
+  const resultado = new Set<string>();
+
+  reservas.forEach((reserva) => {
+    const inicio = new Date(reserva.inicio);
+    const fim = new Date(reserva.fim);
+
+    if (fim <= inicio) {
+      fim.setDate(fim.getDate() + 1); // corrige reservas que cruzam meia-noite
+    }
+
+    const current = new Date(inicio);
+
+    // Igual ao de início, mas SEM recuar 30min antes (sem buffer)
+    while (current <= fim) {
+      const h = padNumber(current.getHours());
+      const m = current.getMinutes() >= 30 ? '30' : '00';
+      resultado.add(`${h}:${m}`);
+      current.setMinutes(current.getMinutes() + INTERVALO_MINUTOS);
+    }
+  });
+
+  return Array.from(resultado);
 };
 
 /**
@@ -182,6 +218,28 @@ export const removerHorariosPassadosDeHoje = (
     if (hh === horaAtual && mm > minutoAtual) return true;
 
     return false;
+  });
+};
+
+export const filtrarHorariosFim = (
+  horariosDia: string[],
+  reservas: Reserva[],
+  inicioSelecionado: string
+): string[] => {
+  return horariosDia.filter((horarioFim) => {
+    // não pode ser antes ou igual ao início
+    if (horarioFim <= inicioSelecionado) return false;
+
+    return !reservas.some((reserva) => {
+      const inicioReserva = formatarHora(reserva.inicio);
+      const fimReserva = formatarHora(reserva.fim);
+
+      // 🚨 regra de interseção
+      return (
+        inicioSelecionado < fimReserva &&
+        horarioFim > inicioReserva
+      );
+    });
   });
 };
 
