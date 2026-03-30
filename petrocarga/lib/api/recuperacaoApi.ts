@@ -278,3 +278,27 @@ export async function ativarConta(
     throw new Error(extractMessage(error));
   }
 }
+
+export async function reativarUsuario(usuarioId: string): Promise<void> {
+  try {
+    if (!usuarioId) {
+      throw new Error('ID do usuário é obrigatório');
+    }
+
+    const res = await clientApi(
+      `/petrocarga/usuarios/reativar/${usuarioId}?id=${usuarioId}`,
+      {
+        method: 'POST',
+      },
+    );
+    console.log('ID enviado:', usuarioId);
+
+    const data = await res.json();
+
+    if (!data.success) {
+      throw new Error(data.message || 'Não foi possível reativar o usuário');
+    }
+  } catch (error: unknown) {
+    throw new Error(extractMessage(error));
+  }
+}

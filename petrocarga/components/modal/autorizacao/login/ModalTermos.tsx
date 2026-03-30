@@ -20,14 +20,14 @@ interface ModalTermosProps {
 /**
  * @component ModalTermos
  * @version 1.0.0
- * 
+ *
  * @description Modal exibindo os Termos de Uso e Política de Privacidade.
  * Apresenta documentação legal completa com base na LGPD e Marco Civil da Internet.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 CONTEÚDO DO DOCUMENTO (16 SEÇÕES):
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. Informações importantes - Visão geral do serviço e bases legais
  * 2. Base Legal - Leis federais aplicáveis
  * 3. Princípios da LGPD (Art. 6º) - 10 princípios de proteção de dados
@@ -44,26 +44,26 @@ interface ModalTermosProps {
  * 14. Contato e DPO - Informações do Encarregado de Dados
  * 15. Foro - Competência judicial
  * 16. Alterações deste termo - Atualizações do documento
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - SCROLLÁVEL: ScrollArea para navegação em conteúdo extenso
  * - ALTURA MÁXIMA: h-[60vh] para 60% da viewport
  * - LARGURA: sm:max-w-3xl (768px) para melhor legibilidade
  * - SEÇÕES: Estrutura organizada com títulos e listas
  * - DESTAQUE: Seção azul com informações importantes
  * - DATA: Última atualização exibida no rodapé
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - Dialog: Componente de modal do shadcn/ui
  * - ScrollArea: Área rolável do shadcn/ui
  * - Button: Botão de fechar
- * 
+ *
  * @example
  * ```tsx
  * <ModalTermos
@@ -82,7 +82,6 @@ export default function ModalTermos({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[80vh]">
-        
         {/* ==================== HEADER ==================== */}
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-blue-600">
@@ -96,7 +95,6 @@ export default function ModalTermos({
         {/* ==================== CONTEÚDO ROLÁVEL ==================== */}
         <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-6">
-            
             {/* Seção 1: Informações importantes */}
             <section className="bg-blue-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-2 text-blue-800">
@@ -336,24 +334,7 @@ export default function ModalTermos({
               </p>
             </section>
 
-            {/* Seção 11: Segurança da informação */}
-            <section>
-              <h3 className="text-lg font-semibold mb-2">
-                10. Segurança da informação
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                Em conformidade com os princípios da segurança e prevenção da
-                LGPD, adotamos:
-              </p>
-              <ul className="list-disc list-inside text-sm text-gray-600 mt-2 space-y-1">
-                <li>Criptografia na transmissão de dados</li>
-                <li>Controle de acesso baseado em necessidade</li>
-                <li>Medidas técnicas e organizativas de proteção</li>
-                <li>Monitoramento e registro de acessos</li>
-              </ul>
-            </section>
-
-            {/* Seção 12: Cookies e tecnologia */}
+            {/* Seção 11: Cookies e tecnologia */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
                 11. Cookies e tecnologia
@@ -368,10 +349,158 @@ export default function ModalTermos({
               </ul>
             </section>
 
+            {/* Seção 12: Geolocalização e rastreamento */}
+            <section>
+              <h3 className="text-lg font-semibold mb-2">
+                12. Geolocalização e rastreamento
+              </h3>
+
+              <div className="space-y-3">
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Para a prestação adequada dos serviços de transporte e
+                  fiscalização, este sistema realiza o tratamento de dados de
+                  geolocalização em conformidade com a Lei Geral de Proteção de
+                  Dados (LGPD) e demais normativos aplicáveis.
+                </p>
+
+                <div className="mt-3">
+                  <p className="text-gray-600 text-sm font-semibold mb-2">
+                    <strong>Como utilizamos sua localização:</strong>
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-2">
+                    <li>
+                      <strong>Execução de políticas públicas:</strong>{' '}
+                      monitoramento do transporte público para otimização de
+                      rotas e horários
+                    </li>
+                    <li>
+                      <strong>Fiscalização e segurança:</strong> verificação do
+                      cumprimento de itinerários e parâmetros operacionais
+                    </li>
+                    <li>
+                      <strong>Melhoria contínua:</strong> coleta de dados
+                      agregados para planejamento urbano e mobilidade
+                    </li>
+                    <li>
+                      <strong>Atendimento emergencial:</strong> localização para
+                      acionamento de serviços de urgência quando necessário
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-3">
+                  <p className="text-gray-600 text-sm font-semibold mb-2">
+                    <strong>Base legal para o tratamento:</strong>
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-2">
+                    <li>
+                      <strong>Art. 7º, II da LGPD:</strong> cumprimento de
+                      obrigação legal ou regulatória
+                    </li>
+                    <li>
+                      <strong>Art. 7º, III da LGPD:</strong> execução de
+                      políticas públicas pela administração pública
+                    </li>
+                    <li>
+                      <strong>Art. 7º, V da LGPD:</strong> proteção da vida ou
+                      da incolumidade física do titular
+                    </li>
+                    <li>
+                      <strong>Interesse público:</strong> exercício regular de
+                      direitos em serviços públicos
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-3">
+                  <p className="text-gray-600 text-sm font-semibold mb-2">
+                    <strong>Transparência e seus direitos:</strong>
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-2">
+                    <li>
+                      Você pode visualizar o histórico de localização coletado a
+                      qualquer momento através do sistema
+                    </li>
+                    <li>
+                      A localização é coletada{' '}
+                      <strong>apenas durante o uso dos serviços</strong>, não
+                      havendo monitoramento contínuo fora do contexto de
+                      trabalho
+                    </li>
+                    <li>
+                      Os dados de geolocalização são armazenados de forma segura
+                      e com controle de acesso restrito
+                    </li>
+                    <li>
+                      Você pode solicitar a retificação ou eliminação de dados
+                      de localização imprecisos, conforme seus direitos
+                      garantidos pela LGPD
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-3">
+                  <p className="text-gray-600 text-sm font-semibold mb-2">
+                    <strong>Medidas de segurança e privacidade:</strong>
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-2">
+                    <li>
+                      <strong>Criptografia:</strong> todos os dados de
+                      localização são transmitidos de forma criptografada
+                    </li>
+                    <li>
+                      <strong>Anonimização:</strong> para fins estatísticos e de
+                      planejamento, os dados são tratados de forma agregada e
+                      anonimizada
+                    </li>
+                    <li>
+                      <strong>Controle de acesso:</strong> apenas servidores
+                      autorizados e com necessidade legítima podem acessar dados
+                      de localização
+                    </li>
+                    <li>
+                      <strong>Registro de acessos:</strong> todos os acessos aos
+                      dados de geolocalização são registrados para fins de
+                      auditoria
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="bg-yellow-50 p-3 rounded-lg mt-3 border-l-4 border-yellow-400">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Importante:</strong> O fornecimento dos dados de
+                    localização é{' '}
+                    <strong>
+                      obrigatório para a execução dos serviços de transporte
+                      público
+                    </strong>
+                    e fiscalização, nos termos da legislação aplicável. A recusa
+                    em compartilhar a localização pode inviabilizar a prestação
+                    adequada do serviço.
+                  </p>
+                </div>
+
+                <p className="text-gray-600 text-sm leading-relaxed mt-2">
+                  Os dados de geolocalização são armazenados pelo prazo de{' '}
+                  <strong>5 (cinco) anos</strong>, conforme a legislação de
+                  arquivo público, ou pelo prazo necessário para cumprimento de
+                  obrigações legais e regulatórias. Após esse período, os dados
+                  são anonimizados ou eliminados de forma segura.
+                </p>
+
+                <p className="text-gray-600 text-sm leading-relaxed mt-2">
+                  Para dúvidas sobre o tratamento de dados de geolocalização,
+                  entre em contato com nosso Encarregado de Proteção de Dados
+                  (DPO) pelos canais informados na seção &quot;Contato e
+                  DPO&quot;.
+                </p>
+              </div>
+            </section>
+
             {/* Seção 13: Compartilhamento de dados */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
-                12. Compartilhamento de dados
+                13. Compartilhamento de dados
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
                 Seus dados podem ser compartilhados:
@@ -392,7 +521,7 @@ export default function ModalTermos({
             {/* Seção 14: Dados anonimizados */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
-                13. Dados anonimizados
+                14. Dados anonimizados
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
                 Dados anonimizados podem ser utilizados para:
@@ -406,7 +535,7 @@ export default function ModalTermos({
 
             {/* Seção 15: Contato e DPO */}
             <section>
-              <h3 className="text-lg font-semibold mb-2">14. Contato e DPO</h3>
+              <h3 className="text-lg font-semibold mb-2">15. Contato e DPO</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
                 Para esclarecer dúvidas sobre este Termo ou sobre o tratamento
                 de seus dados:
@@ -434,7 +563,7 @@ export default function ModalTermos({
 
             {/* Seção 16: Foro */}
             <section>
-              <h3 className="text-lg font-semibold mb-2">15. Foro</h3>
+              <h3 className="text-lg font-semibold mb-2">16. Foro</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
                 Fica eleito o Foro da Comarca de Petrópolis para dirimir
                 quaisquer controvérsias decorrentes deste Termo, com renúncia
@@ -449,7 +578,7 @@ export default function ModalTermos({
             {/* Seção 17: Alterações deste termo */}
             <section>
               <h3 className="text-lg font-semibold mb-2">
-                16. Alterações deste termo
+                17. Alterações deste termo
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
                 Este Termo tem validade indeterminada, mas está sujeito a
