@@ -24,6 +24,7 @@
  * @property {string} telefone - Telefone com DDD (apenas números)
  * @property {string} email - Email institucional
  * @property {string} senha - Senha de acesso (hash)
+ * @property {boolean} ativo - Status do gestor (ativo/inativo)
  *
  * @example
  * ```ts
@@ -44,6 +45,7 @@ export type Gestor = {
   telefone: string;
   email: string;
   senha: string;
+  ativo: boolean;
 };
 
 /**
