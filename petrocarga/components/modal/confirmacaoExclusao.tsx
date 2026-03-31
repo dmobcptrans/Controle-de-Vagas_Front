@@ -10,6 +10,7 @@ interface ModalConfirmacaoExclusaoProps {
   mensagem?: string;
   textoCancelar?: string;
   textoConfirmar?: string;
+  tipo?: 'exclusao' | 'ativacao';
 }
 
 export default function ModalConfirmacaoExclusao({
@@ -20,6 +21,7 @@ export default function ModalConfirmacaoExclusao({
   mensagem = '',
   textoCancelar = 'Cancelar',
   textoConfirmar = 'Excluir',
+  tipo = 'exclusao',
 }: ModalConfirmacaoExclusaoProps) {
   // Bloqueia scroll quando modal está aberto
   useEffect(() => {
@@ -48,6 +50,12 @@ export default function ModalConfirmacaoExclusao({
 
   if (!isOpen) return null;
 
+  // CORES DINÂMICAS BASEADAS NO TIPO
+  const corConfirmar =
+    tipo === 'exclusao'
+      ? 'bg-red-500 hover:bg-red-600'
+      : 'bg-green-500 hover:bg-green-600';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay com backdrop blur */}
@@ -71,7 +79,7 @@ export default function ModalConfirmacaoExclusao({
           </button>
           <button
             onClick={onConfirm}
-            className="px-6 py-3 h-11 bg-red-500 hover:bg-red-600 text-white rounded-lg transition text-sm sm:text-base order-1 sm:order-2 min-w-[120px] font-medium"
+            className={`px-6 py-3 h-11 ${corConfirmar} text-white rounded-lg transition text-sm sm:text-base order-1 sm:order-2 min-w-[120px] font-medium`}
           >
             {textoConfirmar}
           </button>

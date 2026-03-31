@@ -43,6 +43,7 @@ export type Usuario = {
   telefone: string;
   email: string;
   senha: string;
+  ativo: boolean;
 };
 
 /**
@@ -53,7 +54,7 @@ export type Usuario = {
  * @property {string} id - ID do agente (mesmo do usuário)
  * @property {string} matricula - Matrícula do agente na organização
  * @property {Usuario} usuario - Dados do usuário aninhados
- *
+ * @property {boolean} ativo - Status do usuário (ativo/inativo)
  * @example
  * ```ts
  * const agente: Agente = {
