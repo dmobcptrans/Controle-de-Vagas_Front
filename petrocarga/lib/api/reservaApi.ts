@@ -161,9 +161,15 @@ export async function finalizarForcado(reservaID: string) {
  * }
  * ```
  */
-export async function getReservasPorUsuario(usuarioId: string) {
+export async function getReservasPorUsuario(
+  usuarioId: string,
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 1000,
+) {
   try {
-    const res = await clientApi(`/petrocarga/reservas/usuario/${usuarioId}`);
+    const res = await clientApi(
+      `/petrocarga/reservas/usuario/${usuarioId}?numeroPagina=${numeroPagina}&tamanhoPagina=${tamanhoPagina}`,
+    );
     return res.json();
   } catch (err: unknown) {
     const message =
@@ -488,22 +494,35 @@ export async function reservarVagaAgente(
 /**
  * @function getReservasRapidas
  * @description Lista reservas rápidas criadas por um agente.
+ * Suporta paginação para carregar grandes volumes de reservas.
  *
  * @param usuarioId - ID do agente
+ * @param numeroPagina - Número da página (0-indexed, padrão: 0)
+ * @param tamanhoPagina - Quantidade de itens por página (padrão: 1000)
  * @returns Promise<ReservaRapida[]> - Array de reservas rápidas
  * @throws {Error} Dispara erro se a requisição falhar
  *
  * @example
  * ```ts
- * const reservas = await getReservasRapidas('agente123');
- * console.log(`Agente criou ${reservas.length} reservas`);
+ * // Busca todas as reservas (paginação grande)
+ * const todasReservas = await getReservasRapidas('agente123');
+ *
+ * // Busca primeira página com 20 reservas
+ * const primeiraPagina = await getReservasRapidas('agente123', 0, 20);
+ *
+ * // Busca segunda página com 10 reservas
+ * const segundaPagina = await getReservasRapidas('agente123', 1, 10);
  * ```
  */
 export async function getReservasRapidas(
   usuarioId: string,
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 1000,
 ): Promise<ReservaRapida[]> {
   try {
-    const res = await clientApi(`/petrocarga/reserva-rapida/${usuarioId}`);
+    const res = await clientApi(
+      `/petrocarga/reserva-rapida/${usuarioId}?numeroPagina=${numeroPagina}&tamanhoPagina=${tamanhoPagina}`,
+    );
 
     if (!res.ok) {
       throw new Error(`Erro na requisição: ${res.status}`);
