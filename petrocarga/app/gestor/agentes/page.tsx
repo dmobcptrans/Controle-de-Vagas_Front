@@ -9,16 +9,13 @@ import {
   Search,
   X,
   Users,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   CheckCircle,
   XCircle,
   Menu,
 } from 'lucide-react';
 import { Agente } from '@/lib/types/agente';
 import AgenteCard from '@/components/gestor/cards/agentes-card';
+import { Paginacao } from '@/components/paginacao/paginacao';
 
 const ITENS_POR_PAGINA = 9;
 
@@ -202,14 +199,9 @@ export default function AgentesPage() {
   }, [agentesFiltrados, paginaAtual]);
 
   // ==================== FUNÇÕES DE NAVEGAÇÃO ====================
-  const irParaPagina = (pagina: number) => {
-    setPaginaAtual(Math.max(1, Math.min(pagina, totalPaginas)));
+  const handlePageChange = (pagina: number) => {
+    setPaginaAtual(pagina);
   };
-
-  const irParaPrimeiraPagina = () => irParaPagina(1);
-  const irParaUltimaPagina = () => irParaPagina(totalPaginas);
-  const irParaPaginaAnterior = () => irParaPagina(paginaAtual - 1);
-  const irParaProximaPagina = () => irParaPagina(paginaAtual + 1);
 
   // ==================== RENDERIZAÇÃO CONDICIONAL ====================
 
@@ -610,124 +602,15 @@ export default function AgentesPage() {
               </div>
 
               {/* Paginação responsiva */}
-              {totalPaginas > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-4">
-                  {/* Informação de itens visíveis */}
-                  <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
-                    Mostrando{' '}
-                    <span className="font-medium text-blue-600">
-                      {Math.min(
-                        (paginaAtual - 1) * ITENS_POR_PAGINA + 1,
-                        agentesFiltrados.length,
-                      )}{' '}
-                      -{' '}
-                      {Math.min(
-                        paginaAtual * ITENS_POR_PAGINA,
-                        agentesFiltrados.length,
-                      )}
-                    </span>{' '}
-                    de{' '}
-                    <span className="font-medium">
-                      {agentesFiltrados.length}
-                    </span>{' '}
-                    agente(s)
-                  </div>
-
-                  {/* Controles de página */}
-                  <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center">
-                    <button
-                      onClick={irParaPrimeiraPagina}
-                      disabled={paginaAtual === 1}
-                      className="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronsLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Primeira</span>
-                    </button>
-                    <button
-                      onClick={irParaPaginaAnterior}
-                      disabled={paginaAtual === 1}
-                      className="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Anterior</span>
-                    </button>
-
-                    {/* Números das páginas (escondido em mobile) */}
-                    <div className="hidden sm:flex items-center gap-1">
-                      {[...Array(totalPaginas)].map((_, i) => {
-                        const paginaNumero = i + 1;
-                        if (
-                          paginaNumero === 1 ||
-                          paginaNumero === totalPaginas ||
-                          (paginaNumero >= paginaAtual - 1 &&
-                            paginaNumero <= paginaAtual + 1)
-                        ) {
-                          return (
-                            <button
-                              key={paginaNumero}
-                              onClick={() => irParaPagina(paginaNumero)}
-                              className={`min-w-7 h-7 sm:min-w-8 sm:h-8 flex items-center justify-center px-1.5 sm:px-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                                paginaAtual === paginaNumero
-                                  ? 'bg-blue-600 text-white'
-                                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                              }`}
-                            >
-                              {paginaNumero}
-                            </button>
-                          );
-                        } else if (
-                          paginaNumero === paginaAtual - 2 ||
-                          paginaNumero === paginaAtual + 2
-                        ) {
-                          return (
-                            <span
-                              key={paginaNumero}
-                              className="px-1 text-gray-400"
-                            >
-                              ...
-                            </span>
-                          );
-                        }
-                        return null;
-                      })}
-                    </div>
-
-                    {/* Seletor de página dropdown */}
-                    <span className="text-xs sm:text-sm text-gray-700 px-1 sm:px-2">
-                      Página{' '}
-                      <select
-                        value={paginaAtual}
-                        onChange={(e) => irParaPagina(Number(e.target.value))}
-                        className="ml-1 px-1.5 sm:px-2 py-1 border border-gray-300 rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm"
-                      >
-                        {[...Array(totalPaginas)].map((_, i) => (
-                          <option key={i + 1} value={i + 1}>
-                            {i + 1}
-                          </option>
-                        ))}
-                      </select>{' '}
-                      de {totalPaginas}
-                    </span>
-
-                    <button
-                      onClick={irParaProximaPagina}
-                      disabled={paginaAtual === totalPaginas}
-                      className="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <span className="hidden sm:inline">Próxima</span>
-                      <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    </button>
-                    <button
-                      onClick={irParaUltimaPagina}
-                      disabled={paginaAtual === totalPaginas}
-                      className="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <span className="hidden sm:inline">Última</span>
-                      <ChevronsRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <Paginacao
+                paginaAtual={paginaAtual}
+                totalPaginas={totalPaginas}
+                totalItens={agentesFiltrados.length}
+                itensPorPagina={ITENS_POR_PAGINA}
+                itemLabel="agente"
+                itemLabelPlural="agentes"
+                onPageChange={handlePageChange}
+              />
             </>
           )}
         </div>
