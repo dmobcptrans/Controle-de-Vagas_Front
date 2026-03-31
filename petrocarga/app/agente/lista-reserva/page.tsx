@@ -25,7 +25,6 @@ const ITENS_POR_PAGINA = 12;
 
 type FiltroStatusReserva =
   | 'todas'
-  | 'ativas'
   | 'reservada'
   | 'ativa'
   | 'concluida'
@@ -34,29 +33,30 @@ type FiltroStatusReserva =
 
 /**
  * @component ReservaRapidaPage
- * @version 4.0.0
+ * @version 5.0.0
  *
  * @description Página de listagem de reservas rápidas criadas pelo agente.
  * Gerencia busca, loading, erro, filtros por todos os status, paginação e exibição em grid responsivo.
  *
  * ----------------------------------------------------------------------------
- * 📋 ALTERAÇÕES V4.0.0:
+ * 📋 ALTERAÇÕES V5.0.0:
  * ----------------------------------------------------------------------------
  *
- * 1. FILTROS POR TODOS OS STATUS:
+ * 1. REMOÇÃO DO FILTRO "ATIVAS":
+ *    - Removeu o filtro agrupado "Ativas" (RESERVADA + ATIVA)
+ *    - Agora os filtros são individuais e específicos
+ *
+ * 2. FILTRO PADRÃO:
+ *    - Inicia com filtro "ativa" (status ATIVA)
+ *    - Mostra apenas reservas em andamento
+ *
+ * 3. FILTROS DISPONÍVEIS:
  *    - Todas: mostra todas as reservas
- *    - Ativas (padrão): mostra reservas com status 'RESERVADA' ou 'ATIVA'
  *    - Reservada: mostra apenas status 'RESERVADA'
- *    - Ativa: mostra apenas status 'ATIVA'
+ *    - Ativa: mostra apenas status 'ATIVA' (PADRÃO)
  *    - Concluída: mostra apenas status 'CONCLUIDA'
  *    - Cancelada: mostra apenas status 'CANCELADA'
  *    - Removida: mostra apenas status 'REMOVIDA'
- *
- * 2. UI OTIMIZADA:
- *    - Layout responsivo com scroll horizontal em desktop para muitos botões
- *    - Dropdown no mobile para economizar espaço
- *    - Cores distintas para cada status
- *    - Ícones específicos para cada status
  *
  * ----------------------------------------------------------------------------
  * 📊 STATUS DE RESERVAS:
@@ -65,7 +65,7 @@ type FiltroStatusReserva =
  * | Status      | Ícone          | Cor        | Descrição                          |
  * |-------------|----------------|------------|------------------------------------|
  * | RESERVADA   | Clock          | Amarelo    | Reserva agendada, ainda não ativa  |
- * | ATIVA       | CheckCircle2   | Verde      | Reserva em andamento               |
+ * | ATIVA       | CheckCircle2   | Verde      | Reserva em andamento (PADRÃO)      |
  * | CONCLUIDA   | CalendarCheck  | Roxo       | Reserva finalizada                 |
  * | CANCELADA   | Ban            | Vermelho   | Reserva cancelada pelo agente      |
  * | REMOVIDA    | Trash2         | Cinza      | Reserva removida pelo sistema      |
@@ -77,9 +77,8 @@ type FiltroStatusReserva =
  * | Status      | Desktop (ativo)      | Mobile (ativo)       |
  * |-------------|----------------------|----------------------|
  * | Todas       | 🔵 Azul              | 🔵 Azul              |
- * | Ativas      | 🟢 Verde             | 🟢 Verde             |
  * | Reservada   | 🟡 Amarelo           | 🟡 Amarelo           |
- * | Ativa       | 🟢 Verde escuro      | 🟢 Verde escuro      |
+ * | Ativa       | 🟢 Verde             | 🟢 Verde (PADRÃO)    |
  * | Concluída   | 🟣 Roxo              | 🟣 Roxo              |
  * | Cancelada   | 🔴 Vermelho          | 🔴 Vermelho          |
  * | Removida    | ⚫ Cinza             | ⚫ Cinza             |
@@ -101,7 +100,7 @@ export default function ReservaRapidaPage() {
   const [busca, setBusca] = useState('');
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [filtroStatus, setFiltroStatus] =
-    useState<FiltroStatusReserva>('ativas'); // Padrão: mostrar ativas (RESERVADA + ATIVA)
+    useState<FiltroStatusReserva>('ativa');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // --------------------------------------------------------------------------
@@ -168,15 +167,8 @@ export default function ReservaRapidaPage() {
   const reservasFiltradas = useMemo(() => {
     let filtradas = [...reservas];
 
-    // Filtro por status
+    // Filtro por status (filtros individuais)
     switch (filtroStatus) {
-      case 'ativas':
-        // Reservas ativas: status 'RESERVADA' ou 'ATIVA'
-        filtradas = filtradas.filter(
-          (reserva) =>
-            reserva.status === 'RESERVADA' || reserva.status === 'ATIVA',
-        );
-        break;
       case 'reservada':
         filtradas = filtradas.filter(
           (reserva) => reserva.status === 'RESERVADA',
@@ -202,7 +194,7 @@ export default function ReservaRapidaPage() {
         break;
       case 'todas':
       default:
-        // Mostra todas as reservas, incluindo canceladas e removidas
+        // Mostra todas as reservas, incluindo todos os status
         break;
     }
 
@@ -239,61 +231,6 @@ export default function ReservaRapidaPage() {
 
   const contarPorStatus = (status: string) => {
     return reservas.filter((reserva) => reserva.status === status).length;
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'RESERVADA':
-        return <Clock className="h-3.5 w-3.5" />;
-      case 'ATIVA':
-        return <CheckCircle2 className="h-3.5 w-3.5" />;
-      case 'CONCLUIDA':
-        return <CalendarCheck className="h-3.5 w-3.5" />;
-      case 'CANCELADA':
-        return <Ban className="h-3.5 w-3.5" />;
-      case 'REMOVIDA':
-        return <Trash2 className="h-3.5 w-3.5" />;
-      default:
-        return <CalendarClock className="h-3.5 w-3.5" />;
-    }
-  };
-
-  const getStatusColor = (status: string, isActive: boolean) => {
-    if (!isActive) return 'text-gray-600 hover:text-gray-900';
-
-    switch (status) {
-      case 'RESERVADA':
-        return 'bg-yellow-50 shadow-sm text-yellow-700';
-      case 'ATIVA':
-        return 'bg-green-50 shadow-sm text-green-700';
-      case 'CONCLUIDA':
-        return 'bg-purple-50 shadow-sm text-purple-700';
-      case 'CANCELADA':
-        return 'bg-red-50 shadow-sm text-red-700';
-      case 'REMOVIDA':
-        return 'bg-gray-50 shadow-sm text-gray-700';
-      default:
-        return 'bg-white shadow-sm text-gray-900';
-    }
-  };
-
-  const getMobileStatusColor = (status: string, isActive: boolean) => {
-    if (!isActive) return 'bg-gray-100 text-gray-700';
-
-    switch (status) {
-      case 'RESERVADA':
-        return 'bg-yellow-600 text-white';
-      case 'ATIVA':
-        return 'bg-green-600 text-white';
-      case 'CONCLUIDA':
-        return 'bg-purple-600 text-white';
-      case 'CANCELADA':
-        return 'bg-red-600 text-white';
-      case 'REMOVIDA':
-        return 'bg-gray-600 text-white';
-      default:
-        return 'bg-blue-600 text-white';
-    }
   };
 
   // --------------------------------------------------------------------------
@@ -418,7 +355,7 @@ export default function ReservaRapidaPage() {
                   </div>
                 </div>
 
-                {/* Controles de filtro - Todos os status */}
+                {/* Controles de filtro - Todos os status individuais */}
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="flex gap-2 p-1 bg-gray-100 rounded-lg overflow-x-auto max-w-full">
                     <button
@@ -435,22 +372,6 @@ export default function ReservaRapidaPage() {
                     </button>
 
                     <button
-                      onClick={() => handleFiltroStatus('ativas')}
-                      className={`inline-flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-all text-xs sm:text-sm whitespace-nowrap ${
-                        filtroStatus === 'ativas'
-                          ? 'bg-green-50 shadow-sm text-green-700'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Ativas</span>
-                      <span className="sm:hidden">Atv</span>
-                      {filtroStatus === 'ativas' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-600 hidden sm:inline-block"></span>
-                      )}
-                    </button>
-
-                    <button
                       onClick={() => handleFiltroStatus('reservada')}
                       className={`inline-flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-all text-xs sm:text-sm whitespace-nowrap ${
                         filtroStatus === 'reservada'
@@ -461,19 +382,25 @@ export default function ReservaRapidaPage() {
                       <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Reservada</span>
                       <span className="sm:hidden">Res</span>
+                      {filtroStatus === 'reservada' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-600 hidden sm:inline-block"></span>
+                      )}
                     </button>
 
                     <button
                       onClick={() => handleFiltroStatus('ativa')}
                       className={`inline-flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-all text-xs sm:text-sm whitespace-nowrap ${
                         filtroStatus === 'ativa'
-                          ? 'bg-green-100 shadow-sm text-green-800'
+                          ? 'bg-green-50 shadow-sm text-green-700'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
                       <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Ativa</span>
                       <span className="sm:hidden">Atv</span>
+                      {filtroStatus === 'ativa' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-600 hidden sm:inline-block"></span>
+                      )}
                     </button>
 
                     <button
@@ -487,6 +414,9 @@ export default function ReservaRapidaPage() {
                       <CalendarCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Concluída</span>
                       <span className="sm:hidden">Conc</span>
+                      {filtroStatus === 'concluida' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-600 hidden sm:inline-block"></span>
+                      )}
                     </button>
 
                     <button
@@ -500,6 +430,9 @@ export default function ReservaRapidaPage() {
                       <Ban className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Cancelada</span>
                       <span className="sm:hidden">Canc</span>
+                      {filtroStatus === 'cancelada' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-600 hidden sm:inline-block"></span>
+                      )}
                     </button>
 
                     <button
@@ -513,6 +446,9 @@ export default function ReservaRapidaPage() {
                       <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Removida</span>
                       <span className="sm:hidden">Rem</span>
+                      {filtroStatus === 'removida' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-gray-600 hidden sm:inline-block"></span>
+                      )}
                     </button>
                   </div>
 
@@ -536,7 +472,7 @@ export default function ReservaRapidaPage() {
                 </div>
               </div>
 
-              {/* Resumo dos filtros aplicados e estatísticas rápidas */}
+              {/* Resumo dos filtros aplicados */}
               {(busca || filtroStatus !== 'todas') && (
                 <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="text-xs sm:text-sm text-gray-600">
@@ -551,17 +487,15 @@ export default function ReservaRapidaPage() {
                             {' '}
                             |{' '}
                             <span className="font-medium">
-                              {filtroStatus === 'ativas'
-                                ? 'Reservas ativas (Reservada + Ativa)'
-                                : filtroStatus === 'reservada'
-                                  ? 'Apenas reservadas'
-                                  : filtroStatus === 'ativa'
-                                    ? 'Apenas ativas'
-                                    : filtroStatus === 'concluida'
-                                      ? 'Apenas concluídas'
-                                      : filtroStatus === 'cancelada'
-                                        ? 'Apenas canceladas'
-                                        : 'Apenas removidas'}
+                              {filtroStatus === 'reservada'
+                                ? 'Apenas reservadas'
+                                : filtroStatus === 'ativa'
+                                  ? 'Apenas ativas'
+                                  : filtroStatus === 'concluida'
+                                    ? 'Apenas concluídas'
+                                    : filtroStatus === 'cancelada'
+                                      ? 'Apenas canceladas'
+                                      : 'Apenas removidas'}
                             </span>
                           </>
                         )}
@@ -570,19 +504,17 @@ export default function ReservaRapidaPage() {
                       <>
                         Mostrando{' '}
                         <span className="font-medium text-blue-600">
-                          {filtroStatus === 'ativas'
-                            ? 'reservas ativas (Reservada + Ativa)'
-                            : filtroStatus === 'reservada'
-                              ? 'apenas reservas com status "Reservada"'
-                              : filtroStatus === 'ativa'
-                                ? 'apenas reservas com status "Ativa"'
-                                : filtroStatus === 'concluida'
-                                  ? 'apenas reservas concluídas'
-                                  : filtroStatus === 'cancelada'
-                                    ? 'apenas reservas canceladas'
-                                    : filtroStatus === 'removida'
-                                      ? 'apenas reservas removidas'
-                                      : 'todas as reservas'}
+                          {filtroStatus === 'reservada'
+                            ? 'apenas reservas com status "Reservada"'
+                            : filtroStatus === 'ativa'
+                              ? 'apenas reservas com status "Ativa"'
+                              : filtroStatus === 'concluida'
+                                ? 'apenas reservas concluídas'
+                                : filtroStatus === 'cancelada'
+                                  ? 'apenas reservas canceladas'
+                                  : filtroStatus === 'removida'
+                                    ? 'apenas reservas removidas'
+                                    : 'todas as reservas'}
                         </span>
                       </>
                     )}
@@ -632,7 +564,7 @@ export default function ReservaRapidaPage() {
                   )}
                 </div>
 
-                {/* Botões de filtro mobile - Scroll vertical */}
+                {/* Botões de filtro mobile */}
                 <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -645,17 +577,6 @@ export default function ReservaRapidaPage() {
                     >
                       <CalendarClock className="h-4 w-4" />
                       Todas
-                    </button>
-                    <button
-                      onClick={() => handleFiltroStatus('ativas')}
-                      className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        filtroStatus === 'ativas'
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Ativas
                     </button>
                     <button
                       onClick={() => handleFiltroStatus('reservada')}
@@ -672,7 +593,7 @@ export default function ReservaRapidaPage() {
                       onClick={() => handleFiltroStatus('ativa')}
                       className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         filtroStatus === 'ativa'
-                          ? 'bg-green-700 text-white'
+                          ? 'bg-green-600 text-white'
                           : 'bg-gray-100 text-gray-700'
                       }`}
                     >
@@ -772,7 +693,17 @@ export default function ReservaRapidaPage() {
                   <p className="text-gray-600 mb-5 sm:mb-6 text-xs sm:text-sm md:text-base">
                     {busca
                       ? `Não encontramos reservas para "${busca}".`
-                      : `Não encontramos reservas com o status selecionado.`}
+                      : `Não encontramos reservas com o status "${
+                          filtroStatus === 'reservada'
+                            ? 'Reservada'
+                            : filtroStatus === 'ativa'
+                              ? 'Ativa'
+                              : filtroStatus === 'concluida'
+                                ? 'Concluída'
+                                : filtroStatus === 'cancelada'
+                                  ? 'Cancelada'
+                                  : 'Removida'
+                        }".`}
                   </p>
                   <button
                     onClick={mostrarTodas}
@@ -860,17 +791,15 @@ export default function ReservaRapidaPage() {
                     {filtroStatus !== 'todas' && (
                       <span className="text-xs">
                         (
-                        {filtroStatus === 'ativas'
-                          ? 'ativas'
-                          : filtroStatus === 'reservada'
-                            ? 'reservadas'
-                            : filtroStatus === 'ativa'
-                              ? 'ativas'
-                              : filtroStatus === 'concluida'
-                                ? 'concluídas'
-                                : filtroStatus === 'cancelada'
-                                  ? 'canceladas'
-                                  : 'removidas'}
+                        {filtroStatus === 'reservada'
+                          ? 'reservadas'
+                          : filtroStatus === 'ativa'
+                            ? 'ativas'
+                            : filtroStatus === 'concluida'
+                              ? 'concluídas'
+                              : filtroStatus === 'cancelada'
+                                ? 'canceladas'
+                                : 'removidas'}
                         )
                       </span>
                     )}
