@@ -270,7 +270,7 @@ export default function AgenteCard({
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Determina se o agente está ativo
-  const isAtivo = agente.ativo === true;
+  const isAtivo = agente.usuario.ativo === true;
 
   /**
    * @function handleExcluir
