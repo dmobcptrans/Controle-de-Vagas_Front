@@ -43,6 +43,7 @@ export type Usuario = {
   telefone: string;
   email: string;
   senha: string;
+  ativo: boolean;
 };
 
 /**
@@ -74,7 +75,6 @@ export type Agente = {
   id: string;
   matricula: string;
   usuario: Usuario;
-  ativo: boolean;
 };
 
 /**
