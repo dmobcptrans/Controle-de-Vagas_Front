@@ -151,6 +151,9 @@ export function useReserva(selectedVaga: Vaga | null) {
   const [horariosCarregados, setHorariosCarregados] = useState(false);
   const reservedTimesEndBaseRef = useRef<string[]>([]);
 
+  const INTERVALO_AGENTE = 15;
+  const INTERVALO_MOTORISTA = 30;
+
   // ==================== RESET ====================
   const reset = useCallback(() => {
     setReservaState({
@@ -248,6 +251,7 @@ export function useReserva(selectedVaga: Vaga | null) {
 
       try {
         const operacao = getOperacaoDia(day, vaga);
+        const intervalo = isAgente ? INTERVALO_AGENTE : INTERVALO_MOTORISTA;
         if (!operacao) return [];
 
         let tipoVeiculo: Veiculo['tipo'] | undefined;
@@ -269,13 +273,14 @@ export function useReserva(selectedVaga: Vaga | null) {
           tipoVeiculo,
         );
 
-        const horariosOcupadosInicio = gerarHorariosOcupadosInicio(bloqueios);
-        const horariosOcupadosFim = gerarHorariosOcupadosFim(bloqueios);
+        const horariosOcupadosInicio = gerarHorariosOcupadosInicio(bloqueios, intervalo);
+        const horariosOcupadosFim = gerarHorariosOcupadosFim(bloqueios, intervalo);
 
-        const todosHorarios = gerarHorariosDia(operacao);
+
+        const todosHorarios = gerarHorariosDia(operacao, intervalo);
         const horariosFiltradosHoje = removerHorariosPassadosDeHoje(
           day,
-          todosHorarios,
+          todosHorarios
         );
 
         reservedTimesEndBaseRef.current = horariosOcupadosFim;
@@ -283,9 +288,10 @@ export function useReserva(selectedVaga: Vaga | null) {
           ...prev,
           availableTimes: horariosFiltradosHoje,
           reservedTimesStart: horariosOcupadosInicio,
-          reservedTimesEnd: [],
+          reservedTimesEnd: horariosOcupadosFim,
         }));
 
+        console.log(horariosOcupadosFim)
         return horariosFiltradosHoje;
       } finally {
         setLoadingHorarios(false);
@@ -294,6 +300,7 @@ export function useReserva(selectedVaga: Vaga | null) {
     },
     [vehicles, reservaState.tipoVeiculoAgente, isAgente],
   );
+
 
   // ==================== CÁLCULO DE HORÁRIOS FINAIS ====================
   const calcularReservedTimesEnd = useCallback(
