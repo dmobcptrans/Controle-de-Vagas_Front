@@ -2,6 +2,7 @@ import { DiaSemana, OperacoesVaga } from '@/lib/types/vaga';
 import { Reserva } from '@/lib/types/reserva';
 import { Vaga } from '@/lib/types/vaga';
 
+
 /**
  * @module utils/reserva/horarios
  * @description Funções utilitárias para gerenciamento de horários no fluxo de reserva.
@@ -33,24 +34,24 @@ export const DIAS_SEMANA: DiaSemana[] = [
   'SABADO',
 ];
 
-export const INTERVALO_MINUTOS = 30;
-
-const formatarHora = (dateString: string): string => {
-  const d = new Date(dateString);
-  const h = padNumber(d.getHours());
-  const m = d.getMinutes() >= 30 ? '30' : '00';
-  return `${h}:${m}`;
-};
-
 /**
  * @function padNumber
- * @description Preenche um número com zero à esquerda (ex: 5 → "05")
  */
 export const padNumber = (n: number): string => n.toString().padStart(2, '0');
 
 /**
+ * 🔥 NOVO: formatação padrão (remove dependência de 30min)
+ */
+const formatarHoraFromDate = (date: Date): string => {
+  return `${padNumber(date.getHours())}:${padNumber(date.getMinutes())}`;
+};
+
+const formatarHora = (dateString: string): string => {
+  return formatarHoraFromDate(new Date(dateString));
+};
+
+/**
  * @function formatDateTime
- * @description Combina uma data e uma hora para criar uma string ISO
  */
 export const formatDateTime = (day: Date, hour: string): string => {
   const [h, m] = hour.split(':').map(Number);
@@ -60,11 +61,12 @@ export const formatDateTime = (day: Date, hour: string): string => {
 };
 
 /**
- * @function gerarHorariosOcupados
- * @description Gera todos os horários ocupados por uma reserva (intervalo de 30 min)
+ * gerarHorariosOcupadosInicio
  */
-
-export const gerarHorariosOcupadosInicio = (reservas: Reserva[]): string[] => {
+export const gerarHorariosOcupadosInicio = (
+  reservas: Reserva[],
+  intervalo: number
+): string[] => {
   const resultado = new Set<string>();
 
   reservas.forEach((reserva) => {
@@ -75,40 +77,12 @@ export const gerarHorariosOcupadosInicio = (reservas: Reserva[]): string[] => {
       fim.setDate(fim.getDate() + 1);
     }
 
-    // Começa 30min antes do início (buffer)
     const current = new Date(inicio);
-    current.setMinutes(current.getMinutes() - INTERVALO_MINUTOS);
+    current.setMinutes(current.getMinutes() - intervalo);
 
     while (current <= fim) {
-      const h = padNumber(current.getHours());
-      const m = current.getMinutes() >= 30 ? '30' : '00';
-      resultado.add(`${h}:${m}`);
-      current.setMinutes(current.getMinutes() + INTERVALO_MINUTOS);
-    }
-  });
-
-  return Array.from(resultado);
-};
-
-export const gerarHorariosOcupadosFim = (reservas: Reserva[]): string[] => {
-  const resultado = new Set<string>();
-
-  reservas.forEach((reserva) => {
-    const inicio = new Date(reserva.inicio);
-    const fim = new Date(reserva.fim);
-
-    if (fim <= inicio) {
-      fim.setDate(fim.getDate() + 1); // corrige reservas que cruzam meia-noite
-    }
-
-    const current = new Date(inicio);
-
-    // Igual ao de início, mas SEM recuar 30min antes (sem buffer)
-    while (current <= fim) {
-      const h = padNumber(current.getHours());
-      const m = current.getMinutes() >= 30 ? '30' : '00';
-      resultado.add(`${h}:${m}`);
-      current.setMinutes(current.getMinutes() + INTERVALO_MINUTOS);
+      resultado.add(formatarHoraFromDate(current));
+      current.setMinutes(current.getMinutes() + intervalo);
     }
   });
 
@@ -116,10 +90,40 @@ export const gerarHorariosOcupadosFim = (reservas: Reserva[]): string[] => {
 };
 
 /**
- * @function gerarHorariosDia
- * @description Gera todos os horários disponíveis para um dia baseado na operação da vaga
+ * gerarHorariosOcupadosFim
  */
-export const gerarHorariosDia = (operacao: OperacoesVaga): string[] => {
+export const gerarHorariosOcupadosFim = (
+  reservas: Reserva[],
+  intervalo: number
+): string[] => {
+  const resultado = new Set<string>();
+
+  reservas.forEach((reserva) => {
+    const inicio = new Date(reserva.inicio);
+    const fim = new Date(reserva.fim);
+
+    if (fim <= inicio) {
+      fim.setDate(fim.getDate() + 1);
+    }
+
+    const current = new Date(inicio);
+
+    while (current <= fim) {
+      resultado.add(formatarHoraFromDate(current));
+      current.setMinutes(current.getMinutes() + intervalo);
+    }
+  });
+
+  return Array.from(resultado);
+};
+
+/**
+ * gerarHorariosDia
+ */
+export const gerarHorariosDia = (
+  operacao: OperacoesVaga,
+  intervalo: number
+): string[] => {
   const [hInicio, mInicio] = operacao.horaInicio.split(':').map(Number);
   const [hFim, mFim] = operacao.horaFim.split(':').map(Number);
 
@@ -130,7 +134,7 @@ export const gerarHorariosDia = (operacao: OperacoesVaga): string[] => {
   while (h < hFim || (h === hFim && m <= mFim)) {
     times.push(`${padNumber(h)}:${padNumber(m)}`);
 
-    m += INTERVALO_MINUTOS;
+    m += intervalo;
     if (m >= 60) {
       h += 1;
       m -= 60;
@@ -141,8 +145,7 @@ export const gerarHorariosDia = (operacao: OperacoesVaga): string[] => {
 };
 
 /**
- * @function getOperacaoDia
- * @description Retorna a operação de funcionamento da vaga para um dia específico
+ * getOperacaoDia
  */
 export const getOperacaoDia = (
   day: Date,
@@ -153,11 +156,11 @@ export const getOperacaoDia = (
 };
 
 /**
- * @function gerarHorariosBloqueados
- * @description Gera horários bloqueados a partir de uma lista de reservas
+ * gerarHorariosBloqueados
  */
 export const gerarHorariosBloqueados = (
   bloqueios: { inicio: string; fim: string }[],
+  intervalo: number
 ): string[] => {
   const horarios: string[] = [];
 
@@ -167,12 +170,8 @@ export const gerarHorariosBloqueados = (
     const current = new Date(inicio);
 
     while (current < fim) {
-      const h = padNumber(current.getHours());
-      const m = current.getMinutes() >= 30 ? '30' : '00';
-
-      horarios.push(`${h}:${m}`);
-
-      current.setMinutes(current.getMinutes() + INTERVALO_MINUTOS);
+      horarios.push(formatarHoraFromDate(current));
+      current.setMinutes(current.getMinutes() + intervalo);
     }
   });
 
@@ -180,8 +179,7 @@ export const gerarHorariosBloqueados = (
 };
 
 /**
- * @function filtrarHorariosDisponiveis
- * @description Filtra horários disponíveis removendo os bloqueados
+ * filtrarHorariosDisponiveis
  */
 export const filtrarHorariosDisponiveis = (
   horariosDia: string[],
@@ -191,8 +189,7 @@ export const filtrarHorariosDisponiveis = (
 };
 
 /**
- * @function removerHorariosPassadosDeHoje
- * @description Remove horários que já passaram (apenas para o dia atual)
+ * removerHorariosPassadosDeHoje
  */
 export const removerHorariosPassadosDeHoje = (
   day: Date,
@@ -200,7 +197,6 @@ export const removerHorariosPassadosDeHoje = (
 ): string[] => {
   const agora = new Date();
 
-  // Se o dia NÃO é hoje, retorna todos os horários normalmente
   const isHoje =
     day.getDate() === agora.getDate() &&
     day.getMonth() === agora.getMonth() &&
@@ -221,20 +217,21 @@ export const removerHorariosPassadosDeHoje = (
   });
 };
 
+/**
+ * filtrarHorariosFim
+ */
 export const filtrarHorariosFim = (
   horariosDia: string[],
   reservas: Reserva[],
   inicioSelecionado: string
 ): string[] => {
   return horariosDia.filter((horarioFim) => {
-    // não pode ser antes ou igual ao início
     if (horarioFim <= inicioSelecionado) return false;
 
     return !reservas.some((reserva) => {
       const inicioReserva = formatarHora(reserva.inicio);
       const fimReserva = formatarHora(reserva.fim);
 
-      // 🚨 regra de interseção
       return (
         inicioSelecionado < fimReserva &&
         horarioFim > inicioReserva
@@ -244,17 +241,11 @@ export const filtrarHorariosFim = (
 };
 
 /**
- * @function gerarHorariosOcupadosPorArea
- * @description Gera horários ocupados com limite de horas por área
- * 
- * Limites por área:
- * - VERMELHA: 1 hora
- * - AMARELA: 2 horas
- * - AZUL: 4 horas
- * - BRANCA: 6 horas
+ * gerarHorariosOcupadosPorArea
  */
 export const gerarHorariosOcupadosPorArea = (
   reserva: Reserva,
+  intervalo: number,
   area: Vaga['area'],
 ): string[] => {
   const limites: Record<string, number> = {
@@ -283,11 +274,8 @@ export const gerarHorariosOcupadosPorArea = (
   const current = new Date(inicio);
 
   while (current <= fim) {
-    const h = padNumber(current.getHours());
-    const m = current.getMinutes() >= 30 ? '30' : '00';
-
-    horariosOcupados.push(`${h}:${m}`);
-    current.setMinutes(current.getMinutes() + INTERVALO_MINUTOS);
+    horariosOcupados.push(formatarHoraFromDate(current));
+    current.setMinutes(current.getMinutes() + intervalo);
   }
 
   return horariosOcupados;
