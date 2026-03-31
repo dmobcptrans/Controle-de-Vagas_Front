@@ -200,13 +200,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const dadosLogin =
           tipo === 'email'
             ? {
-                email: identificador.trim().toLowerCase(),
-                senha,
-              }
+              email: identificador.trim().toLowerCase(),
+              senha,
+            }
             : {
-                cpf: identificador.replace(/\D/g, ''),
-                senha,
-              };
+              cpf: identificador.replace(/\D/g, ''),
+              senha,
+            };
 
         const loginResponse = await api.post(
           '/petrocarga/auth/login',
@@ -276,7 +276,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (googleToken: string) => {
       try {
         const response = await api.post(
-          `/petrocarga/auth/loginWithGoogle?token=${googleToken}`,
+          `/petrocarga/auth/loginWithGoogle`,
+          {
+            token: googleToken,
+          }
         );
 
         const { token } = response.data;
