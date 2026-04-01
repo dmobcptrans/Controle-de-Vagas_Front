@@ -6,13 +6,13 @@ importScripts(
 );
 
 firebase.initializeApp({
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ''
+  apiKey: "AIzaSyCJiidfgkv5oyzQJr5cyI7W8BZv6OWtueE",
+  authDomain: "fir-cpt-ig.firebaseapp.com",
+  projectId: "fir-cpt-ig",
+  storageBucket: "fir-cpt-ig.firebasestorage.app",
+  messagingSenderId: "569723490331",
+  appId: "1:569723490331:web:b3363e0b1b0ece99d628be",
+  measurementId: "G-WCYM3XCSQ5"
 });
 
 const messaging = firebase.messaging();
