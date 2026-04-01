@@ -7,10 +7,12 @@ import {
   Car,
   AlertCircle,
   X,
+  Info,
 } from 'lucide-react';
 import { getReservasPorPlaca } from '@/lib/api/reservaApi';
 import { ReservaPlaca } from '@/lib/types/reservaPlaca';
 import ReservaPlacaCard from '@/components/agente/cards/reservaPlaca-card';
+import Link from 'next/link';
 
 /**
  * @component ConsultarPlacaPage
@@ -384,10 +386,9 @@ const renderResultado = () => {
   // RENDERIZAÇÃO PRINCIPAL
   // --------------------------------------------------------------------------
 
-  return (
-
+   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* ── Header ── */}
+      {/* Header */}
       <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
@@ -396,71 +397,84 @@ const renderResultado = () => {
           <p className="text-xs text-white/50 capitalize">{INFO_MESSAGES.DESCRICAO}</p>
         </div>
       </header>
-      <div className="w-full max-w-6xl">
 
-        <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-
-          <div className="-mt-4 mb-5">
-            <div
-              className="bg-[#071D41] rounded-2xl border-l-4 border-[#FFCD07] px-5 py-4 "
-              style={{ boxShadow: '0 4px 16px rgba(7,29,65,0.18)' }}
-            >
-              <div className="relative">
-
-                {/* Input row */}
-                <div
-                  className="flex items-center gap-2 rounded-xl px-3 py-2.5"
-                  style={{
-                    background: searchFocused
-                      ? 'rgba(255,255,255,0.15)'
-                      : 'rgba(255,255,255,0.10)',
-                    border: searchFocused
-                      ? '1.5px solid rgba(255,205,7,0.6)'
-                      : '1.5px solid rgba(255,255,255,0.12)',
-                  }}
-                >
-                  <Search
-                    className="h-4 w-4 flex-shrink-0 transition-colors"
-                    style={{ color: searchFocused ? '#FFCD07' : 'rgba(255,255,255,0.45)' }}
-                  />
-
-                  <input
-                    type="text"
-                    value={placa}
-                    onChange={handlePlacaChange}
-                    onKeyDown={handleKeyDown}
-                    onFocus={() => setSearchFocused(true)}
-                    onBlur={() => setSearchFocused(false)}
-                    placeholder="Digite a placa (ABC1234)"
-                    maxLength={PLACA_CONFIG.MAX_LENGTH}
-                    className="flex-1 bg-transparent text-sm text-white placeholder:text-white/35 outline-none min-w-0"
-                    style={{ caretColor: '#FFCD07' }}
-                  />
-
-                  {placa && (
-                    <button
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setPlaca('');
-                      }}
-                      className="flex-shrink-0 rounded-full p-0.5 transition-colors hover:bg-white/20"
-                      style={{ background: 'rgba(255,255,255,0.12)' }}
-                      aria-label="Limpar"
-                    >
-                      <X className="h-3 w-3 text-white/70" />
-                    </button>
-                  )}
-                </div>
-
+      {/* Main content */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-8 pb-16">
+        {/* Input de busca */}
+        <div className="-mt-4 mb-5">
+          <div
+            className="bg-[#071D41] rounded-2xl border-l-4 border-[#FFCD07] px-5 py-4"
+            style={{ boxShadow: '0 4px 16px rgba(7,29,65,0.18)' }}
+          >
+            <div className="relative">
+              <div
+                className="flex items-center gap-2 rounded-xl px-3 py-2.5"
+                style={{
+                  background: searchFocused
+                    ? 'rgba(255,255,255,0.15)'
+                    : 'rgba(255,255,255,0.10)',
+                  border: searchFocused
+                    ? '1.5px solid rgba(255,205,7,0.6)'
+                    : '1.5px solid rgba(255,255,255,0.12)',
+                }}
+              >
+                <Search
+                  className="h-4 w-4 flex-shrink-0 transition-colors"
+                  style={{ color: searchFocused ? '#FFCD07' : 'rgba(255,255,255,0.45)' }}
+                />
+                <input
+                  type="text"
+                  value={placa}
+                  onChange={handlePlacaChange}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  placeholder="Digite a placa (ABC1234)"
+                  maxLength={PLACA_CONFIG.MAX_LENGTH}
+                  className="flex-1 bg-transparent text-sm text-white placeholder:text-white/35 outline-none min-w-0"
+                  style={{ caretColor: '#FFCD07' }}
+                />
+                {placa && (
+                  <button
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setPlaca('');
+                    }}
+                    className="flex-shrink-0 rounded-full p-0.5 transition-colors hover:bg-white/20"
+                    style={{ background: 'rgba(255,255,255,0.12)' }}
+                    aria-label="Limpar"
+                  >
+                    <X className="h-3 w-3 text-white/70" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
+        </div>
 
+        {/* Área de resultados */}
+        {renderResultado()}
 
-          {/* Área de resultados (renderização condicional) */}
-          {renderResultado()}
-        </main>
-      </div>
+        {/* Tutorial */}
+        <div className="mt-6">
+          <Link
+            href="/agente/tutorial#consultaplaca"
+            className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors group w-full"
+          >
+            <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+              <Info className="h-5 w-5 text-[#1351B4]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              {/* Cor preta para o título */}
+              <p className="text-sm font-semibold text-[#071D41]">Novo por aqui?</p>
+              {/* Cor cinza para a descrição */}
+              <p className="text-xs text-gray-500 mt-0.5">
+                Aprenda a buscar reservas por placa de forma eficiente
+              </p>
+            </div>
+          </Link>
+        </div>
+      </main>
     </div>
   );
 }

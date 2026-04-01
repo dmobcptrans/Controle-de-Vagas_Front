@@ -1,9 +1,10 @@
 'use client';
 
 import { useDenuncias } from '@/components/hooks/useDenuncias';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Info, Loader2 } from 'lucide-react';
 import DenunciaLista from '@/components/gestor/denuncia/DenunciaLista';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 /**
  * @component DenunciasAgente
@@ -200,6 +201,26 @@ export default function DenunciasAgente() {
           Denúncias
         </h1>
         <DenunciaLista denuncias={denuncias} onRefresh={refetch} />
+
+        {/* Tutorial Link */}
+        <div className="mt-6">
+          <Link
+            href="/agente/tutorial#denuncias"
+            className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors group w-full"
+          >
+            <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+              <Info className="h-5 w-5 text-[#1351B4]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-800">
+                Novo por aqui?
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Aprenda a acompanhar e responder às denúncias dos motoristas
+              </p>
+            </div>
+          </Link>
+        </div>
       </div>
     </section>
   );

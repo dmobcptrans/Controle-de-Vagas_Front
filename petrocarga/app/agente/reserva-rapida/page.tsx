@@ -5,8 +5,8 @@ import { MapReserva } from '@/components/map/MapReserva';
 import ReservaRapida from '@/components/agente/reservaRapida/reservaRapidaComponent';
 import { Vaga } from '@/lib/types/vaga';
 import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
-import Link from 'next/dist/client/link';
 import { Info, MapIcon, MapPin, Search, X } from 'lucide-react';
+import Link from 'next/link';
 
 type Suggestion = {
   label: string;
@@ -230,7 +230,7 @@ export default function ReservaRapidaPage() {
 
         {/* Tutorial */}
         <Link
-          href="/motorista/guia"
+          href="/agente/tutorial#reservarapida"
           className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"
         >
           <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
@@ -239,7 +239,7 @@ export default function ReservaRapidaPage() {
           <div>
             <p className="text-sm font-semibold text-[#071D41]">Novo por aqui?</p>
             <p className="text-xs text-gray-400 mt-0.5">
-              Veja como usar o sistema em 3 passos simples
+              Veja como reservar uma vaga em 3 passos simples
             </p>
           </div>
         </Link>
