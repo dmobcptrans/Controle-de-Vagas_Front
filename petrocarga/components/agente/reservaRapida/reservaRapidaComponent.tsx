@@ -91,8 +91,7 @@ export default function ReservaAgente({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [vagaDisponivel, setVagaDisponivel] = useState<boolean | null>(null);
-  
-  // ✅ ESTADO ATUALIZADO PARA GUARDAR O OBJETO COMPLETO
+
   const [slotLivre, setSlotLivre] = useState<SlotLivre | null>(null);
 
   // --------------------------------------------------------------------------
@@ -111,21 +110,20 @@ export default function ReservaAgente({
     return hh * 60 + mm;
   };
 
-  // ✅ HELPER PARA FORMATAR DATE PARA HH:MM (Usado na UI)
   const formatTime = (d: Date) => {
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
 
-  // ✅ NOVA FUNÇÃO QUE RETORNA O PERÍODO E A DURAÇÃO
   const encontrarProximoSlotLivre = (
     reservas: ReservaBloqueio[],
-    agora: Date
+    agora: Date,
+    limite: Date
   ): SlotLivre => {
     const MINIMO_MINUTOS = 15;
     const MINIMO_MS = MINIMO_MINUTOS * 60 * 1000;
 
     if (!reservas.length) {
-      return { inicio: agora, fim: null, duracaoMinutos: null };
+      return { inicio: agora, fim: limite, duracaoMinutos: Math.round((limite.getTime() - agora.getTime()) / 60000) };
     }
 
     const ordenadas = reservas
@@ -153,7 +151,11 @@ export default function ReservaAgente({
       }
     }
 
-    return { inicio: cursor, fim: null, duracaoMinutos: null };
+    return { 
+    inicio: cursor, 
+    fim: limite,  
+    duracaoMinutos: Math.round((limite.getTime() - cursor.getTime()) / 60000)
+  };
   };
 
   const isNowInReservedRange = (
@@ -173,81 +175,81 @@ export default function ReservaAgente({
   // HANDLER: avançar do Step 1 → Step 2
   // --------------------------------------------------------------------------
   const handleNextFromStep1 = async () => {
-  const now = new Date();
-  const nowFormatted = getNow();
-  const today = new Date();
-  const dataFormatada = today.toISOString().split('T')[0];
+    const now = new Date();
+    const nowFormatted = getNow();
+    const today = new Date();
+    const dataFormatada = today.toISOString().split('T')[0];
 
-  const calcularDuracaoMinutos = (inicio: Date, fim: Date) => {
-    return (fim.getTime() - inicio.getTime()) / (1000 * 60);
-  };
+    const calcularDuracaoMinutos = (inicio: Date, fim: Date) => {
+      return (fim.getTime() - inicio.getTime()) / (1000 * 60);
+    };
 
-  const ajustarSlot = (slot: SlotLivre | null) => {
-    if (!slot) return null;
+    const ajustarSlot = (slot: SlotLivre | null) => {
+      if (!slot || !slot.fim) return slot;
 
-    const duracao = calcularDuracaoMinutos(slot.inicio, slot.fim || new Date());
+      const duracao = calcularDuracaoMinutos(slot.inicio, slot.fim || new Date());
 
-    if (duracao <= 30) {
-      return {
-        ...slot,
-        fim: new Date(slot.inicio.getTime() + 15 * 60 * 1000)
-      };
-    }
+      if (duracao <= 30) {
+        return {
+          ...slot,
+          fim: new Date(slot.inicio.getTime() + 15 * 60 * 1000),
+          duracaoMinutos: 15,
+        };
+      }
 
-    return slot;
-  };
+      return slot;
+    };
 
-  setStartHour(nowFormatted);
-  setSelectedDay(today);
+    setStartHour(nowFormatted);
+    setSelectedDay(today);
 
-  const reservas: ReservaBloqueio[] = await fetchReservasBloqueios(
-    selectedVaga.id,
-    dataFormatada,
-    tipoVeiculoAgente!
-  );
+    const reservas: ReservaBloqueio[] = await fetchReservasBloqueios(
+      selectedVaga.id,
+      dataFormatada,
+      tipoVeiculoAgente!
+    );
 
-  const diasSemanas: DiaSemana[] = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO'];
-  const hojeEnum = diasSemanas[today.getDay()];
+    const diasSemanas: DiaSemana[] = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO'];
+    const hojeEnum = diasSemanas[today.getDay()];
 
-  const operacaoHoje = selectedVaga.operacoesVaga.find(op => op.diaSemanaAsEnum === hojeEnum)
-    || selectedVaga.operacoesVaga[0];
+    const operacaoHoje = selectedVaga.operacoesVaga.find(op => op.diaSemanaAsEnum === hojeEnum)
+      || selectedVaga.operacoesVaga[0];
 
-  if (!operacaoHoje) {
-    setVagaDisponivel(false);
-    setStep(2);
-    return;
-  }
-
-  const [horaFim, minFim] = operacaoHoje.horaFim.split(':').map(Number);
-  const limiteDisponibilidade = new Date(today);
-  limiteDisponibilidade.setHours(horaFim, minFim, 0, 0);
-
-  const estaOcupadoAgora = isNowInReservedRange(reservas);
-  const proximoSlot = encontrarProximoSlotLivre(reservas, now);
-
-  // 👇 AQUI acontece o ajuste
-  const slotAjustado = ajustarSlot(proximoSlot);
-
-  if (estaOcupadoAgora) {
-    setVagaDisponivel(false);
-
-    if (slotAjustado && slotAjustado.inicio < limiteDisponibilidade) {
-      setSlotLivre(slotAjustado);
-    } else {
-      setSlotLivre(null);
-    }
-  } else {
-    if (now > limiteDisponibilidade) {
+    if (!operacaoHoje) {
       setVagaDisponivel(false);
-      setSlotLivre(null);
-    } else {
-      setVagaDisponivel(true);
-      setSlotLivre(slotAjustado);
+      setStep(2);
+      return;
     }
-  }
 
-  setStep(2);
-};
+    const [horaFim, minFim] = operacaoHoje.horaFim.split(':').map(Number);
+    const limiteDisponibilidade = new Date(today);
+    limiteDisponibilidade.setHours(horaFim, minFim, 0, 0);
+
+    const estaOcupadoAgora = isNowInReservedRange(reservas);
+    const proximoSlot = encontrarProximoSlotLivre(reservas, now, limiteDisponibilidade);
+
+    const slotAjustado = ajustarSlot(proximoSlot);
+
+    if (estaOcupadoAgora) {
+      setVagaDisponivel(false);
+
+      if (slotAjustado && slotAjustado.inicio.getTime() < limiteDisponibilidade.getTime()) {
+        setSlotLivre(slotAjustado);
+      } else {
+        setSlotLivre(null);
+      }
+    } else {
+      if (now > limiteDisponibilidade) {
+        setVagaDisponivel(false);
+        setSlotLivre(null);
+      } else {
+        setVagaDisponivel(true);
+        setSlotLivre(slotAjustado);
+      }
+    }
+
+    setStep(2);
+  };
   // --------------------------------------------------------------------------
   // HANDLER DE CONFIRMAÇÃO
   // --------------------------------------------------------------------------
@@ -340,16 +342,7 @@ export default function ReservaAgente({
                   <p className="text-gray-500 mt-1 text-sm">
                     A vaga está livre agora. Escolha até quando deseja reservar.
                   </p>
-                  
-                  {/* ✅ ALERTA SE A VAGA ESTIVER LIVRE AGORA, MAS POR TEMPO LIMITADO */}
-                  {slotLivre?.duracaoMinutos && slotLivre.fim && (
-                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-left">
-                      <p className="text-sm text-yellow-800 font-semibold">⚠️ Atenção: Tempo Limitado</p>
-                      <p className="text-sm text-yellow-700 mt-1">
-                        Há uma reserva agendada em breve. Você tem apenas <strong>{slotLivre.duracaoMinutos} minutos</strong> disponíveis (até às {formatTime(slotLivre.fim)}).
-                      </p>
-                    </div>
-                  )}
+
                 </div>
                 <button
                   onClick={() => setStep(3)}
@@ -368,12 +361,12 @@ export default function ReservaAgente({
                 <div className="w-full">
                   <p className="text-xl font-bold text-gray-800">Vaga Ocupada</p>
                   <p className="text-gray-500 mt-1 text-sm">Esta vaga não está disponível no momento.</p>
-                  
+
                   {slotLivre && (
                     <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg px-5 py-3 text-center">
                       <p className="text-sm text-yellow-700 font-medium">Próximo horário livre:</p>
                       <p className="text-2xl font-bold text-yellow-800 mt-1">{formatTime(slotLivre.inicio)}</p>
-                      
+
                       {/* ✅ ALERTA SE O PRÓXIMO HORÁRIO FOR CURTO */}
                       {slotLivre.duracaoMinutos && slotLivre.fim && (
                         <p className="text-sm text-yellow-700 mt-2 border-t border-yellow-200 pt-2">
