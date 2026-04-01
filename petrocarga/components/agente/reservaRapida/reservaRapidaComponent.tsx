@@ -388,7 +388,6 @@ export default function ReservaAgente({
           </div>
         )}
 
-        {/* STEP 3, 4, 5 MANTIDOS IGUAIS... */}
         {step === 3 && startHour && (
           <div className="p-2">
             <h3 className="text-md font-semibold text-gray-700 mb-1">Até quando deseja reservar?</h3>
