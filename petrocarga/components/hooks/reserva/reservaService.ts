@@ -54,19 +54,14 @@ const disponibilidadeInFlight = new Map<
 export const fetchReservasBloqueios = async (
   vagaId: string,
   data: string,
-  tipoVeiculo:
-    | 'AUTOMOVEL'
-    | 'VUC'
-    | 'CAMINHONETA'
-    | 'CAMINHAO_MEDIO'
-    | 'CAMINHAO_LONGO',
+  tipoVeiculo: 'AUTOMOVEL' | 'VUC' | 'CAMINHONETA' | 'CAMINHAO_MEDIO' | 'CAMINHAO_LONGO',
 ) => {
   try {
     const bloqueios = await getReservasBloqueios(vagaId, data, tipoVeiculo);
     return bloqueios;
   } catch (error) {
     console.error('Erro ao buscar bloqueios:', error);
-    return [];
+    throw error; 
   }
 };
 

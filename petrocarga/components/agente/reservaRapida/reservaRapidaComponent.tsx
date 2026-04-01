@@ -89,6 +89,9 @@ export default function ReservaAgente({
   const [success, setSuccess] = useState<boolean | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [vagaIncompativel, setVagaIncompativel] = useState(false);
+  const [vagaIncompativelMsg, setVagaIncompativelMsg] = useState<string | null>(null);
+  const [validandoVeiculo, setValidandoVeiculo] = useState(false);
 
   const [vagaDisponivel, setVagaDisponivel] = useState<boolean | null>(null);
 
@@ -151,11 +154,11 @@ export default function ReservaAgente({
       }
     }
 
-    return { 
-    inicio: cursor, 
-    fim: limite,  
-    duracaoMinutos: Math.round((limite.getTime() - cursor.getTime()) / 60000)
-  };
+    return {
+      inicio: cursor,
+      fim: limite,
+      duracaoMinutos: Math.round((limite.getTime() - cursor.getTime()) / 60000)
+    };
   };
 
   const isNowInReservedRange = (
@@ -274,6 +277,31 @@ export default function ReservaAgente({
     }
   };
 
+  const handleTipoVeiculoChange = async (tipo: Veiculo['tipo']) => {
+    setTipoVeiculoAgente(tipo);
+    setVagaIncompativel(false);
+    setVagaIncompativelMsg(null);
+
+    if (!tipo) return;
+
+    setValidandoVeiculo(true);
+    try {
+      const dataFormatada = new Date().toISOString().split('T')[0];
+      await fetchReservasBloqueios(selectedVaga.id, dataFormatada, tipo);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Veículo incompatível com esta vaga.';
+
+      toast.error(msg);
+
+      // opcional manter controle interno
+      setVagaIncompativel(true);
+    } finally {
+      setValidandoVeiculo(false);
+    }
+  };
   // --------------------------------------------------------------------------
   // RENDER
   // --------------------------------------------------------------------------
@@ -291,7 +319,7 @@ export default function ReservaAgente({
               <p className="font-medium mb-1">Tipo de veículo</p>
               <select
                 value={tipoVeiculoAgente || ''}
-                onChange={(e) => setTipoVeiculoAgente(e.target.value as Veiculo['tipo'])}
+                onChange={(e) => handleTipoVeiculoChange(e.target.value as Veiculo['tipo'])}
                 className="w-full border rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               >
                 <option value="">Selecione...</option>
@@ -301,6 +329,7 @@ export default function ReservaAgente({
                 <option value="CAMINHAO_MEDIO">Caminhão médio</option>
                 <option value="CAMINHAO_LONGO">Caminhão longo</option>
               </select>
+
             </div>
             <div>
               <p className="font-medium mb-1">Placa</p>
@@ -314,13 +343,21 @@ export default function ReservaAgente({
             </div>
             <button
               onClick={handleNextFromStep1}
-              disabled={!tipoVeiculoAgente || placaAgente.length < 7}
-              className={`py-3 rounded-lg mt-4 font-semibold transition-opacity ${!tipoVeiculoAgente || placaAgente.length < 7
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+              disabled={
+                !tipoVeiculoAgente ||
+                placaAgente.length < 7 ||
+                vagaIncompativel ||      
+                validandoVeiculo          
+              }
+              className={`py-3 rounded-lg mt-4 font-semibold transition-opacity ${!tipoVeiculoAgente ||
+                  placaAgente.length < 7 ||
+                  vagaIncompativel ||
+                  validandoVeiculo
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
             >
-              Próximo
+              {validandoVeiculo ? 'Validando...' : 'Próximo'}
             </button>
           </div>
         )}
