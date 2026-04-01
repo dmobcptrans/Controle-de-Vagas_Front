@@ -130,7 +130,6 @@ export default function MinhasReservas() {
   // --------------------------------------------------------------------------
   // FUNÇÃO DE BUSCA
   // --------------------------------------------------------------------------
-
   const fetchReservas = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
@@ -141,8 +140,13 @@ export default function MinhasReservas() {
     setError(null);
 
     try {
-      const data = await getReservasPorUsuario(user.id);
-      setReservas(data || []);
+      // getReservasPorUsuario retorna PaginatedReservaResponse
+      const response = await getReservasPorUsuario(user.id);
+      
+      // CORRETO: acessa o array através de response.content
+      const reservasArray = response?.content || [];
+      setReservas(reservasArray);
+      
       setIsOffline(false);
     } catch {
       setError('Não foi possível carregar suas reservas atuais.');
