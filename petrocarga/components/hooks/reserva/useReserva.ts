@@ -290,8 +290,6 @@ export function useReserva(selectedVaga: Vaga | null) {
           reservedTimesStart: horariosOcupadosInicio,
           reservedTimesEnd: horariosOcupadosFim,
         }));
-
-        console.log(horariosOcupadosFim)
         return horariosFiltradosHoje;
       } finally {
         setLoadingHorarios(false);
