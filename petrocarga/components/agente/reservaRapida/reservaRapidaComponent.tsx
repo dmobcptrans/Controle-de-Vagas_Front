@@ -173,60 +173,81 @@ export default function ReservaAgente({
   // HANDLER: avançar do Step 1 → Step 2
   // --------------------------------------------------------------------------
   const handleNextFromStep1 = async () => {
-    const now = new Date();
-    const nowFormatted = getNow();
-    const today = new Date();
-    const dataFormatada = today.toISOString().split('T')[0];
+  const now = new Date();
+  const nowFormatted = getNow();
+  const today = new Date();
+  const dataFormatada = today.toISOString().split('T')[0];
 
-    setStartHour(nowFormatted);
-    setSelectedDay(today);
-
-    const reservas: ReservaBloqueio[] = await fetchReservasBloqueios(
-      selectedVaga.id,
-      dataFormatada,
-      tipoVeiculoAgente!
-    );
-
-    const diasSemanas: DiaSemana[] = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO'];
-    const hojeEnum = diasSemanas[today.getDay()];
-
-    const operacaoHoje = selectedVaga.operacoesVaga.find(op => op.diaSemanaAsEnum === hojeEnum)
-      || selectedVaga.operacoesVaga[0];
-
-    if (!operacaoHoje) {
-      setVagaDisponivel(false);
-      setStep(2);
-      return;
-    }
-
-    const [horaFim, minFim] = operacaoHoje.horaFim.split(':').map(Number);
-    const limiteDisponibilidade = new Date(today);
-    limiteDisponibilidade.setHours(horaFim, minFim, 0, 0);
-
-    const estaOcupadoAgora = isNowInReservedRange(reservas);
-    const proximoSlot = encontrarProximoSlotLivre(reservas, now);
-
-    if (estaOcupadoAgora) {
-      setVagaDisponivel(false);
-
-      if (proximoSlot && proximoSlot.inicio < limiteDisponibilidade) {
-        setSlotLivre(proximoSlot);
-      } else {
-        setSlotLivre(null);
-      }
-    } else {
-      if (now > limiteDisponibilidade) {
-        setVagaDisponivel(false);
-        setSlotLivre(null);
-      } else {
-        setVagaDisponivel(true);
-        setSlotLivre(proximoSlot); // Salva para exibir aviso se o tempo atual for curto
-      }
-    }
-
-    setStep(2);
+  const calcularDuracaoMinutos = (inicio: Date, fim: Date) => {
+    return (fim.getTime() - inicio.getTime()) / (1000 * 60);
   };
 
+  const ajustarSlot = (slot: SlotLivre | null) => {
+    if (!slot) return null;
+
+    const duracao = calcularDuracaoMinutos(slot.inicio, slot.fim || new Date());
+
+    if (duracao <= 30) {
+      return {
+        ...slot,
+        fim: new Date(slot.inicio.getTime() + 15 * 60 * 1000)
+      };
+    }
+
+    return slot;
+  };
+
+  setStartHour(nowFormatted);
+  setSelectedDay(today);
+
+  const reservas: ReservaBloqueio[] = await fetchReservasBloqueios(
+    selectedVaga.id,
+    dataFormatada,
+    tipoVeiculoAgente!
+  );
+
+  const diasSemanas: DiaSemana[] = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO'];
+  const hojeEnum = diasSemanas[today.getDay()];
+
+  const operacaoHoje = selectedVaga.operacoesVaga.find(op => op.diaSemanaAsEnum === hojeEnum)
+    || selectedVaga.operacoesVaga[0];
+
+  if (!operacaoHoje) {
+    setVagaDisponivel(false);
+    setStep(2);
+    return;
+  }
+
+  const [horaFim, minFim] = operacaoHoje.horaFim.split(':').map(Number);
+  const limiteDisponibilidade = new Date(today);
+  limiteDisponibilidade.setHours(horaFim, minFim, 0, 0);
+
+  const estaOcupadoAgora = isNowInReservedRange(reservas);
+  const proximoSlot = encontrarProximoSlotLivre(reservas, now);
+
+  // 👇 AQUI acontece o ajuste
+  const slotAjustado = ajustarSlot(proximoSlot);
+
+  if (estaOcupadoAgora) {
+    setVagaDisponivel(false);
+
+    if (slotAjustado && slotAjustado.inicio < limiteDisponibilidade) {
+      setSlotLivre(slotAjustado);
+    } else {
+      setSlotLivre(null);
+    }
+  } else {
+    if (now > limiteDisponibilidade) {
+      setVagaDisponivel(false);
+      setSlotLivre(null);
+    } else {
+      setVagaDisponivel(true);
+      setSlotLivre(slotAjustado);
+    }
+  }
+
+  setStep(2);
+};
   // --------------------------------------------------------------------------
   // HANDLER DE CONFIRMAÇÃO
   // --------------------------------------------------------------------------
