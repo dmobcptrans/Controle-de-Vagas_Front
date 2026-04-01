@@ -9,8 +9,9 @@ import { ReactNode } from 'react';
  * ----------------------------------------------------------------------------
  *
  * 1. Notification - Estrutura de uma notificação individual
- * 2. NotificationContextData - Dados e funções do contexto
- * 3. NotificationProviderProps - Propriedades do provider
+ * 2. PaginatedNotificationResponse - Resposta paginada da API
+ * 3. NotificationContextData - Dados e funções do contexto
+ * 4. NotificationProviderProps - Propriedades do provider
  */
 
 /**
@@ -59,6 +60,24 @@ export interface Notification {
 }
 
 /**
+ * @interface PaginatedNotificationResponse
+ * @description Resposta paginada da API de Notificações conforme Swagger
+ *
+ * @property {Notification[]} content - Lista de notificações da página atual
+ * @property {number} totalElementos - Total de elementos no backend
+ * @property {number} totalPaginas - Total de páginas disponíveis
+ * @property {number} tamanhoPagina - Tamanho da página (itens por página)
+ * @property {number} pagina - Número da página atual (0-indexed)
+ */
+export interface PaginatedNotificationResponse {
+  content: Notification[];
+  totalElementos: number;
+  totalPaginas: number;
+  tamanhoPagina: number;
+  pagina: number;
+}
+
+/**
  * @interface NotificationContextData
  * @description Dados e funções disponíveis através do contexto de notificações.
  *
@@ -67,8 +86,13 @@ export interface Notification {
  * ----------------------------------------------------------------------------
  * @property {Notification[]} notifications - Lista de notificações atuais
  * @property {boolean} isConnected - Status da conexão SSE
- * @property {boolean} isLoading - Estado de carregamento
+ * @property {boolean} isLoading - Estado de carregamento inicial
+ * @property {boolean} isLoadingMore - Estado de carregamento de mais itens
  * @property {string | null} error - Mensagem de erro (se houver)
+ * @property {number} totalElementos - Total de notificações no backend
+ * @property {number} totalPaginas - Total de páginas disponíveis
+ * @property {number} paginaAtual - Página atual carregada (0-indexed)
+ * @property {boolean} podeCarregarMais - Indica se há mais páginas para carregar
  *
  * ----------------------------------------------------------------------------
  * ✏️ AÇÕES BÁSICAS
@@ -84,16 +108,25 @@ export interface Notification {
  * @property {function} deleteSelectedNotifications - Remove múltiplas notificações
  *
  * ----------------------------------------------------------------------------
- * 🔄 SINCronização
+ * 🔄 SINCRONIZAÇÃO COM PAGINAÇÃO
  * ----------------------------------------------------------------------------
- * @property {function} loadHistorico - Carrega histórico de notificações
+ * @property {function} loadHistorico - Carrega histórico (primeira página)
+ * @property {function} carregarMais - Carrega a próxima página de notificações
  * @property {function} refreshNotifications - Atualiza lista de notificações
  * @property {function} reconnect - Reconecta ao serviço SSE
  *
  * @example
  * ```tsx
  * function NotificationComponent() {
- *   const { notifications, markAsRead, deleteSelected } = useNotifications();
+ *   const { 
+ *     notifications, 
+ *     isLoading, 
+ *     isLoadingMore,
+ *     totalElementos,
+ *     podeCarregarMais,
+ *     carregarMais,
+ *     markAsRead 
+ *   } = useNotifications();
  *
  *   return (
  *     <div>
@@ -102,6 +135,10 @@ export interface Notification {
  *           {n.titulo}
  *         </div>
  *       ))}
+ *       {isLoadingMore && <Spinner />}
+ *       {podeCarregarMais && (
+ *         <button onClick={carregarMais}>Carregar mais</button>
+ *       )}
  *     </div>
  *   );
  * }
@@ -112,19 +149,25 @@ export interface NotificationContextData {
   notifications: Notification[];
   isConnected: boolean;
   isLoading: boolean;
+  isLoadingMore: boolean;
   error: string | null;
+  totalElementos: number;
+  totalPaginas: number;
+  paginaAtual: number;
+  podeCarregarMais: boolean;
 
   // Ações básicas
   addNotification: (notification: Notification) => void;
-  removeNotification: (id: string) => void;
-  markAsRead: (id: string) => void;
+  removeNotification: (id: string) => Promise<void>;
+  markAsRead: (id: string) => Promise<void>;
 
   // Ações em lote
   markSelectedAsRead: (ids: string[]) => Promise<void>;
   deleteSelectedNotifications: (ids: string[]) => Promise<void>;
 
-  // Sincronização
+  // Sincronização com paginação
   loadHistorico: () => Promise<void>;
+  carregarMais: () => Promise<void>;
   refreshNotifications: () => Promise<void>;
   reconnect: () => void;
 }
@@ -137,6 +180,7 @@ export interface NotificationContextData {
  * @property {string} usuarioId - ID do usuário para filtrar notificações
  *
  * @property {number} [maxNotifications=100] - Número máximo de notificações em memória
+ * @property {number} [pageSize=10] - Tamanho da página para paginação
  *
  * @property {boolean} [enableSSE=true] - Habilita Server-Sent Events
  * @property {boolean} [autoReconnect=true] - Tenta reconectar automaticamente
@@ -151,6 +195,7 @@ export interface NotificationContextData {
  *     <NotificationProvider
  *       usuarioId="user123"
  *       maxNotifications={50}
+ *       pageSize={10}
  *       enableSSE={true}
  *       autoReconnect={true}
  *       reconnectMaxAttempts={10}
@@ -165,6 +210,7 @@ export interface NotificationProviderProps {
   children: ReactNode;
   usuarioId: string;
   maxNotifications?: number;
+  pageSize?: number;
   enableSSE?: boolean;
   autoReconnect?: boolean;
   reconnectMaxAttempts?: number;

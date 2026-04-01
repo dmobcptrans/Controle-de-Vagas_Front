@@ -1,6 +1,7 @@
 'use client';
 
 import { clientApi } from '../clientApi';
+import { PaginatedNotificationResponse } from '../types/notificacao';
 
 /**
  * @module notificacaoApi
@@ -164,51 +165,86 @@ export async function enviarNotificacaoPorPermissao(formData: FormData) {
 // ----------------------
 // OBTER NOTIFICAÇÕES DO USUÁRIO
 // ----------------------
-
 /**
  * @function getNotificacoesUsuario
- * @description Lista notificações de um usuário, com filtro opcional por status de leitura.
+ * @description Lista notificações de um usuário, com paginação e filtro opcional por status de leitura.
  *
  * @param usuarioId - ID do usuário
  * @param lida - (opcional) Filtrar por lidas (true) ou não lidas (false)
+ * @param numeroPagina - (opcional) Número da página (padrão: 0)
+ * @param tamanhoPagina - (opcional) Tamanho da página (padrão: 10)
  *
- * @returns Promise<{ error: boolean; message?: string; notificacoes?: Notificacao[] }>
+ * @returns Promise<{ error: boolean; message?: string; data?: PaginatedNotificationResponse }>
  *
  * @example
  * ```ts
- * // Buscar todas as notificações do usuário
+ * // Buscar todas as notificações do usuário (primeira página)
  * const result = await getNotificacoesUsuario('123');
  *
- * // Buscar apenas não lidas
- * const naoLidas = await getNotificacoesUsuario('123', false);
+ * // Buscar apenas não lidas, página 2, 20 itens por página
+ * const naoLidas = await getNotificacoesUsuario('123', false, 1, 20);
+ * 
+ * if (!result.error && result.data) {
+ *   console.log(result.data.content); // Array de notificações
+ *   console.log(result.data.totalElementos); // Total de elementos
+ *   console.log(result.data.totalPaginas); // Total de páginas
+ * }
  * ```
  */
 export async function getNotificacoesUsuario(
   usuarioId: string,
   lida?: boolean,
-) {
-  let url = `/petrocarga/notificacoes/byUsuario/${usuarioId}`;
-
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 10,
+): Promise<{ error: boolean; message?: string; data?: PaginatedNotificationResponse }> {
+  // Construir query params conforme Swagger
+  const params = new URLSearchParams();
+  
+  // Adiciona filtro de lida se fornecido
   if (lida !== undefined) {
-    url += `?lida=${lida}`;
+    params.append('lida', String(lida));
   }
+  
+  // Adiciona paginação
+  params.append('numeroPagina', String(numeroPagina));
+  params.append('tamanhoPagina', String(tamanhoPagina));
+  
+  // Constrói URL com query params
+  const url = `/petrocarga/notificacoes/byUsuario/${usuarioId}${params.toString() ? `?${params.toString()}` : ''}`;
 
-  const res = await clientApi(url, {
-    method: 'GET',
-  });
+  try {
+    const res = await clientApi(url, {
+      method: 'GET',
+    });
 
-  if (!res.ok) {
-    let msg = 'Erro ao buscar notificações';
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
+    if (!res.ok) {
+      let msg = 'Erro ao buscar notificações';
+      try {
+        const err = await res.json();
+        msg = err.message ?? msg;
+      } catch {}
 
-    return { error: true, message: msg };
+      return { error: true, message: msg };
+    }
+
+    const data = await res.json();
+    
+    // Garante que a resposta tenha a estrutura esperada
+    const responseData: PaginatedNotificationResponse = {
+      content: data.content || [],
+      totalElementos: data.totalElementos || 0,
+      totalPaginas: data.totalPaginas || 0,
+      tamanhoPagina: data.tamanhoPagina || tamanhoPagina,
+      pagina: data.pagina || numeroPagina,
+    };
+    
+    return { error: false, data: responseData };
+  } catch (error) {
+    return { 
+      error: true, 
+      message: error instanceof Error ? error.message : 'Erro ao buscar notificações' 
+    };
   }
-
-  const data = await res.json();
-  return { error: false, notificacoes: data };
 }
 
 // ----------------------
