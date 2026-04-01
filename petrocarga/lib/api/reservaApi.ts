@@ -5,6 +5,7 @@ import { clientApi } from '../clientApi';
 import { ConfirmResult } from '../types/confirmResult';
 import { ReservaRapida } from '@/lib/types/reservaRapida';
 import { ReservaPlaca } from '@/lib/types/reservaPlaca';
+import { ReservaGet } from '@/lib/types/reserva';
 
 /**
  * @module reservaApi
@@ -144,27 +145,63 @@ export async function finalizarForcado(reservaID: string) {
 // ----------------------
 
 /**
+ * @interface PaginatedReservaResponse
+ * @description Resposta paginada da API de reservas
+ */
+export interface PaginatedReservaResponse {
+  content: ReservaGet[];
+  totalElementos: number;
+  totalPaginas: number;
+  tamanhoPagina: number;
+  pagina: number;
+}
+
+/**
  * @function getReservasPorUsuario
- * @description Lista todas as reservas de um usuário específico.
+ * @description Lista todas as reservas de um usuário específico com paginação.
  *
  * @param usuarioId - ID do usuário
- * @returns Promise<Reserva[]> - Array de reservas
+ * @param numeroPagina - Número da página (0-indexed, padrão: 0)
+ * @param tamanhoPagina - Quantidade de itens por página (padrão: 10)
+ * @returns Promise<PaginatedReservaResponse> - Objeto paginado com reservas e metadados
  * @throws {Error} Dispara erro se a requisição falhar
  *
  * @example
  * ```ts
  * try {
- *   const reservas = await getReservasPorUsuario('user123');
- *   console.log(`Usuário tem ${reservas.length} reservas`);
+ *   // Busca primeira página com 10 reservas
+ *   const reservas = await getReservasPorUsuario('user123', 0, 10);
+ *   console.log(`Total de reservas: ${reservas.totalElementos}`);
+ *   console.log(`Reservas da página: ${reservas.content.length}`);
  * } catch (error) {
  *   console.error(error);
  * }
  * ```
  */
-export async function getReservasPorUsuario(usuarioId: string) {
+export async function getReservasPorUsuario(
+  usuarioId: string,
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 10,
+): Promise<PaginatedReservaResponse> {
   try {
-    const res = await clientApi(`/petrocarga/reservas/usuario/${usuarioId}`);
-    return res.json();
+    const res = await clientApi(
+      `/petrocarga/reservas/usuario/${usuarioId}?numeroPagina=${numeroPagina}&tamanhoPagina=${tamanhoPagina}`,
+    );
+
+    if (!res.ok) {
+      throw new Error(`Erro na requisição: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    // Retorna o objeto paginado conforme a estrutura do back-end
+    return {
+      content: data.content || [],
+      totalElementos: data.totalElementos || 0,
+      totalPaginas: data.totalPaginas || 0,
+      tamanhoPagina: data.tamanhoPagina || tamanhoPagina,
+      pagina: data.pagina || numeroPagina,
+    };
   } catch (err: unknown) {
     const message =
       err instanceof Error
@@ -486,31 +523,60 @@ export async function reservarVagaAgente(
 // ----------------------
 
 /**
+ * @interface PaginatedResponse
+ * @description Resposta paginada da API de reservas rápidas
+ */
+export interface PaginatedReservaRapidaResponse {
+  content: ReservaRapida[];
+  totalElements: number;
+  totalPaginas: number;
+  tamanhoPagina: number;
+  pagina: number;
+}
+
+/**
  * @function getReservasRapidas
- * @description Lista reservas rápidas criadas por um agente.
+ * @description Lista reservas rápidas criadas por um agente com paginação.
  *
  * @param usuarioId - ID do agente
- * @returns Promise<ReservaRapida[]> - Array de reservas rápidas
+ * @param numeroPagina - Número da página (0-indexed, padrão: 0)
+ * @param tamanhoPagina - Quantidade de itens por página (padrão: 10)
+ * @returns Promise<PaginatedReservaRapidaResponse> - Objeto paginado com reservas e metadados
  * @throws {Error} Dispara erro se a requisição falhar
  *
  * @example
  * ```ts
- * const reservas = await getReservasRapidas('agente123');
- * console.log(`Agente criou ${reservas.length} reservas`);
+ * // Busca primeira página com 10 reservas
+ * const primeiraPagina = await getReservasRapidas('agente123', 0, 10);
+ * console.log(primeiraPagina.content); // array de reservas
+ * console.log(primeiraPagina.totalElements); // total de reservas
+ * console.log(primeiraPagina.totalPaginas); // total de páginas
  * ```
  */
 export async function getReservasRapidas(
   usuarioId: string,
-): Promise<ReservaRapida[]> {
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 10,
+): Promise<PaginatedReservaRapidaResponse> {
   try {
-    const res = await clientApi(`/petrocarga/reserva-rapida/${usuarioId}`);
+    const res = await clientApi(
+      `/petrocarga/reserva-rapida/${usuarioId}?numeroPagina=${numeroPagina}&tamanhoPagina=${tamanhoPagina}`,
+    );
 
     if (!res.ok) {
       throw new Error(`Erro na requisição: ${res.status}`);
     }
 
     const data = await res.json();
-    return data;
+
+    // Retorna o objeto paginado conforme a estrutura do back-end
+    return {
+      content: data.content || [],
+      totalElements: data.totalElementos || 0,
+      totalPaginas: data.totalPaginas || 0,
+      tamanhoPagina: data.tamanhoPagina || tamanhoPagina,
+      pagina: data.pagina || numeroPagina,
+    };
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : 'Erro ao buscar reservas do agente.';
