@@ -17,9 +17,11 @@ import {
   Ban,
   Trash2,
   Clock,
+  Info,
 } from 'lucide-react';
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { Paginacao } from '@/components/paginacao/paginacao';
+import Link from 'next/link';
 
 const ITENS_POR_PAGINA = 10;
 
@@ -747,6 +749,26 @@ export default function ReservaRapidaPage() {
               </div>
             </>
           )}
+        </div>
+
+        {/* ── TUTORIAL LINK ── */}
+        <div className="mt-8">
+          <Link
+            href="/agente/tutorial#historicoreservas"
+            className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors group w-full"
+          >
+            <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+              <Info className="h-5 w-5 text-[#1351B4]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              {/* Cor preta para o título */}
+              <p className="text-sm font-semibold text-[#071D41]">Novo por aqui?</p>
+              {/* Cor cinza para a descrição */}
+              <p className="text-xs text-gray-500 mt-0.5">
+                Aprenda a filtrar, buscar e gerenciar suas reservas
+              </p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>
