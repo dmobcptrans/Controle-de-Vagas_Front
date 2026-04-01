@@ -21,7 +21,7 @@ import {
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { Paginacao } from '@/components/paginacao/paginacao';
 
-const ITENS_POR_PAGINA = 12;
+const ITENS_POR_PAGINA = 10;
 
 type FiltroStatusReserva =
   | 'todas'
@@ -31,62 +31,6 @@ type FiltroStatusReserva =
   | 'cancelada'
   | 'removida';
 
-/**
- * @component ReservaRapidaPage
- * @version 5.0.0
- *
- * @description Página de listagem de reservas rápidas criadas pelo agente.
- * Gerencia busca, loading, erro, filtros por todos os status, paginação e exibição em grid responsivo.
- *
- * ----------------------------------------------------------------------------
- * 📋 ALTERAÇÕES V5.0.0:
- * ----------------------------------------------------------------------------
- *
- * 1. REMOÇÃO DO FILTRO "ATIVAS":
- *    - Removeu o filtro agrupado "Ativas" (RESERVADA + ATIVA)
- *    - Agora os filtros são individuais e específicos
- *
- * 2. FILTRO PADRÃO:
- *    - Inicia com filtro "ativa" (status ATIVA)
- *    - Mostra apenas reservas em andamento
- *
- * 3. FILTROS DISPONÍVEIS:
- *    - Todas: mostra todas as reservas
- *    - Reservada: mostra apenas status 'RESERVADA'
- *    - Ativa: mostra apenas status 'ATIVA' (PADRÃO)
- *    - Concluída: mostra apenas status 'CONCLUIDA'
- *    - Cancelada: mostra apenas status 'CANCELADA'
- *    - Removida: mostra apenas status 'REMOVIDA'
- *
- * ----------------------------------------------------------------------------
- * 📊 STATUS DE RESERVAS:
- * ----------------------------------------------------------------------------
- *
- * | Status      | Ícone          | Cor        | Descrição                          |
- * |-------------|----------------|------------|------------------------------------|
- * | RESERVADA   | Clock          | Amarelo    | Reserva agendada, ainda não ativa  |
- * | ATIVA       | CheckCircle2   | Verde      | Reserva em andamento (PADRÃO)      |
- * | CONCLUIDA   | CalendarCheck  | Roxo       | Reserva finalizada                 |
- * | CANCELADA   | Ban            | Vermelho   | Reserva cancelada pelo agente      |
- * | REMOVIDA    | Trash2         | Cinza      | Reserva removida pelo sistema      |
- *
- * ----------------------------------------------------------------------------
- * 🎨 CORES DOS BOTÕES:
- * ----------------------------------------------------------------------------
- *
- * | Status      | Desktop (ativo)      | Mobile (ativo)       |
- * |-------------|----------------------|----------------------|
- * | Todas       | 🔵 Azul              | 🔵 Azul              |
- * | Reservada   | 🟡 Amarelo           | 🟡 Amarelo           |
- * | Ativa       | 🟢 Verde             | 🟢 Verde (PADRÃO)    |
- * | Concluída   | 🟣 Roxo              | 🟣 Roxo              |
- * | Cancelada   | 🔴 Vermelho          | 🔴 Vermelho          |
- * | Removida    | ⚫ Cinza             | ⚫ Cinza             |
- *
- * @example
- * <ReservaRapidaPage />
- */
-
 export default function ReservaRapidaPage() {
   // --------------------------------------------------------------------------
   // HOOKS E ESTADOS
@@ -95,6 +39,8 @@ export default function ReservaRapidaPage() {
   const { user } = useAuth();
 
   const [reservas, setReservas] = useState<ReservaRapida[]>([]);
+  const [totalReservas, setTotalReservas] = useState(0);
+  const [totalPaginasBackend, setTotalPaginasBackend] = useState(0);
   const [isLoadingReservas, setIsLoadingReservas] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
@@ -104,7 +50,7 @@ export default function ReservaRapidaPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // --------------------------------------------------------------------------
-  // BUSCA DE DADOS
+  // BUSCA DE DADOS COM PAGINAÇÃO DO BACKEND
   // --------------------------------------------------------------------------
 
   const fetchReservas = useCallback(async () => {
@@ -117,16 +63,29 @@ export default function ReservaRapidaPage() {
     setError(null);
 
     try {
-      const result = await getReservasRapidas(user.id);
-      setReservas(result);
+      // Converte página front (1-indexed) para back (0-indexed)
+      const numeroPaginaBackend = paginaAtual - 1;
+
+      const response = await getReservasRapidas(
+        user.id,
+        numeroPaginaBackend,
+        ITENS_POR_PAGINA,
+      );
+
+      setReservas(response.content);
+      setTotalReservas(response.totalElements);
+      setTotalPaginasBackend(response.totalPaginas);
     } catch {
       setError('Erro ao buscar as reservas. Tente novamente mais tarde.');
+      setReservas([]);
+      setTotalReservas(0);
+      setTotalPaginasBackend(0);
     } finally {
       setIsLoadingReservas(false);
     }
-  }, [user?.id]);
+  }, [user?.id, paginaAtual]);
 
-  // Carrega dados iniciais
+  // Carrega dados quando página muda
   useEffect(() => {
     fetchReservas();
   }, [fetchReservas]);
@@ -158,16 +117,15 @@ export default function ReservaRapidaPage() {
   };
 
   // --------------------------------------------------------------------------
-  // FILTRAGEM E PAGINAÇÃO
+  // FILTRAGEM (local, após carregar os dados da página atual)
   // --------------------------------------------------------------------------
 
-  /**
-   * Filtra reservas por status e busca textual
-   */
   const reservasFiltradas = useMemo(() => {
-    let filtradas = [...reservas];
+    // Garante que reservas é um array
+    const reservasArray = Array.isArray(reservas) ? reservas : [];
+    let filtradas = [...reservasArray];
 
-    // Filtro por status (filtros individuais)
+    // Filtro por status
     switch (filtroStatus) {
       case 'reservada':
         filtradas = filtradas.filter(
@@ -194,7 +152,6 @@ export default function ReservaRapidaPage() {
         break;
       case 'todas':
       default:
-        // Mostra todas as reservas, incluindo todos os status
         break;
     }
 
@@ -213,12 +170,8 @@ export default function ReservaRapidaPage() {
     return filtradas;
   }, [reservas, filtroStatus, busca]);
 
-  const totalPaginas = Math.ceil(reservasFiltradas.length / ITENS_POR_PAGINA);
-
-  const reservasPaginadas = useMemo(() => {
-    const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
-    return reservasFiltradas.slice(inicio, inicio + ITENS_POR_PAGINA);
-  }, [reservasFiltradas, paginaAtual]);
+  // Usa o total de páginas vindo do backend
+  const totalPaginas = totalPaginasBackend;
 
   const handlePageChange = (pagina: number) => {
     setPaginaAtual(pagina);
@@ -279,7 +232,7 @@ export default function ReservaRapidaPage() {
               {error}
             </p>
             <button
-              onClick={fetchReservas}
+              onClick={() => fetchReservas()}
               className="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-sm"
             >
               Tentar novamente
@@ -355,7 +308,7 @@ export default function ReservaRapidaPage() {
                   </div>
                 </div>
 
-                {/* Controles de filtro - Todos os status individuais */}
+                {/* Controles de filtro */}
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="flex gap-2 p-1 bg-gray-100 rounded-lg overflow-x-auto max-w-full">
                     <button
@@ -466,7 +419,7 @@ export default function ReservaRapidaPage() {
                   <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
                     <CalendarClock className="h-4 w-4 text-blue-600" />
                     <span className="text-sm font-medium text-blue-800">
-                      {reservas.length} reservas
+                      {totalReservas} reservas
                     </span>
                   </div>
                 </div>
@@ -528,7 +481,7 @@ export default function ReservaRapidaPage() {
                     </button>
                   ) : (
                     <div className="text-xs sm:text-sm text-gray-500">
-                      Mostrando {reservasFiltradas.length} de {reservas.length}{' '}
+                      Mostrando {reservasFiltradas.length} de {totalReservas}{' '}
                       reservas
                     </div>
                   )}
@@ -539,7 +492,6 @@ export default function ReservaRapidaPage() {
             {/* Mobile filters drawer */}
             {mobileFiltersOpen && (
               <div className="lg:hidden border-t border-gray-200 p-4 space-y-4">
-                {/* Campo de busca mobile */}
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-gray-400" />
@@ -564,7 +516,6 @@ export default function ReservaRapidaPage() {
                   )}
                 </div>
 
-                {/* Botões de filtro mobile */}
                 <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
                   <div className="grid grid-cols-2 gap-2">
                     <button
@@ -646,15 +597,14 @@ export default function ReservaRapidaPage() {
                   )}
                 </div>
 
-                {/* Contador mobile */}
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                   <div className="flex items-center gap-2">
                     <CalendarClock className="h-4 w-4 text-blue-600" />
                     <span className="text-sm font-medium text-gray-700">
-                      {reservas.length} reservas no total
+                      {totalReservas} reservas no total
                     </span>
                   </div>
-                  {reservasFiltradas.length !== reservas.length && (
+                  {reservasFiltradas.length !== totalReservas && (
                     <span className="text-xs text-blue-600">
                       {reservasFiltradas.length} filtradas
                     </span>
@@ -680,7 +630,6 @@ export default function ReservaRapidaPage() {
         {/* LISTA DE RESERVAS */}
         <div className="space-y-3 sm:space-y-4 md:space-y-6">
           {reservasFiltradas.length === 0 ? (
-            // Estado vazio
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 md:p-12 text-center">
               {busca || filtroStatus !== 'todas' ? (
                 <div className="max-w-md mx-auto">
@@ -693,17 +642,7 @@ export default function ReservaRapidaPage() {
                   <p className="text-gray-600 mb-5 sm:mb-6 text-xs sm:text-sm md:text-base">
                     {busca
                       ? `Não encontramos reservas para "${busca}".`
-                      : `Não encontramos reservas com o status "${
-                          filtroStatus === 'reservada'
-                            ? 'Reservada'
-                            : filtroStatus === 'ativa'
-                              ? 'Ativa'
-                              : filtroStatus === 'concluida'
-                                ? 'Concluída'
-                                : filtroStatus === 'cancelada'
-                                  ? 'Cancelada'
-                                  : 'Removida'
-                        }".`}
+                      : `Não encontramos reservas com o status selecionado.`}
                   </p>
                   <button
                     onClick={mostrarTodas}
@@ -731,7 +670,7 @@ export default function ReservaRapidaPage() {
             <>
               {/* Grid de cards responsivo */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-                {reservasPaginadas.map((reserva) => (
+                {reservasFiltradas.map((reserva) => (
                   <div key={reserva.id} className="h-full">
                     <ReservaRapidaCard reserva={reserva} />
                   </div>
@@ -744,7 +683,7 @@ export default function ReservaRapidaPage() {
                   <Paginacao
                     paginaAtual={paginaAtual}
                     totalPaginas={totalPaginas}
-                    totalItens={reservasFiltradas.length}
+                    totalItens={totalReservas}
                     itensPorPagina={ITENS_POR_PAGINA}
                     itemLabel="reserva"
                     itemLabelPlural="reservas"
@@ -758,7 +697,7 @@ export default function ReservaRapidaPage() {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="text-center sm:text-left">
                     <h3 className="font-semibold text-gray-900 text-base md:text-lg">
-                      Total de Reservas: {reservas.length}
+                      Total de Reservas: {totalReservas}
                     </h3>
                     <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mt-2">
                       <div className="flex items-center gap-1 text-xs md:text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
