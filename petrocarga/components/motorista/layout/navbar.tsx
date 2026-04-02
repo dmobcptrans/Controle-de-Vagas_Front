@@ -19,6 +19,8 @@ import {
   Archive,
   CalendarPlus,
   PlusCircle,
+  Info,
+  BarChart,
 } from 'lucide-react';
 import { LogoutButton } from '@/components/logoutButton/logoutButton';
 import { useNotifications } from '@/context/NotificationContext';
@@ -58,7 +60,9 @@ function CardLink({
         {icon}
       </div>
       <div>
-        <p className="text-sm font-medium text-gray-800 leading-tight">{label}</p>
+        <p className="text-sm font-medium text-gray-800 leading-tight">
+          {label}
+        </p>
         <p className="text-xs text-gray-400 mt-0.5">{description}</p>
       </div>
     </Link>
@@ -68,35 +72,35 @@ function CardLink({
 /**
  * @component Navbar
  * @version 1.0.0
- * 
+ *
  * @description Barra de navegação principal para a área do motorista.
  * Responsiva com menu mobile em formato de cards, notificações em tempo real e dropdowns.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FUNCIONALIDADES:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. NAVEGAÇÃO DESKTOP:
  *    - Link principal: "Reservar Vaga"
  *    - Dropdown "Reservas": Minhas Reservas, Minhas Denúncias
  *    - Dropdown "Veículo": Meu Veículo, Adicionar Veículo
  *    - Dropdown "Perfil": Meu Perfil, Sair
  *    - Ícone de notificações com contador
- * 
+ *
  * 2. NAVEGAÇÃO MOBILE (CARDS):
  *    - Seções: Reservas, Veículos, Mais Opções
  *    - Cada link em formato de card com ícone, título e descrição
  *    - Cores diferenciadas por seção (azul, âmbar, verde, vermelho, roxo)
- * 
+ *
  * 3. NOTIFICAÇÕES:
  *    - Contador de não lidas (unreadCount)
  *    - Badge vermelho com número (9+)
  *    - Indicador de conexão (ponto amarelo)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🎨 CORES DOS CARDS MOBILE:
  * ----------------------------------------------------------------------------
- * 
+ *
  * | Seção       | Link               | Ícone       | Cor             |
  * |-------------|--------------------|-------------|-----------------|
  * | Reservas    | Reservar vaga      | CalendarPlus| 🔵 Azul         |
@@ -105,15 +109,15 @@ function CardLink({
  * | Veículos    | Adicionar veículo  | PlusCircle  | ⚪ Cinza        |
  * | Mais Opções | Minhas denúncias   | TriangleAlert| 🔴 Vermelho     |
  * | Mais Opções | Meu perfil         | User        | 🟣 Roxo         |
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - LogoutButton: Botão de logout
  * - useNotifications: Contexto de notificações
  * - DropdownMenu: Menu dropdown do shadcn/ui
- * 
+ *
  * @example
  * ```tsx
  * <Navbar />
@@ -133,7 +137,6 @@ export function Navbar() {
   return (
     <header className="bg-blue-800 text-white relative">
       <nav className="grid grid-cols-3 items-center p-4 max-w-6xl mx-auto md:flex md:justify-between">
-        
         {/* ==================== SINO - MOBILE ==================== */}
         <Link
           href="/motorista/notificacoes"
@@ -170,7 +173,7 @@ export function Navbar() {
         {/* ==================== MENU DESKTOP ==================== */}
         <ul className="hidden md:flex gap-6 text-lg items-center">
           <li className="hover:text-gray-300">
-            <Link href="/motorista/dashboard">Dashboard</Link>
+            <Link href="/motorista/dashboard">Menu</Link>
           </li>
           <li className="hover:text-gray-300">
             <Link href="/motorista/reservar-vaga">Reservar Vaga</Link>
@@ -185,13 +188,19 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                 <DropdownMenuItem asChild>
-                  <Link href="/motorista/reservas" className="flex items-center gap-2 cursor-pointer w-full">
+                  <Link
+                    href="/motorista/reservas"
+                    className="flex items-center gap-2 cursor-pointer w-full"
+                  >
                     <Archive className="h-4 w-4" />
                     Minhas Reservas
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/motorista/reservas/minhas-denuncias" className="flex items-center gap-2 cursor-pointer w-full">
+                  <Link
+                    href="/motorista/reservas/minhas-denuncias"
+                    className="flex items-center gap-2 cursor-pointer w-full"
+                  >
                     <TriangleAlert className="h-4 w-4" />
                     Minhas Denúncias
                   </Link>
@@ -209,19 +218,29 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                 <DropdownMenuItem asChild>
-                  <Link href="/motorista/veiculos/meus-veiculos" className="flex items-center gap-2 cursor-pointer w-full">
+                  <Link
+                    href="/motorista/veiculos/meus-veiculos"
+                    className="flex items-center gap-2 cursor-pointer w-full"
+                  >
                     <CarIcon className="h-4 w-4" />
                     Meu Veículo
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/motorista/veiculos/cadastrar-veiculos" className="flex items-center gap-2 cursor-pointer w-full">
+                  <Link
+                    href="/motorista/veiculos/cadastrar-veiculos"
+                    className="flex items-center gap-2 cursor-pointer w-full"
+                  >
                     <CarIcon className="h-4 w-4" />
                     Adicionar Veículo
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </li>
+
+          <li className="hover:text-gray-300">
+            <Link href="/motorista/tutorial">Tutorial</Link>
           </li>
 
           {/* Dropdown Perfil */}
@@ -233,7 +252,10 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                 <DropdownMenuItem asChild>
-                  <Link href="/motorista/perfil" className="flex items-center gap-2 cursor-pointer w-full">
+                  <Link
+                    href="/motorista/perfil"
+                    className="flex items-center gap-2 cursor-pointer w-full"
+                  >
                     <User className="h-4 w-4" />
                     Meu Perfil
                   </Link>
@@ -259,7 +281,10 @@ export function Navbar() {
                 </span>
               )}
               {!isConnected && (
-                <span className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full h-2 w-2 animate-pulse" title="Reconectando..." />
+                <span
+                  className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full h-2 w-2 animate-pulse"
+                  title="Reconectando..."
+                />
               )}
             </Link>
           </li>
@@ -273,7 +298,6 @@ export function Navbar() {
         }`}
       >
         <div className="bg-blue-800 p-4  space-y-5">
-
           {/* Seção: Reservas */}
           <div>
             <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
@@ -350,6 +374,26 @@ export function Navbar() {
                 iconBg="bg-purple-100"
                 iconColor="text-purple-700"
                 icon={<User className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2 py-2">
+              <CardLink
+                href="/motorista/tutorial"
+                label="Tutoriais"
+                description="Guia de uso"
+                iconBg="bg-indigo-100"
+                iconColor="text-indigo-700"
+                icon={<Info className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+              <CardLink
+                href="/motorista/dashboard"
+                label="Menu"
+                description="Visualizar relatórios"
+                iconBg="bg-blue-100"
+                iconColor="text-blue-700"
+                icon={<BarChart className="h-5 w-5" />}
                 onClick={fecharMenu}
               />
             </div>
