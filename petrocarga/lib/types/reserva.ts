@@ -268,3 +268,15 @@ export type ReservaGet = {
   cidadeOrigem: string;
   status: 'ATIVA' | 'CONCLUIDA' | 'RESERVADA' | 'REMOVIDA' | 'CANCELADA';
 };
+
+/**
+ * @interface PaginatedReservaResponse
+ * @description Resposta paginada da API de reservas
+ */
+export interface PaginatedReservaResponse {
+  content: ReservaGet[];
+  totalElementos: number;
+  totalPaginas: number;
+  tamanhoPagina: number;
+  pagina: number;
+}

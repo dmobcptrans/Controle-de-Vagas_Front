@@ -3,9 +3,9 @@
 import toast from 'react-hot-toast';
 import { clientApi } from '../clientApi';
 import { ConfirmResult } from '../types/confirmResult';
-import { ReservaRapida } from '@/lib/types/reservaRapida';
+import { PaginatedReservaRapidaResponse } from '@/lib/types/reservaRapida';
 import { ReservaPlaca } from '@/lib/types/reservaPlaca';
-import { ReservaGet } from '@/lib/types/reserva';
+import { PaginatedReservaResponse } from '@/lib/types/reserva';
 
 /**
  * @module reservaApi
@@ -143,18 +143,6 @@ export async function finalizarForcado(reservaID: string) {
 // ----------------------
 // GET RESERVAS POR USUARIO
 // ----------------------
-
-/**
- * @interface PaginatedReservaResponse
- * @description Resposta paginada da API de reservas
- */
-export interface PaginatedReservaResponse {
-  content: ReservaGet[];
-  totalElementos: number;
-  totalPaginas: number;
-  tamanhoPagina: number;
-  pagina: number;
-}
 
 /**
  * @function getReservasPorUsuario
@@ -521,18 +509,6 @@ export async function reservarVagaAgente(
 // ----------------------
 // GET RESERVAS RÁPIDAS
 // ----------------------
-
-/**
- * @interface PaginatedResponse
- * @description Resposta paginada da API de reservas rápidas
- */
-export interface PaginatedReservaRapidaResponse {
-  content: ReservaRapida[];
-  totalElements: number;
-  totalPaginas: number;
-  tamanhoPagina: number;
-  pagina: number;
-}
 
 /**
  * @function getReservasRapidas

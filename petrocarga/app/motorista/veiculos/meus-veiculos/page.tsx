@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
-import { AlertCircle, CarIcon, Loader2 } from 'lucide-react';
+import { AlertCircle, CarIcon, Info, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Veiculo } from '@/lib/types/veiculo';
 import VeiculoCard from '@/components/motorista/cards/veiculo-item';
@@ -123,7 +123,6 @@ export default function VeiculosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* ── HEADER FIXO ── */}
       <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
         <div className="max-w-4xl mx-auto">
@@ -145,9 +144,7 @@ export default function VeiculosPage() {
             <p className="text-white font-semibold text-[15px] mb-0.5">
               Adicionar novo veículo
             </p>
-            <p className="text-white/70 text-xs">
-              Cadastre um veículo
-            </p>
+            <p className="text-white/70 text-xs">Cadastre um veículo</p>
           </div>
 
           <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
@@ -157,13 +154,10 @@ export default function VeiculosPage() {
       </div>
 
       <main className="p-4 flex flex-col items-center w-full">
-
         {loading ? (
           <div className="flex flex-col items-center justify-center min-h-[50vh] gap-2 text-center">
             <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
-            <span className="text-gray-600">
-              Carregando seus veículos...
-            </span>
+            <span className="text-gray-600">Carregando seus veículos...</span>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
@@ -190,6 +184,23 @@ export default function VeiculosPage() {
           </div>
         )}
 
+        {/* Tutorial */}
+        <Link
+          href="/motorista/tutorial#meusveiculos"
+          className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors mt-6"
+        >
+          <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+            <Info className="h-5 w-5 text-[#1351B4]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#071D41]">
+              Gerenciando seus veículos?
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Aprenda a cadastrar e gerenciar seus veículos
+            </p>
+          </div>
+        </Link>
       </main>
     </div>
   );

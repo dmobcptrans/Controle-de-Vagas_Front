@@ -149,7 +149,7 @@ export function Navbar() {
    * Links principais da navegação desktop
    */
   const links = [
-    { href: '/agente/dashboard', label: 'Relatório' },
+    { href: '/agente/dashboard', label: 'Menu' },
     { href: '/agente/reserva-rapida', label: 'Reserva Rápida' },
     { href: '/agente/lista-reserva', label: 'Lista de Reservas' },
     { href: '/agente/consulta', label: 'Consultar Placa' },
@@ -348,7 +348,7 @@ export function Navbar() {
               />
               <CardLink
                 href="/agente/dashboard"
-                label="Relatório"
+                label="Menu"
                 description="Visualizar relatórios"
                 iconBg="bg-blue-100"
                 iconColor="text-blue-700"
