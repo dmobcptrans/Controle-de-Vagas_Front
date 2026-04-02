@@ -1,12 +1,7 @@
 'use client';
 
 import { buttonVariants } from '@/components/ui/button';
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { useAuth } from '@/components/hooks/useAuth';
 import { deleteMotorista, getMotoristaByUserId } from '@/lib/api/motoristaApi';
 import { Motorista } from '@/lib/types/motorista';
@@ -22,6 +17,7 @@ import {
   IdCardIcon,
   Loader2,
   Edit,
+  Info,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -200,7 +196,6 @@ export default function PerfilMotorista() {
 
   if (error) {
     return (
-
       <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[calc(100vh-4rem)]">
         <div className="text-center max-w-md px-4">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -243,12 +238,12 @@ export default function PerfilMotorista() {
           <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
             Seu Perfil, {motorista.usuario.nome.split(' ')[0]}!
           </h1>
-          <p className="text-xs text-white/50 capitalize">Aqui você pode ver suas informações e atualizar
-            seus dados.</p>
+          <p className="text-xs text-white/50 capitalize">
+            Aqui você pode ver suas informações e atualizar seus dados.
+          </p>
         </div>
       </header>
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-
         {/* CTA flutuante */}
         <div className="-mt-4 mb-2 flex justify-center">
           <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#071D41] rounded-2xl flex items-center justify-center shadow-lg">
@@ -298,7 +293,9 @@ export default function PerfilMotorista() {
               <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
                 <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-500">Tipo da CNH</p>
+                  <p className="text-sm font-medium text-gray-500">
+                    Tipo da CNH
+                  </p>
                   <p className="text-base sm:text-lg font-semibold text-gray-900">
                     {motorista.tipoCnh}
                   </p>
@@ -346,29 +343,47 @@ export default function PerfilMotorista() {
                 <span>Editar Perfil</span>
               </Link>
 
-            {/* Botão Excluir Conta */}
-            <button
-              onClick={() => setModalAberto(true)}
-              className={cn(
-                buttonVariants({ variant: 'destructive' }),
-                'flex items-center justify-center gap-2 px-8 py-3 h-12 text-sm sm:text-base w-full sm:w-auto min-w-[150px] font-medium',
-              )}
-            >
-              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Desativar Conta</span>
-            </button>
+              {/* Botão Excluir Conta */}
+              <button
+                onClick={() => setModalAberto(true)}
+                className={cn(
+                  buttonVariants({ variant: 'destructive' }),
+                  'flex items-center justify-center gap-2 px-8 py-3 h-12 bg-red-500 hover:bg-red-600 text-sm sm:text-base w-full sm:w-auto min-w-[150px] font-medium',
+                )}
+              >
+                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Desativar Conta</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      {/* Modal de confirmação de exclusão */}
-      <ModalConfirmacaoExclusao
-        isOpen={modalAberto}
-        onClose={() => setModalAberto(false)}
-        onConfirm={handleExcluir}
-        mensagem='Deseja mesmo desativar sua conta? Para reativar, basta ir em "Ativa Conta" no login.'
-      />
-    </main>
+        {/* Modal de confirmação de exclusão */}
+        <ModalConfirmacaoExclusao
+          isOpen={modalAberto}
+          onClose={() => setModalAberto(false)}
+          onConfirm={handleExcluir}
+          mensagem='Deseja mesmo desativar sua conta? Para reativar, basta ir em "Ativa Conta" no login.'
+        />
+
+        {/* Tutorial */}
+        <Link
+          href="/motorista/tutorial#perfil"
+          className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors mt-6"
+        >
+          <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+            <Info className="h-5 w-5 text-[#1351B4]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#071D41]">
+              Seus dados estão corretos?
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Aprenda a manter seu perfil sempre atualizado
+            </p>
+          </div>
+        </Link>
+      </main>
     </div>
   );
 }

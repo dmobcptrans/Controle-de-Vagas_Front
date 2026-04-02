@@ -4,10 +4,11 @@ import { useAuth } from '@/context/AuthContext';
 import { getDenunciasByUsuario } from '@/lib/api/denunciaApi';
 import DenunciaLista from '@/components/motorista/cards/denuncia/DenunciaLista';
 import { Denuncia } from '@/lib/types/denuncias';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Info, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 /**
  * @component MinhasDenuncias
@@ -137,7 +138,6 @@ export default function MinhasDenuncias() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* ── HEADER FIXO ── */}
       <header className="bg-blue-800 px-4 pt-1 pb-3 sm:px-8">
         <div className="max-w-4xl mx-auto">
@@ -181,6 +181,23 @@ export default function MinhasDenuncias() {
           </div>
         )}
 
+        {/* Tutorial */}
+        <Link
+          href="/motorista/tutorial#denuncias"
+          className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors mt-6"
+        >
+          <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+            <Info className="h-5 w-5 text-[#1351B4]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#071D41]">
+              Como registrar denúncias?
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Aprenda a registrar e acompanhar suas denúncias
+            </p>
+          </div>
+        </Link>
       </main>
     </div>
   );
