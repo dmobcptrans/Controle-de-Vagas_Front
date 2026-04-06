@@ -266,9 +266,6 @@ export const ReservaModal = ({
               <div className="border-b border-border px-4 py-3">
                 <p className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground">Motorista</p>
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-content-center rounded-full bg-blue-50 text-[13px] font-medium text-blue-600 dark:bg-blue-950 dark:text-blue-400">
-                    {modalState.data.reserva.motoristaNome?.slice(0, 2).toUpperCase() || 'A'}
-                  </div>
                   <p className="text-[14px] font-medium text-foreground">
                     {modalState.data.reserva.motoristaNome || 'Agendado por Agente'}
                   </p>
