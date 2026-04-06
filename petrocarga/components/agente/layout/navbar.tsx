@@ -20,6 +20,8 @@ import {
   CarIcon,
   Archive,
   CalendarPlus,
+  BarChart,
+  Info,
 } from 'lucide-react';
 
 type CardLinkProps = {
@@ -147,10 +149,12 @@ export function Navbar() {
    * Links principais da navegação desktop
    */
   const links = [
+    { href: '/agente/dashboard', label: 'Menu' },
     { href: '/agente/reserva-rapida', label: 'Reserva Rápida' },
     { href: '/agente/lista-reserva', label: 'Lista de Reservas' },
-    { href: '/agente/denuncias', label: 'Denúncias' },
     { href: '/agente/consulta', label: 'Consultar Placa' },
+    { href: '/agente/denuncias', label: 'Denúncias' },
+    { href: '/agente/tutorial', label: 'Tutoriais' },
   ];
 
   return (
@@ -309,6 +313,24 @@ export function Navbar() {
             </div>
           </div>
 
+          {/* Seção: Tutoriais */}
+          <div>
+            <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
+              Tutoriais
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              <CardLink
+                href="/agente/tutorial"
+                label="Tutoriais"
+                description="Guia de uso"
+                iconBg="bg-indigo-100"
+                iconColor="text-indigo-700"
+                icon={<Info className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+            </div>
+          </div>
+
           {/* Seção: Mais Opções */}
           <div>
             <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
@@ -322,6 +344,15 @@ export function Navbar() {
                 iconBg="bg-purple-100"
                 iconColor="text-purple-700"
                 icon={<User className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+              <CardLink
+                href="/agente/dashboard"
+                label="Menu"
+                description="Visualizar relatórios"
+                iconBg="bg-blue-100"
+                iconColor="text-blue-700"
+                icon={<BarChart className="h-5 w-5" />}
                 onClick={fecharMenu}
               />
             </div>

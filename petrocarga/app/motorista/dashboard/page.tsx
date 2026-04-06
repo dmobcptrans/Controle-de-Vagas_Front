@@ -18,7 +18,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { ReservaGet } from '@/lib/types/reserva';
 import { Denuncia } from '@/lib/types/denuncias';
 import toast from 'react-hot-toast';
-import { useNotifications } from '@/context/NotificationContext';
 
 const statusConfig = {
   ATIVA: {
@@ -79,12 +78,9 @@ function SkeletonCard() {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { notifications } = useNotifications();
   const [reservas, setReservas] = useState<ReservaGet[]>([]);
   const [denuncias, setDenuncias] = useState<Denuncia[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const unreadCount = notifications.filter((n) => !n.lida).length;
 
   const fetchDados = useCallback(async () => {
     if (!user?.id) {
@@ -328,7 +324,7 @@ export default function Dashboard() {
 
         {/* Tutorial */}
         <Link
-          href="/motorista/guia"
+          href="/motorista/tutorial#dashboard"
           className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"
         >
           <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">

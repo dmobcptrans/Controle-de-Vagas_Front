@@ -317,9 +317,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pushToken = localStorage.getItem('pushToken');
 
     try {
-      if (pushToken && user?.id) {
-        await atualizarStatusPushToken(user.id, pushToken, false);
-      }
+      // if (pushToken && user?.id) {
+      //   await atualizarStatusPushToken(user.id, pushToken, false);
+      // }
       await api.post('/petrocarga/auth/logout');
     } catch (error) {
       console.error('Erro ao notificar logout', error);

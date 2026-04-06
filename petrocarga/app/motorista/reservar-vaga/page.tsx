@@ -8,13 +8,11 @@ import { Vaga } from '@/lib/types/vaga';
 import { Search, MapPin, X, MapIcon, Info } from 'lucide-react';
 import Link from 'next/link';
 
-
 type Suggestion = {
   label: string;
   lat: number;
   lng: number;
 };
-
 
 export default function ReservaPage() {
   const [step, setStep] = useState<'mapa' | 'reserva'>('mapa');
@@ -55,14 +53,13 @@ export default function ReservaPage() {
   };
 
   // Extrai campos da vaga com fallbacks
-  const vagaLabel = selectedVaga?.endereco.logradouro
-  const vagaEndereco = selectedVaga?.endereco.bairro
-  const vagaSetor = selectedVaga?.area
+  const vagaLabel = selectedVaga?.endereco.logradouro;
+  const vagaEndereco = selectedVaga?.endereco.bairro;
+  const vagaSetor = selectedVaga?.area;
   const showSuggestions = searchFocused && suggestions.length > 0;
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-
       {/* ── Header ── */}
       <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
         <div className="max-w-4xl mx-auto">
@@ -70,18 +67,18 @@ export default function ReservaPage() {
             Reservar Vaga
           </h1>
           <p className="text-xs text-white/50 capitalize">
-            {step === 'mapa' ? 'Selecione uma vaga no mapa' : 'Preencha os dados da reserva'}
+            {step === 'mapa'
+              ? 'Selecione uma vaga no mapa'
+              : 'Preencha os dados da reserva'}
           </p>
         </div>
       </header>
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-
         {/* ══════════════════════════════════════════
             CTA DINÂMICO
         ══════════════════════════════════════════ */}
         <div className="-mt-4 mb-5">
-
           {step === 'mapa' && (
             <div
               className="bg-[#071D41] rounded-2xl border-l-4 border-[#FFCD07] px-5 py-4"
@@ -89,7 +86,6 @@ export default function ReservaPage() {
             >
               {/* Container relativo PRO dropdown */}
               <div className="relative">
-
                 {/* Input row */}
                 <div
                   className="flex items-center gap-2 rounded-xl px-3 py-2.5"
@@ -104,7 +100,11 @@ export default function ReservaPage() {
                 >
                   <Search
                     className="h-4 w-4 flex-shrink-0 transition-colors"
-                    style={{ color: searchFocused ? '#FFCD07' : 'rgba(255,255,255,0.45)' }}
+                    style={{
+                      color: searchFocused
+                        ? '#FFCD07'
+                        : 'rgba(255,255,255,0.45)',
+                    }}
                   />
 
                   <input
@@ -177,7 +177,6 @@ export default function ReservaPage() {
               className="flex items-center justify-between bg-[#071D41] rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]"
               style={{ boxShadow: '0 4px 16px rgba(7,29,65,0.18)' }}
             >
-
               {/* Textos */}
               <div className="flex-1 min-w-0">
                 <p className="text-white font-semibold text-[15px] mb-0.5 truncate">
@@ -191,17 +190,17 @@ export default function ReservaPage() {
                 )}
 
                 {!vagaEndereco && vagaSetor && (
-                  <p className="text-white/60 text-xs truncate">
-                    {vagaSetor}
-                  </p>
+                  <p className="text-white/60 text-xs truncate">{vagaSetor}</p>
                 )}
               </div>
 
               {/* Ícone */}
               <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-white/30">
-                <MapIcon className="h-5 w-5 text-white" onClick={handleBackToMap} />
+                <MapIcon
+                  className="h-5 w-5 text-white"
+                  onClick={handleBackToMap}
+                />
               </div>
-
             </div>
           )}
         </div>
@@ -212,7 +211,10 @@ export default function ReservaPage() {
         {step === 'mapa' && (
           <div className="flex flex-col items-center justify-center">
             <div className="w-full h-[calc(75vh-120px)] md:h-[70vh] lg:h-[75vh] rounded-xl overflow-hidden shadow-md mb-4">
-              <MapReserva onClickVaga={handleSelectVaga} selectedLocation={selectedLocation} />
+              <MapReserva
+                onClickVaga={handleSelectVaga}
+                selectedLocation={selectedLocation}
+              />
             </div>
           </div>
         )}
@@ -221,25 +223,26 @@ export default function ReservaPage() {
             ETAPA 2: FORMULÁRIO
         ══════════════════════════════════════════ */}
         {step === 'reserva' && selectedVaga && (
-          <div className='mb-4'>
+          <div className="mb-4">
             <ReservaComponent
               selectedVaga={selectedVaga}
               onBack={handleBackToMap}
             />
           </div>
-
         )}
 
         {/* Tutorial */}
         <Link
-          href="/motorista/guia"
+          href="/motorista/tutorial#reservarvaga"
           className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"
         >
           <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
             <Info className="h-5 w-5 text-[#1351B4]" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#071D41]">Novo por aqui?</p>
+            <p className="text-sm font-semibold text-[#071D41]">
+              Novo por aqui?
+            </p>
             <p className="text-xs text-gray-400 mt-0.5">
               Veja como usar o sistema em 3 passos simples
             </p>

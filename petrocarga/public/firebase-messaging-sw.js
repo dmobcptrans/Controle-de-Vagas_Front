@@ -6,12 +6,13 @@ importScripts(
 );
 
 firebase.initializeApp({
-  apiKey: "AIzaSyDjkIW9FSXzaz2DxaSh7xdwnccZSsya5dw",
-  authDomain: "fir-cptrans-project.firebaseapp.com",
-  projectId: "fir-cptrans-project",
-  storageBucket: "fir-cptrans-project.firebasestorage.app",
-  messagingSenderId: "663684137039",
-  appId: "1:663684137039:web:e724c72ca710c84939aa3a"
+  apiKey: "AIzaSyCJiidfgkv5oyzQJr5cyI7W8BZv6OWtueE",
+  authDomain: "fir-cpt-ig.firebaseapp.com",
+  projectId: "fir-cpt-ig",
+  storageBucket: "fir-cpt-ig.firebasestorage.app",
+  messagingSenderId: "569723490331",
+  appId: "1:569723490331:web:b3363e0b1b0ece99d628be",
+  measurementId: "G-WCYM3XCSQ5"
 });
 
 const messaging = firebase.messaging();

@@ -84,3 +84,15 @@ export interface ReservaRapida {
   triadoEm: string;
   status: 'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'CANCELADA' | 'REMOVIDA';
 }
+
+/**
+ * @interface PaginatedResponse
+ * @description Resposta paginada da API de reservas rápidas
+ */
+export interface PaginatedReservaRapidaResponse {
+  content: ReservaRapida[];
+  totalElements: number;
+  totalPaginas: number;
+  tamanhoPagina: number;
+  pagina: number;
+}
