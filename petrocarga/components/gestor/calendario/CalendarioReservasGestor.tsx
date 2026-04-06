@@ -31,21 +31,21 @@ interface ReservasPorDia {
  */
 type ModalState =
   | {
-      type: 'group';
-      data: { dateStr: string; logradouros: ReservasPorLogradouro };
-    }
+    type: 'group';
+    data: { dateStr: string; logradouros: ReservasPorLogradouro };
+  }
   | {
-      type: 'vagasLogradouro';
-      data: { logradouro: string; reservasDoLogradouro: Reserva[] };
-    }
+    type: 'vagasLogradouro';
+    data: { logradouro: string; reservasDoLogradouro: Reserva[] };
+  }
   | {
-      type: 'vaga';
-      data: { vagaId: string; vagaInfo: Vaga | null; reservas: Reserva[] };
-    }
+    type: 'vaga';
+    data: { vagaId: string; vagaInfo: Vaga | null; reservas: Reserva[] };
+  }
   | { type: 'reserva'; data: { reserva: Reserva; vagaInfo: Vaga | null } }
   | { type: null; data: null };
 
-  // ============================================================================
+// ============================================================================
 // COMPONENTE PRINCIPAL
 // ============================================================================
 
@@ -234,13 +234,13 @@ export default function CalendarioReservasGestor() {
     try {
       await finalizarReservaForcada(reservaId, reservaData);
       closeModal();
-    } catch {}
+    } catch { }
   };
 
   // ==================== RENDER ====================
 
   return (
-    <div className="p-2 md:p-4">
+    <div>
       <ReservaModal
         modalState={modalState}
         vagaCache={vagaCacheRef.current}
@@ -284,11 +284,17 @@ export default function CalendarioReservasGestor() {
       />
 
       <FullCalendar
-        ref={calendarRef} 
+        ref={calendarRef}
         plugins={[dayGridPlugin, interactionPlugin]}
         locale={ptBr}
         initialView="dayGridMonth"
-        height="82vh"
+        height="auto"
+        dayMaxEventRows={3}
+        eventDisplay="block"
+        expandRows={true}
+        showNonCurrentDates={false}
+        fixedWeekCount={false}
+        contentHeight="auto"
         events={eventosCalendario}
         eventClick={handleGroupClick}
         headerToolbar={{
