@@ -7,6 +7,7 @@ import {
   BookOpen,
   Target,
   Bell,
+  CalendarDays,
 } from 'lucide-react';
 
 export const secoesAgente = [
@@ -96,6 +97,28 @@ export const secoesAgente = [
       'Cards mostram status com cores diferentes para fácil identificação',
       'Reservas ativas têm destaque especial',
       'Você pode cancelar reservas ativas diretamente do card',
+    ],
+  },
+  {
+    id: 'reservas',
+    titulo: '📅 Calendário de Reservas',
+    icone: CalendarDays,
+    descricao:
+      'Visualize todas as reservas em um formato de calendário intuitivo',
+    passos: [
+      'Acesse a página "Reservas" pelo menu lateral',
+      'Navegue entre os meses usando os botões de navegação',
+      'Visualize as reservas organizadas por dia no calendário',
+      'Clique em um dia para ver as reservas daquela data',
+      'Clique em uma reserva para ver detalhes e realizar ações',
+      'Realize check-in, check-out ou cancelamento diretamente pelo calendário',
+    ],
+    dicas: [
+      'O calendário mostra todas as reservas do sistema em tempo real',
+      'Use os botões de navegação para ver meses anteriores ou futuros',
+      'Reservas ativas aparecem com destaque visual diferente',
+      'O calendário é atualizado automaticamente quando novas reservas são criadas',
+      'Você pode filtrar reservas por status para focar no que é importante',
     ],
   },
   {

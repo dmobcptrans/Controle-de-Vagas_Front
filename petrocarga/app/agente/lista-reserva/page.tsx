@@ -19,7 +19,7 @@ import {
   Clock,
   Info,
 } from 'lucide-react';
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Paginacao } from '@/components/paginacao/paginacao';
 import Link from 'next/link';
 
@@ -33,6 +33,116 @@ type FiltroStatusReserva =
   | 'cancelada'
   | 'removida';
 
+/**
+ * @component ReservaRapidaPage
+ * @version 2.0.0
+ *
+ * @description Página de gerenciamento de reservas rápidas para agentes.
+ * As reservas são paginadas e filtradas diretamente pelo backend.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. CARREGAMENTO INICIAL:
+ *    - Verifica autenticação (user?.id)
+ *    - Busca reservas via getReservasRapidas() com paginação e filtros
+ *    - Estados: loading → erro → sucesso
+ *
+ * 2. FILTROS (ENVIADOS AO BACKEND):
+ *    - Status: Todas | Reservada | Ativa | Concluída | Cancelada | Removida
+ *    - Busca textual: placa do veículo
+ *    - Botão "Limpar Filtros" quando ativos
+ *    - Menu mobile com drawer de filtros
+ *
+ * 3. PAGINAÇÃO (GERENCIADA PELO BACKEND):
+ *    - 10 itens por página (ITENS_POR_PAGINA)
+ *    - Controles: página atual, total de páginas, total de elementos
+ *    - Scroll suave para o topo ao mudar de página
+ *
+ * 4. RESPONSIVIDADE:
+ *    - Desktop: filtros em linha, números de página visíveis
+ *    - Mobile: menu de filtros colapsável (drawer)
+ *    - Grid de cards: 1 coluna mobile → 2 tablets → 3 desktop → 4 telas grandes
+ *
+ * 5. ESTADOS DE UI:
+ *    - Loading: spinner animado com ícone CalendarClock
+ *    - Erro: card vermelho com botão de retry
+ *    - Vazio (sem filtros): mensagem sem reservas
+ *    - Vazio (com filtros): mensagem com opção "Ver todas"
+ *    - Sucesso: grid de cards + paginação + rodapé estatístico
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - FILTROS NO BACKEND: Todos os filtros (status e busca) são enviados ao backend
+ * - SEM FILTRAGEM LOCAL: Não utiliza useMemo para filtragem, evitando inconsistências
+ * - PAGINAÇÃO DO BACKEND: totalPaginas e totalElements vêm da API
+ * - CONVERSÃO DE PÁGINA: Frontend (1-indexed) → Backend (0-indexed)
+ * - MAPEAMENTO DE STATUS: Converte string do frontend para enum do backend
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 CORES DOS STATUS:
+ * ----------------------------------------------------------------------------
+ *
+ * | Status     | Cor Desktop (ativo) | Cor Mobile (ativo) |
+ * |------------|---------------------|--------------------|
+ * | Todas      | 🔵 Azul             | 🔵 Azul            |
+ * | Reservada  | 🟡 Amarelo          | 🟡 Amarelo         |
+ * | Ativa      | 🟢 Verde            | 🟢 Verde           |
+ * | Concluída  | 🟣 Roxo             | 🟣 Roxo            |
+ * | Cancelada  | 🔴 Vermelho         | 🔴 Vermelho        |
+ * | Removida   | ⚫ Cinza            | ⚫ Cinza           |
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - ReservaRapidaCard: Card individual de reserva
+ * - Paginacao: Componente reutilizável de paginação
+ * - getReservasRapidas: API de busca com paginação e filtros
+ * - useAuth: Hook de autenticação
+ *
+ * @example
+ * ```tsx
+ * // Uso em rota de agente
+ * <ReservaRapidaPage />
+ * ```
+ *
+ * @see /src/components/agente/cards/reservaRapida-card.tsx - Card de reserva
+ * @see /src/lib/api/reservaApi.ts - API de reservas
+ */
+
+/**
+ * @function mapStatusToBackend
+ * @description Converte o status do frontend para o formato aceito pelo backend
+ * @param status - Status selecionado no frontend
+ * @returns Array com o status no formato do backend ou undefined para 'todas'
+ */
+function mapStatusToBackend(
+  status: FiltroStatusReserva,
+):
+  | Array<'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'REMOVIDA' | 'CANCELADA'>
+  | undefined {
+  if (status === 'todas') {
+    return undefined;
+  }
+
+  const statusMap: Record<
+    Exclude<FiltroStatusReserva, 'todas'>,
+    'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'REMOVIDA' | 'CANCELADA'
+  > = {
+    reservada: 'RESERVADA',
+    ativa: 'ATIVA',
+    concluida: 'CONCLUIDA',
+    cancelada: 'CANCELADA',
+    removida: 'REMOVIDA',
+  };
+
+  return [statusMap[status]];
+}
+
 export default function ReservaRapidaPage() {
   // --------------------------------------------------------------------------
   // HOOKS E ESTADOS
@@ -41,21 +151,26 @@ export default function ReservaRapidaPage() {
   const { user } = useAuth();
 
   const [reservas, setReservas] = useState<ReservaRapida[]>([]);
-  const [totalReservas, setTotalReservas] = useState(0);
-  const [totalPaginasBackend, setTotalPaginasBackend] = useState(0);
-  const [isLoadingReservas, setIsLoadingReservas] = useState(true);
+  const [totalReservas, setTotalReservas] = useState<number>(0);
+  const [totalPaginasBackend, setTotalPaginasBackend] = useState<number>(0);
+  const [isLoadingReservas, setIsLoadingReservas] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [busca, setBusca] = useState('');
-  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [busca, setBusca] = useState<string>('');
+  const [paginaAtual, setPaginaAtual] = useState<number>(1);
   const [filtroStatus, setFiltroStatus] =
     useState<FiltroStatusReserva>('ativa');
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState<boolean>(false);
 
   // --------------------------------------------------------------------------
-  // BUSCA DE DADOS COM PAGINAÇÃO DO BACKEND
+  // BUSCA DE DADOS COM FILTROS ENVIADOS AO BACKEND
   // --------------------------------------------------------------------------
 
-  const fetchReservas = useCallback(async () => {
+  /**
+   * @function fetchReservas
+   * @description Busca reservas do backend aplicando paginação e filtros.
+   * Os filtros de status e busca são enviados diretamente à API.
+   */
+  const fetchReservas = useCallback(async (): Promise<void> => {
     if (!user?.id) {
       setIsLoadingReservas(false);
       return;
@@ -65,29 +180,45 @@ export default function ReservaRapidaPage() {
     setError(null);
 
     try {
-      // Converte página front (1-indexed) para back (0-indexed)
-      const numeroPaginaBackend = paginaAtual - 1;
+      // Converte página frontend (1-indexed) para backend (0-indexed)
+      const numeroPaginaBackend: number = paginaAtual - 1;
+
+      // Converte o filtro de status para o formato do backend
+      const listaStatus:
+        | Array<'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'REMOVIDA' | 'CANCELADA'>
+        | undefined = mapStatusToBackend(filtroStatus);
+
+      // Busca textual: envia a placa como filtro se houver texto
+      const placaVeiculo: string | undefined = busca.trim() || undefined;
 
       const response = await getReservasRapidas(
         user.id,
         numeroPaginaBackend,
         ITENS_POR_PAGINA,
+        undefined, // vagaId - não utilizado neste contexto
+        placaVeiculo, // placaVeiculo - filtro por placa
+        undefined, // data - não utilizado neste contexto
+        listaStatus, // listaStatus - filtro por status
       );
 
       setReservas(response.content);
       setTotalReservas(response.totalElements);
       setTotalPaginasBackend(response.totalPaginas);
-    } catch {
-      setError('Erro ao buscar as reservas. Tente novamente mais tarde.');
+    } catch (err: unknown) {
+      const errorMessage: string =
+        err instanceof Error
+          ? err.message
+          : 'Erro ao buscar as reservas. Tente novamente mais tarde.';
+      setError(errorMessage);
       setReservas([]);
       setTotalReservas(0);
       setTotalPaginasBackend(0);
     } finally {
       setIsLoadingReservas(false);
     }
-  }, [user?.id, paginaAtual]);
+  }, [user?.id, paginaAtual, filtroStatus, busca]);
 
-  // Carrega dados quando página muda
+  // Carrega dados quando página, filtro de status ou busca mudam
   useEffect(() => {
     fetchReservas();
   }, [fetchReservas]);
@@ -101,91 +232,40 @@ export default function ReservaRapidaPage() {
   // HANDLERS DE FILTRO
   // --------------------------------------------------------------------------
 
-  const handleFiltroStatus = (status: FiltroStatusReserva) => {
+  const handleFiltroStatus = (status: FiltroStatusReserva): void => {
     setFiltroStatus(status);
     setMobileFiltersOpen(false);
   };
 
-  const mostrarTodas = () => {
+  const mostrarTodas = (): void => {
     setFiltroStatus('todas');
     setBusca('');
     setPaginaAtual(1);
     setMobileFiltersOpen(false);
   };
 
-  const limparBusca = () => {
+  const limparBusca = (): void => {
     setBusca('');
     setPaginaAtual(1);
-  };
-
-  // --------------------------------------------------------------------------
-  // FILTRAGEM (local, após carregar os dados da página atual)
-  // --------------------------------------------------------------------------
-
-  const reservasFiltradas = useMemo(() => {
-    // Garante que reservas é um array
-    const reservasArray = Array.isArray(reservas) ? reservas : [];
-    let filtradas = [...reservasArray];
-
-    // Filtro por status
-    switch (filtroStatus) {
-      case 'reservada':
-        filtradas = filtradas.filter(
-          (reserva) => reserva.status === 'RESERVADA',
-        );
-        break;
-      case 'ativa':
-        filtradas = filtradas.filter((reserva) => reserva.status === 'ATIVA');
-        break;
-      case 'concluida':
-        filtradas = filtradas.filter(
-          (reserva) => reserva.status === 'CONCLUIDA',
-        );
-        break;
-      case 'cancelada':
-        filtradas = filtradas.filter(
-          (reserva) => reserva.status === 'CANCELADA',
-        );
-        break;
-      case 'removida':
-        filtradas = filtradas.filter(
-          (reserva) => reserva.status === 'REMOVIDA',
-        );
-        break;
-      case 'todas':
-      default:
-        break;
-    }
-
-    // Filtro por busca textual
-    if (busca.trim()) {
-      const termoBusca = busca.toLowerCase().trim();
-      filtradas = filtradas.filter(
-        (reserva) =>
-          reserva.placa?.toLowerCase().includes(termoBusca) ||
-          reserva.logradouro?.toLowerCase().includes(termoBusca) ||
-          reserva.bairro?.toLowerCase().includes(termoBusca) ||
-          reserva.tipoVeiculo?.toLowerCase().includes(termoBusca),
-      );
-    }
-
-    return filtradas;
-  }, [reservas, filtroStatus, busca]);
-
-  // Usa o total de páginas vindo do backend
-  const totalPaginas = totalPaginasBackend;
-
-  const handlePageChange = (pagina: number) => {
-    setPaginaAtual(pagina);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // --------------------------------------------------------------------------
   // FUNÇÕES AUXILIARES PARA ESTATÍSTICAS
   // --------------------------------------------------------------------------
 
-  const contarPorStatus = (status: string) => {
-    return reservas.filter((reserva) => reserva.status === status).length;
+  const contarPorStatus = (status: ReservaRapida['status']): number => {
+    return reservas.filter(
+      (reserva: ReservaRapida) => reserva.status === status,
+    ).length;
+  };
+
+  // --------------------------------------------------------------------------
+  // HANDLER DE PAGINAÇÃO
+  // --------------------------------------------------------------------------
+
+  const handlePageChange = (pagina: number): void => {
+    setPaginaAtual(pagina);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // --------------------------------------------------------------------------
@@ -249,6 +329,10 @@ export default function ReservaRapidaPage() {
   // RENDERIZAÇÃO PRINCIPAL
   // --------------------------------------------------------------------------
 
+  // Verifica se há reservas para exibir
+  const temReservas: boolean = reservas.length > 0;
+  const temFiltrosAtivos: boolean = busca !== '' || filtroStatus !== 'todas';
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 lg:py-8">
@@ -271,7 +355,7 @@ export default function ReservaRapidaPage() {
             >
               <Menu className="h-4 w-4" />
               Filtros
-              {(busca || filtroStatus !== 'todas') && (
+              {temFiltrosAtivos && (
                 <span className="w-2 h-2 rounded-full bg-blue-600"></span>
               )}
             </button>
@@ -291,11 +375,11 @@ export default function ReservaRapidaPage() {
                     <input
                       type="text"
                       value={busca}
-                      onChange={(e) => {
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setBusca(e.target.value);
                         setPaginaAtual(1);
                       }}
-                      placeholder="Buscar por placa, logradouro ou bairro..."
+                      placeholder="Buscar por placa do veículo..."
                       className="w-full pl-9 sm:pl-10 md:pl-12 pr-9 sm:pr-10 md:pr-12 py-2 sm:py-2.5 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm"
                     />
                     {busca && (
@@ -407,7 +491,7 @@ export default function ReservaRapidaPage() {
                     </button>
                   </div>
 
-                  {(busca || filtroStatus !== 'todas') && (
+                  {temFiltrosAtivos && (
                     <button
                       onClick={mostrarTodas}
                       className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-xs sm:text-sm"
@@ -428,7 +512,7 @@ export default function ReservaRapidaPage() {
               </div>
 
               {/* Resumo dos filtros aplicados */}
-              {(busca || filtroStatus !== 'todas') && (
+              {temFiltrosAtivos && (
                 <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="text-xs sm:text-sm text-gray-600">
                     {busca ? (
@@ -474,17 +558,17 @@ export default function ReservaRapidaPage() {
                       </>
                     )}
                   </div>
-                  {reservasFiltradas.length === 0 ? (
+                  {!temReservas && (
                     <button
                       onClick={mostrarTodas}
                       className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
                     >
                       Ver todas as reservas
                     </button>
-                  ) : (
+                  )}
+                  {temReservas && (
                     <div className="text-xs sm:text-sm text-gray-500">
-                      Mostrando {reservasFiltradas.length} de {totalReservas}{' '}
-                      reservas
+                      Mostrando {reservas.length} de {totalReservas} reservas
                     </div>
                   )}
                 </div>
@@ -501,11 +585,11 @@ export default function ReservaRapidaPage() {
                   <input
                     type="text"
                     value={busca}
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       setBusca(e.target.value);
                       setPaginaAtual(1);
                     }}
-                    placeholder="Buscar reservas..."
+                    placeholder="Buscar reservas por placa..."
                     className="w-full pl-9 pr-9 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   />
                   {busca && (
@@ -588,7 +672,7 @@ export default function ReservaRapidaPage() {
                     </button>
                   </div>
 
-                  {(busca || filtroStatus !== 'todas') && (
+                  {temFiltrosAtivos && (
                     <button
                       onClick={mostrarTodas}
                       className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
@@ -606,9 +690,9 @@ export default function ReservaRapidaPage() {
                       {totalReservas} reservas no total
                     </span>
                   </div>
-                  {reservasFiltradas.length !== totalReservas && (
+                  {reservas.length !== totalReservas && (
                     <span className="text-xs text-blue-600">
-                      {reservasFiltradas.length} filtradas
+                      {reservas.length} exibidas
                     </span>
                   )}
                 </div>
@@ -631,9 +715,9 @@ export default function ReservaRapidaPage() {
 
         {/* LISTA DE RESERVAS */}
         <div className="space-y-3 sm:space-y-4 md:space-y-6">
-          {reservasFiltradas.length === 0 ? (
+          {!temReservas ? (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 md:p-12 text-center">
-              {busca || filtroStatus !== 'todas' ? (
+              {temFiltrosAtivos ? (
                 <div className="max-w-md mx-auto">
                   <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <Search className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-400" />
@@ -643,7 +727,7 @@ export default function ReservaRapidaPage() {
                   </h3>
                   <p className="text-gray-600 mb-5 sm:mb-6 text-xs sm:text-sm md:text-base">
                     {busca
-                      ? `Não encontramos reservas para "${busca}".`
+                      ? `Não encontramos reservas com a placa "${busca}".`
                       : `Não encontramos reservas com o status selecionado.`}
                   </p>
                   <button
@@ -672,7 +756,7 @@ export default function ReservaRapidaPage() {
             <>
               {/* Grid de cards responsivo */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-                {reservasFiltradas.map((reserva) => (
+                {reservas.map((reserva: ReservaRapida) => (
                   <div key={reserva.id} className="h-full">
                     <ReservaRapidaCard reserva={reserva} />
                   </div>
@@ -680,11 +764,11 @@ export default function ReservaRapidaPage() {
               </div>
 
               {/* Paginação */}
-              {totalPaginas > 1 && (
+              {totalPaginasBackend > 1 && (
                 <div className="mt-6 md:mt-8">
                   <Paginacao
                     paginaAtual={paginaAtual}
-                    totalPaginas={totalPaginas}
+                    totalPaginas={totalPaginasBackend}
                     totalItens={totalReservas}
                     itensPorPagina={ITENS_POR_PAGINA}
                     itemLabel="reserva"
@@ -727,10 +811,11 @@ export default function ReservaRapidaPage() {
 
                   {/* Badge com contagem atual */}
                   <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm md:text-base font-medium">
-                    {reservasFiltradas.length}{' '}
-                    {reservasFiltradas.length === 1 ? 'reserva' : 'reservas'}{' '}
+                    {reservas.length}{' '}
+                    {reservas.length === 1 ? 'reserva' : 'reservas'} exibidas
                     {filtroStatus !== 'todas' && (
                       <span className="text-xs">
+                        {' '}
                         (
                         {filtroStatus === 'reservada'
                           ? 'reservadas'
@@ -761,9 +846,9 @@ export default function ReservaRapidaPage() {
               <Info className="h-5 w-5 text-[#1351B4]" />
             </div>
             <div className="flex-1 min-w-0">
-              {/* Cor preta para o título */}
-              <p className="text-sm font-semibold text-[#071D41]">Novo por aqui?</p>
-              {/* Cor cinza para a descrição */}
+              <p className="text-sm font-semibold text-[#071D41]">
+                Novo por aqui?
+              </p>
               <p className="text-xs text-gray-500 mt-0.5">
                 Aprenda a filtrar, buscar e gerenciar suas reservas
               </p>
