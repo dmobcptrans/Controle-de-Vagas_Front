@@ -512,46 +512,62 @@ export async function reservarVagaAgente(
 
 /**
  * @function getReservasRapidas
- * @description Lista reservas rápidas criadas por um agente com paginação.
+ * @description Lista reservas rápidas criadas por um agente com paginação e filtros.
  *
  * @param usuarioId - ID do agente
  * @param numeroPagina - Número da página (0-indexed, padrão: 0)
  * @param tamanhoPagina - Quantidade de itens por página (padrão: 10)
+ * @param vagaId - ID da vaga (opcional)
+ * @param placaVeiculo - Placa do veículo (opcional)
+ * @param data - Data da reserva no formato YYYY-MM-DD (opcional)
+ * @param listaStatus - Lista de status para filtrar (opcional)
  * @returns Promise<PaginatedReservaRapidaResponse> - Objeto paginado com reservas e metadados
- * @throws {Error} Dispara erro se a requisição falhar
- *
- * @example
- * ```ts
- * // Busca primeira página com 10 reservas
- * const primeiraPagina = await getReservasRapidas('agente123', 0, 10);
- * console.log(primeiraPagina.content); // array de reservas
- * console.log(primeiraPagina.totalElements); // total de reservas
- * console.log(primeiraPagina.totalPaginas); // total de páginas
- * ```
  */
 export async function getReservasRapidas(
   usuarioId: string,
   numeroPagina: number = 0,
   tamanhoPagina: number = 10,
+  vagaId?: string,
+  placaVeiculo?: string,
+  data?: string,
+  listaStatus?: Array<
+    'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'REMOVIDA' | 'CANCELADA'
+  >,
 ): Promise<PaginatedReservaRapidaResponse> {
   try {
-    const res = await clientApi(
-      `/petrocarga/reserva-rapida/${usuarioId}?numeroPagina=${numeroPagina}&tamanhoPagina=${tamanhoPagina}`,
-    );
+    const urlParams = new URLSearchParams();
+
+    urlParams.append('numeroPagina', String(numeroPagina));
+    urlParams.append('tamanhoPagina', String(tamanhoPagina));
+
+    if (vagaId) urlParams.append('vagal', vagaId);
+    if (placaVeiculo) urlParams.append('placaVeiculo', placaVeiculo);
+    if (data) urlParams.append('data', data);
+    if (listaStatus && listaStatus.length > 0) {
+      listaStatus.forEach((status) => urlParams.append('listaStatus', status));
+    }
+
+    const queryString = urlParams.toString();
+    const url = `/petrocarga/reserva-rapida/${usuarioId}${queryString ? `?${queryString}` : ''}`;
+
+    const res = await clientApi(url);
 
     if (!res.ok) {
       throw new Error(`Erro na requisição: ${res.status}`);
     }
 
-    const data = await res.json();
+    const dataResponse = await res.json();
 
-    // Retorna o objeto paginado conforme a estrutura do back-end
     return {
-      content: data.content || [],
-      totalElements: data.totalElementos || 0,
-      totalPaginas: data.totalPaginas || 0,
-      tamanhoPagina: data.tamanhoPagina || tamanhoPagina,
-      pagina: data.pagina || numeroPagina,
+      content: dataResponse.content || [],
+      totalElements: dataResponse.totalElementos || 0,
+      totalPaginas: dataResponse.totalPaginas || 0,
+      tamanhoPagina: dataResponse.tamanhoPagina || tamanhoPagina,
+      pagina: dataResponse.pagina || numeroPagina,
+      vagaId: dataResponse.vagaId || vagaId,
+      placaVeiculo: dataResponse.placaVeiculo || placaVeiculo,
+      data: dataResponse.data || data,
+      listaStatus: dataResponse.listaStatus || listaStatus,
     };
   } catch (err: unknown) {
     const message =
