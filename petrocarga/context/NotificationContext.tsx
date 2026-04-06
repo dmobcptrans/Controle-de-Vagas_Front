@@ -20,7 +20,6 @@ import type {
   Notification as AppNotification,
   NotificationContextData,
   NotificationProviderProps,
-  PaginatedNotificationResponse,
 } from '@/lib/types/notificacao';
 
 // Contexto
@@ -87,7 +86,7 @@ export function NotificationProvider({
 
         if (result.data) {
           const novasNotificacoes = result.data.content || [];
-          
+
           const notificacoesOrdenadas = [...novasNotificacoes].sort(
             (a, b) =>
               new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime(),
@@ -97,11 +96,15 @@ export function NotificationProvider({
           setTotalElementos(result.data.totalElementos);
           setTotalPaginas(result.data.totalPaginas);
           setPaginaAtual(result.data.pagina);
-          setPodeCarregarMais(result.data.pagina + 1 < result.data.totalPaginas);
+          setPodeCarregarMais(
+            result.data.pagina + 1 < result.data.totalPaginas,
+          );
           setError(null);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro ao carregar notificações');
+        setError(
+          err instanceof Error ? err.message : 'Erro ao carregar notificações',
+        );
         setNotifications([]);
         setTotalElementos(0);
         setTotalPaginas(0);
@@ -138,7 +141,7 @@ export function NotificationProvider({
 
       if (result.data) {
         const novasNotificacoes = result.data.content || [];
-        
+
         setNotifications((prev) => {
           const novas = [...prev];
           for (const notif of novasNotificacoes) {
@@ -146,22 +149,36 @@ export function NotificationProvider({
               novas.push(notif);
             }
           }
-          return novas.sort(
-            (a, b) =>
-              new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime(),
-          ).slice(0, maxNotifications);
+          return novas
+            .sort(
+              (a, b) =>
+                new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime(),
+            )
+            .slice(0, maxNotifications);
         });
-        
+
         setPaginaAtual(result.data.pagina);
         setPodeCarregarMais(result.data.pagina + 1 < result.data.totalPaginas);
         setError(null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar mais notificações');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Erro ao carregar mais notificações',
+      );
     } finally {
       setIsLoadingMore(false);
     }
-  }, [usuarioId, paginaAtual, totalPaginas, podeCarregarMais, isLoadingMore, maxNotifications, pageSize]);
+  }, [
+    usuarioId,
+    paginaAtual,
+    totalPaginas,
+    podeCarregarMais,
+    isLoadingMore,
+    maxNotifications,
+    pageSize,
+  ]);
 
   // ==================== ADICIONAR NOTIFICAÇÃO ====================
   const addNotification = useCallback(
@@ -239,7 +256,7 @@ export function NotificationProvider({
   const connect = useCallback(() => {
     // Verifica se já está conectando OU conectado
     const currentState = eventSourceRef.current?.readyState;
-    
+
     if (
       currentState === EventSource.OPEN ||
       currentState === EventSource.CONNECTING
@@ -309,20 +326,23 @@ export function NotificationProvider({
         console.log('Mensagem SSE recebida');
         handleIncoming(e.data);
       };
-      
+
       eventSource.addEventListener('notificacao', (e) => {
         console.log('Evento notificacao recebido');
         handleIncoming((e as MessageEvent).data);
       });
 
       eventSource.onerror = (event) => {
-        console.log('SSE onerror disparado, readyState:', eventSource.readyState);
-        
+        console.log(
+          'SSE onerror disparado, readyState:',
+          eventSource.readyState,
+        );
+
         // ReadyState: 0 = CONNECTING, 1 = OPEN, 2 = CLOSED
         if (eventSource.readyState === EventSource.CLOSED) {
           console.log('Conexão SSE fechada');
           setIsConnected(false);
-          
+
           // Só tenta reconectar se não atingiu o limite
           if (autoReconnect && retryCountRef.current < reconnectMaxAttempts) {
             retryCountRef.current += 1;
@@ -330,8 +350,10 @@ export function NotificationProvider({
               reconnectInitialDelayMs * Math.pow(2, retryCountRef.current - 1),
               reconnectMaxDelayMs,
             );
-            console.log(`Tentativa ${retryCountRef.current}/${reconnectMaxAttempts} em ${delay}ms`);
-            
+            console.log(
+              `Tentativa ${retryCountRef.current}/${reconnectMaxAttempts} em ${delay}ms`,
+            );
+
             reconnectTimerRef.current = window.setTimeout(() => {
               console.log('Executando reconexão...');
               connect();
@@ -344,7 +366,10 @@ export function NotificationProvider({
           console.log('SSE ainda está tentando conectar...');
           // Não faz nada, aguarda
         } else {
-          console.log('SSE onerror com estado desconhecido:', eventSource.readyState);
+          console.log(
+            'SSE onerror com estado desconhecido:',
+            eventSource.readyState,
+          );
         }
       };
     } catch (err) {
@@ -457,7 +482,7 @@ export function NotificationProvider({
  */
 export function useNotifications() {
   const context = useContext(NotificationContext);
-  
+
   if (!context) {
     return {
       notifications: [] as AppNotification[],
@@ -480,6 +505,6 @@ export function useNotifications() {
       reconnect: () => {},
     };
   }
-  
+
   return context;
 }
