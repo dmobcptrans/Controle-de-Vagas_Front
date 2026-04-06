@@ -8,8 +8,6 @@ import {
   ChevronRight,
   Target,
   Clock,
-  Menu,
-  X,
   ChevronDown,
 } from 'lucide-react';
 import { PropsTutorial } from '@/lib/types/tutorial';
@@ -374,7 +372,6 @@ function ConteudoTutorial({
 
 // Componente principal do Tutorial
 export function Tutorial(props: PropsTutorial) {
-  const [menuMobileAberto, setMenuMobileAberto] = useState(false);
   const cores = coresPadrao;
 
   return (
@@ -391,16 +388,6 @@ export function Tutorial(props: PropsTutorial) {
               </h1>
               <p className="text-xs text-white/50">{props.subtituloHeader}</p>
             </div>
-            <button
-              onClick={() => setMenuMobileAberto(!menuMobileAberto)}
-              className="lg:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              {menuMobileAberto ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </button>
           </div>
         </div>
       </header>
