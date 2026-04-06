@@ -1,7 +1,6 @@
 import Footer from '@/components/gestor/layout/footer';
 import { Metadata } from 'next';
 import { MapProvider } from '@/context/MapContext';
-import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { Navbar } from '@/components/agente/layout/navbar';
 import PrivateRoute from '@/context/PrivateRoute';
 import { PushNotificationBanner } from '@/context/PushProvider/PushNotificationBanner';

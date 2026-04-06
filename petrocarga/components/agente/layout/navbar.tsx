@@ -22,6 +22,7 @@ import {
   CalendarPlus,
   BarChart,
   Info,
+  ParkingSquareIcon,
 } from 'lucide-react';
 
 type CardLinkProps = {
@@ -154,6 +155,7 @@ export function Navbar() {
     { href: '/agente/lista-reserva', label: 'Lista de Reservas' },
     { href: '/agente/consulta', label: 'Consultar Placa' },
     { href: '/agente/denuncias', label: 'Denúncias' },
+    { href: '/agente/reservas', label: 'Reservas' },
     { href: '/agente/tutorial', label: 'Tutoriais' },
   ];
 
@@ -229,9 +231,8 @@ export function Navbar() {
             <Link
               href="/agente/notificacoes"
               className="relative flex items-center p-2 rounded-lg hover:bg-blue-700 transition-colors"
-              aria-label={`Notificações${
-                unreadCount > 0 ? `, ${unreadCount} não lidas` : ''
-              }`}
+              aria-label={`Notificações${unreadCount > 0 ? `, ${unreadCount} não lidas` : ''
+                }`}
             >
               <Bell className="h-5 w-5" />
 
@@ -254,9 +255,8 @@ export function Navbar() {
 
       {/* ==================== MENU MOBILE (CARDS) ==================== */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
-        }`}
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+          }`}
       >
         <div className="bg-blue-800 p-4 space-y-5">
           {/* Seção: Reservas */}
@@ -286,15 +286,15 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Seção: Análise */}
+          {/* Seção: Consulta */}
           <div>
             <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
-              Análise
+              Consulta
             </p>
             <div className="grid grid-cols-2 gap-2">
               <CardLink
                 href="/agente/consulta"
-                label="Consultar reserva"
+                label="Consultar Placa"
                 description="Verificação"
                 iconBg="bg-green-100"
                 iconColor="text-green-700"
@@ -302,30 +302,39 @@ export function Navbar() {
                 onClick={fecharMenu}
               />
               <CardLink
-                href="/agente/denuncias"
-                label="Denuncias"
-                description="Ver denuncias"
-                iconBg="bg-gray-100"
-                iconColor="text-gray-500"
-                icon={<TriangleAlert className="h-5 w-5" />}
+                href="/agente/reservas"
+                label="Consultar Reserva"
+                description="Ver reservas"
+                iconBg="bg-green-100"
+                iconColor="text-green-700"
+                icon={<ParkingSquareIcon className="h-5 w-5" />}
                 onClick={fecharMenu}
               />
             </div>
           </div>
 
-          {/* Seção: Tutoriais */}
+          {/* Seção:  */}
           <div>
             <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
-              Tutoriais
+              Análise
             </p>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <CardLink
-                href="/agente/tutorial"
-                label="Tutoriais"
-                description="Guia de uso"
-                iconBg="bg-indigo-100"
-                iconColor="text-indigo-700"
-                icon={<Info className="h-5 w-5" />}
+                href="/agente/dashboard"
+                label="Menu"
+                description="Visualizar relatórios"
+                iconBg="bg-blue-100"
+                iconColor="text-blue-700"
+                icon={<BarChart className="h-5 w-5" />}
+                onClick={fecharMenu}
+              />
+              <CardLink
+                href="/agente/denuncias"
+                label="Denúncias"
+                description="Visualizar denúncias"
+                iconBg="bg-gray-100"
+                iconColor="text-gray-500"
+                icon={<TriangleAlert className="h-5 w-5" />}
                 onClick={fecharMenu}
               />
             </div>
@@ -347,12 +356,12 @@ export function Navbar() {
                 onClick={fecharMenu}
               />
               <CardLink
-                href="/agente/dashboard"
-                label="Menu"
-                description="Visualizar relatórios"
+                href="/agente/tutorial"
+                label="Tutorial"
+                description="Ver tutorial"
                 iconBg="bg-blue-100"
                 iconColor="text-blue-700"
-                icon={<BarChart className="h-5 w-5" />}
+                icon={<Info className="h-5 w-5" />}
                 onClick={fecharMenu}
               />
             </div>

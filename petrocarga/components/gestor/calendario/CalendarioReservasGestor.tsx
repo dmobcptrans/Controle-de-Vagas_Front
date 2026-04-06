@@ -5,16 +5,15 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ptBr from '@fullcalendar/core/locales/pt-br';
 import useReservas from '@/components/hooks/gestor/calendario/useReservas';
 import { ReservaModal } from '@/components/modal/gestor/calendario/ReservaModal';
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { toDateKey, dayStartISO } from '../../utils/gestor/calendario/utils';
 import type { EventClickArg, EventInput } from '@fullcalendar/core';
 import { getVagaById } from '@/lib/api/vagaApi';
 import type { Reserva } from '@/lib/types/reserva';
 import type { Vaga } from '@/lib/types/vaga';
+import { useCalendarioMes } from '@/context/CalendarioMesContext';
 
-// ============================================================================
-// TIPOS
-// ============================================================================
+// ==================== TIPOS ====================
 
 interface ReservasPorLogradouro {
   [logradouro: string]: Reserva[];
@@ -23,7 +22,6 @@ interface ReservasPorLogradouro {
 interface ReservasPorDia {
   [dateKey: string]: ReservasPorLogradouro;
 }
-
 /**
  * Estados do modal para navegação hierárquica
  * - group: Visualização por dia (logradouros)
@@ -47,7 +45,7 @@ type ModalState =
   | { type: 'reserva'; data: { reserva: Reserva; vagaInfo: Vaga | null } }
   | { type: null; data: null };
 
-// ============================================================================
+  // ============================================================================
 // COMPONENTE PRINCIPAL
 // ============================================================================
 
@@ -108,10 +106,19 @@ type ModalState =
  * <CalendarioReservasGestor />
  * ```
  */
+// ==================== COMPONENTE ====================
 
 export default function CalendarioReservasGestor() {
-  // ==================== HOOKS E ESTADOS ====================
   const { reservas, actionLoading, finalizarReservaForcada } = useReservas();
+  const { ano, mes } = useCalendarioMes();
+  const calendarRef = useRef<InstanceType<typeof FullCalendar>>(null);
+
+  useEffect(() => {
+    const api = calendarRef.current?.getApi();
+    if (!api) return;
+    api.gotoDate(new Date(ano, mes, 1));
+  }, [ano, mes]);
+
   const vagaCacheRef = useRef<Record<string, Vaga | null>>({});
   const [, forceUpdate] = useState(0);
   const [modalState, setModalState] = useState<ModalState>({
@@ -120,29 +127,19 @@ export default function CalendarioReservasGestor() {
   });
   const historyRef = useRef<ModalState[]>([]);
 
-  // ==================== FUNÇÕES DE NAVEGAÇÃO ====================
-  
-  /**
-   * Volta para o estado anterior do modal
-   */
+  // ==================== NAVEGAÇÃO ====================
+
   const goBack = () => {
     setModalState(historyRef.current.pop() ?? { type: null, data: null });
   };
 
-  /**
-   * Fecha completamente o modal e limpa o histórico
-   */
   const closeModal = () => {
     historyRef.current = [];
     setModalState({ type: null, data: null });
   };
 
-  // ==================== PROCESSAMENTO DE DADOS ====================
-  
-  /**
-   * Agrupa reservas por dia e logradouro
-   * Estrutura: { data: { logradouro: [reservas] } }
-   */
+  // ==================== DADOS ====================
+
   const reservasPorDia = useMemo<ReservasPorDia>(() => {
     const map: ReservasPorDia = {};
     reservas.forEach((r) => {
@@ -155,11 +152,6 @@ export default function CalendarioReservasGestor() {
     return map;
   }, [reservas]);
 
-  /**
-   * Converte dados para eventos do FullCalendar
-   * - Cor verde: há reservas ativas no dia
-   * - Cor vermelha: apenas reservas finalizadas/canceladas
-   */
   const eventosCalendario: EventInput[] = useMemo(() => {
     return Object.entries(reservasPorDia).map(([dateStr, logradouros]) => {
       const todasFinalizadas = Object.values(logradouros)
@@ -170,6 +162,7 @@ export default function CalendarioReservasGestor() {
             reserva.status === 'REMOVIDA' ||
             reserva.status === 'CANCELADA',
         );
+
       return {
         id: dateStr,
         title: '● Reservas',
@@ -182,17 +175,14 @@ export default function CalendarioReservasGestor() {
     });
   }, [reservasPorDia]);
 
-  // ==================== CACHE DE VAGAS ====================
-  
-  /**
-   * Garante que as vagas estejam no cache antes de exibir
-   * Busca apenas as que ainda não foram carregadas
-   */
+  // ==================== CACHE ====================
+
   const ensureVagasInCache = useCallback(async (vagaIds: string[]) => {
     const missing = vagaIds.filter((id) => !(id in vagaCacheRef.current));
     if (!missing.length) return;
 
     const newEntries: Record<string, Vaga | null> = {};
+
     await Promise.all(
       missing.map(async (id) => {
         try {
@@ -211,10 +201,7 @@ export default function CalendarioReservasGestor() {
   }, []);
 
   // ==================== HANDLERS ====================
-  
-  /**
-   * Ao clicar no evento do calendário, abre modal com logradouros
-   */
+
   const handleGroupClick = async (info: EventClickArg) => {
     info.jsEvent.preventDefault();
     info.jsEvent.stopPropagation();
@@ -223,7 +210,6 @@ export default function CalendarioReservasGestor() {
       info.event.extendedProps as { logradouros: ReservasPorLogradouro }
     ).logradouros;
 
-    // Pré-carrega todas as vagas relacionadas ao dia
     const todosVagaIds = Array.from(
       new Set(
         Object.values(logradouros)
@@ -240,9 +226,6 @@ export default function CalendarioReservasGestor() {
     });
   };
 
-  /**
-   * Finaliza uma reserva à força (checkout forçado)
-   */
   const handleCheckoutForcado = async (
     reservaId: string,
     reservaData: Reserva,
@@ -251,16 +234,13 @@ export default function CalendarioReservasGestor() {
     try {
       await finalizarReservaForcada(reservaId, reservaData);
       closeModal();
-    } catch {
-      // erro já tratado pelo hook via toast
-    }
+    } catch {}
   };
 
-  // ==================== RENDERIZAÇÃO ====================
+  // ==================== RENDER ====================
+
   return (
     <div className="p-2 md:p-4">
-      
-      {/* Modal com navegação hierárquica */}
       <ReservaModal
         modalState={modalState}
         vagaCache={vagaCacheRef.current}
@@ -303,8 +283,8 @@ export default function CalendarioReservasGestor() {
         }}
       />
 
-      {/* Calendário FullCalendar */}
       <FullCalendar
+        ref={calendarRef} 
         plugins={[dayGridPlugin, interactionPlugin]}
         locale={ptBr}
         initialView="dayGridMonth"
@@ -312,11 +292,10 @@ export default function CalendarioReservasGestor() {
         events={eventosCalendario}
         eventClick={handleGroupClick}
         headerToolbar={{
-          left: 'prev next',
-          center: 'title',
-          right: 'today',
+          left: '',
+          center: '',
+          right: '',
         }}
-        buttonText={{ today: 'Hoje', month: 'Mês' }}
       />
     </div>
   );
