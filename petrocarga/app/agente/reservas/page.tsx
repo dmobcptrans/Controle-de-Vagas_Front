@@ -1,9 +1,7 @@
-import CalendarioReservasTeste from '@/components/gestor/calendario/CalendarioReservas';
+
 import CalendarioReservas from '@/components/gestor/calendario/CalendarioReservasGestor';
 import CalendarioInfoCTA from '@/components/ui/CTA/CalendarioInfoCTA';
 import { CalendarioMesProvider } from '@/context/CalendarioMesContext';
-import { CalendarPlus } from 'lucide-react';
-import Link from 'next/dist/client/link';
 
 /**
  * @component Reserva

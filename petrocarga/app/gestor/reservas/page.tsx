@@ -1,4 +1,7 @@
+
 import CalendarioReservas from '@/components/gestor/calendario/CalendarioReservasGestor';
+import CalendarioInfoCTA from '@/components/ui/CTA/CalendarioInfoCTA';
+import { CalendarioMesProvider } from '@/context/CalendarioMesContext';
 
 /**
  * @component Reserva
@@ -58,14 +61,33 @@ import CalendarioReservas from '@/components/gestor/calendario/CalendarioReserva
 
 export default function Reserva() {
   return (
-    <div className="flex flex-col items-center">
-      {/* Título da página */}
-      <h1 className="text-2xl font-bold p-4">Gerenciar Reservas</h1>
+    <div className="min-h-screen bg-[#f5f5f0]">
+      {/* ── Header ── */}
+      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
+            Gerenciar Reservas!
+          </h1>
+          <p className="text-xs text-white/50 capitalize">informações em tempo real</p>
+        </div>
+      </header>
 
-      {/* Container responsivo para o calendário */}
-      <div className="w-full max-w-5xl px-2 md:px-4">
-        <CalendarioReservas />
-      </div>
+      <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
+        <CalendarioMesProvider>
+          <div className='-mt-4 mb-5'>
+            {/* CTA dinâmico de info calendario */}
+            <CalendarioInfoCTA
+            />
+          </div>
+
+          {/* Container responsivo para o calendário */}
+          <div className="w-full max-w-5xl px-2 md:px-4">
+            <CalendarioReservas />
+          </div>
+        </CalendarioMesProvider>
+      </main>
+
+
     </div>
   );
 }
