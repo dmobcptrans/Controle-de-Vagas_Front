@@ -10,7 +10,6 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, TOKEN_KEY } from '@/service/api';
-import { atualizarStatusPushToken } from '@/lib/api/notificacaoApi';
 import { AxiosError } from 'axios';
 
 interface UserData {
@@ -60,36 +59,36 @@ export const AuthContext = createContext({} as AuthContextData);
 /**
  * @component AuthProvider
  * @version 1.0.0
- * 
+ *
  * @description Provider para gerenciamento de autenticação.
  * Gerencia login, logout, refresh de token e estado do usuário.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FUNCIONALIDADES:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. AUTENTICAÇÃO:
  *    - login: Autenticação com email ou CPF
  *    - loginWithGoogle: Autenticação via Google OAuth
  *    - logout: Desconecta usuário e remove token
- * 
+ *
  * 2. GESTÃO DE ESTADO:
  *    - user: Dados do usuário logado
  *    - isAuthenticated: Flag de autenticação
  *    - loading: Estado de carregamento
- * 
+ *
  * 3. REFRESH:
  *    - refreshUser: Atualiza dados do usuário após login
  *    - Carregamento inicial: useEffect busca dados do usuário
- * 
+ *
  * 4. TIPOS DE LOGIN:
  *    - Identificação automática (email ou CPF)
  *    - Validação de formato
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 RETORNO DO HOOK useAuth:
  * ----------------------------------------------------------------------------
- * 
+ *
  * @property {boolean} isAuthenticated - Indica se usuário está autenticado
  * @property {UserData | null} user - Dados do usuário
  * @property {boolean} loading - Estado de carregamento
@@ -97,35 +96,35 @@ export const AuthContext = createContext({} as AuthContextData);
  * @property {(token: string) => Promise<UserData>} loginWithGoogle - Login com Google
  * @property {() => void} logout - Função de logout
  * @property {() => Promise<void>} refreshUser - Atualiza dados do usuário
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - AUTO DETECÇÃO: identifica se input é email ou CPF
  * - TOKEN EM LOCALSTORAGE: Armazena token JWT
  * - REFRESH AUTOMÁTICO: useEffect carrega usuário na montagem
  * - CLEANUP: Remove token e notifica backend no logout
  * - TRATAMENTO DE ERRO: Mensagens amigáveis por status HTTP
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - useAuth: Hook para acessar o contexto
  * - api: Instância Axios com interceptors
  * - PrivateRoute: Componente de proteção de rotas
- * 
+ *
  * @example
  * ```tsx
  * // Provider no layout
  * <AuthProvider>
  *   <App />
  * </AuthProvider>
- * 
+ *
  * // Uso do hook
  * const { user, login, logout } = useAuth();
- * 
+ *
  * const handleLogin = async () => {
  *   try {
  *     await login({ login: 'joao@email.com', senha: '123456' });
@@ -146,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await api.get('/petrocarga/auth/me');
       setUser(normalizeUserData(response.data));
-    } catch (error) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -200,13 +199,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const dadosLogin =
           tipo === 'email'
             ? {
-              email: identificador.trim().toLowerCase(),
-              senha,
-            }
+                email: identificador.trim().toLowerCase(),
+                senha,
+              }
             : {
-              cpf: identificador.replace(/\D/g, ''),
-              senha,
-            };
+                cpf: identificador.replace(/\D/g, ''),
+                senha,
+              };
 
         const loginResponse = await api.post(
           '/petrocarga/auth/login',
@@ -275,12 +274,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = useCallback(
     async (googleToken: string) => {
       try {
-        const response = await api.post(
-          `/petrocarga/auth/loginWithGoogle`,
-          {
-            token: googleToken,
-          }
-        );
+        const response = await api.post(`/petrocarga/auth/loginWithGoogle`, {
+          token: googleToken,
+        });
 
         const { token } = response.data;
 

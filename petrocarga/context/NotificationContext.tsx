@@ -58,23 +58,6 @@ export function NotificationProvider({
   const retryCountRef = useRef(0);
   const reconnectTimerRef = useRef<number | null>(null);
 
-  // ==================== FUNÇÃO AUXILIAR PARA PEGAR TOKEN ====================
-  const getAuthToken = useCallback(() => {
-    if (typeof window === 'undefined') return null;
-
-    // Tenta pegar o token do localStorage (usado no login)
-    const token =
-      localStorage.getItem('auth-token') || localStorage.getItem('token');
-
-    if (token) {
-      console.log('Token encontrado para SSE');
-    } else {
-      console.log('Nenhum token encontrado para SSE');
-    }
-
-    return token;
-  }, []);
-
   // ==================== CARREGAR HISTÓRICO (PRIMEIRA PÁGINA) ====================
   const loadHistorico = useCallback(
     async (silent = false) => {
@@ -306,26 +289,11 @@ export function NotificationProvider({
       return;
     }
 
-    // ========== MODIFICAÇÃO PRINCIPAL: Adicionar token na URL ==========
-    const token = getAuthToken();
-    let url = `${baseUrl}/petrocarga/notificacoes/stream`;
-
-    if (token) {
-      url += `?token=${encodeURIComponent(token)}`;
-      console.log(
-        `Conectando SSE com token na URL (modo mobile compatível): ${url.replace(token, 'TOKEN_REDACTED')}`,
-      );
-    } else {
-      console.log(`Conectando SSE sem token (pode falhar em mobile): ${url}`);
-    }
-    // ========== FIM DA MODIFICAÇÃO ==========
+    const url = `${baseUrl}/petrocarga/notificacoes/stream`;
+    console.log(`Conectando SSE: ${url}`);
 
     try {
-      // ========== MODIFICAÇÃO: Remover withCredentials quando usar token ==========
-      // Se estamos usando token na URL, não precisamos de withCredentials
-      const eventSource = token
-        ? new EventSource(url)
-        : new EventSource(url, { withCredentials: true });
+      const eventSource = new EventSource(url, { withCredentials: true });
       eventSourceRef.current = eventSource;
 
       const handleIncoming = (data: string | null) => {
@@ -415,7 +383,6 @@ export function NotificationProvider({
     reconnectMaxAttempts,
     reconnectInitialDelayMs,
     reconnectMaxDelayMs,
-    getAuthToken,
   ]);
 
   // ==================== DESCONECTAR SSE ====================
