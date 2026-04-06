@@ -1,9 +1,8 @@
-
 import CalendarioReservas from '@/components/gestor/calendario/CalendarioReservasGestor';
 import CalendarioInfoCTA from '@/components/ui/CTA/CalendarioInfoCTA';
 import { CalendarioMesProvider } from '@/context/CalendarioMesContext';
 import { Info } from 'lucide-react';
-import Link from 'next/dist/client/link';
+import Link from 'next/link';
 
 /**
  * @component Reserva
@@ -70,16 +69,17 @@ export default function Reserva() {
           <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
             Gerenciar Reservas!
           </h1>
-          <p className="text-xs text-white/50 capitalize">informações em tempo real</p>
+          <p className="text-xs text-white/50 capitalize">
+            informações em tempo real
+          </p>
         </div>
       </header>
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         <CalendarioMesProvider>
-          <div className='-mt-4 mb-5'>
+          <div className="-mt-4 mb-5">
             {/* CTA dinâmico de info calendario */}
-            <CalendarioInfoCTA
-            />
+            <CalendarioInfoCTA />
           </div>
 
           {/* Container responsivo para o calendário */}
@@ -87,7 +87,7 @@ export default function Reserva() {
             <CalendarioReservas />
           </div>
         </CalendarioMesProvider>
-         {/* Tutorial */}
+        {/* Tutorial */}
         <Link
           href="/agente/tutorial#reservas"
           className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"
@@ -105,8 +105,6 @@ export default function Reserva() {
           </div>
         </Link>
       </main>
-
-
     </div>
   );
 }
