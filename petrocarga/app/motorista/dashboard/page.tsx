@@ -18,6 +18,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ReservaGet } from '@/lib/types/reserva';
 import { Denuncia } from '@/lib/types/denuncias';
 import toast from 'react-hot-toast';
+import { CTA } from '@/components/ui/CTA/CTA';
 
 const statusConfig = {
   ATIVA: {
@@ -181,22 +182,10 @@ export default function Dashboard() {
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA flutuante */}
         <div className="-mt-4 mb-5">
-          <Link
-            href="/motorista/reservar-vaga"
-            className="flex items-center justify-between bg-[#071D41] hover:bg-[#0C3D8A] transition-colors rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]"
-          >
-            <div>
-              <p className="text-white font-semibold text-[15px] mb-0.5">
-                Reservar uma vaga
-              </p>
-              <p className="text-white/60 text-xs">
-                Encontre e reserve sua vaga agora
-              </p>
-            </div>
-            <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
-              <CalendarPlus className="h-5 w-5 text-white" />
-            </div>
-          </Link>
+          <CTA href="/motorista/reservar-vaga"
+            title="Reservar uma vaga"
+            description="Encontre e faça uma reserva rápida"
+            icon={<CalendarPlus className="h-5 w-5 text-white" />} />
         </div>
 
         {/* Estatísticas */}

@@ -140,10 +140,8 @@ export default function MinhasReservas() {
     setError(null);
 
     try {
-      // getReservasPorUsuario retorna PaginatedReservaResponse
       const response = await getReservasPorUsuario(user.id);
 
-      // CORRETO: acessa o array através de response.content
       const reservasArray = response?.content || [];
       setReservas(reservasArray);
 
