@@ -10,6 +10,67 @@ import {
   CalendarDays,
 } from 'lucide-react';
 
+/**
+ * @module secoesAgente
+ * @description Configuração das seções do tutorial para a persona Agente.
+ * Cada seção contém título, ícone, descrição e conteúdo/passos/dicas.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 ESTRUTURA DE CADA SEÇÃO:
+ * ----------------------------------------------------------------------------
+ *
+ * @property {string} id - Identificador único da seção (usado para âncoras)
+ * @property {string} titulo - Título da seção (pode incluir emojis)
+ * @property {LucideIcon} icone - Ícone Lucide para representar a seção
+ * @property {string} descricao - Breve descrição do conteúdo da seção
+ * @property {string[]} [conteudo] - Texto descritivo (para visão geral)
+ * @property {string[]} [passos] - Lista de passos (para tutoriais práticos)
+ * @property {string[]} [dicas] - Lista de dicas e boas práticas
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 SEÇÕES DISPONÍVEIS:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. visaoGeral - Visão geral do sistema
+ * 2. relatorio - Dashboard e painel de controle
+ * 3. consultaPlaca - Consulta de reservas por placa
+ * 4. reservaRapida - Criação de reservas rápidas
+ * 5. historicoReservas - Histórico e gerenciamento de reservas
+ * 6. reservas - Calendário de reservas
+ * 7. denuncias - Gerenciamento de denúncias
+ * 8. perfil - Gerenciamento do perfil
+ * 9. notificacoes - Sistema de notificações
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 ÍCONES POR SEÇÃO:
+ * ----------------------------------------------------------------------------
+ *
+ * | Seção               | Ícone            | Cor/Significado           |
+ * |---------------------|------------------|----------------------------|
+ * | Visão Geral         | BookOpen         | 📖 Informações gerais      |
+ * | Relatório           | Target           | 🎯 Dashboard e metas       |
+ * | Consulta Placa      | Search           | 🔍 Busca                   |
+ * | Reserva Rápida      | CalendarPlus     | 📅 Criar reserva           |
+ * | Histórico Reservas  | ClipboardList    | 📋 Lista e gerenciamento   |
+ * | Reservas (Calendário)| CalendarDays    | 📆 Visualização mensal     |
+ * | Denúncias           | AlertCircle      | ⚠️ Alertas                 |
+ * | Perfil              | User             | 👤 Usuário                 |
+ * | Notificações        | Bell             | 🔔 Alertas                 |
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - Tutorial: Componente que renderiza estas seções
+ * - secoesMotorista: Configuração para persona Motorista
+ *
+ * @example
+ * ```tsx
+ * // Uso no componente Tutorial
+ * <Tutorial secoes={secoesAgente} persona="agente" />
+ * ```
+ */
+
 export const secoesAgente = [
   {
     id: 'visaogeral',

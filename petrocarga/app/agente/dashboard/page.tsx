@@ -10,7 +10,6 @@ import {
   Info,
   MapPin,
   Clock,
-  Bell,
   Truck,
   CarIcon,
 } from 'lucide-react';
@@ -22,6 +21,9 @@ import toast from 'react-hot-toast';
 import { useNotifications } from '@/context/NotificationContext';
 import { ReservaRapida } from '@/lib/types/reservaRapida';
 
+/**
+ * Configuração de cores e rótulos para cada status de reserva rápida
+ */
 const statusConfig = {
   ATIVA: {
     label: 'Ativa',
@@ -47,6 +49,10 @@ const statusConfig = {
 
 type StatusKey = keyof typeof statusConfig;
 
+/**
+ * @component StatusBadge
+ * @description Badge visual para exibir o status da reserva
+ */
 function StatusBadge({ status }: { status: StatusKey }) {
   const { label, className } = statusConfig[status];
   return (
@@ -64,6 +70,10 @@ const formatarData = (data: string) =>
     timeStyle: 'short',
   });
 
+/**
+ * @component SkeletonCard
+ * @description Placeholder animado para carregamento das reservas
+ */
 function SkeletonCard() {
   return (
     <div className="bg-white border border-gray-100 rounded-xl px-4 py-3 animate-pulse">
@@ -79,6 +89,83 @@ function SkeletonCard() {
   );
 }
 
+/**
+ * @component Dashboard
+ * @version 1.0.0
+ *
+ * @description Página principal (dashboard) do agente.
+ * Exibe resumo de reservas rápidas, estatísticas, últimas reservas e acesso rápido.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. HEADER:
+ *    - Saudação personalizada com nome do agente
+ *    - Data atual formatada
+ *
+ * 2. ESTATÍSTICAS (3 cards):
+ *    - Total de reservas rápidas
+ *    - Reservas ativas no momento
+ *    - Total de denúncias abertas
+ *
+ * 3. CTA CONSULTA DE PLACA:
+ *    - Card destacado para consulta de placa
+ *
+ * 4. ÚLTIMAS RESERVAS:
+ *    - Mostra as 3 reservas mais recentes
+ *    - Exibe logradouro, bairro, horários e placa
+ *    - Link "Ver todas" para página completa
+ *
+ * 5. ACESSO RÁPIDO (4 cards):
+ *    - Histórico de reservas
+ *    - Denúncias
+ *    - Consultar placa
+ *    - Meu perfil
+ *
+ * 6. NOTIFICAÇÕES:
+ *    - Contador de não lidas (para badge)
+ *
+ * 7. TUTORIAL:
+ *    - Link para página de tutorial
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - BUSCA PARALELA: Promise.allSettled para carregar reservas e denúncias
+ * - TRATAMENTO DE PAGINAÇÃO: API retorna objeto com content (array)
+ * - FALLBACK: Valores padrão quando não há dados
+ * - LOADING: Skeleton cards durante carregamento
+ * - NOTIFICAÇÕES: Contexto para contagem de não lidas
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 CORES DOS STATUS:
+ * ----------------------------------------------------------------------------
+ *
+ * | Status     | Label       | Cor                           |
+ * |------------|-------------|-------------------------------|
+ * | ATIVA      | Ativa       | 🟢 Verde (bg-green-100)       |
+ * | RESERVADA  | Reservada   | 🟢 Verde (bg-green-100)       |
+ * | CONCLUIDA  | Concluída   | ⚪ Cinza (bg-gray-100)         |
+ * | CANCELADA  | Cancelada   | ⚪ Cinza (bg-gray-100)         |
+ * | REMOVIDA   | Removida    | 🔴 Vermelho (bg-gray-100)      |
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - useAuth: Hook de autenticação
+ * - getReservasRapidas: API de reservas rápidas
+ * - getDenuncias: API de denúncias
+ * - useNotifications: Contexto de notificações
+ *
+ * @example
+ * ```tsx
+ * <Dashboard />
+ * ```
+ */
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { notifications } = useNotifications();
@@ -88,6 +175,7 @@ export default function Dashboard() {
 
   const unreadCount = notifications.filter((n) => !n.lida).length;
 
+  // ==================== BUSCA DE DADOS ====================
   const fetchDados = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
@@ -96,14 +184,13 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const [resReservas, resDenuncias] = await Promise.allSettled([
-        getReservasRapidas(user.id, 0, 100), // Pega até 100 reservas para o dashboard
+        getReservasRapidas(user.id, 0, 100),
         getDenuncias('ABERTA'),
       ]);
 
-      // CORREÇÃO: extrai o array do objeto paginado
+      // Tratamento de reservas rápidas (suporta paginação)
       if (resReservas.status === 'fulfilled') {
         const reservasData = resReservas.value;
-        // Se for objeto paginado, pega o content; se for array direto, usa como está
         const reservasArray = Array.isArray(reservasData)
           ? reservasData
           : reservasData?.content || [];
@@ -113,6 +200,7 @@ export default function Dashboard() {
         setReservas([]);
       }
 
+      // Tratamento de denúncias
       if (resDenuncias.status === 'fulfilled') {
         setDenuncias(resDenuncias.value ?? []);
       } else {
@@ -128,6 +216,7 @@ export default function Dashboard() {
     fetchDados();
   }, [fetchDados]);
 
+  // ==================== DADOS DERIVADOS ====================
   const primeiroNome = user?.nome?.split(' ')[0] ?? 'Motorista';
   const totalReservas = reservas.length;
   const reservasAtivas = reservas.filter((r) => r.status === 'ATIVA').length;
@@ -140,6 +229,7 @@ export default function Dashboard() {
     year: 'numeric',
   });
 
+  // ==================== AÇÕES DE ACESSO RÁPIDO ====================
   const acoes = [
     {
       href: '/agente/lista-reserva',
@@ -173,7 +263,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* ── Header ── */}
+      {/* ==================== HEADER ==================== */}
       <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
@@ -183,9 +273,9 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* ── Corpo ── */}
+      {/* ==================== CORPO PRINCIPAL ==================== */}
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-        {/* CTA flutuante */}
+        {/* CTA principal - Reservar vaga rápida */}
         <div className="-mt-4 mb-5">
           <Link
             href="/agente/reserva-rapida"
@@ -205,30 +295,35 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {/* Estatísticas */}
+        {/* ==================== CARDS DE ESTATÍSTICAS ==================== */}
         <div className="grid grid-cols-3 gap-2.5 mb-5">
-          {[
-            { num: totalReservas, label: 'Total de reservas', accent: false },
-            { num: reservasAtivas, label: 'Ativa agora', accent: true },
-            { num: totalDenuncias, label: 'Denúncias', accent: false },
-          ].map(({ num, label, accent }) => (
-            <div
-              key={label}
-              className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center"
-            >
-              <p
-                className={`text-2xl font-bold ${accent ? 'text-[#168821]' : 'text-[#071D41]'}`}
-              >
-                {loading ? '—' : num}
-              </p>
-              <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
-                {label}
-              </p>
-            </div>
-          ))}
+          <div className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center">
+            <p className="text-2xl font-bold text-[#071D41]">
+              {loading ? '—' : totalReservas}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
+              Total de reservas
+            </p>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center">
+            <p className="text-2xl font-bold text-[#168821]">
+              {loading ? '—' : reservasAtivas}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
+              Ativa agora
+            </p>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center">
+            <p className="text-2xl font-bold text-[#071D41]">
+              {loading ? '—' : totalDenuncias}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
+              Denúncias
+            </p>
+          </div>
         </div>
 
-        {/* CTA consulta de placa */}
+        {/* ==================== CTA CONSULTA DE PLACA ==================== */}
         <div className="mb-5">
           <Link
             href="/agente/consulta"
@@ -242,14 +337,13 @@ export default function Dashboard() {
                 Verifique veículos e possíveis infrações
               </p>
             </div>
-
             <div className="bg-green-700 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
               <Truck className="h-5 w-5 text-white" />
             </div>
           </Link>
         </div>
 
-        {/* Últimas reservas */}
+        {/* ==================== ÚLTIMAS RESERVAS ==================== */}
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2.5">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
@@ -265,12 +359,14 @@ export default function Dashboard() {
 
           <div className="flex flex-col gap-1.5">
             {loading ? (
+              // Estado de loading
               <>
                 <SkeletonCard />
                 <SkeletonCard />
                 <SkeletonCard />
               </>
             ) : reservas.length === 0 ? (
+              // Estado vazio
               <div className="bg-white border border-dashed border-gray-200 rounded-xl py-8 text-center">
                 <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-2">
                   <Archive className="h-5 w-5 text-gray-300" />
@@ -280,6 +376,7 @@ export default function Dashboard() {
                 </p>
               </div>
             ) : (
+              // Lista das 3 reservas mais recentes
               reservas
                 .sort(
                   (a, b) =>
@@ -297,7 +394,6 @@ export default function Dashboard() {
                         <p className="text-sm font-semibold text-gray-800 truncate">
                           {r.logradouro}
                         </p>
-
                         <StatusBadge status={r.status as StatusKey} />
                       </div>
 
@@ -316,6 +412,7 @@ export default function Dashboard() {
                           Fim: {formatarData(r.fim)}
                         </span>
                       </div>
+
                       <p className="text-xs text-gray-500 flex items-center gap-1 truncate">
                         <CarIcon className="h-3 w-3 text-gray-400" />
                         {r.placa}
@@ -327,7 +424,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Acesso rápido */}
+        {/* ==================== ACESSO RÁPIDO ==================== */}
         <div className="mb-5">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
             Acesso rápido
@@ -353,7 +450,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Tutorial */}
+        {/* ==================== TUTORIAL ==================== */}
         <Link
           href="/agente/tutorial#relatorio"
           className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"
