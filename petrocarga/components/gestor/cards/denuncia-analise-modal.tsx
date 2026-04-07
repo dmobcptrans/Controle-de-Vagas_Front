@@ -27,6 +27,88 @@ interface DenunciaAnaliseModalProps {
   onFinalizado: (status: 'PROCEDENTE' | 'IMPROCEDENTE') => void;
 }
 
+/**
+ * @component DenunciaAnaliseModal
+ * @version 1.0.0
+ *
+ * @description Modal para análise e finalização de denúncias por gestores.
+ * Permite selecionar parecer (procedente/improcedente) e adicionar resposta justificada.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. ABERTURA DO MODAL:
+ *    - Exibe dados da denúncia (ocorrência, motorista, veículo, localização)
+ *    - Seção de dados é expansível/colapsável
+ *    - Limpa estados anteriores ao abrir
+ *
+ * 2. SELEÇÃO DO PARECER:
+ *    - PROCEDENTE: ícone verde, fundo verde claro
+ *    - IMPROCEDENTE: ícone vermelho, fundo vermelho claro
+ *    - Botões com feedback visual e acessibilidade (aria-pressed)
+ *
+ * 3. RESPOSTA JUSTIFICADA:
+ *    - Campo texto obrigatório
+ *    - Limite de 300 caracteres
+ *    - Contador de caracteres com cor de alerta no limite
+ *    - Placeholder informativo
+ *
+ * 4. FINALIZAÇÃO:
+ *    - Valida formulário (parecer + resposta)
+ *    - Chama API finalizarAnaliseDenuncia
+ *    - Em sucesso: notifica pai e fecha modal
+ *    - Em erro: toast de erro
+ *
+ * 5. ACESSIBILIDADE:
+ *    - Fechamento com tecla ESC
+ *    - ARIA labels e roles
+ *    - foco gerenciado
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - memo: Otimização para evitar re-renders desnecessários
+ * - useCallback: Memoização de funções (toggleExpanded, collapseOnFocus, handleSubmit)
+ * - EXPANSÃO: Seção de dados colapsável para melhor UX em mobile
+ * - VALIDAÇÃO: Botão desabilitado até preenchimento completo
+ * - LIMITE DE CARACTERES: 300 para resposta justificada
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 CORES E ESTILOS:
+ * ----------------------------------------------------------------------------
+ *
+ * | Elemento           | Cor                                   |
+ * |--------------------|---------------------------------------|
+ * | PROCEDENTE         | 🟢 Verde (emerald)                    |
+ * | IMPROCEDENTE       | 🔴 Vermelho (rose)                    |
+ * | Botão finalizar    | 🔵 Azul (blue-600)                    |
+ * | Fundo modal        | ⚪ Cinza claro (slate-50)              |
+ * | Cards de dados     | 🟦 Azul/Amarelo/Roxo (ícones)         |
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - finalizarAnaliseDenuncia: API de finalização
+ * - DenunciaCard: Card que abre este modal
+ * - DenunciaLista: Lista de denúncias
+ *
+ * @example
+ * ```tsx
+ * <DenunciaAnaliseModal
+ *   isOpen={showModal}
+ *   onClose={() => setShowModal(false)}
+ *   denuncia={denuncia}
+ *   onFinalizado={(status) => {
+ *     toast.success(`Denúncia ${status.toLowerCase()}`);
+ *     refetch();
+ *   }}
+ * />
+ * ```
+ */
+
 function DenunciaAnaliseModalInner({
   isOpen,
   onClose,
@@ -42,6 +124,7 @@ function DenunciaAnaliseModalInner({
 
   const isFormIncompleto = !resultado || !resposta.trim();
 
+  // ==================== RESET AO ABRIR ====================
   useEffect(() => {
     if (isOpen) {
       setResultado('');
@@ -51,6 +134,7 @@ function DenunciaAnaliseModalInner({
     }
   }, [isOpen]);
 
+  // ==================== FECHAR COM ESC ====================
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
@@ -60,6 +144,7 @@ function DenunciaAnaliseModalInner({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
+  // ==================== HANDLERS ====================
   const toggleExpanded = useCallback(() => setIsExpanded((prev) => !prev), []);
   const collapseOnFocus = useCallback(() => setIsExpanded(false), []);
 
@@ -81,24 +166,34 @@ function DenunciaAnaliseModalInner({
     } finally {
       setIsSubmitting(false);
     }
-  }, [denuncia.id, resultado, resposta, isFormIncompleto, onFinalizado, onClose]);
+  }, [
+    denuncia.id,
+    resultado,
+    resposta,
+    isFormIncompleto,
+    onFinalizado,
+    onClose,
+  ]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {/* Overlay */}
       <div
         className="absolute inset-0 bg-slate-900/70"
         onClick={onClose}
         role="presentation"
       />
 
+      {/* Modal */}
       <div
         className="relative bg-slate-50 rounded-t-3xl sm:rounded-2xl w-full max-w-md max-h-[92vh] shadow-xl flex flex-col overflow-hidden"
         role="dialog"
         aria-labelledby="analise-modal-title"
         aria-describedby="analise-modal-desc"
       >
+        {/* ==================== HEADER ==================== */}
         <div className="flex justify-between items-center px-6 py-4 bg-white border-b border-slate-100 shrink-0">
           <div>
             <h2
@@ -124,7 +219,9 @@ function DenunciaAnaliseModalInner({
           </button>
         </div>
 
+        {/* ==================== CONTEÚDO ==================== */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+          {/* Seção: Dados da Ocorrência (expansível) */}
           <div className="space-y-3">
             <button
               type="button"
@@ -146,6 +243,7 @@ function DenunciaAnaliseModalInner({
 
             {isExpanded && (
               <div className="space-y-3">
+                {/* Card: Localização */}
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-start gap-3">
                   <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
                     <MapPin className="w-5 h-5" aria-hidden />
@@ -161,6 +259,7 @@ function DenunciaAnaliseModalInner({
                   </div>
                 </div>
 
+                {/* Card: Motorista */}
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-start gap-3">
                   <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
                     <User className="w-5 h-5" aria-hidden />
@@ -181,6 +280,7 @@ function DenunciaAnaliseModalInner({
                   </div>
                 </div>
 
+                {/* Card: Veículo */}
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-start gap-3">
                   <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
                     <CarFront className="w-5 h-5" aria-hidden />
@@ -198,6 +298,7 @@ function DenunciaAnaliseModalInner({
                   </div>
                 </div>
 
+                {/* Card: Descrição */}
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                   <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
                     <AlignLeft className="w-3 h-3" aria-hidden /> Descrição do
@@ -213,15 +314,23 @@ function DenunciaAnaliseModalInner({
 
           <div className="h-px bg-slate-200 mx-2" />
 
+          {/* ==================== SEÇÃO DE ANÁLISE ==================== */}
           <div className="space-y-6 pb-6">
+            {/* Parecer Final */}
             <div className="space-y-3">
               <span className="text-[11px] font-bold text-slate-500 uppercase ml-2">
                 Parecer Final
               </span>
-              <div className="grid grid-cols-2 gap-3" role="group" aria-labelledby="parecer-label">
+              <div
+                className="grid grid-cols-2 gap-3"
+                role="group"
+                aria-labelledby="parecer-label"
+              >
                 <span id="parecer-label" className="sr-only">
                   Selecionar parecer
                 </span>
+
+                {/* Botão PROCEDENTE */}
                 <button
                   type="button"
                   onClick={() => setResultado('PROCEDENTE')}
@@ -254,6 +363,7 @@ function DenunciaAnaliseModalInner({
                   </span>
                 </button>
 
+                {/* Botão IMPROCEDENTE */}
                 <button
                   type="button"
                   onClick={() => setResultado('IMPROCEDENTE')}
@@ -288,6 +398,7 @@ function DenunciaAnaliseModalInner({
               </div>
             </div>
 
+            {/* Resposta Justificada */}
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-2">
                 <label
@@ -322,6 +433,7 @@ function DenunciaAnaliseModalInner({
           </div>
         </div>
 
+        {/* ==================== FOOTER ==================== */}
         <div className="p-4 bg-white border-t border-slate-100 shrink-0 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
           <button
             type="button"

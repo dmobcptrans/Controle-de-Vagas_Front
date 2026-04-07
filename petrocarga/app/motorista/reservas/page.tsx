@@ -22,7 +22,18 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// ==================== COMPONENTE DE PAGINAÇÃO RESPONSIVO ====================
+/**
+ * @component PaginationControls
+ * @description Componente de controles de paginação responsivo.
+ * Adapta a quantidade de botões visíveis conforme o tamanho da tela.
+ *
+ * @param currentPage - Página atual (0-indexed)
+ * @param totalPages - Total de páginas
+ * @param totalElements - Total de elementos
+ * @param currentPageSize - Itens por página
+ * @param onPageChange - Callback ao mudar de página
+ * @param isLoading - Estado de carregamento
+ */
 function PaginationControls({
   currentPage,
   totalPages,
@@ -47,9 +58,7 @@ function PaginationControls({
       typeof window !== 'undefined' && window.innerWidth < 640 ? 3 : 5;
 
     if (totalPages <= maxVisiblePages) {
-      for (let i = 0; i < totalPages; i++) {
-        pages.push(i);
-      }
+      for (let i = 0; i < totalPages; i++) pages.push(i);
     } else {
       if (currentPage <= 2) {
         for (let i = 0; i < 3; i++) pages.push(i);
@@ -132,12 +141,82 @@ function PaginationControls({
   );
 }
 
-// ==================== FUNÇÃO AUXILIAR ====================
+/**
+ * @function updateOnlineStatus
+ * @description Atualiza o estado de conexão do usuário
+ */
 const updateOnlineStatus = (setIsOffline: (v: boolean) => void) => {
   setIsOffline(!navigator.onLine);
 };
 
-// ==================== PÁGINA PRINCIPAL ====================
+/**
+ * @component MinhasReservas
+ * @version 1.0.0
+ *
+ * @description Página de listagem e gerenciamento de reservas do motorista.
+ * Exibe reservas paginadas com ações de checkout, cancelamento e geração de comprovante.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. AUTENTICAÇÃO:
+ *    - Hook useAuth obtém usuário logado
+ *    - Se não houver user.id, não carrega reservas
+ *
+ * 2. CARREGAMENTO DE RESERVAS (PAGINADO):
+ *    - useEffect dispara fetchReservas na montagem
+ *    - useCallback memoiza função com base no user.id
+ *    - Chama API getReservasPorUsuario com página
+ *    - Resposta inclui dados paginados (content, totalPages, totalElements)
+ *
+ * 3. PAGINAÇÃO:
+ *    - Controles responsivos (mobile/desktop)
+ *    - Números de página com reticências
+ *    - Scroll suave ao trocar de página
+ *
+ * 4. DETECÇÃO DE CONEXÃO:
+ *    - Monitora eventos online/offline do navegador
+ *    - Exibe banner amarelo quando offline
+ *    - Bloqueia ações que exigem conexão
+ *    - Recarrega dados ao reconectar
+ *
+ * 5. AÇÕES DISPONÍVEIS:
+ *    a) CHECKOUT: Finalizar reserva ativa
+ *    b) CANCELAR: Cancelar/excluir reserva
+ *    c) COMPROVANTE: Gerar PDF da reserva
+ *
+ * 6. ESTADOS DE UI:
+ *    - Loading: spinner centralizado
+ *    - Erro: toast error
+ *    - Sem reservas: ícone + mensagem
+ *    - Lista com reservas: cards + paginação
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - PAGINAÇÃO NO BACKEND: API retorna objeto paginado (content, totalPages)
+ * - PAGINAÇÃO RESPONSIVA: 3 botões no mobile, 5 no desktop
+ * - DETECÇÃO DE CONEXÃO: Event listeners 'online' e 'offline'
+ * - SCROLL SUAVE: window.scrollTo({ behavior: 'smooth' }) ao trocar página
+ * - RECARGA AUTOMÁTICA: Ao voltar online, recarrega página atual
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - ReservaLista: Lista de reservas com ações
+ * - useAuth: Hook de autenticação
+ * - getReservasPorUsuario: API de listagem paginada
+ *
+ * @example
+ * ```tsx
+ * // Uso em rota de motorista
+ * <MinhasReservas />
+ * ```
+ */
+
 export default function MinhasReservas() {
   const { user } = useAuth();
   const [paginatedData, setPaginatedData] =
@@ -146,7 +225,7 @@ export default function MinhasReservas() {
   const [isOffline, setIsOffline] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
 
-  // Busca reservas com paginação
+  // ==================== BUSCA DE RESERVAS (PAGINADA) ====================
   const fetchReservas = useCallback(
     async (page: number = 0) => {
       if (!user?.id) {
@@ -171,7 +250,7 @@ export default function MinhasReservas() {
     [user?.id],
   );
 
-  // Carregamento inicial e listeners de conexão
+  // ==================== EFEITOS (CARREGAMENTO + ONLINE/OFFLINE) ====================
   useEffect(() => {
     fetchReservas(0);
 
@@ -190,7 +269,7 @@ export default function MinhasReservas() {
     };
   }, [fetchReservas]);
 
-  // Handler de mudança de página
+  // ==================== HANDLER DE PÁGINA ====================
   const handlePageChange = (newPage: number) => {
     if (
       newPage !== currentPage &&
@@ -202,7 +281,7 @@ export default function MinhasReservas() {
     }
   };
 
-  // Handler para gerar comprovante
+  // ==================== HANDLERS DE AÇÕES ====================
   const handleGerarDocumento = async (reservaId: string) => {
     try {
       await getGerarComprovanteReserva(reservaId);
@@ -212,7 +291,6 @@ export default function MinhasReservas() {
     }
   };
 
-  // Handler para excluir reserva
   const handleExcluirReserva = async (reservaId: string) => {
     if (!navigator.onLine) {
       toast.error(
@@ -230,7 +308,6 @@ export default function MinhasReservas() {
     }
   };
 
-  // Handler para checkout
   const handleCheckoutReserva = async (reserva: ReservaGet) => {
     if (!navigator.onLine) {
       toast.error(
@@ -257,7 +334,7 @@ export default function MinhasReservas() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* HEADER RESPONSIVO */}
+      {/* ==================== HEADER ==================== */}
       <header className="bg-blue-800 px-4 pt-3 pb-6 sm:px-6 md:px-8 sm:pt-4 sm:pb-7">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1">
@@ -285,7 +362,7 @@ export default function MinhasReservas() {
       </header>
 
       <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
-        {/* BANNER OFFLINE RESPONSIVO */}
+        {/* ==================== BANNER OFFLINE ==================== */}
         {isOffline && (
           <div className="w-full mb-4 p-3 sm:p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-lg flex items-center gap-2 text-xs sm:text-sm">
             <WifiOff size={16} className="sm:w-[18px] sm:h-[18px] shrink-0" />
@@ -296,7 +373,7 @@ export default function MinhasReservas() {
           </div>
         )}
 
-        {/* ESTADO DE LOADING */}
+        {/* ==================== ESTADO DE LOADING ==================== */}
         {loading ? (
           <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
             <Loader2 className="animate-spin w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
@@ -305,7 +382,7 @@ export default function MinhasReservas() {
             </span>
           </div>
         ) : reservas.length === 0 ? (
-          /* ESTADO SEM RESERVAS */
+          /* ==================== ESTADO SEM RESERVAS ==================== */
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4">
             <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
             <p className="text-sm sm:text-base text-gray-500">
@@ -314,7 +391,7 @@ export default function MinhasReservas() {
           </div>
         ) : (
           <>
-            {/* LISTA DE RESERVAS */}
+            {/* ==================== LISTA DE RESERVAS ==================== */}
             <ReservaLista
               reservas={reservas}
               onGerarDocumento={handleGerarDocumento}
@@ -322,7 +399,7 @@ export default function MinhasReservas() {
               onCheckout={handleCheckoutReserva}
             />
 
-            {/* CONTROLES DE PAGINAÇÃO RESPONSIVOS */}
+            {/* ==================== CONTROLES DE PAGINAÇÃO ==================== */}
             {totalPaginas > 1 && (
               <PaginationControls
                 currentPage={currentPage}
@@ -336,7 +413,7 @@ export default function MinhasReservas() {
           </>
         )}
 
-        {/* TUTORIAL LINK RESPONSIVO */}
+        {/* ==================== TUTORIAL LINK ==================== */}
         <Link
           href="/motorista/tutorial#minhasreservas"
           className="flex items-center gap-3 sm:gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-3 sm:p-4 hover:bg-blue-50/30 transition-colors mt-6 sm:mt-8"
