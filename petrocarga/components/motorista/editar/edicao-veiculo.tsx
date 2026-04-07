@@ -167,7 +167,7 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
                     label: 'Carro - Até 5 metros',
                   },
                   {
-                    value: 'CAMINHONETE',
+                    value: 'CAMINHONETA',
                     label: 'Caminhonete - Até 6 metros',
                   },
                   { value: 'VUC', label: 'VUC - Até a 8 metros' },

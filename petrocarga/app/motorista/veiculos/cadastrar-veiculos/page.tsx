@@ -264,7 +264,7 @@ export default function CadastroVeiculo() {
                               label: 'Carro - Até 5 metros',
                             },
                             {
-                              value: 'CAMINHONETE',
+                              value: 'CAMINHONETA',
                               label: 'Caminhonete - Até 6 metros',
                             },
                             { value: 'VUC', label: 'VUC - Até a 8 metros' },
