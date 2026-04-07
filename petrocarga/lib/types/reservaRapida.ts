@@ -86,13 +86,22 @@ export interface ReservaRapida {
 }
 
 /**
- * @interface PaginatedResponse
- * @description Resposta paginada da API de reservas rápidas
+ * @interface PaginatedReservaRapidaResponse
+ * @description Resposta paginada da API de reservas rápidas com os filtros aplicados
  */
 export interface PaginatedReservaRapidaResponse {
+  // Dados paginados
   content: ReservaRapida[];
   totalElements: number;
   totalPaginas: number;
   tamanhoPagina: number;
   pagina: number;
+
+  // Filtros aplicados na consulta
+  vagaId?: string;
+  placaVeiculo?: string;
+  data?: string;
+  listaStatus?: Array<
+    'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'REMOVIDA' | 'CANCELADA'
+  >;
 }

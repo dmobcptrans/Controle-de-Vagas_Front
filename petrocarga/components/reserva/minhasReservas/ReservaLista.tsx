@@ -53,43 +53,43 @@ interface ReservaListaProps {
 /**
  * @component ReservaLista
  * @version 1.0.0
- * 
+ *
  * @description Lista de reservas com separação entre ativas e histórico.
  * Reservas ativas (ATIVA/RESERVADA) são exibidas sempre.
  * Reservas encerradas (CONCLUIDA/CANCELADA/REMOVIDA) ficam em seção colapsável.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 ESTRUTURA:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. SEÇÃO PRINCIPAL (RESERVAS ATIVAS):
  *    - Exibe reservas com status ATIVA ou RESERVADA
  *    - Ordenadas por prioridade (ATIVA primeiro)
  *    - Estado vazio: botão "Fazer Reserva"
- * 
+ *
  * 2. SEÇÃO DE HISTÓRICO (COLAPSÁVEL):
  *    - Exibe reservas com status CONCLUIDA, CANCELADA ou REMOVIDA
  *    - Mostra contador de itens no botão
  *    - Pode ser expandido/recolhido
  *    - Transição suave com grid-rows
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - SEPARAÇÃO POR STATUS: VISIBLE_STATUSES e HIDDEN_STATUSES definem onde cada status aparece
  * - ORDENAÇÃO: PRIORIDADE mapeia ordem de exibição (ATIVA > RESERVADA > CONCLUIDA > CANCELADA > REMOVIDA)
  * - COLLAPSE: grid-rows-[1fr]/[0fr] + transition-all para animação suave
  * - MEMO: useMemo para processamento da lista (evita recálculos desnecessários)
  * - EMPTY STATE: Exibido quando não há reservas ativas, com botão para fazer nova reserva
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - ReservaCard: Card individual de reserva
  * - ReservaGet: Tipo de reserva
- * 
+ *
  * @example
  * ```tsx
  * <ReservaLista
@@ -135,7 +135,6 @@ export default function ReservaLista({
 
   return (
     <div className="-mt-4 mb-5">
-
       {/* ==================== SEÇÃO PRINCIPAL (RESERVAS ATIVAS) ==================== */}
       <section className="flex flex-col gap-4 animate-in fade-in duration-200">
         {visiveis.length > 0 ? (
@@ -156,7 +155,6 @@ export default function ReservaLista({
       {/* ==================== SEÇÃO DE HISTÓRICO (COLAPSÁVEL) ==================== */}
       {ocultas.length > 0 && (
         <div className="border-t border-gray-100 pt-6">
-
           {/* Botão de toggle */}
           <button
             onClick={() => setMostrarOcultas((s) => !s)}
@@ -184,8 +182,9 @@ export default function ReservaLista({
           {/* Conteúdo colapsável (transição suave) */}
           <div
             id="lista-ocultas"
-            className={`grid transition-[grid-template-rows] duration-300 ease-out ${mostrarOcultas ? 'grid-rows-[1fr] mt-4' : 'grid-rows-[0fr]'
-              }`}
+            className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+              mostrarOcultas ? 'grid-rows-[1fr] mt-4' : 'grid-rows-[0fr]'
+            }`}
           >
             <div className="overflow-hidden min-h-0">
               <div className="flex flex-col gap-3 pb-2">
@@ -216,15 +215,15 @@ export default function ReservaLista({
  */
 function EmptyState() {
   return (
-
-    <Link href="/motorista/reservar-vaga" className="flex items-center justify-between bg-[#071D41] hover:bg-[#0C3D8A] transition-colors rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]">
+    <Link
+      href="/motorista/reservar-vaga"
+      className="flex items-center justify-between bg-[#071D41] hover:bg-[#0C3D8A] transition-colors rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]"
+    >
       <div>
         <p className="text-white font-semibold text-[15px] mb-0.5">
           Nenhuma Reserva Ativa
         </p>
-        <p className="text-white/60 text-xs">
-          Fazer Reserva
-        </p>
+        <p className="text-white/60 text-xs">Fazer Reserva</p>
       </div>
       <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
         <CopyPlus className="h-5 w-5 text-white" />
