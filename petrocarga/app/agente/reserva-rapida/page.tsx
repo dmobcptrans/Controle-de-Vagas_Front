@@ -278,6 +278,13 @@ export default function ReservaRapidaPage() {
             <ReservaRapida
               selectedVaga={selectedVaga}
               onBack={handleBackToMap}
+              onNewReservation={() => {
+                setStep('mapa');    
+                setSelectedVaga(null);
+                setLocalOrigin('');      
+                setSelectedLocation(null); 
+                setSearchFocused(false);  
+              }}
             />
           </div>
         )}
