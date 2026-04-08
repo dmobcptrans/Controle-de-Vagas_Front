@@ -226,87 +226,89 @@ export const ReservaModal = ({
               <DialogTitle>Detalhes da Reserva</DialogTitle>
             </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto">
-            <div className="overflow-hidden rounded-xl border border-border">
+            <div className="flex-1 overflow-y-auto">
+              <div className="overflow-hidden rounded-xl border border-border">
 
-              {/* Header: Vaga + Status */}
-              <div className="flex items-start justify-between gap-3 border-b border-border bg-muted/40 px-4 py-3">
-                <div>
-                  <p className="mb-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">Reserva</p>
-                  <p className="text-[15px] font-medium text-foreground">
-                    {modalState.data.reserva.enderecoVaga.logradouro}
-                  </p>
-                  <p className="mt-0.5 text-[13px] text-muted-foreground">
-                    {modalState.data.reserva.enderecoVaga.bairro}
-                    {modalState.data.vagaInfo?.area ? ` · ${modalState.data.vagaInfo.area}` : ''}
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-md border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-medium text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
-                  {modalState.data.reserva.status}
-                </span>
-              </div>
-
-              {/* Início / Fim */}
-              <div className="grid grid-cols-2 gap-2.5 border-b border-border p-3">
-                <div className="rounded-lg bg-muted/40 px-3 py-2.5">
-                  <p className="mb-1 text-[11px] text-muted-foreground">Início</p>
-                  <p className="text-[13px] font-medium text-foreground">
-                    {new Date(modalState.data.reserva.inicio).toLocaleString()}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-muted/40 px-3 py-2.5">
-                  <p className="mb-1 text-[11px] text-muted-foreground">Fim</p>
-                  <p className="text-[13px] font-medium text-foreground">
-                    {new Date(modalState.data.reserva.fim).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              {/* Motorista */}
-              <div className="border-b border-border px-4 py-3">
-                <p className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground">Motorista</p>
-                <div className="flex items-center gap-2.5">
-                  <p className="text-[14px] font-medium text-foreground">
-                    {modalState.data.reserva.motoristaNome || 'Agendado por Agente'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Veículo */}
-              <div className="border-b border-border px-4 py-3">
-                <p className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground">Veículo</p>
-                <div className="flex items-center justify-between">
+                {/* Header: Vaga + Status */}
+                <div className="flex items-start justify-between gap-3 border-b border-border bg-muted/40 px-4 py-3">
                   <div>
-                    <p className="text-[14px] font-medium text-foreground">
-                      {modalState.data.reserva.marcaVeiculo} {modalState.data.reserva.modeloVeiculo || 'Não informado'}
+                    <p className="mb-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">Reserva</p>
+                    <p className="text-[15px] font-medium text-foreground">
+                      {modalState.data.reserva.enderecoVaga.logradouro}
                     </p>
-                    <p className="mt-0.5 text-[12px] text-muted-foreground">
-                      {modalState.data.reserva.tamanhoVeiculo}
+                    <p className="mt-0.5 text-[13px] text-muted-foreground">
+                      {modalState.data.reserva.enderecoVaga.bairro}
+                      {modalState.data.vagaInfo?.area ? ` · ${modalState.data.vagaInfo.area}` : ''}
                     </p>
                   </div>
-                  <span className="rounded-md border border-border bg-muted/40 px-3 py-1.5 text-[14px] font-medium tracking-wide text-foreground">
-                    {modalState.data.reserva.placaVeiculo}
+                  <span className="shrink-0 rounded-md border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-medium text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+                    {modalState.data.reserva.status}
                   </span>
                 </div>
-              </div>
 
-              {/* Origem + Entrada */}
-              <div className="grid grid-cols-2 gap-0 px-4 py-3">
-                <div className="pr-3">
-                  <p className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Origem</p>
-                  <p className="text-[13px] font-medium text-foreground">
-                    {modalState.data.reserva.cidadeOrigem || 'Não informado'}
-                  </p>
+                {/* Início / Fim */}
+                <div className="grid grid-cols-2 gap-2.5 border-b border-border p-3">
+                  <div className="rounded-lg bg-muted/40 px-3 py-2.5">
+                    <p className="mb-1 text-[11px] text-muted-foreground">Início</p>
+                    <p className="text-[13px] font-medium text-foreground">
+                      {new Date(modalState.data.reserva.inicio).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-muted/40 px-3 py-2.5">
+                    <p className="mb-1 text-[11px] text-muted-foreground">Fim</p>
+                    <p className="text-[13px] font-medium text-foreground">
+                      {new Date(modalState.data.reserva.fim).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-                <div className="border-l border-border pl-3">
-                  <p className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Entrada cidade</p>
-                  <p className="text-[13px] font-medium text-foreground">
-                    {modalState.data.reserva.entradaCidade || 'Não informado'}
-                  </p>
-                </div>
-              </div>
 
-            </div>
+                {/* Motorista */}
+                <div className="border-b border-border px-4 py-3">
+                  <p className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground">Motorista</p>
+                  <div className="flex items-center gap-2.5">
+                    <p className="text-[14px] font-medium text-foreground">
+                      {modalState.data.reserva.motoristaNome
+                        ? modalState.data.reserva.motoristaNome
+                        : `${modalState.data.reserva.criadoPor.nome} - (Agente)`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Veículo */}
+                <div className="border-b border-border px-4 py-3">
+                  <p className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground">Veículo</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[14px] font-medium text-foreground">
+                        {modalState.data.reserva.marcaVeiculo} {modalState.data.reserva.modeloVeiculo || 'Não informado'}
+                      </p>
+                      <p className="mt-0.5 text-[12px] text-muted-foreground">
+                        Tamanho: {modalState.data.reserva.tamanhoVeiculo} 
+                      </p>
+                    </div>
+                    <span className="rounded-md border border-border bg-muted/40 px-3 py-1.5 text-[14px] font-medium tracking-wide text-foreground">
+                      {modalState.data.reserva.placaVeiculo}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Origem + Entrada */}
+                <div className="grid grid-cols-2 gap-0 px-4 py-3">
+                  <div className="pr-3">
+                    <p className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Origem</p>
+                    <p className="text-[13px] font-medium text-foreground">
+                      {modalState.data.reserva.cidadeOrigem || 'Não informado'}
+                    </p>
+                  </div>
+                  <div className="border-l border-border pl-3">
+                    <p className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">Entrada cidade</p>
+                    <p className="text-[13px] font-medium text-foreground">
+                      {modalState.data.reserva.entradaCidade || 'Não informado'}
+                    </p>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </>
         );
