@@ -190,14 +190,21 @@ export default function DisponibilidadeCalendario() {
 
   // ==================== RENDERIZAÇÃO ====================
   return (
-    <div className="p-4">
+    <div>
 
       {/* ==================== CALENDÁRIO ==================== */}
-      <FullCalendar
+     <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
         locale={ptBr}
+        initialView="dayGridMonth"
+        height="auto"
+        dayMaxEventRows={3}
+        eventDisplay="block"
+        expandRows={true}
+        showNonCurrentDates={false}
+        fixedWeekCount={false}
+        contentHeight="auto"
         events={eventos}
         dateClick={handleDateClick}
         eventClick={handleEventClick}
