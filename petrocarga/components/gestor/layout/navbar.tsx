@@ -115,8 +115,28 @@ export function Navbar() {
 
           {/* Links Desktop */}
           <ul className="hidden md:flex gap-4 lg:gap-6 text-base lg:text-lg items-center whitespace-nowrap">
-            <li className="hover:text-gray-300">
-              <Link href="/gestor/relatorio">Relatório</Link>
+
+            {/* Dropdown Gerais */}
+            <li>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  suppressHydrationWarning
+                  className="flex items-center gap-1 hover:text-gray-300 focus:outline-none"
+                >
+                  Relatórios <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
+                  <DropdownMenuItem asChild>
+                    <Link href="/gestor/relatorio">Relatório</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/gestor/disponibilidade-vagas">Disponibilidade</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/gestor/reservas">Reservas</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </li>
 
             {/* Dropdown Vagas */}
@@ -137,14 +157,6 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </li>
-
-            <li className="hover:text-gray-300">
-              <Link href="/gestor/disponibilidade-vagas">Disponibilidade</Link>
-            </li>
-
-            <li className="hover:text-gray-300">
-              <Link href="/gestor/reservas">Reservas</Link>
             </li>
 
             <li className="hover:text-gray-300">

@@ -20,6 +20,9 @@ import { Denuncia } from '@/lib/types/denuncias';
 import toast from 'react-hot-toast';
 import { CTA } from '@/components/ui/CTA/CTA';
 
+/**
+ * Configuração de cores e rótulos para cada status de reserva
+ */
 const statusConfig = {
   ATIVA: {
     label: 'Ativa',
@@ -45,6 +48,10 @@ const statusConfig = {
 
 type StatusKey = keyof typeof statusConfig;
 
+/**
+ * @component StatusBadge
+ * @description Badge visual para exibir o status da reserva
+ */
 function StatusBadge({ status }: { status: StatusKey }) {
   const { label, className } = statusConfig[status];
   return (
@@ -62,6 +69,10 @@ const formatarData = (data: string) =>
     timeStyle: 'short',
   });
 
+/**
+ * @component SkeletonCard
+ * @description Placeholder animado para carregamento das reservas
+ */
 function SkeletonCard() {
   return (
     <div className="bg-white border border-gray-100 rounded-xl px-4 py-3 animate-pulse">
@@ -77,12 +88,84 @@ function SkeletonCard() {
   );
 }
 
+/**
+ * @component Dashboard
+ * @version 1.0.0
+ *
+ * @description Página principal (dashboard) do motorista.
+ * Exibe resumo de reservas, estatísticas, últimas reservas e acesso rápido.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FUNCIONALIDADES:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. HEADER:
+ *    - Saudação personalizada com nome do motorista
+ *    - Data atual formatada
+ *
+ * 2. ESTATÍSTICAS (3 cards):
+ *    - Total de reservas
+ *    - Reservas ativas no momento
+ *    - Total de denúncias
+ *
+ * 3. ÚLTIMAS RESERVAS:
+ *    - Mostra as 3 reservas mais recentes
+ *    - Link "Ver todas" para página completa
+ *    - Estado de loading com skeleton
+ *    - Estado vazio com mensagem amigável
+ *
+ * 4. ACESSO RÁPIDO (4 cards):
+ *    - Histórico de reservas
+ *    - Minhas denúncias
+ *    - Meu veículo
+ *    - Meu perfil
+ *
+ * 5. TUTORIAL:
+ *    - Link para página de tutorial
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - BUSCA PARALELA: Promise.allSettled para carregar reservas e denúncias
+ * - TRATAMENTO DE PAGINAÇÃO: API retorna objeto com content (array)
+ * - FALLBACK: Valores padrão quando não há dados
+ * - LOADING: Skeleton cards durante carregamento
+ * - CORES: Azul (header e destaques), verde (ativos), cinza (concluídos)
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 CORES DOS STATUS:
+ * ----------------------------------------------------------------------------
+ *
+ * | Status     | Label       | Cor                           |
+ * |------------|-------------|-------------------------------|
+ * | ATIVA      | Ativa       | 🟢 Verde (bg-green-100)       |
+ * | RESERVADA  | Reservada   | 🟢 Verde (bg-green-100)       |
+ * | CONCLUIDA  | Concluída   | ⚪ Cinza (bg-gray-100)         |
+ * | CANCELADA  | Cancelada   | ⚪ Cinza (bg-gray-100)         |
+ * | REMOVIDA   | Removida    | 🔴 Vermelho (bg-gray-100)      |
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - useAuth: Hook de autenticação
+ * - getReservasPorUsuario: API de reservas
+ * - getDenunciasByUsuario: API de denúncias
+ *
+ * @example
+ * ```tsx
+ * <Dashboard />
+ * ```
+ */
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [reservas, setReservas] = useState<ReservaGet[]>([]);
   const [denuncias, setDenuncias] = useState<Denuncia[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ==================== BUSCA DE DADOS ====================
   const fetchDados = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
@@ -91,14 +174,13 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const [resReservas, resDenuncias] = await Promise.allSettled([
-        getReservasPorUsuario(user.id, 0, 100), // Pega até 100 reservas para o dashboard
+        getReservasPorUsuario(user.id, 0, 100),
         getDenunciasByUsuario(user.id),
       ]);
 
-      // CORREÇÃO: extrai o array do objeto paginado
+      // Tratamento de reservas (suporta paginação)
       if (resReservas.status === 'fulfilled') {
         const reservasData = resReservas.value;
-        // Se for objeto paginado, pega o content; se for array direto, usa como está
         const reservasArray = Array.isArray(reservasData)
           ? reservasData
           : reservasData?.content || [];
@@ -108,6 +190,7 @@ export default function Dashboard() {
         setReservas([]);
       }
 
+      // Tratamento de denúncias
       if (resDenuncias.status === 'fulfilled') {
         setDenuncias(resDenuncias.value ?? []);
       } else {
@@ -123,6 +206,7 @@ export default function Dashboard() {
     fetchDados();
   }, [fetchDados]);
 
+  // ==================== DADOS DERIVADOS ====================
   const primeiroNome = user?.nome?.split(' ')[0] ?? 'Motorista';
   const totalReservas = reservas.length;
   const reservasAtivas = reservas.filter((r) => r.status === 'ATIVA').length;
@@ -135,6 +219,7 @@ export default function Dashboard() {
     year: 'numeric',
   });
 
+  // ==================== AÇÕES DE ACESSO RÁPIDO ====================
   const acoes = [
     {
       href: '/motorista/reservas',
@@ -168,7 +253,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* ── Header ── */}
+      {/* ==================== HEADER ==================== */}
       <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
@@ -178,9 +263,9 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* ── Corpo ── */}
+      {/* ==================== CORPO PRINCIPAL ==================== */}
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-        {/* CTA flutuante */}
+        {/* CTA principal - Reservar vaga */}
         <div className="-mt-4 mb-5">
           <CTA href="/motorista/reservar-vaga"
             title="Reservar uma vaga"
@@ -188,30 +273,35 @@ export default function Dashboard() {
             icon={<CalendarPlus className="h-5 w-5 text-white" />} />
         </div>
 
-        {/* Estatísticas */}
+        {/* ==================== CARDS DE ESTATÍSTICAS ==================== */}
         <div className="grid grid-cols-3 gap-2.5 mb-5">
-          {[
-            { num: totalReservas, label: 'Total de reservas', accent: false },
-            { num: reservasAtivas, label: 'Ativa agora', accent: true },
-            { num: totalDenuncias, label: 'Denúncias', accent: false },
-          ].map(({ num, label, accent }) => (
-            <div
-              key={label}
-              className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center"
-            >
-              <p
-                className={`text-2xl font-bold ${accent ? 'text-[#168821]' : 'text-[#071D41]'}`}
-              >
-                {loading ? '—' : num}
-              </p>
-              <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
-                {label}
-              </p>
-            </div>
-          ))}
+          <div className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center">
+            <p className="text-2xl font-bold text-[#071D41]">
+              {loading ? '—' : totalReservas}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
+              Total de reservas
+            </p>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center">
+            <p className="text-2xl font-bold text-[#168821]">
+              {loading ? '—' : reservasAtivas}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
+              Ativa agora
+            </p>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center">
+            <p className="text-2xl font-bold text-[#071D41]">
+              {loading ? '—' : totalDenuncias}
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
+              Denúncias
+            </p>
+          </div>
         </div>
 
-        {/* Últimas reservas */}
+        {/* ==================== ÚLTIMAS RESERVAS ==================== */}
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2.5">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
@@ -227,12 +317,14 @@ export default function Dashboard() {
 
           <div className="flex flex-col gap-1.5">
             {loading ? (
+              // Estado de loading
               <>
                 <SkeletonCard />
                 <SkeletonCard />
                 <SkeletonCard />
               </>
             ) : reservas.length === 0 ? (
+              // Estado vazio
               <div className="bg-white border border-dashed border-gray-200 rounded-xl py-8 text-center">
                 <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-2">
                   <Archive className="h-5 w-5 text-gray-300" />
@@ -242,6 +334,7 @@ export default function Dashboard() {
                 </p>
               </div>
             ) : (
+              // Lista das 3 reservas mais recentes
               reservas
                 .sort(
                   (a, b) =>
@@ -259,15 +352,12 @@ export default function Dashboard() {
                         <p className="text-sm font-semibold text-gray-800 truncate">
                           {r.logradouro}
                         </p>
-
                         <StatusBadge status={r.status as StatusKey} />
                       </div>
-
                       <p className="text-xs text-gray-500 flex items-center gap-1 truncate">
                         <MapPin className="h-3 w-3 text-gray-400" />
                         {r.cidadeOrigem}
                       </p>
-
                       <div className="flex flex-wrap gap-3 text-xs text-gray-600 mt-1">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3 text-gray-400" />
@@ -285,7 +375,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Acesso rápido */}
+        {/* ==================== ACESSO RÁPIDO ==================== */}
         <div className="mb-5">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
             Acesso rápido
@@ -311,7 +401,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Tutorial */}
+        {/* ==================== TUTORIAL ==================== */}
         <Link
           href="/motorista/tutorial#dashboard"
           className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"

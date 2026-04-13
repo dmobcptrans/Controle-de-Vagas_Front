@@ -9,9 +9,11 @@ import Confirmation from '@/components/reserva/Confirmation';
 import { Veiculo } from '@/lib/types/veiculo';
 import toast from 'react-hot-toast';
 import { fetchReservasBloqueios } from '@/components/hooks/reserva/reservaService';
+import router from 'next/router';
 
 interface ReservaAgenteProps {
   selectedVaga: Vaga;
+  onNewReservation?: () => void;
   onBack?: () => void;
 }
 
@@ -59,6 +61,7 @@ type ReservaBloqueio = {
 
 export default function ReservaAgente({
   selectedVaga,
+  onNewReservation,
 }: ReservaAgenteProps) {
   // --------------------------------------------------------------------------
   // HOOK DE RESERVA
@@ -86,6 +89,7 @@ export default function ReservaAgente({
   // ESTADOS LOCAIS
   // --------------------------------------------------------------------------
   const [step, setStep] = useState(1);
+  const [stepReturn, setStepReturn] = useState<'mapa' | 'reserva'>('mapa');
   const [success, setSuccess] = useState<boolean | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -302,6 +306,8 @@ export default function ReservaAgente({
       setValidandoVeiculo(false);
     }
   };
+
+
   // --------------------------------------------------------------------------
   // RENDER
   // --------------------------------------------------------------------------
@@ -471,6 +477,16 @@ export default function ReservaAgente({
                 <p className="text-gray-600 max-w-sm mb-8 leading-relaxed">
                   {feedbackMessage ?? 'Sua solicitação foi processada com sucesso.'}
                 </p>
+                <button
+                  onClick={() => {
+                    if (onNewReservation) {
+                      onNewReservation();
+                    }
+                  }}
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all shadow-lg active:scale-95"
+                >
+                  Fazer nova reserva
+                </button>
               </div>
             ) : (
               <div className="flex flex-col items-center text-center">

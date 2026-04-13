@@ -14,7 +14,63 @@ type Suggestion = {
   lng: number;
 };
 
+/**
+ * @component ReservaPage
+ * @version 1.0.0
+ *
+ * @description Página de reserva de vagas para motoristas em duas etapas.
+ * Permite buscar localização, selecionar uma vaga no mapa e preencher os dados da reserva.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 FLUXO COMPLETO:
+ * ----------------------------------------------------------------------------
+ *
+ * ETAPA 1 - SELEÇÃO DE VAGA (MAPA):
+ *    - Campo de busca com sugestões do Mapbox
+ *    - Mapa interativo (MapReserva) com vagas disponíveis
+ *    - Ao clicar em uma vaga, avança para etapa 2
+ *    - Pode usar busca para centralizar o mapa
+ *
+ * ETAPA 2 - FORMULÁRIO DE RESERVA:
+ *    - Componente ReservaComponent recebe a vaga selecionada
+ *    - Exibe resumo da vaga selecionada
+ *    - Botão "Voltar" retorna ao mapa (ícone MapIcon)
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - BUSCA POR LOCALIZAÇÃO: useMapboxSuggestions com geocodificação reversa
+ * - DROPDOWN: Sugestões aparecem em card flutuante sobre o CTA
+ * - SELEÇÃO DE LOCAL: Centraliza o mapa na localização escolhida
+ * - PREVENÇÃO DE BLOQUEIO: onMouseDown + preventDefault evita conflito com onBlur
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 ESTILOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - Header: Azul escuro (#071D41)
+ * - CTA de busca: Fundo azul escuro com borda amarela (#FFCD07)
+ * - Dropdown: Fundo azul médio (#0C2D5E), texto branco
+ * - Ícones de destaque: Amarelo (#FFCD07)
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - MapReserva: Mapa interativo com vagas clicáveis
+ * - ReservaComponent: Formulário de criação de reserva
+ * - useMapboxSuggestions: Hook para busca de endereços
+ *
+ * @example
+ * ```tsx
+ * // Uso em rota de motorista
+ * <ReservaPage />
+ * ```
+ */
+
 export default function ReservaPage() {
+  // ==================== ESTADOS ====================
   const [step, setStep] = useState<'mapa' | 'reserva'>('mapa');
   const [selectedVaga, setSelectedVaga] = useState<Vaga | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -26,6 +82,7 @@ export default function ReservaPage() {
     lng: number;
   } | null>(null);
 
+  // ==================== HANDLERS ====================
   const handleSelectVaga = (vaga: Vaga) => {
     setSelectedVaga(vaga);
     setStep('reserva');
@@ -40,19 +97,22 @@ export default function ReservaPage() {
     setLocalOrigin('');
   };
 
-  // onMouseDown + preventDefault: garante que o clique seja processado
-  // antes do onBlur do input fechar o dropdown
+  /**
+   * Seleciona uma sugestão do dropdown
+   * - Atualiza o campo de busca
+   * - Fecha o dropdown
+   * - Centraliza o mapa na localização selecionada
+   */
   const handleSelectSuggestion = (place: Suggestion) => {
     setLocalOrigin(place.label);
     setSearchFocused(false);
-
     setSelectedLocation({
       lat: place.lat,
       lng: place.lng,
     });
   };
 
-  // Extrai campos da vaga com fallbacks
+  // ==================== DADOS DERIVADOS ====================
   const vagaLabel = selectedVaga?.endereco.logradouro;
   const vagaEndereco = selectedVaga?.endereco.bairro;
   const vagaSetor = selectedVaga?.area;
@@ -60,7 +120,7 @@ export default function ReservaPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* ── Header ── */}
+      {/* ==================== HEADER ==================== */}
       <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
@@ -75,16 +135,14 @@ export default function ReservaPage() {
       </header>
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-        {/* ══════════════════════════════════════════
-            CTA DINÂMICO
-        ══════════════════════════════════════════ */}
+        {/* ==================== CTA DINÂMICO ==================== */}
         <div className="-mt-4 mb-5">
+          {/* ETAPA 1: Campo de busca */}
           {step === 'mapa' && (
             <div
               className="bg-[#071D41] rounded-2xl border-l-4 border-[#FFCD07] px-5 py-4"
               style={{ boxShadow: '0 4px 16px rgba(7,29,65,0.18)' }}
             >
-              {/* Container relativo PRO dropdown */}
               <div className="relative">
                 {/* Input row */}
                 <div
@@ -133,7 +191,7 @@ export default function ReservaPage() {
                   )}
                 </div>
 
-                {/* Dropdown */}
+                {/* Dropdown de sugestões */}
                 {showSuggestions && (
                   <ul
                     className="absolute left-0 right-0 mt-2 rounded-xl overflow-hidden z-50"
@@ -171,30 +229,27 @@ export default function ReservaPage() {
             </div>
           )}
 
-          {/* ── ETAPA RESERVA: Info da vaga selecionada ── */}
+          {/* ETAPA 2: Info da vaga selecionada */}
           {step === 'reserva' && selectedVaga && (
             <div
               className="flex items-center justify-between bg-[#071D41] rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]"
               style={{ boxShadow: '0 4px 16px rgba(7,29,65,0.18)' }}
             >
-              {/* Textos */}
               <div className="flex-1 min-w-0">
                 <p className="text-white font-semibold text-[15px] mb-0.5 truncate">
                   {vagaLabel}
                 </p>
-
                 {vagaEndereco && (
                   <p className="text-white/60 text-xs truncate">
                     {vagaEndereco}
                   </p>
                 )}
-
                 {!vagaEndereco && vagaSetor && (
                   <p className="text-white/60 text-xs truncate">{vagaSetor}</p>
                 )}
               </div>
 
-              {/* Ícone */}
+              {/* Botão voltar ao mapa */}
               <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors hover:bg-white/30">
                 <MapIcon
                   className="h-5 w-5 text-white"
@@ -205,9 +260,7 @@ export default function ReservaPage() {
           )}
         </div>
 
-        {/* ══════════════════════════════════════════
-            ETAPA 1: MAPA
-        ══════════════════════════════════════════ */}
+        {/* ==================== ETAPA 1: MAPA ==================== */}
         {step === 'mapa' && (
           <div className="flex flex-col items-center justify-center">
             <div className="w-full h-[calc(75vh-120px)] md:h-[70vh] lg:h-[75vh] rounded-xl overflow-hidden shadow-md mb-4">
@@ -219,9 +272,7 @@ export default function ReservaPage() {
           </div>
         )}
 
-        {/* ══════════════════════════════════════════
-            ETAPA 2: FORMULÁRIO
-        ══════════════════════════════════════════ */}
+        {/* ==================== ETAPA 2: FORMULÁRIO ==================== */}
         {step === 'reserva' && selectedVaga && (
           <div className="mb-4">
             <ReservaComponent
@@ -231,7 +282,7 @@ export default function ReservaPage() {
           </div>
         )}
 
-        {/* Tutorial */}
+        {/* ==================== TUTORIAL ==================== */}
         <Link
           href="/motorista/tutorial#reservarvaga"
           className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"

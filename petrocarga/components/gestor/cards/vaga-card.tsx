@@ -23,11 +23,96 @@ const diasSemana: DiaSemana[] = [
   'SABADO',
 ];
 
+/**
+ * @component VagaDetalhes
+ * @version 1.0.0
+ *
+ * @description Página de detalhes de uma vaga específica para gestores.
+ * Exibe informações completas da vaga, incluindo mapa, horários de funcionamento,
+ * e permite edição/exclusão.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 INFORMAÇÕES EXIBIDAS:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. HEADER:
+ *    - Logradouro e bairro
+ *    - Indicador de status (🟢 Disponível, 🔴 Indisponível, 🟡 Manutenção)
+ *    - Botões "Alterar" (editar) e "Excluir"
+ *
+ * 2. MAPA:
+ *    - Componente CardMap exibindo a localização da vaga
+ *    - Altura fixa de 48px (h-48)
+ *
+ * 3. HORÁRIOS DE FUNCIONAMENTO:
+ *    - Botões para cada dia da semana (abreviação: DOM, SEG, etc.)
+ *    - Dias ativos: fundo verde, texto verde escuro
+ *    - Dias inativos: fundo cinza, texto cinza, cursor not-allowed
+ *    - Ao clicar em um dia ativo, exibe horário (HH:MM - HH:MM)
+ *
+ * 4. CARACTERÍSTICAS:
+ *    - Comprimento (metros)
+ *    - Área (Vermelha, Amarela, Azul, Branca)
+ *    - Tipo (Paralela, Perpendicular)
+ *
+ * 5. METADADOS:
+ *    - Código PMP
+ *    - ID da vaga
+ *    - Referência do endereço
+ *    - Número da vaga
+ *    - Localização GPS início/fim
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - STATUS INDICATOR: Círculo colorido no canto superior direito
+ * - HORÁRIOS POR DIA: Mapeamento via Map para acesso rápido
+ * - SELEÇÃO DE DIA: Estado local para exibir horário do dia clicado
+ * - MAPA: Componente CardMap com altura fixa
+ * - EXCLUSÃO: Modal de confirmação com backdrop blur
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 CORES DOS STATUS:
+ * ----------------------------------------------------------------------------
+ *
+ * | Status        | Cor           | Descrição                    |
+ * |---------------|---------------|------------------------------|
+ * | DISPONIVEL    | 🟢 Verde      | Vaga disponível para reserva |
+ * | INDISPONIVEL  | 🔴 Vermelho   | Vaga indisponível            |
+ * | MANUTENCAO    | 🟡 Amarelo    | Vaga em manutenção           |
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 CORES DOS DIAS DA SEMANA:
+ * ----------------------------------------------------------------------------
+ *
+ * | Estado        | Cor do Botão               | Texto                 |
+ * |---------------|----------------------------|-----------------------|
+ * | Ativo         | 🟢 Verde claro (bg-green-100)| Texto verde escuro    |
+ * | Ativo hover   | 🟢 Verde médio (hover:bg-green-200)| Texto verde escuro |
+ * | Selecionado   | 🟢 Verde escuro (bg-green-500)| Texto branco          |
+ * | Inativo       | ⚪ Cinza (bg-gray-200)      | Texto cinza           |
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - CardMap: Mini-mapa da localização da vaga
+ * - deleteVaga: API de exclusão
+ * - /gestor/visualizar-vagas/:id/editar: Página de edição
+ *
+ * @example
+ * ```tsx
+ * <VagaDetalhes vaga={vaga} />
+ * ```
+ */
+
 export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
   const [diaSelecionado, setDiaSelecionado] = useState<DiaSemana | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const router = useRouter();
 
+  // ==================== MAPEAMENTO DE HORÁRIOS ====================
   const horariosPorDia = new Map<DiaSemana, string>();
   vaga.operacoesVaga.forEach((op) => {
     horariosPorDia.set(
@@ -36,6 +121,7 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
     );
   });
 
+  // ==================== HANDLER DE EXCLUSÃO ====================
   const handleExcluir = async () => {
     try {
       await deleteVaga(vaga.id);
@@ -48,7 +134,9 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
 
   return (
     <article className="relative bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl border-l-8 border-blue-500 transition-shadow max-w-4xl mx-auto">
+      {/* ==================== HEADER ==================== */}
       <header className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+        {/* Indicador de status (círculo colorido) */}
         <div
           className={cn(
             'absolute top-4 right-4 w-4 h-4 rounded-full shadow-md',
@@ -58,12 +146,15 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
           )}
           title={vaga.status}
         />
+
         <div className="flex-1 min-w-0">
           <h2 className="text-2xl font-bold text-gray-800 truncate">
             {vaga.endereco.logradouro}
           </h2>
           <p className="text-gray-600 mt-1 truncate">{vaga.endereco.bairro}</p>
         </div>
+
+        {/* Botões de ação */}
         <div className="flex gap-2 mt-2 sm:mt-5">
           <Link
             href={`/gestor/visualizar-vagas/${vaga.id}/editar`}
@@ -80,10 +171,12 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
         </div>
       </header>
 
+      {/* ==================== MAPA ==================== */}
       <div className="w-full h-48 mb-6 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
         <CardMap vaga={vaga} />
       </div>
 
+      {/* ==================== DIAS DA SEMANA ==================== */}
       <section className="mb-4 flex flex-wrap gap-2">
         {diasSemana.map((dia) => {
           const ativo = horariosPorDia.has(dia);
@@ -109,6 +202,7 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
         })}
       </section>
 
+      {/* ==================== HORÁRIO DO DIA SELECIONADO ==================== */}
       {diaSelecionado && horariosPorDia.has(diaSelecionado) && (
         <p className="mb-6 text-gray-700 text-sm">
           <strong>Horário de {diaSelecionado}:</strong>{' '}
@@ -116,6 +210,7 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
         </p>
       )}
 
+      {/* ==================== CARACTERÍSTICAS DA VAGA ==================== */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700 text-sm mb-4">
         <p>
           <strong>Comprimento:</strong> {vaga.comprimento} m
@@ -128,6 +223,7 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
         </p>
       </section>
 
+      {/* ==================== METADADOS ==================== */}
       <section className="border-t pt-4 text-xs text-gray-500 space-y-1">
         <p>
           <strong>Código PMP:</strong> {vaga.endereco.codigoPmp}
@@ -149,6 +245,7 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
         </p>
       </section>
 
+      {/* ==================== MODAL DE EXCLUSÃO ==================== */}
       {modalAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div

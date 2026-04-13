@@ -11,8 +11,61 @@ interface MotoristaCardProps {
   motorista: Motorista;
 }
 
+/**
+ * @component MotoristaCard
+ * @version 1.0.0
+ *
+ * @description Card de exibição de motorista para gestores.
+ * Exibe informações resumidas do motorista e permite enviar notificações ou visualizar veículos.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 INFORMAÇÕES EXIBIDAS:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. HEADER:
+ *    - Ícone UserCircle (azul)
+ *    - Nome do motorista (primeiro e último nome)
+ *    - Email
+ *    - Badge "Motorista" (azul)
+ *
+ * 2. INFORMAÇÕES:
+ *    - Telefone (com ícone Phone)
+ *    - CNH (com ícone Car) - número da CNH
+ *
+ * 3. AÇÕES:
+ *    - Botão "Notificar": abre modal para envio de notificação
+ *    - Botão "Veículos": redireciona para página de veículos do motorista
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - NOME FORMATADO: Exibe apenas primeiro e último nome (ex: "João Silva")
+ * - LAYOUT: Grid responsivo (1 coluna mobile, 2 colunas desktop)
+ * - BOTÕES: Responsivos (full width mobile, auto desktop)
+ * - MODAL: NotificacaoModal para envio de mensagens ao motorista
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - NotificacaoModal: Modal para envio de notificações
+ * - /gestor/motoristas/veiculos/:id: Página de veículos do motorista
+ *
+ * @example
+ * ```tsx
+ * <MotoristaCard motorista={motorista} />
+ * ```
+ */
+
 export default function MotoristaCard({ motorista }: MotoristaCardProps) {
   const [isNotificacaoModalOpen, setIsNotificacaoModalOpen] = useState(false);
+
+  // Extrai primeiro e último nome do motorista
+  const nomeParts = motorista.usuario.nome.split(' ');
+  const primeiroNome = nomeParts[0];
+  const ultimoNome = nomeParts[nomeParts.length - 1];
+  const nomeExibido = `${primeiroNome} ${ultimoNome}`;
 
   return (
     <>
@@ -22,14 +75,16 @@ export default function MotoristaCard({ motorista }: MotoristaCardProps) {
           'hover:shadow-md transition-shadow',
         )}
       >
-        {/* Header com nome e badge */}
+        {/* ==================== HEADER ==================== */}
         <div className="px-5 pt-5 pb-4 border-b border-gray-100">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
+              {/* Ícone do motorista */}
               <UserCircle className="w-9 h-9 text-blue-500 flex-shrink-0" />
+
               <div className="min-w-0">
                 <h3 className="text-base font-semibold text-gray-800 truncate">
-                  {motorista.usuario.nome.split(' ')[0]} {motorista.usuario.nome.split(' ')[motorista.usuario.nome.split(' ').length - 1]}
+                  {nomeExibido}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
                   <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -39,13 +94,15 @@ export default function MotoristaCard({ motorista }: MotoristaCardProps) {
                 </div>
               </div>
             </div>
+
+            {/* Badge de perfil */}
             <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
               Motorista
             </span>
           </div>
         </div>
 
-        {/* Informações do motorista */}
+        {/* ==================== INFORMAÇÕES ==================== */}
         <div className="px-5 py-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Telefone */}
@@ -82,9 +139,10 @@ export default function MotoristaCard({ motorista }: MotoristaCardProps) {
           </div>
         </div>
 
-        {/* Botões */}
+        {/* ==================== BOTÕES ==================== */}
         <div className="px-5 pb-5 pt-4 border-t border-gray-100">
           <div className="flex flex-col sm:flex-row gap-3">
+            {/* Botão Notificar */}
             <button
               onClick={() => setIsNotificacaoModalOpen(true)}
               className={cn(
@@ -99,6 +157,7 @@ export default function MotoristaCard({ motorista }: MotoristaCardProps) {
               <span>Notificar</span>
             </button>
 
+            {/* Botão Veículos */}
             <Link
               href={`/gestor/motoristas/veiculos/${motorista.usuario.id}`}
               className={cn(
@@ -117,7 +176,7 @@ export default function MotoristaCard({ motorista }: MotoristaCardProps) {
         </div>
       </article>
 
-      {/* Modal de Notificação */}
+      {/* ==================== MODAL DE NOTIFICAÇÃO ==================== */}
       <NotificacaoModal
         isOpen={isNotificacaoModalOpen}
         onClose={() => setIsNotificacaoModalOpen(false)}

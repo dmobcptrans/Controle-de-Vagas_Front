@@ -20,46 +20,46 @@ import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 /**
  * @component EditarVeiculo
  * @version 1.0.0
- * 
+ *
  * @description Formulário de edição de veículo para motoristas.
  * Permite atualizar dados do veículo e proprietário.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 CAMPOS EDITÁVEIS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. DADOS DO VEÍCULO:
  *    - Placa (obrigatório)
  *    - Marca (obrigatório)
  *    - Modelo (obrigatório)
  *    - Tipo (obrigatório) - select com 5 opções
- * 
+ *
  * 2. DADOS DO PROPRIETÁRIO:
  *    - CPF (opcional, 11 dígitos)
  *    - CNPJ (opcional, 14 dígitos)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - useActionState: Gerencia estado da Server Action
  * - Wrapper assíncrono: Para compatibilidade com useActionState
  * - Máscaras: CPF e CNPJ com remoção de caracteres não numéricos
  * - Hidden inputs: IDs do veículo e usuário (não mostrados no código atual)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - atualizarVeiculo: Server Action de atualização
  * - FormItem: Campo com label e descrição
  * - SelecaoCustomizada: Select estilizado para tipo de veículo
- * 
+ *
  * @example
  * ```tsx
  * <EditarVeiculo veiculo={veiculo} />
  * ```
- * 
+ *
  * @see /src/lib/api/veiculoApi.ts - Função atualizarVeiculo
  */
 
@@ -81,7 +81,6 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">
       <Card className="w-full max-w-5xl mx-auto">
-        
         {/* Header do card */}
         <CardHeader className="space-y-3 text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -98,7 +97,6 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
         {/* Formulário */}
         <Form action={atualizarVeiculoAction}>
           <CardContent className="p-4 md:p-6 lg:p-8">
-            
             {/* ==================== MENSAGEM DE ERRO ==================== */}
             {state?.error && (
               <div className="flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-4 mb-6 text-red-900">
@@ -164,9 +162,15 @@ export default function EditarVeiculo({ veiculo }: { veiculo: Veiculo }) {
                 name="tipo"
                 placeholder="Selecione o tipo"
                 options={[
-                  { value: 'AUTOMOVEL', label: 'Carro - Até 5 metros' },
-                  { value: 'VUC', label: 'VUC - 6 a 7 metros' },
-                  { value: 'CAMINHONETA', label: 'Caminhoneta - Até 8 metros' },
+                  {
+                    value: 'AUTOMOVEL',
+                    label: 'Carro - Até 5 metros',
+                  },
+                  {
+                    value: 'CAMINHONETA',
+                    label: 'Caminhonete - Até 6 metros',
+                  },
+                  { value: 'VUC', label: 'VUC - Até a 8 metros' },
                   {
                     value: 'CAMINHAO_MEDIO',
                     label: 'Caminhão Médio - 9 a 12 metros',
