@@ -471,7 +471,7 @@ export default function CadastroGestores() {
                           placeholder="gestor@organizacao.com"
                           required
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => setEmail(e.target.value.toLowerCase)}
                           autoComplete="email"
                         />
                         {/* Ícone de email */}
@@ -501,7 +501,9 @@ export default function CadastroGestores() {
                           placeholder="gestor@organizacao.com"
                           required
                           value={confirmarEmail}
-                          onChange={(e) => setConfirmarEmail(e.target.value)}
+                          onChange={(e) =>
+                            setConfirmarEmail(e.target.value.toLowerCase)
+                          }
                           autoComplete="email"
                         />
                         {/* Ícone de validação (verde quando igual) */}

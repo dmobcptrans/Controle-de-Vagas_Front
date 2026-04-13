@@ -9,7 +9,98 @@ interface ReservaPlacaCardProps {
   reserva: ReservaPlaca;
 }
 
+/**
+ * @component ReservaPlacaCard
+ * @version 1.0.0
+ *
+ * @description Card de exibição de reserva para consulta por placa.
+ * Exibe todas as informações relevantes da reserva em um formato compacto e organizado.
+ *
+ * ----------------------------------------------------------------------------
+ * 📋 INFORMAÇÕES EXIBIDAS:
+ * ----------------------------------------------------------------------------
+ *
+ * 1. HEADER:
+ *    - Nome do motorista (título)
+ *    - Badge com status colorido
+ *
+ * 2. VEÍCULO:
+ *    - Marca e modelo
+ *    - Placa
+ *    - Tamanho em metros
+ *
+ * 3. LOCALIZAÇÃO DA VAGA:
+ *    - Logradouro e número
+ *    - Bairro
+ *    - Referência (se houver)
+ *
+ * 4. DATAS:
+ *    - Início (data e hora)
+ *    - Fim (data e hora)
+ *
+ * 5. MOTORISTA E CRIAÇÃO:
+ *    - Nome do motorista
+ *    - Quem criou a reserva (se disponível)
+ *
+ * 6. RODAPÉ:
+ *    - Código PMP da vaga
+ *    - Data de criação da reserva
+ *
+ * ----------------------------------------------------------------------------
+ * 🧠 DECISÕES TÉCNICAS:
+ * ----------------------------------------------------------------------------
+ *
+ * - getStatusColor: Função que retorna classes Tailwind baseadas no status
+ *   - ATIVA: verde
+ *   - RESERVADA: azul
+ *   - Outros: cinza (fallback)
+ *
+ * - formatDate: Formatação de datas com date-fns e locale pt-BR
+ *   - Fallback para string original se a data for inválida
+ *   - Formato: "dd/MM/yyyy 'às' HH:mm"
+ *
+ * - LAYOUT RESPONSIVO:
+ *   - Datas em grid: 1 coluna (mobile) / 2 colunas (md+)
+ *   - Ícones fixos à esquerda para alinhamento visual
+ *
+ * - TRATAMENTO DE DADOS OPCIONAIS:
+ *   - `reserva.referenciaEndereco` só é exibido se existir
+ *   - `reserva.criadoPor` só é exibido se existir
+ *
+ * ----------------------------------------------------------------------------
+ * 🎨 CORES DOS STATUS:
+ * ----------------------------------------------------------------------------
+ *
+ * | Status     | Cor           | Uso                          |
+ * |------------|---------------|------------------------------|
+ * | ATIVA      | 🟢 Verde      | Reserva em andamento         |
+ * | RESERVADA  | 🔵 Azul       | Reserva agendada             |
+ * | Outros     | ⚪ Cinza      | Finalizada, cancelada, etc.  |
+ *
+ * ----------------------------------------------------------------------------
+ * 🔗 COMPONENTES RELACIONADOS:
+ * ----------------------------------------------------------------------------
+ *
+ * - Badge: Componente de status
+ * - Card: Container principal
+ * - Lucide icons: Ícones visuais
+ * - date-fns: Formatação de datas
+ *
+ * @example
+ * ```tsx
+ * <ReservaPlacaCard reserva={reserva} />
+ * ```
+ *
+ * @see /src/lib/types/reservaPlaca.ts - Tipo ReservaPlaca
+ */
+
 export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
+  /**
+   * @function getStatusColor
+   * @description Retorna classes CSS baseadas no status da reserva
+   * @param status - Status da reserva
+   * @returns Classes Tailwind para cor de fundo, texto e borda
+   */
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ATIVA':
@@ -21,6 +112,12 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
     }
   };
 
+  /**
+   * @function formatDate
+   * @description Formata data ISO para o padrão brasileiro
+   * @param dateString - Data em formato ISO string
+   * @returns Data formatada (dd/MM/yyyy 'às' HH:mm) ou string original se inválida
+   */
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -32,6 +129,7 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
 
   return (
     <Card className="w-full overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-200">
+      {/* ==================== HEADER ==================== */}
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold text-gray-800 truncate">
@@ -43,8 +141,9 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
         </div>
       </CardHeader>
 
+      {/* ==================== CONTEÚDO ==================== */}
       <CardContent className="space-y-4">
-        {/* Informações do Veículo */}
+        {/* Seção: Veículo */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Car className="w-4 h-4 text-blue-600" />
@@ -65,7 +164,7 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
           </div>
         </div>
 
-        {/* Localização da Vaga */}
+        {/* Seção: Localização da Vaga */}
         <div className="space-y-2">
           <div className="flex items-start gap-2">
             <MapPin className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -77,6 +176,7 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
               <p className="text-sm text-gray-600">
                 {reserva.enderecoVaga.bairro}
               </p>
+              {/* Referência (opcional) */}
               {reserva.referenciaEndereco && (
                 <p className="text-sm text-gray-500 mt-1">
                   <span className="font-medium">Referência:</span>{' '}
@@ -87,7 +187,7 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
           </div>
         </div>
 
-        {/* Datas */}
+        {/* Seção: Datas (grid responsivo) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-blue-600" />
@@ -107,8 +207,9 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
           </div>
         </div>
 
-        {/* Informações do Motorista */}
+        {/* Seção: Informações do Motorista e Criação */}
         <div className="space-y-2 pt-2 border-t border-gray-100">
+          {/* Motorista (proprietário da reserva) */}
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-blue-600" />
             <div className="flex-1">
@@ -116,6 +217,8 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
               <p className="text-sm text-gray-900">{reserva.motoristaNome}</p>
             </div>
           </div>
+
+          {/* Criador da reserva (opcional - pode ser agente/gestor) */}
           {reserva.criadoPor && (
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-blue-600" />
@@ -129,7 +232,7 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
           )}
         </div>
 
-        {/* Código PMP */}
+        {/* Rodapé com metadados */}
         <div className="pt-2 border-t border-gray-100">
           <p className="text-xs text-gray-500">
             <strong>Código PMP:</strong> {reserva.enderecoVaga.codigoPmp}

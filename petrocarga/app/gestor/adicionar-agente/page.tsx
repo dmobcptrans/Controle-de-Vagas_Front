@@ -441,7 +441,7 @@ export default function CadastroAgentes() {
                           placeholder="agente@organizacao.com"
                           required
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => setEmail(e.target.value.toLowerCase)}
                           autoComplete="email"
                         />
                         {/* Ícone decorativo */}
@@ -471,7 +471,9 @@ export default function CadastroAgentes() {
                           placeholder="agente@organizacao.com"
                           required
                           value={confirmarEmail}
-                          onChange={(e) => setConfirmarEmail(e.target.value)}
+                          onChange={(e) =>
+                            setConfirmarEmail(e.target.value.toLowerCase)
+                          }
                           autoComplete="email"
                         />
                         {/* Ícone de validação (verde quando igual) */}
