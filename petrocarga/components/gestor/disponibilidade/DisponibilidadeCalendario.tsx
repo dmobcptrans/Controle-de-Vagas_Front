@@ -4,7 +4,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBr from '@fullcalendar/core/locales/pt-br';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { EventClickArg } from '@fullcalendar/core';
 import type { DateClickArg } from '@fullcalendar/interaction';
@@ -18,6 +18,7 @@ import { useVagas } from '../../hooks/gestor/disponibilidade/useVagas';
 import { useCalendarEvents } from '../../hooks/gestor/disponibilidade/useCalendarEvents';
 
 import type { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
+import { useCalendarioMes } from '@/context/CalendarioMesContext';
 
 /* --------------------------------------------------------------------- */
 /* ----------------------- TIPOS (Manutenção) -------------------------- */
@@ -104,6 +105,9 @@ export default function DisponibilidadeCalendario() {
     setDisponibilidades,
   });
 
+  const { ano, mes } = useCalendarioMes();
+  const calendarRef = useRef<FullCalendar>(null);
+
   // ==================== ESTADOS DOS MODAIS ====================
   const [modalAddOpen, setModalAddOpen] = useState(false);
   const [modalEditOpen, setModalEditOpen] = useState(false);
@@ -121,8 +125,16 @@ export default function DisponibilidadeCalendario() {
     gruposAgrupados: null,
   });
 
+  // ==================== EFFECTS ====================
+
+  useEffect(() => {
+    const api = calendarRef.current?.getApi();
+    if (!api) return;
+    api.gotoDate(new Date(ano, mes, 1));
+  }, [ano, mes]);
+
   // ==================== HANDLERS ====================
-  
+
   /**
    * @function handleDateClick
    * @description Abre modal de adição ao clicar em um dia do calendário
@@ -178,23 +190,28 @@ export default function DisponibilidadeCalendario() {
 
   // ==================== RENDERIZAÇÃO ====================
   return (
-    <div className="p-4">
-      
+    <div>
+
       {/* ==================== CALENDÁRIO ==================== */}
-      <FullCalendar
+     <FullCalendar
+        ref={calendarRef}
         plugins={[dayGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        timeZone="local"
         locale={ptBr}
-        height="80vh"
+        initialView="dayGridMonth"
+        height="auto"
+        dayMaxEventRows={3}
+        eventDisplay="block"
+        expandRows={true}
+        showNonCurrentDates={false}
+        fixedWeekCount={false}
+        contentHeight="auto"
         events={eventos}
-        timeZoneParam="UTC"
         dateClick={handleDateClick}
         eventClick={handleEventClick}
         headerToolbar={{
-          left: 'prev next',
-          center: 'title',
-          right: 'today',
+          left: '',
+          center: '',
+          right: '',
         }}
       />
 

@@ -216,9 +216,45 @@ export async function getReservasPorUsuario(
  * console.log(`Total de reservas: ${reservas.length}`);
  * ```
  */
-export async function getReservas() {
+type GetReservasParams = {
+  data?: string;
+  mes?: number;
+  ano?: number;
+  status?: string[]; 
+};
+
+export async function getReservas(params?: GetReservasParams) {
   try {
-    const res = await clientApi('/petrocarga/reservas/all');
+    let url = '/petrocarga/reservas/all';
+
+    if (params) {
+      const query = new URLSearchParams();
+
+      if (params.data) {
+        query.append('data', params.data);
+      }
+
+      if (params.mes !== undefined) {
+        query.append('mes', String(params.mes));
+      }
+
+      if (params.ano !== undefined) {
+        query.append('ano', String(params.ano));
+      }
+
+      if (params.status && params.status.length > 0) {
+        params.status.forEach((s) => {
+          query.append('status', s);
+        });
+      }
+
+      const queryString = query.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+
+    const res = await clientApi(url);
     return res.json();
   } catch (err: unknown) {
     const message =
@@ -226,7 +262,6 @@ export async function getReservas() {
     throw new Error(message);
   }
 }
-
 // ----------------------
 // GET RESERVAS BLOQUEIOS
 // ----------------------
