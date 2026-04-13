@@ -20,7 +20,6 @@ import { Denuncia } from '@/lib/types/denuncias';
 import toast from 'react-hot-toast';
 import { useNotifications } from '@/context/NotificationContext';
 import { ReservaRapida } from '@/lib/types/reservaRapida';
-import { CTA } from '@/components/ui/CTA/CTA';
 
 /**
  * Configuração de cores e rótulos para cada status de reserva rápida
@@ -278,10 +277,22 @@ export default function Dashboard() {
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA principal - Reservar vaga rápida */}
         <div className="-mt-4 mb-5">
-          <CTA href="/agente/reserva-rapida"
-            title="Reservar uma vaga"
-            description="Encontre e faça uma reserva rápida"
-            icon={<CalendarPlus className="h-5 w-5 text-white" />} />
+          <Link
+            href="/agente/reserva-rapida"
+            className="flex items-center justify-between bg-[#071D41] hover:bg-[#0C3D8A] transition-colors rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]"
+          >
+            <div>
+              <p className="text-white font-semibold text-[15px] mb-0.5">
+                Reservar uma vaga
+              </p>
+              <p className="text-white/60 text-xs">
+                Encontre e faça uma reserva rápida
+              </p>
+            </div>
+            <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+              <CalendarPlus className="h-5 w-5 text-white" />
+            </div>
+          </Link>
         </div>
 
         {/* ==================== CARDS DE ESTATÍSTICAS ==================== */}
@@ -314,7 +325,7 @@ export default function Dashboard() {
 
         {/* ==================== CTA CONSULTA DE PLACA ==================== */}
         <div className="mb-5">
-          <CTA
+          <Link
             href="/agente/consulta"
             className="flex items-center justify-between bg-white hover:bg-black/10 transition-colors rounded-2xl px-5 py-4 border-l-4 border-green-700 shadow-sm"
           >
