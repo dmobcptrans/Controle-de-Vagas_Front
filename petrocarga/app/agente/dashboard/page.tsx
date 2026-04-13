@@ -10,6 +10,7 @@ import {
   Info,
   MapPin,
   Clock,
+  Bell,
   Truck,
   CarIcon,
 } from 'lucide-react';
