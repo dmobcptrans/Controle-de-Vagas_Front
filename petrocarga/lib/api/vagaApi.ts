@@ -252,6 +252,59 @@ export async function getVagas(status?: string): Promise<Vaga[]> {
   }
 }
 
+type GetVagasParams = {
+  status?: string;
+  numeroPagina?: number;
+  tamanhoPagina?: number;
+  ordenarPor?: string;
+  logradouro?: string;
+};
+
+export async function getVagasFiltradas(params?: GetVagasParams): Promise<Vaga[]> {
+  try {
+    const queryParams = new URLSearchParams();
+
+    if (params?.status) {
+      queryParams.append('status', params.status);
+    }
+
+    if (params?.numeroPagina !== undefined) {
+      queryParams.append('numeroPagina', String(params.numeroPagina));
+    }
+
+    if (params?.tamanhoPagina !== undefined) {
+      queryParams.append('tamanhoPagina', String(params.tamanhoPagina));
+    }
+
+    if (params?.ordenarPor) {
+      queryParams.append('ordenarPor', params.ordenarPor);
+    }
+
+    if (params?.logradouro !== undefined && params.logradouro !== "") {
+      queryParams.append('logradouro', String(params.logradouro));
+    }
+
+    // AJUSTE 1: Troca os sinais de '+' gerados pelo URLSearchParams por '%20'
+    const queryString = queryParams.toString().replace(/\+/g, '%20');
+
+    const query = queryString
+      ? `?${queryString}`
+      : '';
+
+    // AJUSTE 2: Remove o '/all' da rota para bater com o seu padrão
+    const res = await clientApi(`/petrocarga/vagas${query}`, {
+      method: 'GET',
+    });
+
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data?.content ?? []);
+  } catch (err) {
+    const error = err as ApiError; // Assumindo que ApiError está tipado em outro lugar
+    console.error('Erro ao buscar vagas:', error);
+    return [];
+  }
+}
+
 // ----------------------
 // GET VAGAS COM FILTROS (versão alternativa com mais filtros)
 // ----------------------
