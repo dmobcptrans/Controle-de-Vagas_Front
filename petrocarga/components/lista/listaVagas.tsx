@@ -92,7 +92,7 @@ useEffect(() => {
   const fetchVagas = async () => {
     setLoading(true);
     try {
-      const data: Vaga[] = await vagaActions.getVagas({
+      const data: Vaga[] = await vagaActions.getVagasFiltradas({
         logradouro: searchQuery,
       });
 
