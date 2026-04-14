@@ -85,7 +85,7 @@ export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasP
   const [error, setError] = useState<string | null>(null);
 
   const filtroDebounced = useDebounce(filtro, 300);
-  console.log('pesquisa:', searchQuery);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // ==================== CARREGAMENTO INICIAL ====================
 useEffect(() => {
@@ -93,12 +93,12 @@ useEffect(() => {
     setLoading(true);
     try {
       const data: Vaga[] = await vagaActions.getVagasFiltradas({
-        logradouro: searchQuery,
+        logradouro: debouncedSearchQuery,
       });
 
       setVagas(data);
 
-      if (data.length > 0 && onSelectFirstCoordinate && searchQuery !== '') {
+      if (data.length > 0 && onSelectFirstCoordinate && debouncedSearchQuery !== '') {
         const primeira = data[0];
 
         const geo = primeira?.referenciaGeoInicio || primeira?.referenciaGeoFim;
@@ -125,7 +125,7 @@ useEffect(() => {
   };
 
   fetchVagas();
-}, [searchQuery]);
+}, [debouncedSearchQuery]);
 
   // ==================== FILTRO ====================
   const vagasFiltradas = vagas.filter((vaga) => {
