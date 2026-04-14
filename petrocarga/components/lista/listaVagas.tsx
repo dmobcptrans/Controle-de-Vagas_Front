@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import VagaItem from '@/components/gestor/cards/vagas-item';
 import { Vaga } from '@/lib/types/vaga';
-import { ChevronUp, ChevronDown } from 'lucide-react';
 import * as vagaActions from '@/lib/api/vagaApi';
 
 /**
@@ -26,6 +25,10 @@ function useDebounce(value: string, delay = 300) {
   return debouncedValue;
 }
 
+type ListaVagasProps = {
+  searchQuery: string;
+  onSelectFirstCoordinate?: (coord: { lat: number; lng: number }) => void;
+};
 /**
  * @component ListaVagas
  * @version 1.0.0
@@ -74,7 +77,7 @@ function useDebounce(value: string, delay = 300) {
  * ```
  */
 
-export function ListaVagas() {
+export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasProps) {
   const [vagas, setVagas] = useState<Vaga[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('');
@@ -82,25 +85,47 @@ export function ListaVagas() {
   const [error, setError] = useState<string | null>(null);
 
   const filtroDebounced = useDebounce(filtro, 300);
+  console.log('pesquisa:', searchQuery);
 
   // ==================== CARREGAMENTO INICIAL ====================
-  useEffect(() => {
-    const fetchVagas = async () => {
-      setLoading(true);
-      try {
-        const data: Vaga[] = await vagaActions.getVagas();
-        setVagas(data);
-      } catch (err) {
-        console.error('Erro ao carregar vagas:', err);
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
-        setVagas([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const fetchVagas = async () => {
+    setLoading(true);
+    try {
+      const data: Vaga[] = await vagaActions.getVagasFiltradas({
+        logradouro: searchQuery,
+      });
 
-    fetchVagas();
-  }, []);
+      setVagas(data);
+
+      if (data.length > 0 && onSelectFirstCoordinate && searchQuery !== '') {
+        const primeira = data[0];
+
+        const geo = primeira?.referenciaGeoInicio || primeira?.referenciaGeoFim;
+
+        if (geo) {
+          const [latStr, lngStr] = geo.split(',');
+
+          const lat = Number(latStr.trim());
+          const lng = Number(lngStr.trim());
+
+          if (!isNaN(lat) && !isNaN(lng)) {
+            onSelectFirstCoordinate({ lat, lng });
+          }
+        }
+      }
+
+    } catch (err) {
+      console.error('Erro ao carregar vagas:', err);
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      setVagas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchVagas();
+}, [searchQuery]);
 
   // ==================== FILTRO ====================
   const vagasFiltradas = vagas.filter((vaga) => {
@@ -135,32 +160,6 @@ export function ListaVagas() {
   return (
     <div className="flex flex-col h-full">
       
-      {/* ==================== BARRA DE FILTRO E ORDENAÇÃO ==================== */}
-      <div className="mb-2 flex items-center gap-2">
-        <input
-          type="text"
-          placeholder="Filtrar por área, rua ou bairro..."
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          className="flex-1 p-2 rounded border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
-        />
-        <button
-          onClick={() => setDisponiveisPrimeiro(!disponiveisPrimeiro)}
-          className="p-2 rounded border border-gray-300 shadow-sm hover:bg-gray-100"
-          title={
-            disponiveisPrimeiro
-              ? 'Disponíveis por último'
-              : 'Disponíveis primeiro'
-          }
-        >
-          {disponiveisPrimeiro ? (
-            <ChevronUp size={18} />
-          ) : (
-            <ChevronDown size={18} />
-          )}
-        </button>
-      </div>
-
       {/* ==================== LISTA SCROLLÁVEL ==================== */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">
         

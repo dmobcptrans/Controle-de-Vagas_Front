@@ -19,6 +19,8 @@ interface MapboxFeature {
 interface MapProps {
   selectedPlace: MapboxFeature | null;
   onSelectPlace?: (place: MapboxFeature) => void;
+  searchQuery?: string;
+  firstCoord?: { lat: number; lng: number } | null; 
 }
 
 /**
@@ -75,7 +77,7 @@ interface MapProps {
  * ```
  */
 
-export function ViewMap({ selectedPlace, onSelectPlace }: MapProps) {
+export function ViewMap({ selectedPlace, onSelectPlace, searchQuery, firstCoord }: MapProps){
   const mapContainer = useRef<HTMLDivElement>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -94,15 +96,20 @@ export function ViewMap({ selectedPlace, onSelectPlace }: MapProps) {
    * - Adiciona um marcador temporário no local
    * - Remove o marcador anterior se existir
    */
-  useEffect(() => {
-    if (!map || !selectedPlace || !map.isStyleLoaded()) return;
+useEffect(() => {
+  if (!map || !firstCoord) return;
 
-    const [lng, lat] = selectedPlace.geometry.coordinates;
-    map.flyTo({ center: [lng, lat], zoom: 14 });
+  const { lat, lng } = firstCoord;
 
-    if (markerRef.current) markerRef.current.remove();
-    markerRef.current = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
-  }, [selectedPlace, map]);
+  map.flyTo({
+    center: [lng, lat],
+    zoom: 16,
+    speed: 1.2,
+    curve: 1.4,
+    essential: true,
+  });
+
+}, [firstCoord, map]);
 
   // ==================== EFEITO: MARCADORES DE VAGAS ====================
   /**
@@ -115,10 +122,10 @@ export function ViewMap({ selectedPlace, onSelectPlace }: MapProps) {
   }, [vagas, map, mapLoaded]);
 
   return (
-    <div className="w-full h-full rounded-lg overflow-visible relative">
+    <div className="w-full h-full rounded-2xl overflow-visible relative">
       <div
         ref={mapContainer}
-        className="w-full h-full rounded-lg shadow-md overflow-visible"
+        className="w-full h-full rounded-2xl shadow-md overflow-visible"
         style={{ minHeight: '300px' }}
       />
       
