@@ -93,8 +93,8 @@ let globalMap: mapboxgl.Map | null = null;
 export function useMapbox({
   containerRef,
   onSelectPlace,
-  enableSearch = true,
-  enableNavigation = true,
+  enableSearch = false,
+  enableNavigation = false,
   enableGeolocate = false,
   expandSearch = false,
 }: UseMapboxProps) {
