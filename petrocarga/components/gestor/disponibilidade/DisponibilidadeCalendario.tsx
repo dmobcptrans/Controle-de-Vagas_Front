@@ -35,52 +35,52 @@ interface ExtendedPropsDisponibilidade {
 /**
  * @component DisponibilidadeCalendario
  * @version 1.0.0
- * 
+ *
  * @description Calendário interativo para gerenciamento de disponibilidade de vagas.
  * Permite visualizar, adicionar e editar disponibilidades por dia e logradouro.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FUNCIONALIDADES:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. CALENDÁRIO:
  *    - Visualização mensal (dayGridMonth)
  *    - Navegação por mês (prev/next)
  *    - Botão "Hoje" para voltar ao mês atual
- * 
+ *
  * 2. INTERAÇÕES:
  *    - Clique em um dia → abre modal para adicionar disponibilidade
  *    - Clique em um evento → abre modal para editar/excluir disponibilidade
- * 
+ *
  * 3. EVENTOS:
  *    - Eventos agrupados (múltiplos logradouros): cor verde (#22c55e)
  *    - Eventos individuais (único logradouro): cor azul (#3b82f6)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 HOOKS UTILIZADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - useDisponibilidadesData: Dados de disponibilidades agrupadas
  * - useVagas: Lista de vagas e agrupamento por logradouro
  * - useCalendarEvents: Converte disponibilidades em eventos do FullCalendar
  * - useDisponibilidadeActions: Ações de CRUD (salvar, editar, remover)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - ESTADO CONSOLIDADO: modalState agrupa dados para os modais
  * - EVENTOS AGRUPADOS: Verdes quando há múltiplos logradouros no mesmo intervalo
  * - EVENTOS INDIVIDUAIS: Azuis quando apenas um logradouro
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - AdicionarModal: Modal para criar nova disponibilidade
  * - EditarModal: Modal para editar/excluir disponibilidade
  * - FullCalendar: Biblioteca de calendário
- * 
+ *
  * @example
  * ```tsx
  * <DisponibilidadeCalendario />
@@ -88,15 +88,17 @@ interface ExtendedPropsDisponibilidade {
  */
 
 export default function DisponibilidadeCalendario() {
+  const { ano, mes } = useCalendarioMes();
+  const calendarRef = useRef<FullCalendar>(null);
   // ==================== HOOKS ====================
-  const { disponibilidadesAgrupadas, setDisponibilidades } =
-    useDisponibilidadesData();
+  const { disponibilidadesAgrupadas, setDisponibilidades } = useDisponibilidadesData({mes: mes + 1, ano: ano} );
 
   const { vagas, vagasPorLogradouro } = useVagas();
+  console.log('disponibilidadesAgrupadas', disponibilidadesAgrupadas);
+  console.log('vagas', vagas)
 
   const { eventos } = useCalendarEvents({
-    disponibilidadesAgrupadas,
-    vagas,
+    disponibilidadesAgrupadas
   });
 
   const actions = useDisponibilidadeActions({
@@ -104,9 +106,6 @@ export default function DisponibilidadeCalendario() {
     disponibilidadesAgrupadas,
     setDisponibilidades,
   });
-
-  const { ano, mes } = useCalendarioMes();
-  const calendarRef = useRef<FullCalendar>(null);
 
   // ==================== ESTADOS DOS MODAIS ====================
   const [modalAddOpen, setModalAddOpen] = useState(false);
@@ -132,6 +131,8 @@ export default function DisponibilidadeCalendario() {
     if (!api) return;
     api.gotoDate(new Date(ano, mes, 1));
   }, [ano, mes]);
+  
+  
 
   // ==================== HANDLERS ====================
 
@@ -147,7 +148,7 @@ export default function DisponibilidadeCalendario() {
   /**
    * @function handleEventClick
    * @description Abre modal de edição ao clicar em um evento
-   * 
+   *
    * Comportamento:
    * - Se evento agrupado (múltiplos logradouros): abre modal com grupos
    * - Se evento individual (único logradouro): abre modal com aquele logradouro
@@ -191,9 +192,8 @@ export default function DisponibilidadeCalendario() {
   // ==================== RENDERIZAÇÃO ====================
   return (
     <div>
-
       {/* ==================== CALENDÁRIO ==================== */}
-     <FullCalendar
+      <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, interactionPlugin]}
         locale={ptBr}
