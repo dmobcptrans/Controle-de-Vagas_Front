@@ -99,18 +99,43 @@ export async function addDisponibilidadeVagas(formData: FormData) {
  * }
  * ```
  */
-export async function getDisponibilidadeVagas() {
+
+type GetDisponibilidadesParam = {
+  mes?: number;
+  ano?: number;
+};
+
+export async function getDisponibilidadeVagas(params?: GetDisponibilidadesParam) {
   try {
-    const res = await clientApi('/petrocarga/disponibilidade-vagas', {
+    let url = '/petrocarga/disponibilidade-vagas';
+
+    if (params) {
+      const query = new URLSearchParams();
+
+      if (params.mes !== undefined) {
+        query.append('mes', String(params.mes));
+      }
+
+      if (params.ano !== undefined) {
+        query.append('ano', String(params.ano));
+      }
+
+      const queryString = query.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+
+    const res = await clientApi(url, {
       method: 'GET',
     });
+
     return await res.json();
   } catch (err) {
     console.error('Erro ao buscar disponibilidade:', err);
     throw err;
   }
 }
-
 // ----------------------
 // GET DISPONIBILIDADE VAGAS POR VAGAID
 // ----------------------

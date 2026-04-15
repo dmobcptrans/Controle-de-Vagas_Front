@@ -67,10 +67,14 @@ import { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
  * ```
  */
 
-export function useDisponibilidadesData() {
+type Props = {
+  mes?: number;
+  ano?: number;
+};
+export function useDisponibilidadesData({ mes, ano }: Props) {
   // ==================== HOOK BASE ====================
-  const { disponibilidades, setDisponibilidades, loading } =
-    useDisponibilidade();
+  const { disponibilidades, setDisponibilidades } =
+    useDisponibilidade({ mes, ano });
 
   // ==================== AGRUPAMENTO POR LOGRADOURO E INTERVALO ====================
   /**
@@ -113,7 +117,6 @@ export function useDisponibilidadesData() {
   return {
     disponibilidades,
     disponibilidadesAgrupadas,
-    setDisponibilidades,
-    loadingDisponibilidades: loading,
+    setDisponibilidades
   };
 }
