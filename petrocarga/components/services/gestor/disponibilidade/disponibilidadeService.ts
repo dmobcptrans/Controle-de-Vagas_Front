@@ -22,38 +22,11 @@ import {
  * ----------------------------------------------------------------------------
  * 🔗 FUNÇÕES INTERNAS (API):
  * ----------------------------------------------------------------------------
- * 
- * - getDisponibilidadeVagas: GET /petrocarga/disponibilidade-vagas
  * - addDisponibilidadeVagas: POST /petrocarga/disponibilidade-vagas/vagas
  * - editarDisponibilidadeVagas: PATCH /petrocarga/disponibilidade-vagas/{id}
  * - deleteDisponibilidadeVagas: DELETE /petrocarga/disponibilidade-vagas/{id}
  */
 
-// -------------------------------------------------------
-// GET — Carregar todas as disponibilidades
-// -------------------------------------------------------
-
-/**
- * @function fetchDisponibilidades
- * @description Lista todas as disponibilidades de vagas cadastradas no sistema.
- * 
- * @returns Promise<DisponibilidadeVaga[]> - Array de disponibilidades
- * 
- * @throws {Error} Dispara erro se a requisição falhar
- * 
- * @example
- * ```ts
- * try {
- *   const disponibilidades = await fetchDisponibilidades();
- *   console.log(`Total: ${disponibilidades.length}`);
- * } catch (error) {
- *   console.error('Erro ao carregar disponibilidades:', error);
- * }
- * ```
- */
-export async function fetchDisponibilidades() {
-  return await getDisponibilidadeVagas();
-}
 
 // -------------------------------------------------------
 // POST — Criar disponibilidade

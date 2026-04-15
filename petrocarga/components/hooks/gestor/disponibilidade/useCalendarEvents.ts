@@ -3,7 +3,6 @@ import type { EventInput } from '@fullcalendar/core';
 
 // Importando tipos necessários
 import type { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
-import type { Vaga } from '@/lib/types/vaga';
 
 /* ----------------------- TIPOS DO EVENTO DO CALENDÁRIO ------------------- */
 
@@ -22,8 +21,7 @@ interface EventoDisponibilidade extends EventInput {
 /* ----------------------- INTERFACE DE PROPS DO HOOK ---------------------- */
 
 interface UseCalendarEventsProps {
-  disponibilidadesAgrupadas: Record<string, Record<string, Disponibilidade[]>>;
-  vagas: Vaga[];
+  disponibilidadesAgrupadas: Record<string, Record<string, Disponibilidade[]>>
 }
 
 /* --------------------------- HOOK PRINCIPAL  ------------------------------ */
@@ -34,12 +32,15 @@ interface UseCalendarEventsProps {
  * @param dateStr - Data no formato YYYY-MM-DD
  * @returns Data com um dia adicionado (YYYY-MM-DD)
  */
-function addOneDay(dateStr: string): string {
-  const date = new Date(dateStr);
-  date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().substring(0, 10); // Retorna YYYY-MM-DD
-}
+function addOneDay(dateTimeStr: string): string {
+  const [datePart] = dateTimeStr.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
 
+  const date = new Date(year, month - 1, day); 
+  date.setDate(date.getDate() + 1);
+
+  return date.toISOString().split('T')[0];
+}
 /**
  * @hook useCalendarEvents
  * @version 1.0.0
@@ -102,7 +103,7 @@ function addOneDay(dateStr: string): string {
 
 export function useCalendarEvents({
   disponibilidadesAgrupadas,
-  vagas,
+
 }: UseCalendarEventsProps) {
   const eventos: EventoDisponibilidade[] = useMemo(() => {
     /* ==================== 1. ESTRUTURAS DE AGRUPAMENTO ==================== */
@@ -135,7 +136,7 @@ export function useCalendarEvents({
       const inicioDate = inicioISO.split('T')[0];
 
       // Fim: adiciona +1 dia (intervalo exclusivo do banco)
-      const fimDateAjustada = addOneDay(fimISO.split('T')[0]);
+      const fimDateAjustada = addOneDay(fimISO)
 
       const logradouroGroups = logradouroGroupsByInterval[intervaloKey];
       const logradouroCount = Object.keys(logradouroGroups).length;
@@ -176,7 +177,7 @@ export function useCalendarEvents({
         },
       } as EventoDisponibilidade;
     });
-  }, [disponibilidadesAgrupadas, vagas]);
+  }, [disponibilidadesAgrupadas]);
 
   return { eventos };
 }
