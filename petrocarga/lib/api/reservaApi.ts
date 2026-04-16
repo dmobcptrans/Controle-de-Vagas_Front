@@ -125,19 +125,17 @@ export async function reservarVaga(formData: FormData): Promise<ConfirmResult> {
  * ```
  */
 export async function finalizarForcado(reservaID: string) {
-  try {
-    const res = await clientApi(
-      `/petrocarga/reservas/${reservaID}/finalizar-forcado`,
-      {
-        method: 'POST',
-      },
-    );
-    return res.json();
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : 'Erro ao finalizar reserva forçada.';
-    throw new Error(message);
+  const res = await clientApi(
+    `/petrocarga/reservas/${reservaID}/finalizar-forcado`,
+    { method: 'POST' },
+  );
+
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    throw new Error(errorBody?.message || `Erro HTTP ${res.status}`);
   }
+
+  return res.json();
 }
 
 // ----------------------

@@ -2,7 +2,7 @@
 
 import ReservaRapidaCard from '@/components/agente/cards/reservaRapida-card';
 import { useAuth } from '@/components/hooks/useAuth';
-import { getReservasRapidas } from '@/lib/api/reservaApi';
+import {  finalizarForcado, getReservasRapidas } from '@/lib/api/reservaApi';
 import { ReservaRapida } from '@/lib/types/reservaRapida';
 import {
   AlertCircle,
@@ -22,6 +22,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { Paginacao } from '@/components/paginacao/paginacao';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 const ITENS_POR_PAGINA = 10;
 
@@ -217,6 +218,16 @@ export default function ReservaRapidaPage() {
       setIsLoadingReservas(false);
     }
   }, [user?.id, paginaAtual, filtroStatus, busca]);
+
+const handleCheckoutReserva = useCallback(async (reservaId: string) => {
+  try {
+    await finalizarForcado(reservaId);
+    toast.success('Checkout realizado com sucesso!');
+    await fetchReservas();
+  } catch {
+    toast.error('Erro ao realizar checkout da reserva.');
+  }
+}, [fetchReservas]);
 
   // Carrega dados quando página, filtro de status ou busca mudam
   useEffect(() => {
@@ -758,7 +769,7 @@ export default function ReservaRapidaPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 {reservas.map((reserva: ReservaRapida) => (
                   <div key={reserva.id} className="h-full">
-                    <ReservaRapidaCard reserva={reserva} />
+                    <ReservaRapidaCard reserva={reserva} onCheckout={handleCheckoutReserva}/>
                   </div>
                 ))}
               </div>
