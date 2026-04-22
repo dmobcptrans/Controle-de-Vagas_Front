@@ -389,6 +389,23 @@ export default function Cadastro() {
               />
             </FormItem>
 
+            {tipo === 'perpendicular' && (
+              <FormItem
+                name="Quantidade"
+                description="Número de vagas disponíveis"
+              >
+                <Input
+                  className="rounded-sm border-gray-400 text-sm md:text-base"
+                  id="quantidade"
+                  name="quantidade"
+                  type="number"
+                  placeholder="1"
+                  step="1"
+                  min="1"
+                />
+              </FormItem>
+            )}
+
             {/* Campo 8: Descrição (textarea) */}
             <FormItem
               name="Descrição"

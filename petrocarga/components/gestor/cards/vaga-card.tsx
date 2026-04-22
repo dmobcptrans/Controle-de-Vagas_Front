@@ -221,6 +221,11 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
         <p>
           <strong>Tipo:</strong> {vaga.tipoVaga}
         </p>
+        {vaga.tipoVaga === 'PERPENDICULAR' && (
+          <p>
+            <strong>Quantidade:</strong> {vaga.quantidade}
+          </p>
+        )}
       </section>
 
       {/* ==================== METADADOS ==================== */}

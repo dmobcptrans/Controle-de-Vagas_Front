@@ -64,6 +64,7 @@ function buildVagaPayload(formData: FormData): VagaPayload {
     referenciaGeoInicio: formData.get('localizacao-inicio'),
     referenciaGeoFim: formData.get('localizacao-fim'),
     comprimento: Number(formData.get('comprimento')),
+    quantidade: Number(formData.get('quantidade')) || 1,
     operacoesVaga: diasSemana.map((dia) => ({
       codigoDiaSemana: dia.codigoDiaSemana
         ? Number(dia.codigoDiaSemana)
