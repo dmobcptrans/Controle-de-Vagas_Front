@@ -198,6 +198,13 @@ export default function ReservaRapidaCard({
             <MapPin className="w-4 h-4 text-gray-400" />
             {reserva.logradouro}, {reserva.bairro}
           </span>
+          
+          {reserva.cidadeOrigem !== "Petrópolis - RJ" && (
+            <span className="text-sm text-gray-600 flex items-center gap-1">
+              <MapPin className="w-4 h-4 text-gray-400" />
+              Cidade de Origem: {reserva.cidadeOrigem}
+            </span>
+          )}
 
           {/* Data da reserva */}
           <span className="text-sm text-gray-600 flex items-center gap-1">

@@ -403,6 +403,9 @@ export default function ReservaAgente({
                 </div>
                 <div className="w-full">
                   <p className="text-xl font-bold text-gray-800">Vaga Ocupada</p>
+                  {selectedVaga.tipoVaga === "PERPENDICULAR" && (
+                    <p className="text-gray-500 mt-1 text-sm">Vaga Perpendicular ({selectedVaga.quantidade} vagas já ocupadas)</p>
+                  )}
                   <p className="text-gray-500 mt-1 text-sm">Esta vaga não está disponível no momento.</p>
 
                   {slotLivre && (
