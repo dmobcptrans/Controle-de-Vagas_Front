@@ -169,6 +169,7 @@ export interface Vaga {
   referenciaGeoInicio: string;
   referenciaGeoFim: string;
   comprimento: number;
+  quantidade: number;
   status: 'DISPONIVEL' | 'OCUPADO' | 'MANUTENCAO' | 'INDISPONIVEL' | string;
   operacoesVaga: OperacoesVaga[];
   endereco: Endereco;
