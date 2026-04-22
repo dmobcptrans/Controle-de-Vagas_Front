@@ -78,6 +78,8 @@ export interface ReservaRapida {
   logradouro: string;
   bairro: string;
   tipoVeiculo: string;
+  posicaoPerpendicular: number
+  cidadeOrigem: string;
   placa: string;
   inicio: string;
   fim: string;
