@@ -232,6 +232,24 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
               />
             </FormItem>
 
+            {vaga.tipoVaga === 'PERPENDICULAR' && (
+              <FormItem
+                name="Quantidade"
+                description="Número de vagas disponíveis"
+              >
+                <Input
+                  className="rounded-sm border-gray-400 text-sm md:text-base"
+                  id="quantidade"
+                  name="quantidade"
+                  type="number"
+                  placeholder="1"
+                  step="1"
+                  min="1"
+                  defaultValue={vaga.quantidade}
+                />
+              </FormItem>
+            )}
+
             {/* Descrição */}
             <FormItem
               name="Descrição"
