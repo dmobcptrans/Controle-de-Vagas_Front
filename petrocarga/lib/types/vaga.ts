@@ -109,6 +109,7 @@ export interface VagaPayload {
   referenciaGeoInicio: FormDataEntryValue | null;
   referenciaGeoFim: FormDataEntryValue | null;
   comprimento: number;
+  quantidade: number;
   operacoesVaga: Array<{
     codigoDiaSemana?: number;
     horaInicio: string;
