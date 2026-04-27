@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { MapReserva } from '@/components/map/MapReserva';
-import ReservaRapida from '@/components/agente/reservaRapida/reservaRapidaComponent';
 import { Vaga } from '@/lib/types/vaga';
 import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
 import { Info, MapIcon, MapPin, Search, X } from 'lucide-react';
 import Link from 'next/link';
+import ReservaAgente from '@/components/agente/reserva/ReservaAgente';
+import { useReservaAgenteState } from '@/components/agente/reserva/hooks/useReservaAgenteState';
 
 type Suggestion = {
   label: string;
@@ -75,7 +76,7 @@ export default function ReservaRapidaPage() {
   const [selectedVaga, setSelectedVaga] = useState<Vaga | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [localOrigin, setLocalOrigin] = useState('');
-
+  const { clearDefaults } = useReservaAgenteState();
   const suggestions = useMapboxSuggestions(localOrigin, true) as Suggestion[];
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
@@ -91,6 +92,7 @@ export default function ReservaRapidaPage() {
   const handleBackToMap = () => {
     setStep('mapa');
     setSelectedVaga(null);
+    clearDefaults();
   };
 
   const handleClearSearch = () => {
@@ -115,7 +117,7 @@ export default function ReservaRapidaPage() {
   // ==================== DADOS DERIVADOS ====================
   const vagaLabel = selectedVaga?.endereco.logradouro;
   const vagaEndereco = selectedVaga?.endereco.bairro;
-  const vagaSetor = selectedVaga?.area;
+  const vagaTipo = selectedVaga?.tipoVaga;
   const showSuggestions = searchFocused && suggestions.length > 0;
 
   return (
@@ -239,13 +241,10 @@ export default function ReservaRapidaPage() {
                 <p className="text-white font-semibold text-[15px] mb-0.5 truncate">
                   {vagaLabel}
                 </p>
-                {vagaEndereco && (
+                {vagaEndereco && vagaTipo && (
                   <p className="text-white/60 text-xs truncate">
-                    {vagaEndereco}
+                    {vagaEndereco} - {vagaTipo}
                   </p>
-                )}
-                {!vagaEndereco && vagaSetor && (
-                  <p className="text-white/60 text-xs truncate">{vagaSetor}</p>
                 )}
               </div>
 
@@ -275,17 +274,7 @@ export default function ReservaRapidaPage() {
         {/* ==================== ETAPA 2: FORMULÁRIO ==================== */}
         {step === 'reserva' && selectedVaga && (
           <div className="mb-4">
-            <ReservaRapida
-              selectedVaga={selectedVaga}
-              onBack={handleBackToMap}
-              onNewReservation={() => {
-                setStep('mapa');    
-                setSelectedVaga(null);
-                setLocalOrigin('');      
-                setSelectedLocation(null); 
-                setSearchFocused(false);  
-              }}
-            />
+            <ReservaAgente selectedVaga={selectedVaga} />
           </div>
         )}
 
