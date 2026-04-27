@@ -522,6 +522,8 @@ export async function reservarVagaAgente(
     placa: formData.get('placa'),
     inicio: formData.get('inicio'),
     fim: formData.get('fim'),
+    cidadeOrigem: formData.get('cidadeOrigem'),
+    entradaCidade: formData.get('entradaCidade'),
   };
 
   try {

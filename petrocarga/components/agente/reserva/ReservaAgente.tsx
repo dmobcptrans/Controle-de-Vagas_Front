@@ -53,7 +53,8 @@ export default function ReservaAgente({
   } = reserva;
 
   // Estado persistido (placa, tipo, cidade, etc.)
-  const { defaults, hydrated, updateField } = useReservaAgenteState();
+  const { defaults, hydrated, updateField, clearDefaults } =
+    useReservaAgenteState();
 
   // Hook do reserva usa seus próprios setters; espelhamos os defaults persistidos neles
   const {
@@ -94,7 +95,9 @@ export default function ReservaAgente({
       return {
         inicio: agora,
         fim: limite,
-        duracaoMinutos: Math.round((limite.getTime() - agora.getTime()) / 60000),
+        duracaoMinutos: Math.round(
+          (limite.getTime() - agora.getTime()) / 60000,
+        ),
       };
     }
 
@@ -109,7 +112,9 @@ export default function ReservaAgente({
         return {
           inicio: new Date(cursor),
           fim: atual.inicio,
-          duracaoMinutos: Math.round((atual.inicio.getTime() - cursor.getTime()) / 60000),
+          duracaoMinutos: Math.round(
+            (atual.inicio.getTime() - cursor.getTime()) / 60000,
+          ),
         };
       }
       if (cursor < atual.fim) cursor = new Date(atual.fim);
@@ -149,7 +154,9 @@ export default function ReservaAgente({
       await fetchReservasBloqueios(selectedVaga.id, dataFormatada, tipo);
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : 'Veículo incompatível com esta vaga.';
+        err instanceof Error
+          ? err.message
+          : 'Veículo incompatível com esta vaga.';
       toast.error(msg);
       setVagaIncompativel(true);
     } finally {
@@ -177,12 +184,19 @@ export default function ReservaAgente({
     );
 
     const diasSemanas: DiaSemana[] = [
-      'DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO',
+      'DOMINGO',
+      'SEGUNDA',
+      'TERCA',
+      'QUARTA',
+      'QUINTA',
+      'SEXTA',
+      'SABADO',
     ];
     const hojeEnum = diasSemanas[today.getDay()];
     const operacaoHoje =
-      selectedVaga.operacoesVaga.find((op) => op.diaSemanaAsEnum === hojeEnum) ||
-      selectedVaga.operacoesVaga[0];
+      selectedVaga.operacoesVaga.find(
+        (op) => op.diaSemanaAsEnum === hojeEnum,
+      ) || selectedVaga.operacoesVaga[0];
 
     if (!operacaoHoje) {
       setVagaDisponivel(false);
@@ -195,7 +209,11 @@ export default function ReservaAgente({
     limiteDisponibilidade.setHours(horaFim, minFim, 0, 0);
 
     const estaOcupadoAgora = isNowInReservedRange(reservas);
-    const proximoSlot = encontrarProximoSlotLivre(reservas, now, limiteDisponibilidade);
+    const proximoSlot = encontrarProximoSlotLivre(
+      reservas,
+      now,
+      limiteDisponibilidade,
+    );
 
     // Ajusta slot muito curto (≤30min → mostra 15min)
     const slotAjustado =
@@ -230,7 +248,10 @@ export default function ReservaAgente({
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      const result = await handleConfirm();
+      const result = await handleConfirm({
+        cidadeOrigem: defaults.cidadeOrigem,
+        entradaCidade: defaults.entradaCidade,
+      });
       if (!result.success) {
         toast.error('Erro ao confirmar reserva');
       } else {
@@ -250,6 +271,8 @@ export default function ReservaAgente({
     setSuccess(null);
     setFeedbackMessage(null);
     setEndHour(null);
+    clearDefaults();
+
     if (onNewReservation) onNewReservation();
   };
 
