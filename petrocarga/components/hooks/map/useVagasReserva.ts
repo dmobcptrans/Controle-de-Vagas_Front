@@ -82,28 +82,32 @@ import * as vagaApi from '@/lib/api/vagaApi';
 
 export function useVagasReserva() {
   const [vagas, setVagas] = useState<Vaga[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchVagas = async () => {
-      setLoading(true);
-      try {
-        const data: Vaga[] = await vagaApi.getVagas('DISPONIVEL');
-        setVagas(data);
-      } catch (err) {
-        console.error('Erro ao carregar vagas:', err);
-        const message =
-          (err as { message?: string }).message || 'Erro desconhecido';
-        setError(message);
-        setVagas([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const buscarVagas = async (bounds: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  }) => {
+    setLoading(true);
 
-    fetchVagas();
-  }, []);
+    try {
+      const data: Vaga[] = await vagaApi.getVagasPorMapa({
+        ...bounds,
+        status: 'DISPONIVEL',
+      });
 
-  return { vagas, loading, error };
+      setVagas(data);
+    } catch (err) {
+      console.error('Erro ao carregar vagas:', err);
+      setError('Erro ao buscar vagas');
+      setVagas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { vagas, loading, error, buscarVagas };
 }

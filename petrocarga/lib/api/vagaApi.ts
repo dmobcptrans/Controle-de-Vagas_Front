@@ -253,6 +253,25 @@ export async function getVagas(status?: string): Promise<Vaga[]> {
   }
 }
 
+export async function getVagasPorMapa(params: {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+  status?: string;
+}) {
+  const query = new URLSearchParams({
+    north: params.north.toString(),
+    south: params.south.toString(),
+    east: params.east.toString(),
+    west: params.west.toString(),
+    ...(params.status && { status: params.status }),
+  });
+
+  const response = await clientApi(`/petrocarga/vagas/mapa?${query}`);
+  return response.json();
+}
+
 type GetVagasParams = {
   status?: string;
   numeroPagina?: number;
