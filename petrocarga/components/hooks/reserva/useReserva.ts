@@ -29,14 +29,14 @@ import {
 /**
  * @hook useReserva
  * @version 1.0.0
- * 
+ *
  * @description Hook principal para gerenciamento do fluxo de reserva de vagas.
  * Suporta tanto motoristas quanto agentes, gerenciando estados, busca de horários e confirmação.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 RETORNO:
  * ----------------------------------------------------------------------------
- * 
+ *
  * @property {ReservaState} ...reservaState - Todos os campos do estado da reserva
  * @property {boolean} isAgente - Indica se o usuário é agente
  * @property {Veiculo[]} vehicles - Lista de veículos do motorista
@@ -57,52 +57,52 @@ import {
  * @property {function} setSelectedVehicleId - Define veículo selecionado (motorista)
  * @property {function} setTipoVeiculoAgente - Define tipo de veículo (agente)
  * @property {function} setPlacaAgente - Define placa (agente)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FLUXO COMPLETO:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. BUSCA DIAS DISPONÍVEIS:
  *    - fetchDiasDisponiveis consulta disponibilidades da vaga
  *    - Filtra dias que estão dentro do período de disponibilidade
  *    - Considera dias permitidos pela operação da vaga
- * 
+ *
  * 2. BUSCA HORÁRIOS DISPONÍVEIS:
  *    - fetchHorariosDisponiveis consulta bloqueios para o dia selecionado
  *    - Gera todos os horários do dia baseado na operação
  *    - Remove horários bloqueados por reservas existentes
  *    - Remove horários passados (se o dia for hoje)
- * 
+ *
  * 3. CÁLCULO DE HORÁRIOS FINAIS:
  *    - Quando horário inicial é selecionado, calcula horários finais possíveis
  *    - Considera limite de horas por área (vermelha:1h, amarela:2h, azul:4h, branca:6h)
- * 
+ *
  * 4. CONFIRMAÇÃO:
  *    - Monta FormData com dados da reserva
  *    - Chama API apropriada (motorista ou agente)
  *    - Reseta estado após sucesso
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - MODO AGENTE vs MOTORISTA: Diferenciação por permissão do usuário
  * - ATUALIZAÇÃO OTIMISTA: UI responde rapidamente, feedback posterior
  * - LIMITE POR ÁREA: Restrição de duração máxima por cor da vaga
  * - CACHE DE HORÁRIOS: Evita recálculos desnecessários
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - reservaHelpers: Funções auxiliares de horários
  * - reservaService: Serviços de API
  * - ReservaState: Tipo do estado
- * 
+ *
  * @example
  * ```tsx
  * const reserva = useReserva(selectedVaga);
- * 
+ *
  * // Motorista
  * if (!reserva.isAgente) {
  *   return <OriginVehicleStep
@@ -112,7 +112,7 @@ import {
  *     // ...
  *   />;
  * }
- * 
+ *
  * // Agente
  * return <ReservaAgenteForm
  *   tipoVeiculo={reserva.tipoVeiculoAgente}
@@ -184,7 +184,9 @@ export function useReserva(selectedVaga: Vaga | null) {
       return;
     }
 
-    const disponibilidades = await fetchDisponibilidadeByVagaId(selectedVaga.id);
+    const disponibilidades = await fetchDisponibilidadeByVagaId(
+      selectedVaga.id,
+    );
 
     if (!disponibilidades || disponibilidades.length === 0) {
       setAvailableDates([]);
@@ -273,14 +275,19 @@ export function useReserva(selectedVaga: Vaga | null) {
           tipoVeiculo,
         );
 
-        const horariosOcupadosInicio = gerarHorariosOcupadosInicio(bloqueios, intervalo);
-        const horariosOcupadosFim = gerarHorariosOcupadosFim(bloqueios, intervalo);
-
+        const horariosOcupadosInicio = gerarHorariosOcupadosInicio(
+          bloqueios,
+          intervalo,
+        );
+        const horariosOcupadosFim = gerarHorariosOcupadosFim(
+          bloqueios,
+          intervalo,
+        );
 
         const todosHorarios = gerarHorariosDia(operacao, intervalo);
         const horariosFiltradosHoje = removerHorariosPassadosDeHoje(
           day,
-          todosHorarios
+          todosHorarios,
         );
 
         reservedTimesEndBaseRef.current = horariosOcupadosFim;
@@ -298,7 +305,6 @@ export function useReserva(selectedVaga: Vaga | null) {
     },
     [vehicles, reservaState.tipoVeiculoAgente, isAgente],
   );
-
 
   // ==================== CÁLCULO DE HORÁRIOS FINAIS ====================
   const calcularReservedTimesEnd = useCallback(
@@ -347,7 +353,10 @@ export function useReserva(selectedVaga: Vaga | null) {
   // useEffect sem loop: só depende de startHour e da função de cálculo
   useEffect(() => {
     if (!reservaState.startHour || !selectedVaga) return;
-    const bloqueados = calcularReservedTimesEnd(reservaState.startHour, selectedVaga);
+    const bloqueados = calcularReservedTimesEnd(
+      reservaState.startHour,
+      selectedVaga,
+    );
     setReservaState((prev) => ({
       ...prev,
       reservedTimesEnd: bloqueados,
@@ -357,7 +366,10 @@ export function useReserva(selectedVaga: Vaga | null) {
   // Atualiza horários finais quando horário inicial muda
   useEffect(() => {
     if (!reservaState.startHour || !selectedVaga) return;
-    const bloqueados = calcularReservedTimesEnd(reservaState.startHour, selectedVaga);
+    const bloqueados = calcularReservedTimesEnd(
+      reservaState.startHour,
+      selectedVaga,
+    );
     setReservaState((prev) => ({
       ...prev,
       reservedTimesEnd: bloqueados,
@@ -385,7 +397,7 @@ export function useReserva(selectedVaga: Vaga | null) {
       try {
         const r = await getVeiculosUsuario(user.id);
         if (!r.error) setVehicles(r.veiculos);
-      } catch { }
+      } catch {}
     };
     loadVehicles();
   }, [user, isAgente]);
@@ -415,60 +427,110 @@ export function useReserva(selectedVaga: Vaga | null) {
   ]);
 
   // ==================== SETTERS ====================
-  const setStep = (step: number) => setReservaState((prev) => ({ ...prev, step }));
-  const setSelectedDay = (selectedDay?: Date) => setReservaState((prev) => ({ ...prev, selectedDay }));
-  const setStartHour = (startHour: string | null) => setReservaState((prev) => ({ ...prev, startHour }));
-  const setEndHour = (endHour: string | null) => setReservaState((prev) => ({ ...prev, endHour }));
-  const setOrigin = (origin: string) => setReservaState((prev) => ({ ...prev, origin }));
-  const setEntryCity = (entryCity: string | null) => setReservaState((prev) => ({ ...prev, entryCity }));
-  const setSelectedVehicleId = (selectedVehicleId?: string) => setReservaState((prev) => ({ ...prev, selectedVehicleId }));
-  const setTipoVeiculoAgente = (tipo: Veiculo['tipo']) => setReservaState((prev) => ({ ...prev, tipoVeiculoAgente: tipo }));
-  const setPlacaAgente = (placa: string) => setReservaState((prev) => ({ ...prev, placaAgente: placa }));
+  const setStep = (step: number) =>
+    setReservaState((prev) => ({ ...prev, step }));
+  const setSelectedDay = (selectedDay?: Date) =>
+    setReservaState((prev) => ({ ...prev, selectedDay }));
+  const setStartHour = (startHour: string | null) =>
+    setReservaState((prev) => ({ ...prev, startHour }));
+  const setEndHour = (endHour: string | null) =>
+    setReservaState((prev) => ({ ...prev, endHour }));
+  const setOrigin = (origin: string) =>
+    setReservaState((prev) => ({ ...prev, origin }));
+  const setEntryCity = (entryCity: string | null) =>
+    setReservaState((prev) => ({ ...prev, entryCity }));
+  const setSelectedVehicleId = (selectedVehicleId?: string) =>
+    setReservaState((prev) => ({ ...prev, selectedVehicleId }));
+  const setTipoVeiculoAgente = (tipo: Veiculo['tipo']) =>
+    setReservaState((prev) => ({ ...prev, tipoVeiculoAgente: tipo }));
+  const setPlacaAgente = (placa: string) =>
+    setReservaState((prev) => ({ ...prev, placaAgente: placa }));
 
   // ==================== CONFIRMAR RESERVA ====================
-  const handleConfirm = useCallback(async (): Promise<ConfirmResult> => {
-    if (!user?.id || !selectedVaga) {
-      return { success: false, message: 'Sessão inválida ou vaga não selecionada.' };
-    }
-
-    const { selectedDay, selectedVehicleId, tipoVeiculoAgente, placaAgente, startHour, endHour, origin, entryCity } = reservaState;
-
-    if (!selectedDay || !startHour || !endHour) {
-      return { success: false, message: 'Data ou horário inválido.' };
-    }
-
-    const formData = new FormData();
-    formData.append('vagaId', selectedVaga.id);
-
-    if (isAgente) {
-      if (!tipoVeiculoAgente || !placaAgente) {
-        return { success: false, message: 'Informe o tipo do veículo e a placa.' };
+  const handleConfirm = useCallback(
+    async (extra?: {
+      cidadeOrigem?: string;
+      entradaCidade?: string;
+    }): Promise<ConfirmResult> => {
+      if (!user?.id || !selectedVaga) {
+        return {
+          success: false,
+          message: 'Sessão inválida ou vaga não selecionada.',
+        };
       }
-      formData.append('tipoVeiculo', tipoVeiculoAgente);
-      formData.append('placa', placaAgente);
-      formData.append('inicio', formatDateTime(selectedDay, startHour));
-      formData.append('fim', formatDateTime(selectedDay, endHour!));
-    } else {
-      if (!motoristaId || !selectedVehicleId || !origin) {
-        return { success: false, message: 'Dados do motorista incompletos.' };
+
+      const {
+        selectedDay,
+        selectedVehicleId,
+        tipoVeiculoAgente,
+        placaAgente,
+        startHour,
+        endHour,
+        origin,
+        entryCity,
+      } = reservaState;
+
+      if (!selectedDay || !startHour || !endHour) {
+        return { success: false, message: 'Data ou horário inválido.' };
       }
-      formData.append('motoristaId', motoristaId);
-      formData.append('veiculoId', selectedVehicleId);
-      formData.append('cidadeOrigem', origin);
-      if (entryCity) formData.append('entradaCidade', entryCity);
+
+      const formData = new FormData();
+      formData.append('vagaId', selectedVaga.id);
+
       formData.append('inicio', formatDateTime(selectedDay, startHour));
       formData.append('fim', formatDateTime(selectedDay, endHour));
-    }
 
-    const result = isAgente ? await confirmarReservaAgente(formData) : await confirmarReserva(formData);
+      let cidadeFinal = origin;
+      let entradaFinal = entryCity;
 
-    if (!result.success) {
-      return { success: false, message: result.message ?? 'Não foi possível confirmar a reserva.' };
-    }
+      if (isAgente) {
+        cidadeFinal = extra?.cidadeOrigem || '';
+        entradaFinal = extra?.entradaCidade || '';
+      }
 
-    reset();
-    return { success: true, message: 'Reserva confirmada com sucesso!' };
-  }, [user, selectedVaga, motoristaId, reservaState, isAgente, reset]);
+      if (cidadeFinal) {
+        formData.append('cidadeOrigem', cidadeFinal);
+      }
+
+      if (entradaFinal) {
+        formData.append('entradaCidade', entradaFinal);
+      }
+
+      if (isAgente) {
+        if (!tipoVeiculoAgente || !placaAgente) {
+          return {
+            success: false,
+            message: 'Informe o tipo do veículo e a placa.',
+          };
+        }
+
+        formData.append('tipoVeiculo', tipoVeiculoAgente);
+        formData.append('placa', placaAgente);
+      } else {
+        if (!motoristaId || !selectedVehicleId) {
+          return { success: false, message: 'Dados do motorista incompletos.' };
+        }
+
+        formData.append('motoristaId', motoristaId);
+        formData.append('veiculoId', selectedVehicleId);
+      }
+
+      const result = isAgente
+        ? await confirmarReservaAgente(formData)
+        : await confirmarReserva(formData);
+
+      if (!result.success) {
+        return {
+          success: false,
+          message: result.message ?? 'Não foi possível confirmar a reserva.',
+        };
+      }
+
+      reset();
+      return { success: true, message: 'Reserva confirmada com sucesso!' };
+    },
+    [user, selectedVaga, motoristaId, reservaState, isAgente, reset],
+  );
 
   // ==================== RETORNO ====================
   return {
