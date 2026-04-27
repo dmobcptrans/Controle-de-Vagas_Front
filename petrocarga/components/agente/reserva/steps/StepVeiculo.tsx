@@ -156,12 +156,36 @@ export default function StepVeiculo({
               className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
             >
               <option value="" disabled>
-                Selecione a entrada
+                Selecione a Entrada
               </option>
-              <option value="br040-quitandinha">BR-040 - Quitandinha</option>
-              <option value="br040-bingen">BR-040 - Bingen</option>
-              <option value="br040-itaipava">BR-040 - Itaipava</option>
-              <option value="rj107-serra">RJ-107 - Serra da Estrela</option>
+              <option value="br040-quitandinha">
+                BR-040 - Pórtico do Quitandinha
+              </option>
+              <option value="br040-bingen">BR-040 - Pórtico do Bingen</option>
+              <option value="br040-duarte">BR-040 - Duarte da Silveira</option>
+              <option value="br040-mosela">BR-040 - Mosela</option>
+              <option value="br040-bonsucesso">
+                BR-040 - Trevo de Bonsucesso
+              </option>
+              <option value="br040-itaipava">
+                BR-040 - Itaipava (Arranha-Céu)
+              </option>
+              <option value="br040-pedro">BR-040 - Pedro do Rio</option>
+              <option value="br040-barra">BR-040 - Barra Mansa</option>
+              <option value="br495-teresopolis">
+                BR-495 - Est. Teresópolis
+              </option>
+              <option value="rj107-serra">
+                RJ-107 - Serra da Estrela (Serra Velha)
+              </option>
+              <option value="rj117-videiras">RJ-117 - Vale das Videiras</option>
+              <option value="rj123-secretario">RJ-123 - Secretário</option>
+              <option value="rj134-silveira">
+                RJ-134 - Silveira da Motta (Posse)
+              </option>
+              <option value="est-uniao">
+                Est. União e Indústria (Posse-Gaby)
+              </option>
             </select>
           </div>
         </div>
