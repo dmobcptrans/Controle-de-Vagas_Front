@@ -50,32 +50,37 @@ function buildVagaPayload(formData: FormData): VagaPayload {
     ? JSON.parse(diasSemanaRaw)
     : [];
 
-  return {
-    endereco: {
-      codigoPmp: formData.get('codigo') ?? formData.get('codigoPmp'),
-      logradouro: formData.get('logradouro'),
-      bairro: formData.get('bairro'),
-    },
-    area: (formData.get('area') as string)?.toUpperCase(),
-    numeroEndereco: formData.get('numeroEndereco'),
-    referenciaEndereco: formData.get('descricao'),
-    tipoVaga: (formData.get('tipo') as string)?.toUpperCase(),
-    status: (formData.get('status') as string)?.toUpperCase() ?? 'DISPONIVEL',
-    referenciaGeoInicio: formData.get('localizacao-inicio'),
-    referenciaGeoFim: formData.get('localizacao-fim'),
-    comprimento: Number(formData.get('comprimento')),
-    quantidade: Number(formData.get('quantidade')) || 1,
-    operacoesVaga: diasSemana.map((dia) => ({
-      codigoDiaSemana: dia.codigoDiaSemana
-        ? Number(dia.codigoDiaSemana)
-        : undefined,
-      horaInicio: dia.horaInicio,
-      horaFim: dia.horaFim,
-      ...(dia.diaSemanaAsEnum ? { diaSemanaAsEnum: dia.diaSemanaAsEnum } : {}),
-    })),
-  };
-}
+ return {
+  endereco: {
+    codigoPmp: formData.get('codigo') ?? formData.get('codigoPmp'),
+    logradouro: formData.get('logradouro'),
+    bairro: formData.get('bairro'),
+  },
 
+  area: (formData.get('area') as string)?.toUpperCase(),
+  numeroEndereco: formData.get('numeroEndereco'),
+  referenciaEndereco: formData.get('descricao'),
+  tipoVaga: (formData.get('tipo') as string)?.toUpperCase(),
+  status: (formData.get('status') as string)?.toUpperCase() ?? 'DISPONIVEL',
+
+  latitudeInicio: Number(formData.get('latitudeInicio')),
+  longitudeInicio: Number(formData.get('longitudeInicio')),
+  latitudeFim: Number(formData.get('latitudeFim')),
+  longitudeFim: Number(formData.get('longitudeFim')),
+
+  comprimento: Number(formData.get('comprimento')),
+  quantidade: Number(formData.get('quantidade')) || 1,
+
+  operacoesVaga: diasSemana.map((dia) => ({
+    codigoDiaSemana: dia.codigoDiaSemana
+      ? Number(dia.codigoDiaSemana)
+      : undefined,
+    horaInicio: dia.horaInicio,
+    horaFim: dia.horaFim,
+    ...(dia.diaSemanaAsEnum ? { diaSemanaAsEnum: dia.diaSemanaAsEnum } : {}),
+  })),
+};
+}
 // ----------------------
 // POST VAGA
 // ----------------------
@@ -251,6 +256,25 @@ export async function getVagas(status?: string): Promise<Vaga[]> {
     console.error('Erro ao buscar vagas:', error);
     return [];
   }
+}
+
+export async function getVagasPorMapa(params: {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+  status?: string;
+}) {
+  const query = new URLSearchParams({
+    north: params.north.toString(),
+    south: params.south.toString(),
+    east: params.east.toString(),
+    west: params.west.toString(),
+    ...(params.status && { status: params.status }),
+  });
+
+  const response = await clientApi(`/petrocarga/vagas/mapa?${query}`);
+  return response.json();
 }
 
 type GetVagasParams = {

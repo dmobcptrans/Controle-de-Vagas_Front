@@ -11,41 +11,41 @@ interface CardMapProps {
 /**
  * @component CardMap
  * @version 1.0.0
- * 
+ *
  * @description Mini-mapa para exibição da localização da vaga em um card.
  * Renderiza um retângulo rotacionado representando a vaga entre dois pontos geográficos.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FUNCIONALIDADES:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. PARSE DE COORDENADAS:
  *    - Converte string "lat, lng" para array [lng, lat] (formato Mapbox)
- * 
+ *
  * 2. RETÂNGULO ROTACIONADO:
  *    - Calcula retângulo baseado nos pontos de início e fim da vaga
  *    - Rotação automática conforme ângulo entre os pontos
  *    - Largura fixa de 2.5 metros (ajustável)
- * 
+ *
  * 3. RENDERIZAÇÃO:
  *    - Fundo azul com opacidade (fill-color: #2563EB, opacity: 0.4)
  *    - Contorno azul (line-color: #2563EB, width: 2)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - METERS TO DEGREES: Conversão aproximada (0.00001 * widthMeters) para simplificar
  * - ROTACIONAMENTO: Cálculo de offset baseado no ângulo entre os pontos
  * - RESIZE: Event listener para redimensionamento do mapa
  * - CLEANUP: Remove mapa e event listener na desmontagem
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - Vaga: Tipo de vaga com coordenadas de início e fim
- * 
+ *
  * @example
  * ```tsx
  * <CardMap vaga={vaga} />
@@ -57,11 +57,7 @@ export default function CardMap({ vaga }: CardMapProps) {
 
   useEffect(() => {
     // Validação de coordenadas
-    if (
-      !mapContainer.current ||
-      !vaga.referenciaGeoInicio ||
-      !vaga.referenciaGeoFim
-    )
+    if (!mapContainer.current || !vaga.longitudeInicio || !vaga.latitudeInicio)
       return;
 
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
@@ -70,18 +66,13 @@ export default function CardMap({ vaga }: CardMapProps) {
      * @function parseCoordinates
      * @description Converte string "lat, lng" para array [lng, lat]
      */
-    const parseCoordinates = (coord: string) => {
-      const [lat, lng] = coord.split(',').map((v) => parseFloat(v.trim()));
-      return [lng, lat] as [number, number];
-    };
+    const start: [number, number] = [vaga.longitudeInicio, vaga.latitudeInicio];
 
-    const start = parseCoordinates(vaga.referenciaGeoInicio);
-    const end = parseCoordinates(vaga.referenciaGeoFim);
-
+    const end: [number, number] = [vaga.longitudeFim, vaga.latitudeFim];
     /**
      * @function getRotatedRectangle
      * @description Cria um retângulo rotacionado baseado em dois pontos
-     * 
+     *
      * @param start - Ponto inicial [lng, lat]
      * @param end - Ponto final [lng, lat]
      * @param widthMeters - Largura do retângulo em metros

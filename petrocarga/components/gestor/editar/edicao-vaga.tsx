@@ -6,70 +6,71 @@ import { Textarea } from '@/components/ui/textarea';
 import { atualizarVaga } from '@/lib/api/vagaApi';
 import { CircleAlert } from 'lucide-react';
 import Form from 'next/form';
-import { useActionState, useEffect } from 'react';
+import { useActionState, useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import FormItem from '@/components/form/form-item';
 import DiaSemana from '@/components/gestor/dia-semana/dia-semana';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import { Vaga } from '@/lib/types/vaga';
+import CardMapEdit from '@/components/map/cardMapEdit';
 
 /**
  * @component EditarVaga
  * @version 1.0.0
- * 
+ *
  * @description Formulário de edição de vaga para gestores.
  * Permite atualizar todos os dados de uma vaga existente.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 CAMPOS EDITÁVEIS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. DADOS DE ENDEREÇO:
  *    - Código PMP
  *    - Logradouro (nome da rua)
  *    - Número Referência
  *    - Bairro
- * 
+ *
  * 2. CARACTERÍSTICAS DA VAGA:
  *    - Status (Disponível/Indisponível)
  *    - Área (Vermelha, Amarela, Azul, Branca)
  *    - Tipo (Paralela, Perpendicular)
  *    - Comprimento (em metros)
- * 
+ *
  * 3. GEORREFERENCIAMENTO:
  *    - Localização inicial (latitude, longitude)
  *    - Localização final (latitude, longitude)
- * 
+ *
  * 4. DESCRIÇÃO:
  *    - Descrição/referências
- * 
+ *
  * 5. OPERAÇÃO:
  *    - Dias da semana com horários (componente DiaSemana)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - useActionState: Gerencia estado da Server Action
  * - Wrapper assíncrono: Para compatibilidade com useActionState
  * - useEffect: Monitora resultado e exibe toast de feedback
  * - Hidden input: Envia ID da vaga sem exibir na UI
  * - Valores padrão: defaultValue preenche campos com dados existentes
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - atualizarVaga: Server Action de atualização
  * - FormItem: Campo com label e descrição
  * - DiaSemana: Seleção de dias e horários
  * - SelecaoCustomizada: Select estilizado
- * 
+ *
  * @example
  * ```tsx
  * <EditarVaga vaga={vaga} />
  * ```
- * 
+ *
  * @see /src/lib/api/vagaApi.ts - Função atualizarVaga
  */
 
@@ -80,7 +81,14 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
   };
 
   const [state, atualizarVagaAction, pending] = useActionState(atualizar, null);
-  
+  const [useMap, setUseMap] = useState(true);
+  const [geoState, setGeoState] = useState({
+    latitudeInicio: vaga.latitudeInicio,
+    longitudeInicio: vaga.longitudeInicio,
+    latitudeFim: vaga.latitudeFim,
+    longitudeFim: vaga.longitudeFim,
+  });
+
   // ==================== FEEDBACK (TOAST) ====================
   useEffect(() => {
     if (!state) return;
@@ -92,18 +100,24 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
     }
   }, [state]);
 
+  const handleGeoChange = useCallback((data: {
+  latitudeInicio: number;
+  longitudeInicio: number;
+  latitudeFim: number;
+  longitudeFim: number;
+}) => {
+  setGeoState(data);
+}, []); // sem dependências → referência estável
+
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">
       <Card className="w-full max-w-5xl mx-auto">
-        
         {/* ==================== FORMULÁRIO ==================== */}
         <Form action={atualizarVagaAction}>
-          
           {/* Campo oculto com ID da vaga */}
           <input type="hidden" name="id" value={vaga.id} />
 
           <CardContent className="p-4 md:p-6 lg:p-8">
-            
             {/* ==================== MENSAGEM DE ERRO ==================== */}
             {state?.error && (
               <div className="flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-4 mb-6 text-red-900">
@@ -113,7 +127,7 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
             )}
 
             {/* ==================== CAMPOS DO FORMULÁRIO ==================== */}
-            
+
             {/* Código PMP */}
             <FormItem
               name="Código"
@@ -264,31 +278,104 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
               />
             </FormItem>
 
-            {/* Localização inicial */}
+            {/* Localização da vaga */}
             <FormItem
-              name="Localização inicial"
-              description="Latitude e Longitude do início da vaga. Exemplo: -23.55052, -46.633308"
+              name="Localização da vaga"
+              description="Defina pelo mapa ou manualmente (lat, lng)"
             >
-              <Input
-                className="rounded-sm border-gray-400 text-sm md:text-base"
-                id="localizacao-inicio"
-                name="localizacao-inicio"
-                placeholder="-23.55052, -46.633308"
-                defaultValue={vaga.referenciaGeoInicio}
-              />
-            </FormItem>
+              {/* 🔁 Toggle */}
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setUseMap(true)}
+                  className={`px-3 py-1 rounded ${
+                    useMap ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                  }`}
+                >
+                  Mapa
+                </button>
 
-            {/* Localização final */}
-            <FormItem
-              name="Localização final"
-              description="Latitude e Longitude do fim da vaga. Exemplo: -23.55052, -46.633308"
-            >
-              <Input
-                className="rounded-sm border-gray-400 text-sm md:text-base"
-                id="localizacao-fim"
-                name="localizacao-fim"
-                placeholder="-23.55052, -46.633308"
-                defaultValue={vaga.referenciaGeoFim}
+                <button
+                  type="button"
+                  onClick={() => setUseMap(false)}
+                  className={`px-3 py-1 rounded ${
+                    !useMap ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                  }`}
+                >
+                  Manual
+                </button>
+              </div>
+
+              {/* 🗺️ MAPA */}
+              {useMap && (
+                <CardMapEdit
+                  defaultValue={{
+                    latitudeInicio: vaga.latitudeInicio,
+                    longitudeInicio: vaga.longitudeInicio,
+                    latitudeFim: vaga.latitudeFim,
+                    longitudeFim: vaga.longitudeFim,
+                  }}
+                  onChange={handleGeoChange}
+                />
+              )}
+
+              {/* ✍️ MANUAL (2 CAMPOS) */}
+              {!useMap && (
+                <div className="flex flex-col gap-2">
+                  <Input
+                    id="geoInicio"
+                    placeholder="-23.55052, -46.633308"
+                    defaultValue={`${vaga.latitudeInicio}, ${vaga.longitudeInicio}`}
+                    onChange={(e) => {
+                      const [lat, lng] = e.target.value
+                        .split(',')
+                        .map((v) => v.trim());
+                      setGeoState((prev) => ({
+                        ...prev,
+                        latitudeInicio: Number(lat) || prev.latitudeInicio,
+                        longitudeInicio: Number(lng) || prev.longitudeInicio,
+                      }));
+                    }}
+                  />
+
+                  <Input
+                    id="geoFim"
+                    placeholder="-23.55052, -46.633308"
+                    defaultValue={`${vaga.latitudeFim}, ${vaga.longitudeFim}`}
+                    onChange={(e) => {
+                      const [lat, lng] = e.target.value
+                        .split(',')
+                        .map((v) => v.trim());
+                      setGeoState((prev) => ({
+                        ...prev,
+                        latitudeFim: Number(lat) || prev.latitudeFim,
+                        longitudeFim: Number(lng) || prev.longitudeFim,
+                      }));
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* 🔒 Hidden (backend continua igual) */}
+              <input
+                type="hidden"
+                name="latitudeInicio"
+                value={geoState.latitudeInicio}
+              />
+              <input
+                type="hidden"
+                name="longitudeInicio"
+                value={geoState.longitudeInicio}
+              />
+              <input
+                type="hidden"
+                name="latitudeFim"
+                value={geoState.latitudeFim}
+              />
+              <input
+                type="hidden"
+                name="longitudeFim"
+                value={geoState.longitudeFim}
               />
             </FormItem>
 

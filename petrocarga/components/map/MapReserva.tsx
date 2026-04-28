@@ -17,61 +17,13 @@ interface MapReservaProps {
   } | null;
 }
 
-/**
- * @component MapReserva
- * @version 1.0.0
- * 
- * @description Mapa interativo para seleção de vagas no fluxo de reserva.
- * Exibe marcadores coloridos (azul = disponível, vermelho = ocupado) e permite clique para seleção.
- * 
- * ----------------------------------------------------------------------------
- * 📋 FUNCIONALIDADES:
- * ----------------------------------------------------------------------------
- * 
- * 1. CARREGAMENTO DE VAGAS:
- *    - Hook useVagasReserva busca vagas disponíveis
- *    - Estados: loading, error, vagas
- * 
- * 2. MAPA:
- *    - Hook useMapbox gerencia instância do mapa
- *    - Geocoder para busca de endereços
- *    - Navigation control desabilitado (expanded)
- * 
- * 3. MARCADORES:
- *    - addVagaMarkersReserva adiciona marcadores coloridos
- *    - 🔵 Azul = vaga disponível (clicável)
- *    - 🔴 Vermelho = vaga ocupada (não clicável)
- *    - Atualização automática quando vagas mudam
- * 
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- * 
- * - useCallback: Memoiza renderMarkers para evitar re-renders desnecessários
- * - CLEANUP: Remove marcadores e event listeners na desmontagem
- * - CONDICIONAL: Aguarda style loaded antes de renderizar marcadores
- * - OVERLAY: Mensagens de loading e erro sobrepostas ao mapa
- * 
- * ----------------------------------------------------------------------------
- * 🔗 HOOKS RELACIONADOS:
- * ----------------------------------------------------------------------------
- * 
- * - useVagasReserva: Busca vagas para reserva
- * - useMapbox: Gerencia instância do Mapbox (com geocoder)
- * - addVagaMarkersReserva: Utilitário de marcadores
- * 
- * @example
- * ```tsx
- * <MapReserva onClickVaga={(vaga) => setVagaSelecionada(vaga)} />
- * ```
- */
-
 export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastBoundsRef = useRef<string | null>(null);
 
-  // ==================== HOOKS ====================
-  const { vagas, loading, error } = useVagasReserva();
+  const { vagas, loading, error, buscarVagas } = useVagasReserva();
 
   const { map } = useMapbox({
     containerRef: mapContainer,
@@ -82,43 +34,85 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
     onSelectPlace: (place) => console.log(place),
   });
 
-  // ==================== RENDERIZAÇÃO DE MARCADORES ====================
-  const renderMarkers = useCallback(() => {
-    if (!map || !vagas || vagas.length === 0) return;
+  // ==================== BUSCA POR BOUNDS ====================
+  const carregarVagas = useCallback(() => {
+    if (!map) return;
 
-    // Remove antigos
+    const bounds = map.getBounds();
+    if (!bounds) return;
+
+    const currentBounds = JSON.stringify({
+      n: bounds.getNorth(),
+      s: bounds.getSouth(),
+      e: bounds.getEast(),
+      w: bounds.getWest(),
+    });
+
+    // evita refetch do mesmo lugar
+    if (lastBoundsRef.current === currentBounds) return;
+
+    lastBoundsRef.current = currentBounds;
+
+    buscarVagas({
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest(),
+    });
+  }, [map, buscarVagas]);
+
+  // ==================== MARCADORES ====================
+  const renderMarkers = useCallback(() => {
+    if (!map || !vagas) return;
+
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
-    // Adiciona novos
     addVagaMarkersReserva(map, vagas, markersRef, onClickVaga);
   }, [map, vagas, onClickVaga]);
 
-  // ==================== EFFECT 1: INIT MAP (RODA 1x) ====================
+  // ==================== INIT + MOVE MAP ====================
   useEffect(() => {
     if (!map) return;
 
+    const handleLoad = () => {
+      carregarVagas();
+    };
+
+    const handleMoveEnd = () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        carregarVagas();
+      }, 600); // debounce
+    };
+
     if (map.isStyleLoaded()) {
-      renderMarkers();
+      handleLoad();
     } else {
-      map.on('load', renderMarkers);
+      map.on('load', handleLoad);
     }
 
+    map.on('moveend', handleMoveEnd);
+
     return () => {
-      if (map) {
-        map.off('load', renderMarkers);
+      map.off('load', handleLoad);
+      map.off('moveend', handleMoveEnd);
+
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
-  }, [map, renderMarkers]);
+  }, [map, carregarVagas]);
 
-  // ==================== EFFECT 2: ATUALIZA MARCADORES ====================
+  // ==================== UPDATE MARKERS ====================
   useEffect(() => {
-    if (!map || !vagas) return;
-
     renderMarkers();
-  }, [vagas, map, renderMarkers]);
+  }, [vagas, renderMarkers]);
 
-  // ==================== EFFECT 3: ZOOM NA BUSCA ====================
+  // ==================== ZOOM SEARCH ====================
   useEffect(() => {
     if (!map || !selectedLocation) return;
 
@@ -140,8 +134,8 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
 
       {/* Loading */}
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
-          Carregando vagas...
+        <div className="absolute top-2 right-2 bg-white px-3 py-1 rounded shadow z-10">
+          Carregando...
         </div>
       )}
 
