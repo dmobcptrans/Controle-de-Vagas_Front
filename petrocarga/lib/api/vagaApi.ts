@@ -50,32 +50,37 @@ function buildVagaPayload(formData: FormData): VagaPayload {
     ? JSON.parse(diasSemanaRaw)
     : [];
 
-  return {
-    endereco: {
-      codigoPmp: formData.get('codigo') ?? formData.get('codigoPmp'),
-      logradouro: formData.get('logradouro'),
-      bairro: formData.get('bairro'),
-    },
-    area: (formData.get('area') as string)?.toUpperCase(),
-    numeroEndereco: formData.get('numeroEndereco'),
-    referenciaEndereco: formData.get('descricao'),
-    tipoVaga: (formData.get('tipo') as string)?.toUpperCase(),
-    status: (formData.get('status') as string)?.toUpperCase() ?? 'DISPONIVEL',
-    referenciaGeoInicio: formData.get('localizacao-inicio'),
-    referenciaGeoFim: formData.get('localizacao-fim'),
-    comprimento: Number(formData.get('comprimento')),
-    quantidade: Number(formData.get('quantidade')) || 1,
-    operacoesVaga: diasSemana.map((dia) => ({
-      codigoDiaSemana: dia.codigoDiaSemana
-        ? Number(dia.codigoDiaSemana)
-        : undefined,
-      horaInicio: dia.horaInicio,
-      horaFim: dia.horaFim,
-      ...(dia.diaSemanaAsEnum ? { diaSemanaAsEnum: dia.diaSemanaAsEnum } : {}),
-    })),
-  };
-}
+ return {
+  endereco: {
+    codigoPmp: formData.get('codigo') ?? formData.get('codigoPmp'),
+    logradouro: formData.get('logradouro'),
+    bairro: formData.get('bairro'),
+  },
 
+  area: (formData.get('area') as string)?.toUpperCase(),
+  numeroEndereco: formData.get('numeroEndereco'),
+  referenciaEndereco: formData.get('descricao'),
+  tipoVaga: (formData.get('tipo') as string)?.toUpperCase(),
+  status: (formData.get('status') as string)?.toUpperCase() ?? 'DISPONIVEL',
+
+  latitudeInicio: Number(formData.get('latitudeInicio')),
+  longitudeInicio: Number(formData.get('longitudeInicio')),
+  latitudeFim: Number(formData.get('latitudeFim')),
+  longitudeFim: Number(formData.get('longitudeFim')),
+
+  comprimento: Number(formData.get('comprimento')),
+  quantidade: Number(formData.get('quantidade')) || 1,
+
+  operacoesVaga: diasSemana.map((dia) => ({
+    codigoDiaSemana: dia.codigoDiaSemana
+      ? Number(dia.codigoDiaSemana)
+      : undefined,
+    horaInicio: dia.horaInicio,
+    horaFim: dia.horaFim,
+    ...(dia.diaSemanaAsEnum ? { diaSemanaAsEnum: dia.diaSemanaAsEnum } : {}),
+  })),
+};
+}
 // ----------------------
 // POST VAGA
 // ----------------------
