@@ -243,10 +243,10 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
           <strong>Número da vaga:</strong> {vaga.numeroEndereco}
         </p>
         <p>
-          <strong>Localização GPS início:</strong> {vaga.referenciaGeoInicio}
+          <strong>Localização GPS início:</strong> {vaga.longitudeInicio}, {vaga.latitudeInicio}
         </p>
         <p>
-          <strong>Localização GPS fim:</strong> {vaga.referenciaGeoFim}
+          <strong>Localização GPS fim:</strong> {vaga.longitudeFim}, {vaga.latitudeFim}
         </p>
       </section>
 
