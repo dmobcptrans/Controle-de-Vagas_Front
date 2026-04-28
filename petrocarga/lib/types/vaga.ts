@@ -106,8 +106,10 @@ export interface VagaPayload {
   referenciaEndereco: FormDataEntryValue | null;
   tipoVaga: string;
   status: string;
-  referenciaGeoInicio: FormDataEntryValue | null;
-  referenciaGeoFim: FormDataEntryValue | null;
+  latitudeInicio: number;
+  latitudeFim: number;
+  longitudeInicio: number;
+  longitudeFim: number;
   comprimento: number;
   quantidade: number;
   operacoesVaga: Array<{
@@ -167,8 +169,10 @@ export interface Vaga {
   numeroEndereco: string;
   referenciaEndereco: string;
   tipoVaga: 'PARALELA' | 'PERPENDICULAR' | string;
-  referenciaGeoInicio: string;
-  referenciaGeoFim: string;
+  latitudeInicio: number;
+  latitudeFim: number;
+  longitudeInicio: number;
+  longitudeFim: number;
   comprimento: number;
   quantidade: number;
   status: 'DISPONIVEL' | 'OCUPADO' | 'MANUTENCAO' | 'INDISPONIVEL' | string;
