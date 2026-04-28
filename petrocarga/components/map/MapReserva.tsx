@@ -134,8 +134,8 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
 
       {/* Loading */}
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
-          Carregando vagas...
+        <div className="absolute top-2 right-2 bg-white px-3 py-1 rounded shadow z-10">
+          Carregando...
         </div>
       )}
 
