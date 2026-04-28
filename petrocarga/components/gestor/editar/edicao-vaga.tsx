@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { atualizarVaga } from '@/lib/api/vagaApi';
 import { CircleAlert } from 'lucide-react';
 import Form from 'next/form';
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import FormItem from '@/components/form/form-item';
 import DiaSemana from '@/components/gestor/dia-semana/dia-semana';
@@ -82,6 +82,12 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
 
   const [state, atualizarVagaAction, pending] = useActionState(atualizar, null);
   const [useMap, setUseMap] = useState(true);
+  const [geoState, setGeoState] = useState({
+    latitudeInicio: vaga.latitudeInicio,
+    longitudeInicio: vaga.longitudeInicio,
+    latitudeFim: vaga.latitudeFim,
+    longitudeFim: vaga.longitudeFim,
+  });
 
   // ==================== FEEDBACK (TOAST) ====================
   useEffect(() => {
@@ -93,6 +99,15 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
       toast.success(state.message || 'Vaga atualizada com sucesso!');
     }
   }, [state]);
+
+  const handleGeoChange = useCallback((data: {
+  latitudeInicio: number;
+  longitudeInicio: number;
+  latitudeFim: number;
+  longitudeFim: number;
+}) => {
+  setGeoState(data);
+}, []); // sem dependências → referência estável
 
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">
@@ -300,35 +315,7 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
                     latitudeFim: vaga.latitudeFim,
                     longitudeFim: vaga.longitudeFim,
                   }}
-                  onChange={(data) => {
-                    (
-                      document.getElementById('geoInicio') as HTMLInputElement
-                    ).value = `${data.latitudeInicio}, ${data.longitudeInicio}`;
-
-                    (
-                      document.getElementById('geoFim') as HTMLInputElement
-                    ).value = `${data.latitudeFim}, ${data.longitudeFim}`;
-
-                    // hidden separados (backend)
-                    (
-                      document.getElementById(
-                        'latitudeInicio',
-                      ) as HTMLInputElement
-                    ).value = String(data.latitudeInicio);
-                    (
-                      document.getElementById(
-                        'longitudeInicio',
-                      ) as HTMLInputElement
-                    ).value = String(data.longitudeInicio);
-                    (
-                      document.getElementById('latitudeFim') as HTMLInputElement
-                    ).value = String(data.latitudeFim);
-                    (
-                      document.getElementById(
-                        'longitudeFim',
-                      ) as HTMLInputElement
-                    ).value = String(data.longitudeFim);
-                  }}
+                  onChange={handleGeoChange}
                 />
               )}
 
@@ -343,17 +330,11 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
                       const [lat, lng] = e.target.value
                         .split(',')
                         .map((v) => v.trim());
-
-                      (
-                        document.getElementById(
-                          'latitudeInicio',
-                        ) as HTMLInputElement
-                      ).value = lat || '';
-                      (
-                        document.getElementById(
-                          'longitudeInicio',
-                        ) as HTMLInputElement
-                      ).value = lng || '';
+                      setGeoState((prev) => ({
+                        ...prev,
+                        latitudeInicio: Number(lat) || prev.latitudeInicio,
+                        longitudeInicio: Number(lng) || prev.longitudeInicio,
+                      }));
                     }}
                   />
 
@@ -365,17 +346,11 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
                       const [lat, lng] = e.target.value
                         .split(',')
                         .map((v) => v.trim());
-
-                      (
-                        document.getElementById(
-                          'latitudeFim',
-                        ) as HTMLInputElement
-                      ).value = lat || '';
-                      (
-                        document.getElementById(
-                          'longitudeFim',
-                        ) as HTMLInputElement
-                      ).value = lng || '';
+                      setGeoState((prev) => ({
+                        ...prev,
+                        latitudeFim: Number(lat) || prev.latitudeFim,
+                        longitudeFim: Number(lng) || prev.longitudeFim,
+                      }));
                     }}
                   />
                 </div>
@@ -384,27 +359,23 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
               {/* 🔒 Hidden (backend continua igual) */}
               <input
                 type="hidden"
-                id="latitudeInicio"
                 name="latitudeInicio"
-                defaultValue={vaga.latitudeInicio}
+                value={geoState.latitudeInicio}
               />
               <input
                 type="hidden"
-                id="longitudeInicio"
                 name="longitudeInicio"
-                defaultValue={vaga.longitudeInicio}
+                value={geoState.longitudeInicio}
               />
               <input
                 type="hidden"
-                id="latitudeFim"
                 name="latitudeFim"
-                defaultValue={vaga.latitudeFim}
+                value={geoState.latitudeFim}
               />
               <input
                 type="hidden"
-                id="longitudeFim"
                 name="longitudeFim"
-                defaultValue={vaga.longitudeFim}
+                value={geoState.longitudeFim}
               />
             </FormItem>
 

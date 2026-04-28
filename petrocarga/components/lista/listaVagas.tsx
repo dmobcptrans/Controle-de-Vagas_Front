@@ -98,22 +98,23 @@ useEffect(() => {
 
       setVagas(data);
 
-      if (data.length > 0 && onSelectFirstCoordinate && debouncedSearchQuery !== '') {
-        const primeira = data[0];
+     if (
+  data.length > 0 &&
+  onSelectFirstCoordinate &&
+  debouncedSearchQuery !== ''
+) {
+  const primeira = data[0];
 
-        const geo = primeira?.referenciaGeoInicio || primeira?.referenciaGeoFim;
-
-        if (geo) {
-          const [latStr, lngStr] = geo.split(',');
-
-          const lat = Number(latStr.trim());
-          const lng = Number(lngStr.trim());
-
-          if (!isNaN(lat) && !isNaN(lng)) {
-            onSelectFirstCoordinate({ lat, lng });
-          }
-        }
-      }
+  if (
+    primeira?.latitudeInicio !== undefined &&
+    primeira?.longitudeInicio !== undefined
+  ) {
+    onSelectFirstCoordinate({
+      lat: primeira.latitudeInicio,
+      lng: primeira.longitudeInicio,
+    });
+  }
+}
 
     } catch (err) {
       console.error('Erro ao carregar vagas:', err);

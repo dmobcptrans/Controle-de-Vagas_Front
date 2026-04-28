@@ -23,6 +23,12 @@ export default function CardMapEdit({
   defaultValue,
 }: CardMapEditProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
+  const defaultValueRef = useRef(defaultValue);
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -40,7 +46,6 @@ export default function CardMapEdit({
     let points: [number, number][] = [];
     let markers: mapboxgl.Marker[] = [];
 
-    // 🔥 cria retângulo rotacionado
     function createRectangle(
       start: [number, number],
       end: [number, number],
@@ -67,7 +72,6 @@ export default function CardMapEdit({
       ];
     }
 
-    // 🔥 cria source + layers UMA VEZ
     function initDrawLayer(data: GeoJSON.Feature) {
       if (!map.getSource('draw')) {
         map.addSource('draw', {
@@ -103,17 +107,10 @@ export default function CardMapEdit({
     map.on('load', () => {
       map.resize();
 
-      // 🔥 default (edição)
-      if (defaultValue) {
-        const p1: [number, number] = [
-          defaultValue.longitudeInicio,
-          defaultValue.latitudeInicio,
-        ];
-
-        const p2: [number, number] = [
-          defaultValue.longitudeFim,
-          defaultValue.latitudeFim,
-        ];
+      const initial = defaultValueRef.current;
+      if (initial) {
+        const p1: [number, number] = [initial.longitudeInicio, initial.latitudeInicio];
+        const p2: [number, number] = [initial.longitudeFim, initial.latitudeFim];
 
         const rectangle = createRectangle(p1, p2);
 
@@ -130,21 +127,17 @@ export default function CardMapEdit({
       }
     });
 
-    // ==================== CLIQUE ====================
     map.on('click', (e) => {
       const point: [number, number] = [e.lngLat.lng, e.lngLat.lat];
 
-      // reset após 2 cliques
       if (points.length === 2) {
         points = [];
-
         markers.forEach((m) => m.remove());
         markers = [];
       }
 
       points.push(point);
 
-      // 🔵 marcador elegante
       const el = document.createElement('div');
       el.style.width = '12px';
       el.style.height = '12px';
@@ -159,7 +152,6 @@ export default function CardMapEdit({
 
       markers.push(marker);
 
-      // 🔹 1 ponto → linha
       if (points.length === 1) {
         initDrawLayer({
           type: 'Feature',
@@ -172,11 +164,10 @@ export default function CardMapEdit({
         return;
       }
 
-      // 🔥 2 pontos → retângulo rotacionado
       if (points.length === 2) {
         const [p1, p2] = points;
 
-        onChange({
+        onChangeRef.current({
           latitudeInicio: p1[1],
           longitudeInicio: p1[0],
           latitudeFim: p2[1],
@@ -199,7 +190,7 @@ export default function CardMapEdit({
     return () => {
       map.remove();
     };
-  }, [onChange, defaultValue]);
+  }, []); // <-- array vazio: monta uma vez
 
   return (
     <div
