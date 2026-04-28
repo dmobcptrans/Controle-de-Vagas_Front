@@ -24,11 +24,7 @@ import { Vaga } from '@/lib/types/vaga';
  * ```ts
  * parseCoordinates("-23.55052, -46.633308") // [-46.633308, -23.55052]
  * ```
- */
-function parseCoordinates(coord: string): [number, number] {
-  const [lat, lng] = coord.split(',').map((v) => parseFloat(v.trim()));
-  return [lng, lat];
-}
+
 
 /**
  * @function addVagaMarkers
@@ -71,7 +67,7 @@ export function addVagaMarkers(
 ) {
   vagas.forEach((vaga) => {
     // Ignora vagas sem coordenadas de início
-    if (!vaga.referenciaGeoInicio) return;
+    if (!vaga.longitudeInicio || !vaga.latitudeInicio) return;
 
     // Cria elemento HTML do marcador
     const el = document.createElement('div');
@@ -79,7 +75,7 @@ export function addVagaMarkers(
       'vaga-marker w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-pointer';
 
     // Converte coordenadas
-    const coordinates = parseCoordinates(vaga.referenciaGeoInicio);
+    const coordinates = [vaga.longitudeInicio, vaga.latitudeInicio] as [number, number];
 
     // Cria marcador com popup
     const marker = new mapboxgl.Marker(el)

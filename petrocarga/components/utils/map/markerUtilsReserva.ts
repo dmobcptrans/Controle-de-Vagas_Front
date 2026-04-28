@@ -21,12 +21,7 @@ import { Vaga } from '@/lib/types/vaga';
  * @param coord - String com coordenadas (ex: "-23.55052, -46.633308")
  * @returns Array com [longitude, latitude] (ordem correta para Mapbox)
  * 
- * @private
- */
-function parseCoordinates(coord: string): [number, number] {
-  const [lat, lng] = coord.split(',').map((v) => parseFloat(v.trim()));
-  return [lng, lat];
-}
+
 
 /**
  * @function addVagaMarkersReserva
@@ -73,7 +68,7 @@ export function addVagaMarkersReserva(
 ) {
   vagas.forEach((vaga) => {
     // Ignora vagas sem coordenadas de início
-    if (!vaga.referenciaGeoInicio) return;
+    if (!vaga.longitudeInicio || !vaga.latitudeInicio) return;
 
     const isDisponivel = vaga.status === 'DISPONIVEL';
 
@@ -89,7 +84,7 @@ export function addVagaMarkersReserva(
     `;
 
     // Converte coordenadas
-    const coordinates = parseCoordinates(vaga.referenciaGeoInicio);
+    const coordinates = [vaga.longitudeInicio, vaga.latitudeInicio] as [number, number];
 
     // Cria marcador com popup
     const marker = new mapboxgl.Marker(el)
