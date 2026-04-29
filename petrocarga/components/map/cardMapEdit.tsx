@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import mapboxgl, { GeoJSONSource } from 'mapbox-gl';
 
 interface CardMapEditProps {
+  mode: 'create' | 'edit'; 
   defaultValue?: {
     latitudeInicio: number;
     longitudeInicio: number;
@@ -19,6 +20,7 @@ interface CardMapEditProps {
 }
 
 export default function CardMapEdit({
+  mode,
   onChange,
   defaultValue,
 }: CardMapEditProps) {
@@ -104,28 +106,37 @@ export default function CardMapEdit({
       }
     }
 
-    map.on('load', () => {
-      map.resize();
+map.on('load', () => {
+  map.resize();
 
-      const initial = defaultValueRef.current;
-      if (initial) {
-        const p1: [number, number] = [initial.longitudeInicio, initial.latitudeInicio];
-        const p2: [number, number] = [initial.longitudeFim, initial.latitudeFim];
+  if (mode === 'edit') {
+    const initial = defaultValueRef.current;
 
-        const rectangle = createRectangle(p1, p2);
+    if (initial) {
+      const p1: [number, number] = [
+        initial.longitudeInicio,
+        initial.latitudeInicio,
+      ];
+      const p2: [number, number] = [
+        initial.longitudeFim,
+        initial.latitudeFim,
+      ];
 
-        initDrawLayer({
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [rectangle],
-          },
-          properties: {},
-        });
+      const rectangle = createRectangle(p1, p2);
 
-        map.fitBounds([p1, p2], { padding: 40 });
-      }
-    });
+      initDrawLayer({
+        type: 'Feature',
+        geometry: {
+          type: 'Polygon',
+          coordinates: [rectangle],
+        },
+        properties: {},
+      });
+
+      map.fitBounds([p1, p2], { padding: 40 });
+    }
+  }
+});
 
     map.on('click', (e) => {
       const point: [number, number] = [e.lngLat.lng, e.lngLat.lat];
@@ -193,9 +204,6 @@ export default function CardMapEdit({
   }, []); // <-- array vazio: monta uma vez
 
   return (
-    <div
-      ref={mapContainer}
-      className="w-full h-64 rounded-lg shadow-md"
-    />
+    <div ref={mapContainer} className="w-full h-64 rounded-lg shadow-md" />
   );
 }

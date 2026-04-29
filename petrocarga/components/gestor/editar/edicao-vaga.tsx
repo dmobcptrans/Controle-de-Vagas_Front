@@ -100,14 +100,17 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
     }
   }, [state]);
 
-  const handleGeoChange = useCallback((data: {
-  latitudeInicio: number;
-  longitudeInicio: number;
-  latitudeFim: number;
-  longitudeFim: number;
-}) => {
-  setGeoState(data);
-}, []); // sem dependências → referência estável
+  const handleGeoChange = useCallback(
+    (data: {
+      latitudeInicio: number;
+      longitudeInicio: number;
+      latitudeFim: number;
+      longitudeFim: number;
+    }) => {
+      setGeoState(data);
+    },
+    [],
+  ); // sem dependências → referência estável
 
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">
@@ -309,6 +312,7 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
               {/* 🗺️ MAPA */}
               {useMap && (
                 <CardMapEdit
+                  mode="edit"
                   defaultValue={{
                     latitudeInicio: vaga.latitudeInicio,
                     longitudeInicio: vaga.longitudeInicio,
