@@ -18,6 +18,7 @@ import toast from 'react-hot-toast';
 import FormItem from '../../../components/form/form-item';
 import DiaSemana from '../../../components/gestor/dia-semana/dia-semana';
 import SelecaoCustomizada from '../../../components/selecaoItem/selecao-customizada';
+import CardMapEdit from '@/components/map/cardMapEdit';
 import Link from 'next/link';
 
 /**
@@ -223,6 +224,23 @@ export default function Cadastro() {
    */
   const [area, setArea] = useState('');
   const [tipo, setTipo] = useState('');
+  const [useMap, setUseMap] = useState(true);
+
+  const [geoState, setGeoState] = useState({
+    latitudeInicio: -22.505,
+    longitudeInicio: -43.178,
+    latitudeFim: -22.505,
+    longitudeFim: -43.178,
+  });
+
+  const handleGeoChange = (data: {
+    latitudeInicio: number;
+    longitudeInicio: number;
+    latitudeFim: number;
+    longitudeFim: number;
+  }) => {
+    setGeoState(data);
+  };
 
   // --------------------------------------------------------------------------
   // EFEITO DE FEEDBACK (TOAST)
@@ -419,29 +437,94 @@ export default function Cadastro() {
               />
             </FormItem>
 
-            {/* Campo 9: Localização inicial (lat/long) */}
+            {/* Localização da vaga */}
             <FormItem
-              name="Localização inicial"
-              description="Latitude e Longitude do início da vaga. Exemplo: -23.55052, -46.633308"
+              name="Localização da vaga"
+              description="Defina pelo mapa ou manualmente (lat, lng)"
             >
-              <Input
-                className="rounded-sm border-gray-400 text-sm md:text-base"
-                id="localizacao-inicio"
-                name="localizacao-inicio"
-                placeholder="-23.55052, -46.633308"
-              />
-            </FormItem>
+              {/* 🔁 Toggle */}
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setUseMap(true)}
+                  className={`px-3 py-1 rounded ${
+                    useMap ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                  }`}
+                >
+                  Mapa
+                </button>
 
-            {/* Campo 10: Localização final (lat/long) */}
-            <FormItem
-              name="Localização final"
-              description="Latitude e Longitude do fim da vaga. Exemplo: -23.55052, -46.633308"
-            >
-              <Input
-                className="rounded-sm border-gray-400 text-sm md:text-base"
-                id="localizacao-fim"
-                name="localizacao-fim"
-                placeholder="-23.55052, -46.633308"
+                <button
+                  type="button"
+                  onClick={() => setUseMap(false)}
+                  className={`px-3 py-1 rounded ${
+                    !useMap ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                  }`}
+                >
+                  Manual
+                </button>
+              </div>
+
+              {/* 🗺️ MAPA */}
+              {useMap && (
+                <CardMapEdit mode="create" onChange={handleGeoChange} />
+              )}
+
+              {/* ✍️ MANUAL (2 CAMPOS) */}
+              {!useMap && (
+                <div className="flex flex-col gap-2">
+                  <Input
+                    id="geoInicio"
+                    placeholder="-23.55052, -46.633308"
+                    onChange={(e) => {
+                      const [lat, lng] = e.target.value
+                        .split(',')
+                        .map((v) => v.trim());
+                      setGeoState((prev) => ({
+                        ...prev,
+                        latitudeInicio: Number(lat) || prev.latitudeInicio,
+                        longitudeInicio: Number(lng) || prev.longitudeInicio,
+                      }));
+                    }}
+                  />
+
+                  <Input
+                    id="geoFim"
+                    placeholder="-23.55052, -46.633308"
+                    onChange={(e) => {
+                      const [lat, lng] = e.target.value
+                        .split(',')
+                        .map((v) => v.trim());
+                      setGeoState((prev) => ({
+                        ...prev,
+                        latitudeFim: Number(lat) || prev.latitudeFim,
+                        longitudeFim: Number(lng) || prev.longitudeFim,
+                      }));
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* 🔒 Hidden (backend continua igual) */}
+              <input
+                type="hidden"
+                name="latitudeInicio"
+                value={geoState.latitudeInicio}
+              />
+              <input
+                type="hidden"
+                name="longitudeInicio"
+                value={geoState.longitudeInicio}
+              />
+              <input
+                type="hidden"
+                name="latitudeFim"
+                value={geoState.latitudeFim}
+              />
+              <input
+                type="hidden"
+                name="longitudeFim"
+                value={geoState.longitudeFim}
               />
             </FormItem>
 
