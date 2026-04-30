@@ -289,7 +289,7 @@ export function NotificationProvider({
       return;
     }
 
-    const url = `${baseUrl}/petrocarga/notificacoes/stream`;
+    const url = `${baseUrl}/petrocarga/notificacoes/stream?ngrok-skip-browser-warning=true`;
     console.log(`Conectando SSE: ${url}`);
 
     try {
