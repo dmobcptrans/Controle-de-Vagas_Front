@@ -252,138 +252,111 @@ export function NotificationProvider({
     [usuarioId],
   );
 
-  // ==================== CONECTAR SSE ====================
-  const connect = useCallback(() => {
-    // Verifica se já está conectando OU conectado
-    const currentState = eventSourceRef.current?.readyState;
+const connect = useCallback(() => {
+  if (!usuarioId || typeof window === 'undefined') {
+    console.log('Usuário não autenticado ou não é navegador');
+    return;
+  }
 
-    if (
-      currentState === EventSource.OPEN ||
-      currentState === EventSource.CONNECTING
-    ) {
-      console.log('SSE já está conectando ou conectado, ignorando...');
-      return;
-    }
+  const baseUrl = apiUrlRef.current || process.env.NEXT_PUBLIC_API_URL;
+  if (!baseUrl) {
+    console.error('URL da API não configurada');
+    setError('URL da API não configurada');
+    return;
+  }
 
-    if (!usuarioId || typeof window === 'undefined') {
-      console.log('Usuário não autenticado ou não é navegador');
-      return;
-    }
+  const url = `${baseUrl}/petrocarga/notificacoes/stream`;
+  console.log(`Conectando SSE via fetch: ${url}`);
 
-    // Limpa qualquer timer pendente antes de tentar nova conexão
-    if (reconnectTimerRef.current) {
-      clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
-    }
+  let isActive = true;
 
-    // Fecha conexão existente se houver
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
-    }
-
-    const baseUrl = apiUrlRef.current || process.env.NEXT_PUBLIC_API_URL;
-    if (!baseUrl) {
-      console.error('URL da API não configurada');
-      setError('URL da API não configurada');
-      return;
-    }
-
-    const url = `${baseUrl}/petrocarga/notificacoes/stream?ngrok-skip-browser-warning=true`;
-    console.log(`Conectando SSE: ${url}`);
+  const handleIncoming = (data: string) => {
+    if (!data) return;
 
     try {
-      const eventSource = new EventSource(url, { withCredentials: true });
-      eventSourceRef.current = eventSource;
+      const parsed = JSON.parse(data.trim());
 
-      const handleIncoming = (data: string | null) => {
-        if (!data) return;
-        try {
-          const parsed = JSON.parse(data.trim());
-          const notification: AppNotification = {
-            id: parsed.id,
-            titulo: parsed.titulo,
-            mensagem: parsed.mensagem,
-            tipo: parsed.tipo,
-            lida: parsed.lida ?? false,
-            criadaEm: parsed.criadaEm,
-            metadata: parsed.metadata || {},
-          };
-          addNotification(notification);
-        } catch {
-          // Silencia erro de parse
-        }
+      const notification: AppNotification = {
+        id: parsed.id,
+        titulo: parsed.titulo,
+        mensagem: parsed.mensagem,
+        tipo: parsed.tipo,
+        lida: parsed.lida ?? false,
+        criadaEm: parsed.criadaEm,
+        metadata: parsed.metadata || {},
       };
 
-      eventSource.onopen = () => {
-        console.log('SSE conectado com sucesso');
-        setIsConnected(true);
-        setError(null);
-        retryCountRef.current = 0; // Reseta contador de tentativas
-      };
-
-      eventSource.onmessage = (e) => {
-        console.log('Mensagem SSE recebida');
-        handleIncoming(e.data);
-      };
-
-      eventSource.addEventListener('notificacao', (e) => {
-        console.log('Evento notificacao recebido');
-        handleIncoming((e as MessageEvent).data);
-      });
-
-      eventSource.onerror = (event) => {
-        console.log(
-          'SSE onerror disparado, readyState:',
-          eventSource.readyState,
-        );
-
-        // ReadyState: 0 = CONNECTING, 1 = OPEN, 2 = CLOSED
-        if (eventSource.readyState === EventSource.CLOSED) {
-          console.log('Conexão SSE fechada');
-          setIsConnected(false);
-
-          // Só tenta reconectar se não atingiu o limite
-          if (autoReconnect && retryCountRef.current < reconnectMaxAttempts) {
-            retryCountRef.current += 1;
-            const delay = Math.min(
-              reconnectInitialDelayMs * Math.pow(2, retryCountRef.current - 1),
-              reconnectMaxDelayMs,
-            );
-            console.log(
-              `Tentativa ${retryCountRef.current}/${reconnectMaxAttempts} em ${delay}ms`,
-            );
-
-            reconnectTimerRef.current = window.setTimeout(() => {
-              console.log('Executando reconexão...');
-              connect();
-            }, delay);
-          } else if (retryCountRef.current >= reconnectMaxAttempts) {
-            console.log('Máximo de tentativas atingido');
-            setError('Não foi possível conectar ao servidor de notificações');
-          }
-        } else if (eventSource.readyState === EventSource.CONNECTING) {
-          console.log('SSE ainda está tentando conectar...');
-          // Não faz nada, aguarda
-        } else {
-          console.log(
-            'SSE onerror com estado desconhecido:',
-            eventSource.readyState,
-          );
-        }
-      };
-    } catch (err) {
-      console.error('Erro ao criar EventSource:', err);
-      setError('Erro ao conectar com servidor de notificações');
+      addNotification(notification);
+    } catch {
+      // ignora parse inválido (heartbeat etc)
     }
-  }, [
-    usuarioId,
-    addNotification,
-    autoReconnect,
-    reconnectMaxAttempts,
-    reconnectInitialDelayMs,
-    reconnectMaxDelayMs,
-  ]);
+  };
+
+  fetch(url, {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+      Accept: 'text/event-stream',
+    },
+  })
+    .then(async (response) => {
+      if (!response.ok || !response.body) {
+        throw new Error('Erro na conexão SSE');
+      }
+
+      console.log('SSE conectado via fetch');
+      setIsConnected(true);
+      setError(null);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      let buffer = '';
+
+      while (isActive) {
+        const { value, done } = await reader.read();
+
+        if (done) {
+          console.log('Stream finalizado');
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // SSE separa eventos por \n\n
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || '';
+
+        for (const part of parts) {
+          const lines = part.split('\n');
+
+          let data = '';
+
+          for (const line of lines) {
+            if (line.startsWith('data:')) {
+              data += line.replace('data:', '').trim();
+            }
+          }
+
+          if (data) {
+            handleIncoming(data);
+          }
+        }
+      }
+    })
+    .catch((err) => {
+      console.error('Erro SSE fetch:', err);
+      setIsConnected(false);
+      setError('Erro ao conectar com servidor de notificações');
+    });
+
+  // cleanup manual
+  return () => {
+    isActive = false;
+    setIsConnected(false);
+  };
+}, [usuarioId, addNotification]);
 
   // ==================== DESCONECTAR SSE ====================
   const disconnect = useCallback(() => {
