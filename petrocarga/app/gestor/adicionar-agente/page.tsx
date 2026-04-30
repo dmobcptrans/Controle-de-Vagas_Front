@@ -441,7 +441,7 @@ export default function CadastroAgentes() {
                           placeholder="agente@organizacao.com"
                           required
                           value={email}
-                          onChange={(e) => setEmail(e.target.value.toLowerCase)}
+                          onChange={(e) => setEmail(e.target.value.toLowerCase())}
                           autoComplete="email"
                         />
                         {/* Ícone decorativo */}
@@ -472,7 +472,7 @@ export default function CadastroAgentes() {
                           required
                           value={confirmarEmail}
                           onChange={(e) =>
-                            setConfirmarEmail(e.target.value.toLowerCase)
+                            setConfirmarEmail(e.target.value.toLowerCase())
                           }
                           autoComplete="email"
                         />
