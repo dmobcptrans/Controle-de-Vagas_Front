@@ -11,62 +11,62 @@ const CNH_CATS = ['B', 'AB', 'C', 'AC', 'D', 'AD', 'E', 'AE'];
 /**
  * @component OnboardingModal
  * @version 1.0.0
- * 
+ *
  * @description Modal de cadastro em 4 etapas para novos usuários (motoristas).
  * Gerencia coleta de dados pessoais, CNH, termos e cadastro de veículo.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FLUXO COMPLETO (4 ETAPAS):
  * ----------------------------------------------------------------------------
- * 
+ *
  * ETAPA 1 - DADOS PESSOAIS:
  *    - CPF (máscara automática)
  *    - Telefone (máscara automática)
  *    - Senha (com validação de 5 requisitos)
  *    - Confirmar senha
  *    - Lista de requisitos da senha (tamanho, minúscula, maiúscula, número, especial)
- * 
+ *
  * ETAPA 2 - HABILITAÇÃO:
  *    - Categoria da CNH (seleção via drawer/gaveta)
  *    - Número da CNH (máscara numérica)
  *    - Data de validade
- * 
+ *
  * ETAPA 3 - TERMOS E CONDIÇÕES:
  *    - Aceitação dos Termos de Uso
  *    - Modal com termos completos (ModalTermos)
- * 
+ *
  * ETAPA 4 - VEÍCULO:
  *    - Placa, Marca, Modelo
  *    - Tipo (select com 5 opções)
  *    - Tipo de proprietário (CPF/CNPJ)
  *    - CPF ou CNPJ do proprietário (com máscara)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 VALIDAÇÃO DE SENHA (5 REQUISITOS):
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. Mínimo de 6 caracteres
  * 2. Pelo menos uma letra minúscula
  * 3. Pelo menos uma letra maiúscula
  * 4. Pelo menos um número
  * 5. Pelo menos um caractere especial (!@#...)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - VALIDAÇÃO DE SENHA: 5 requisitos com feedback visual (✓ verde / ○ cinza)
  * - MÁSCARAS: CPF (000.000.000-00), CNPJ (00.000.000/0000-00), Telefone ((00) 00000-0000)
  * - DETALHAMENTO DE REQUISITOS: Lista completa dos requisitos de senha
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - useOnboarding: Contexto de cadastro
  * - ModalTermos: Modal com termos completos
  * - Checkbox: Componente de checkbox do shadcn/ui
- * 
+ *
  * @example
  * ```tsx
  * <OnboardingModal />
@@ -173,10 +173,7 @@ export default function OnboardingModal({
       const cpf = (data.cpf || '').replace(/\D/g, '');
       const tel = (data.telefone || '').replace(/\D/g, '');
       return (
-        cpf.length >= 11 &&
-        tel.length >= 10 &&
-        senhaValida &&
-        senhasIguais
+        cpf.length >= 11 && tel.length >= 10 && senhaValida && senhasIguais
       );
     }
     if (step === 2) {
@@ -208,17 +205,16 @@ export default function OnboardingModal({
     };
   };
 
-
   function ItemSenha({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <div className={`flex items-center gap-2 ${ok ? 'text-emerald-500' : 'text-gray-400'}`}>
-      <span className="text-xs">
-        {ok ? '✓' : '○'}
-      </span>
-      <span>{label}</span>
-    </div>
-  );
-}
+    return (
+      <div
+        className={`flex items-center gap-2 ${ok ? 'text-emerald-500' : 'text-gray-400'}`}
+      >
+        <span className="text-xs">{ok ? '✓' : '○'}</span>
+        <span>{label}</span>
+      </div>
+    );
+  }
 
   const requisitosSenha = validarSenha(data.senha || '');
 
@@ -288,104 +284,117 @@ export default function OnboardingModal({
         </div>
 
         {/* Step 1 */}
-{step === 1 && (
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <Field label="CPF">
-      <input
-        className={inputCls}
-        inputMode="numeric"
-        placeholder="000.000.000-00"
-        value={fmtCPF(data.cpf || '')}
-        onChange={(e) =>
-          updateData({
-            cpf: onlyNumbers(e.target.value).slice(0, 11),
-          })
-        }
-      />
-    </Field>
+        {step === 1 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="CPF">
+              <input
+                className={inputCls}
+                inputMode="numeric"
+                placeholder="000.000.000-00"
+                value={fmtCPF(data.cpf || '')}
+                onChange={(e) =>
+                  updateData({
+                    cpf: onlyNumbers(e.target.value).slice(0, 11),
+                  })
+                }
+              />
+            </Field>
 
-    <Field label="Telefone">
-      <input
-        className={inputCls}
-        inputMode="numeric"
-        placeholder="(00) 00000-0000"
-        value={fmtTel(data.telefone || '')}
-        onChange={(e) =>
-          updateData({
-            telefone: onlyNumbers(e.target.value).slice(0, 11),
-          })
-        }
-      />
-    </Field>
+            <Field label="Telefone">
+              <input
+                className={inputCls}
+                inputMode="numeric"
+                placeholder="(00) 00000-0000"
+                value={fmtTel(data.telefone || '')}
+                onChange={(e) =>
+                  updateData({
+                    telefone: onlyNumbers(e.target.value).slice(0, 11),
+                  })
+                }
+              />
+            </Field>
 
-    {/* SENHA */}
-    <Field label="Senha">
-      <div className="relative">
-        <input
-          className={`${inputCls} pr-10 ${
-            data.senha && !senhaValida ? 'border-red-500' : ''
-          }`}
-          type={showPassword ? 'text' : 'password'}
-          placeholder="Mínimo 6 caracteres"
-          value={data.senha || ''}
-          onChange={(e) => updateData({ senha: e.target.value })}
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword((p) => !p)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-        >
-          <EyeIcon />
-        </button>
-      </div>
-    </Field>
+            {/* SENHA */}
+            <Field label="Senha">
+              <div className="relative">
+                <input
+                  className={`${inputCls} pr-10 ${
+                    data.senha && !senhaValida ? 'border-red-500' : ''
+                  }`}
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Mínimo 6 caracteres"
+                  value={data.senha || ''}
+                  onChange={(e) => updateData({ senha: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                >
+                  <EyeIcon />
+                </button>
+              </div>
+            </Field>
 
-    {/* CONFIRMAR SENHA */}
-    <Field label="Confirmar senha">
-      <div className="relative">
-        <input
-          className={`${inputCls} pr-10 ${
-            !senhasIguais && confirmarSenha !== ''
-              ? 'border-red-500'
-              : ''
-          }`}
-          type={exibirConfirmarSenha ? 'text' : 'password'}
-          placeholder="Digite novamente"
-          value={confirmarSenha}
-          onChange={(e) => setConfirmarSenha(e.target.value)}
-        />
-        <button
-          type="button"
-          onClick={() =>
-            setExibirConfirmarSenha(!exibirConfirmarSenha)
-          }
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
-        >
-          <EyeIcon />
-        </button>
-      </div>
-    </Field>
+            {/* CONFIRMAR SENHA */}
+            <Field label="Confirmar senha">
+              <div className="relative">
+                <input
+                  className={`${inputCls} pr-10 ${
+                    !senhasIguais && confirmarSenha !== ''
+                      ? 'border-red-500'
+                      : ''
+                  }`}
+                  type={exibirConfirmarSenha ? 'text' : 'password'}
+                  placeholder="Digite novamente"
+                  value={confirmarSenha}
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setExibirConfirmarSenha(!exibirConfirmarSenha)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                >
+                  <EyeIcon />
+                </button>
+              </div>
+            </Field>
 
-    {/* REQUISITOS DA SENHA */}
-    {data.senha && (
-      <div className="col-span-1 sm:col-span-2">
-        <div className="rounded-lg border border-gray-200 p-3 bg-gray-50">
-          <p className="text-xs font-medium text-gray-600 mb-2">
-            A senha deve conter:
-          </p>
+            {/* REQUISITOS DA SENHA */}
+            {data.senha && (
+              <div className="col-span-1 sm:col-span-2">
+                <div className="rounded-lg border border-gray-200 p-3 bg-gray-50">
+                  <p className="text-xs font-medium text-gray-600 mb-2">
+                    A senha deve conter:
+                  </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
-            <ItemSenha ok={requisitosSenha.tamanho} label="Mínimo de 6 caracteres" />
-            <ItemSenha ok={requisitosSenha.minuscula} label="Pelo menos uma letra minúscula" />
-            <ItemSenha ok={requisitosSenha.maiuscula} label="Pelo menos uma letra maiúscula" />
-            <ItemSenha ok={requisitosSenha.numero} label="Pelo menos um número" />
-            <ItemSenha ok={requisitosSenha.especial} label="Pelo menos um caractere especial (!@#...)" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
+                    <ItemSenha
+                      ok={requisitosSenha.tamanho}
+                      label="Mínimo de 6 caracteres"
+                    />
+                    <ItemSenha
+                      ok={requisitosSenha.minuscula}
+                      label="Pelo menos uma letra minúscula"
+                    />
+                    <ItemSenha
+                      ok={requisitosSenha.maiuscula}
+                      label="Pelo menos uma letra maiúscula"
+                    />
+                    <ItemSenha
+                      ok={requisitosSenha.numero}
+                      label="Pelo menos um número"
+                    />
+                    <ItemSenha
+                      ok={requisitosSenha.especial}
+                      label="Pelo menos um caractere especial (!@#...)"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
-    )}
-  </div>
-)}
+        )}
 
         {/* Step 2 — CNH */}
         {step === 2 && (
@@ -515,11 +524,15 @@ export default function OnboardingModal({
                   setVeiculo({ ...veiculo, tipo: e.target.value })
                 }
               >
-                <option value="AUTOMOVEL">Automóvel</option>
-                <option value="VUC">VUC</option>
-                <option value="CAMINHONETA">Caminhoneta</option>
-                <option value="CAMINHAO_MEDIO">Caminhão Médio</option>
-                <option value="CAMINHAO_LONGO">Caminhão Longo</option>
+                <option value="AUTOMOVEL">Carro - Até 5 metros</option>
+                <option value="CAMINHONETA">Caminhonete - Até 6 metros</option>
+                <option value="VUC">VUC - Até 8 metros</option>
+                <option value="CAMINHAO_MEDIO">
+                  Caminhão médio - 9 a 12 metros
+                </option>
+                <option value="CAMINHAO_LONGO">
+                  Caminhão longo - 13 a 19 metros
+                </option>
               </select>
             </Field>
 
@@ -538,10 +551,11 @@ export default function OnboardingModal({
                           cnpjProprietario: '',
                         })
                       }
-                      className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${veiculo.tipoProprietario === tipo
-                        ? 'bg-blue-600 border-blue-600 text-white'
-                        : 'bg-transparent border-gray-300 text-gray-600 hover:border-blue-400'
-                        }`}
+                      className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        veiculo.tipoProprietario === tipo
+                          ? 'bg-blue-600 border-blue-600 text-white'
+                          : 'bg-transparent border-gray-300 text-gray-600 hover:border-blue-400'
+                      }`}
                     >
                       {tipo}
                     </button>
@@ -598,8 +612,9 @@ export default function OnboardingModal({
 
         {/* Footer */}
         <div
-          className={`mt-8 flex items-center gap-3 ${isLockedFlow && step === 4 ? 'justify-center' : 'justify-between'
-            }`}
+          className={`mt-8 flex items-center gap-3 ${
+            isLockedFlow && step === 4 ? 'justify-center' : 'justify-between'
+          }`}
         >
           {step > 1 && !(isLockedFlow && step === 4) && (
             <button
@@ -612,8 +627,9 @@ export default function OnboardingModal({
           <button
             onClick={handleNext}
             disabled={!isStepValid()}
-            className={`rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white disabled:opacity-40 ${isLockedFlow && step === 4 ? 'w-full max-w-xs' : 'flex-1'
-              }`}
+            className={`rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white disabled:opacity-40 ${
+              isLockedFlow && step === 4 ? 'w-full max-w-xs' : 'flex-1'
+            }`}
           >
             {step === totalSteps ? 'Finalizar' : 'Próximo'}
           </button>
@@ -650,10 +666,11 @@ export default function OnboardingModal({
                       updateData({ tipoCnh: cat });
                       setIsCnhDrawerOpen(false);
                     }}
-                    className={`flex h-16 flex-col items-center justify-center rounded-xl border-2 transition-all ${data.tipoCnh === cat
-                      ? 'border-blue-500 bg-blue-50 text-blue-600'
-                      : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
-                      }`}
+                    className={`flex h-16 flex-col items-center justify-center rounded-xl border-2 transition-all ${
+                      data.tipoCnh === cat
+                        ? 'border-blue-500 bg-blue-50 text-blue-600'
+                        : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
+                    }`}
                   >
                     <span className="text-lg font-bold">{cat}</span>
                     {data.tipoCnh === cat && (

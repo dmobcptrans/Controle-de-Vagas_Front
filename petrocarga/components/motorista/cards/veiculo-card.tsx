@@ -16,50 +16,50 @@ type VeiculoDetalhesProps = {
 /**
  * @component VeiculoDetalhes
  * @version 1.0.0
- * 
+ *
  * @description Componente de detalhes e edição de veículo.
  * Exibe informações do veículo com modos de visualização e edição,
  * permitindo atualização e exclusão.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 MODOS DE EXIBIÇÃO:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. MODO VISUALIZAÇÃO (editando = false):
  *    - Exibe marca, modelo, placa, tipo
  *    - Exibe CPF ou CNPJ do proprietário (se houver)
  *    - Botões: "Alterar" e "Excluir"
- * 
+ *
  * 2. MODO EDIÇÃO (editando = true):
  *    - Campos editáveis: marca, modelo, placa, tipo, CPF, CNPJ
  *    - Botões: "Cancelar" e "Salvar Alterações"
  *    - Validações de campos obrigatórios
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 AÇÕES:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - EDITAR: Abre formulário de edição
  * - SALVAR: Atualiza veículo via API e notifica componente pai
  * - CANCELAR: Restaura dados originais e sai do modo edição
  * - EXCLUIR: Abre modal de confirmação, deleta veículo e redireciona
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - SINCRONIZAÇÃO: useEffect sincroniza formData com veículo prop
  * - FEEDBACK: AlertBox com ícones e cores (sucesso/erro)
  * - MODAL DE EXCLUSÃO: Overlay com backdrop blur, responsivo
  * - RESPONSIVIDADE: Grid adaptativa (1 coluna mobile, 2 colunas desktop)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - deleteVeiculo, atualizarVeiculo: APIs de veículo
  * - Veiculo: Tipo de veículo
- * 
+ *
  * @example
  * ```tsx
  * <VeiculoDetalhes
@@ -226,7 +226,6 @@ export default function VeiculoDetalhes({
   return (
     <>
       <article className="relative bg-white p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl border-l-4 sm:border-l-8 border-blue-500 transition-all duration-300 w-full">
-        
         {/* Mensagem de feedback */}
         {mensagem.tipo && (
           <div className="mb-4 sm:mb-6">
@@ -359,12 +358,15 @@ export default function VeiculoDetalhes({
                 value={formData.tipo}
                 onChange={(e) => handleInput('tipo', e.target.value)}
               >
-                <option value="AUTOMOVEL">Automóvel</option>
-                <option value="VUC">Veículo Urbano de Carga</option>
-                <option value="CAMINHONETA">Caminhoneta</option>
-                <option value="CAMINHAO_MEDIO">Caminhão Médio</option>
-                <option value="CAMINHAO_LONGO">Caminhão Longo</option>
-                <option value="CARRETA">Carreta</option>
+                <option value="AUTOMOVEL">Carro - Até 5 metros</option>
+                <option value="CAMINHONETA">Caminhonete - Até 6 metros</option>
+                <option value="VUC">VUC - Até 8 metros</option>
+                <option value="CAMINHAO_MEDIO">
+                  Caminhão médio - 9 a 12 metros
+                </option>
+                <option value="CAMINHAO_LONGO">
+                  Caminhão longo - 13 a 19 metros
+                </option>
               </select>
             </div>
 
@@ -424,7 +426,7 @@ export default function VeiculoDetalhes({
         isOpen={modalAberto}
         onClose={() => setModalAberto(false)}
         onConfirm={handleExcluir}
-        mensagem='Deseja mesmo excluir este veículo? Essa ação não poderá ser desfeita.'
+        mensagem="Deseja mesmo excluir este veículo? Essa ação não poderá ser desfeita."
       />
     </>
   );

@@ -59,11 +59,13 @@ export default function StepVeiculo({
           className="w-full border rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 transition-colors"
         >
           <option value="">Selecione...</option>
-          <option value="AUTOMOVEL">Automóvel</option>
-          <option value="VUC">VUC</option>
-          <option value="CAMINHONETA">Caminhoneta</option>
-          <option value="CAMINHAO_MEDIO">Caminhão médio</option>
-          <option value="CAMINHAO_LONGO">Caminhão longo</option>
+          <option value="AUTOMOVEL">Carro - Até 5 metros</option>
+          <option value="CAMINHONETA">Caminhonete - Até 6 metros</option>
+          <option value="VUC">VUC - Até 8 metros</option>
+          <option value="CAMINHAO_MEDIO">Caminhão médio - 9 a 12 metros</option>
+          <option value="CAMINHAO_LONGO">
+            Caminhão longo - 13 a 19 metros
+          </option>
         </select>
       </div>
 
