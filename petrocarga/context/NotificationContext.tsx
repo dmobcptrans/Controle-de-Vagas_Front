@@ -37,10 +37,6 @@ export function NotificationProvider({
   maxNotifications = 50,
   pageSize = 10,
   enableSSE = true,
-  autoReconnect = true,
-  reconnectMaxAttempts = 5,
-  reconnectInitialDelayMs = 1000,
-  reconnectMaxDelayMs = 30000,
 }: NotificationProviderProps) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -252,111 +248,102 @@ export function NotificationProvider({
     [usuarioId],
   );
 
-const connect = useCallback(() => {
-  if (!usuarioId || typeof window === 'undefined') {
-    console.log('Usuário não autenticado ou não é navegador');
-    return;
-  }
-
-  const baseUrl = apiUrlRef.current || process.env.NEXT_PUBLIC_API_URL;
-  if (!baseUrl) {
-    console.error('URL da API não configurada');
-    setError('URL da API não configurada');
-    return;
-  }
-
-  const url = `${baseUrl}/petrocarga/notificacoes/stream`;
-  console.log(`Conectando SSE via fetch: ${url}`);
-
-  let isActive = true;
-
-  const handleIncoming = (data: string) => {
-    if (!data) return;
-
-    try {
-      const parsed = JSON.parse(data.trim());
-
-      const notification: AppNotification = {
-        id: parsed.id,
-        titulo: parsed.titulo,
-        mensagem: parsed.mensagem,
-        tipo: parsed.tipo,
-        lida: parsed.lida ?? false,
-        criadaEm: parsed.criadaEm,
-        metadata: parsed.metadata || {},
-      };
-
-      addNotification(notification);
-    } catch {
-      // ignora parse inválido (heartbeat etc)
+  // ==================== CONECTAR SSE ====================
+  const connect = useCallback(() => {
+    if (!usuarioId || typeof window === 'undefined') {
+      return;
     }
-  };
 
-  fetch(url, {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      'ngrok-skip-browser-warning': 'true',
-      Accept: 'text/event-stream',
-    },
-  })
-    .then(async (response) => {
-      if (!response.ok || !response.body) {
-        throw new Error('Erro na conexão SSE');
+    const baseUrl = apiUrlRef.current || process.env.NEXT_PUBLIC_API_URL;
+    if (!baseUrl) {
+      setError('URL da API não configurada');
+      return;
+    }
+
+    const url = `${baseUrl}/petrocarga/notificacoes/stream`;
+
+    let isActive = true;
+
+    const handleIncoming = (data: string) => {
+      if (!data) return;
+
+      try {
+        const parsed = JSON.parse(data.trim());
+
+        const notification: AppNotification = {
+          id: parsed.id,
+          titulo: parsed.titulo,
+          mensagem: parsed.mensagem,
+          tipo: parsed.tipo,
+          lida: parsed.lida ?? false,
+          criadaEm: parsed.criadaEm,
+          metadata: parsed.metadata || {},
+        };
+
+        addNotification(notification);
+      } catch {
+        // ignora parse inválido (heartbeat etc)
       }
+    };
 
-      console.log('SSE conectado via fetch');
-      setIsConnected(true);
-      setError(null);
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-
-      let buffer = '';
-
-      while (isActive) {
-        const { value, done } = await reader.read();
-
-        if (done) {
-          console.log('Stream finalizado');
-          break;
+    fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'ngrok-skip-browser-warning': 'true',
+        Accept: 'text/event-stream',
+      },
+    })
+      .then(async (response) => {
+        if (!response.ok || !response.body) {
+          throw new Error('Erro na conexão SSE');
         }
 
-        buffer += decoder.decode(value, { stream: true });
+        setIsConnected(true);
+        setError(null);
 
-        // SSE separa eventos por \n\n
-        const parts = buffer.split('\n\n');
-        buffer = parts.pop() || '';
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
 
-        for (const part of parts) {
-          const lines = part.split('\n');
+        let buffer = '';
 
-          let data = '';
+        while (isActive) {
+          const { value, done } = await reader.read();
 
-          for (const line of lines) {
-            if (line.startsWith('data:')) {
-              data += line.replace('data:', '').trim();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          const parts = buffer.split('\n\n');
+          buffer = parts.pop() || '';
+
+          for (const part of parts) {
+            const lines = part.split('\n');
+
+            let data = '';
+
+            for (const line of lines) {
+              if (line.startsWith('data:')) {
+                data += line.replace('data:', '').trim();
+              }
+            }
+
+            if (data) {
+              handleIncoming(data);
             }
           }
-
-          if (data) {
-            handleIncoming(data);
-          }
         }
-      }
-    })
-    .catch((err) => {
-      console.error('Erro SSE fetch:', err);
-      setIsConnected(false);
-      setError('Erro ao conectar com servidor de notificações');
-    });
+      })
+      .catch(() => {
+        setIsConnected(false);
+        setError('Erro ao conectar com servidor de notificações');
+      });
 
-  // cleanup manual
-  return () => {
-    isActive = false;
-    setIsConnected(false);
-  };
-}, [usuarioId, addNotification]);
+    return () => {
+      isActive = false;
+      setIsConnected(false);
+    };
+  }, [usuarioId, addNotification]);
 
   // ==================== DESCONECTAR SSE ====================
   const disconnect = useCallback(() => {
