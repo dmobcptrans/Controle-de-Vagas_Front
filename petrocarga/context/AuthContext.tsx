@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { api, TOKEN_KEY } from '@/service/api';
 import { AxiosError } from 'axios';
+import { Veiculo } from '@/lib/types/veiculo';
 
 interface UserData {
   id: string;
@@ -18,7 +19,7 @@ interface UserData {
   login: string;
   permissao: 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE';
   cpf?: string;
-  veiculoCadastrado: boolean;
+  veiculos: Veiculo[];
 }
 
 /**
@@ -34,7 +35,9 @@ function normalizeUserData(data: Record<string, unknown>): UserData {
     login: String(data.login ?? data.email ?? ''),
     permissao: (data.permissao as UserData['permissao']) ?? 'MOTORISTA',
     cpf: data.cpf ? String(data.cpf) : undefined,
-    veiculoCadastrado: Boolean(data.veiculoCadastrado ?? false),
+    veiculos: Array.isArray(data.veiculos)
+      ? (data.veiculos as Veiculo[])
+      : [],
   };
 }
 
