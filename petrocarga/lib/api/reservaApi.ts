@@ -180,7 +180,6 @@ export async function getReservasPorUsuario(
 
     const data = await res.json();
 
-    // Retorna o objeto paginado conforme a estrutura do back-end
     return {
       content: data.content || [],
       totalElementos: data.totalElementos || 0,

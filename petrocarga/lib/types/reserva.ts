@@ -254,18 +254,32 @@ export type Reserva = {
  */
 export type ReservaGet = {
   id: string;
-  vagaId: string;
-  logradouro: string;
-  bairro: string;
-  motoristaId: string;
-  veiculoId: string;
-  criadoPorId: string;
+
+  vaga: {
+    id: string;
+    endereco: {
+      logradouro: string;
+      bairro: string;
+    };
+  };
+
+  motorista: {
+    id: string;
+  };
+
+  veiculo: {
+    id: string;
+  };
+
+  criadoPor: {
+    id: string;
+  };
+
   criadoEm: string;
   inicio: string;
   fim: string;
-  referenciaGeoInicio: string;
-  referenciaGeoFim: string;
   cidadeOrigem: string;
+
   status: 'ATIVA' | 'CONCLUIDA' | 'RESERVADA' | 'REMOVIDA' | 'CANCELADA';
 };
 
