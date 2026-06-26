@@ -56,6 +56,7 @@ export type Veiculo = {
     | 'CAMINHONETA'
     | 'CAMINHAO_MEDIO'
     | 'CAMINHAO_LONGO';
+  comprimento: number;
   usuarioId?: string;
   cpfProprietario?: string | null;
   cnpjProprietario?: string | null;
