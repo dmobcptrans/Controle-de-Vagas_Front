@@ -45,11 +45,17 @@ export async function clientApi(path: string, options: ClientApiOptions = {}) {
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
 
-      throw new Error(
-        (errorData.cause !== 'unknown' ? errorData.cause : null) ||
-          errorData.erro ||
-          'Ocorreu um erro na requisição',
-      );
+      const message =
+        typeof errorData.message === 'string'
+          ? errorData.message
+          : typeof errorData.erro === 'string'
+            ? errorData.erro
+            : typeof errorData.cause === 'string' &&
+                errorData.cause !== 'unknown'
+              ? errorData.cause
+              : 'Ocorreu um erro na requisição';
+
+      throw new Error(message);
     }
 
     return res;
