@@ -93,7 +93,7 @@ export default function ReservaEditarModal({
 
   // ==================== ESTADOS DE REFERÊNCIA ====================
   const [initialForm] = useState({
-    veiculoId: reserva.veiculoId,
+    veiculoId: reserva.veiculo.id,
     cidadeOrigem: reserva.cidadeOrigem,
     inicio: reserva.inicio,
     fim: reserva.fim,
@@ -114,7 +114,7 @@ export default function ReservaEditarModal({
     vaga,
     loading,
     error: dataError,
-  } = useReservaData(form.veiculoId, reserva.vagaId);
+  } = useReservaData(form.veiculoId, reserva.vaga.id);
 
   const {
     step,
