@@ -15,7 +15,7 @@ export default function CadastroMotoristaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f0]">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
       <main className="mx-auto flex max-w-4xl justify-center px-4 py-8">
         {!cadastroConcluido ? (
           <FormularioMotorista
@@ -33,7 +33,7 @@ export default function CadastroMotoristaPage() {
         open={mostrarModal}
         onOpenChange={setMostrarModal}
         onClose={handleCloseModal}
-        cpfInicial="" // depois você pode passar o CPF cadastrado
+        cpfInicial="" 
       />
     </div>
   );

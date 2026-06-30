@@ -4,32 +4,37 @@ import { useEffect, useState } from 'react';
 
 type CadastroConcluidoCardProps = {
   tipo: 'motorista' | 'empresa';
-  onAtivarConta: () => void;
+  onAtivarConta?: () => void;
+  onLoginDireto?: () => void;
 };
 
-const TEMPO_TOTAL = 7 * 60; 
+const TEMPO_TOTAL = 7 * 60;
 
 export default function CadastroConcluidoCard({
   tipo,
   onAtivarConta,
+  onLoginDireto,
 }: CadastroConcluidoCardProps) {
   const [segundosRestantes, setSegundosRestantes] =
     useState(TEMPO_TOTAL);
 
+  const precisaAtivacao = tipo === 'motorista';
+
   useEffect(() => {
+    if (!precisaAtivacao) return;
+
     const interval = setInterval(() => {
       setSegundosRestantes((tempo) => {
         if (tempo <= 1) {
           clearInterval(interval);
           return 0;
         }
-
         return tempo - 1;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [precisaAtivacao]);
 
   const porcentagem =
     (segundosRestantes / TEMPO_TOTAL) * 100;
@@ -67,38 +72,51 @@ export default function CadastroConcluidoCard({
         Seu cadastro foi realizado com sucesso.
       </p>
 
-      <p className="mt-2 text-center text-slate-600">
-        Enviamos um código de ativação para o e-mail informado.
-        Para concluir o processo, ative sua conta antes que o
-        código expire.
-      </p>
+      {precisaAtivacao ? (
+        <>
+          <p className="mt-2 text-center text-slate-600">
+            Enviamos um código de ativação para o e-mail informado.
+            Ative sua conta antes que o código expire.
+          </p>
 
-      <div className="mt-8">
-        <div className="mb-2 flex justify-between text-sm font-medium text-slate-600">
-          <span>Tempo restante</span>
+          <div className="mt-8">
+            <div className="mb-2 flex justify-between text-sm font-medium text-slate-600">
+              <span>Tempo restante</span>
+              <span>
+                {String(minutos).padStart(2, '0')}:
+                {String(segundos).padStart(2, '0')}
+              </span>
+            </div>
 
-          <span>
-            {String(minutos).padStart(2, '0')}:
-            {String(segundos).padStart(2, '0')}
-          </span>
-        </div>
+            <div className="h-3 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full bg-blue-600 transition-all duration-1000"
+                style={{ width: `${porcentagem}%` }}
+              />
+            </div>
+          </div>
 
-        <div className="h-3 overflow-hidden rounded-full bg-slate-200">
-          <div
-            className="h-full rounded-full bg-blue-600 transition-all duration-1000"
-            style={{
-              width: `${porcentagem}%`,
-            }}
-          />
-        </div>
-      </div>
+          <button
+            onClick={onAtivarConta}
+            className="mt-8 h-12 w-full rounded-xl bg-blue-600 font-semibold text-white transition hover:bg-blue-700"
+          >
+            Ativar conta
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="mt-2 text-center text-slate-600">
+            Você já pode acessar o sistema normalmente.
+          </p>
 
-      <button
-        onClick={onAtivarConta}
-        className="mt-8 h-12 w-full rounded-xl bg-blue-600 font-semibold text-white transition hover:bg-blue-700"
-      >
-        Ativar conta
-      </button>
+          <button
+            onClick={onLoginDireto}
+            className="mt-8 h-12 w-full rounded-xl bg-green-600 font-semibold text-white transition hover:bg-green-700"
+          >
+            Entrar no sistema
+          </button>
+        </>
+      )}
     </div>
   );
 }
