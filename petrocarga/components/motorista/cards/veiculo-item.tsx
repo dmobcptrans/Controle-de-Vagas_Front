@@ -63,15 +63,14 @@ export default function VeiculoCard({ veiculo }: VeiculoCardProps) {
   return (
     <article
       className={cn(
-        'flex flex-col sm:flex-row justify-between bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow border-l-4 gap-4 w-full',
-        'border-blue-500',
+        'flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all border-l-4 border-[#1351B4]',
       )}
     >
       {/* ==================== CONTEÚDO PRINCIPAL ==================== */}
-      <div className="flex-1 flex flex-col gap-2 min-w-0">
+      <div className="flex-1 flex flex-col gap-1 min-w-0">
         
         {/* Header com marca/modelo e tipo (desktop) */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2">
           <h3 className="text-base sm:text-lg font-semibold text-gray-800 truncate">
             {veiculo.marca} {veiculo.modelo}
           </h3>
@@ -101,7 +100,7 @@ export default function VeiculoCard({ veiculo }: VeiculoCardProps) {
 
         {/* Botão "Ver mais" - link para detalhes */}
         <Link
-          href={`/motorista/veiculos/meus-veiculos/${veiculo.id}`}
+          href={`/meus-veiculos/${veiculo.id}`}
           className={cn(
             buttonVariants({ variant: 'outline' }),
             'text-sm sm:text-base w-full sm:w-auto text-center',

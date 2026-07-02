@@ -139,7 +139,7 @@ export function Navbar() {
       <nav className="grid grid-cols-3 items-center p-4 max-w-6xl mx-auto md:flex md:justify-between">
         {/* ==================== SINO - MOBILE ==================== */}
         <Link
-          href="/motorista/notificacoes"
+          href="/notificacoes"
           className="md:hidden flex items-center justify-start"
           onClick={fecharMenu}
         >
@@ -176,7 +176,7 @@ export function Navbar() {
             <Link href="/motorista/dashboard">Menu</Link>
           </li>
           <li className="hover:text-gray-300">
-            <Link href="/motorista/reservar-vaga">Reservar Vaga</Link>
+            <Link href="/reservar-vaga">Reservar Vaga</Link>
           </li>
 
           {/* Dropdown Reservas */}
@@ -189,7 +189,7 @@ export function Navbar() {
               <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                 <DropdownMenuItem asChild>
                   <Link
-                    href="/motorista/reservas"
+                    href="/minhas-reservas"
                     className="flex items-center gap-2 cursor-pointer w-full"
                   >
                     <Archive className="h-4 w-4" />
@@ -198,7 +198,7 @@ export function Navbar() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="/motorista/reservas/minhas-denuncias"
+                    href="/minhas-denuncias"
                     className="flex items-center gap-2 cursor-pointer w-full"
                   >
                     <TriangleAlert className="h-4 w-4" />
@@ -219,20 +219,11 @@ export function Navbar() {
               <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                 <DropdownMenuItem asChild>
                   <Link
-                    href="/motorista/veiculos/meus-veiculos"
+                    href="/meus-veiculos"
                     className="flex items-center gap-2 cursor-pointer w-full"
                   >
                     <CarIcon className="h-4 w-4" />
-                    Meu Veículo
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/motorista/veiculos/cadastrar-veiculos"
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
-                    <CarIcon className="h-4 w-4" />
-                    Adicionar Veículo
+                    Meus Veículos
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -240,7 +231,7 @@ export function Navbar() {
           </li>
 
           <li className="hover:text-gray-300">
-            <Link href="/motorista/tutorial">Tutorial</Link>
+            <Link href="/tutorial">Tutorial</Link>
           </li>
 
           {/* Dropdown Perfil */}
@@ -253,7 +244,7 @@ export function Navbar() {
               <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
                 <DropdownMenuItem asChild>
                   <Link
-                    href="/motorista/perfil"
+                    href="/perfil"
                     className="flex items-center gap-2 cursor-pointer w-full"
                   >
                     <User className="h-4 w-4" />
@@ -270,7 +261,7 @@ export function Navbar() {
           {/* Notificações Desktop */}
           <li>
             <Link
-              href="/motorista/notificacoes"
+              href="/notificacoes"
               className="relative flex items-center gap-1 hover:text-gray-300 p-2 rounded-lg hover:bg-blue-700 transition-colors"
               aria-label={`Notificações${unreadCount > 0 ? `, ${unreadCount} não lidas` : ''}`}
             >
@@ -305,7 +296,7 @@ export function Navbar() {
             </p>
             <div className="grid grid-cols-2 gap-2">
               <CardLink
-                href="/motorista/reservar-vaga"
+                href="/reservar-vaga"
                 label="Reservar vaga"
                 description="Nova reserva"
                 iconBg="bg-blue-100"
@@ -314,7 +305,7 @@ export function Navbar() {
                 onClick={fecharMenu}
               />
               <CardLink
-                href="/motorista/reservas"
+                href="/minhas-reservas"
                 label="Minhas reservas"
                 description="Histórico"
                 iconBg="bg-amber-100"
@@ -332,21 +323,12 @@ export function Navbar() {
             </p>
             <div className="grid grid-cols-2 gap-2">
               <CardLink
-                href="/motorista/veiculos/meus-veiculos"
-                label="Meu veículo"
+                href="/meus-veiculos"
+                label="Meus veículos"
                 description="Ver cadastro"
                 iconBg="bg-green-100"
                 iconColor="text-green-700"
                 icon={<CarIcon className="h-5 w-5" />}
-                onClick={fecharMenu}
-              />
-              <CardLink
-                href="/motorista/veiculos/cadastrar-veiculos"
-                label="Adicionar veículo"
-                description="Novo cadastro"
-                iconBg="bg-gray-100"
-                iconColor="text-gray-500"
-                icon={<PlusCircle className="h-5 w-5" />}
                 onClick={fecharMenu}
               />
             </div>
@@ -359,7 +341,7 @@ export function Navbar() {
             </p>
             <div className="grid grid-cols-2 gap-2">
               <CardLink
-                href="/motorista/reservas/minhas-denuncias"
+                href="/minhas-denuncias"
                 label="Minhas denúncias"
                 description="Ver ocorrências"
                 iconBg="bg-red-100"
@@ -368,7 +350,7 @@ export function Navbar() {
                 onClick={fecharMenu}
               />
               <CardLink
-                href="/motorista/perfil"
+                href="/perfil"
                 label="Meu perfil"
                 description="Dados pessoais"
                 iconBg="bg-purple-100"
@@ -379,7 +361,7 @@ export function Navbar() {
             </div>
             <div className="grid grid-cols-2 gap-2 py-2">
               <CardLink
-                href="/motorista/tutorial"
+                href="/tutorial"
                 label="Tutoriais"
                 description="Guia de uso"
                 iconBg="bg-indigo-100"
@@ -388,7 +370,7 @@ export function Navbar() {
                 onClick={fecharMenu}
               />
               <CardLink
-                href="/motorista/dashboard"
+                href="/dashboard"
                 label="Menu"
                 description="Visualizar relatórios"
                 iconBg="bg-blue-100"

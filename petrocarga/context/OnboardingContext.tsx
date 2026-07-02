@@ -155,11 +155,11 @@ export function OnboardingProvider({
     if (loading || checked) return;
     if (!user) return;
 
-    const precisaCpf = !user.cpf;
+    const precisaTelefone = !user.cpf;
     const precisaVeiculo = user.veiculos.length === 0;
 
     // Se não precisa de cadastro complementar, não abre modal
-    if (!precisaCpf && !precisaVeiculo) {
+    if (!precisaTelefone && !precisaVeiculo) {
       setChecked(true);
       return;
     }
@@ -167,7 +167,7 @@ export function OnboardingProvider({
     setIsOpen(true);
 
     // Define etapa inicial baseada na necessidade
-    if (precisaCpf) {
+    if (precisaTelefone) {
       setStep(1); // Começa do CPF
     } else if (precisaVeiculo) {
       setStep(4); // Vai direto para cadastro de veículo

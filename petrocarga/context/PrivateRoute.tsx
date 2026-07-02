@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
-type Role = 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE';
+type Role = 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE' | 'EMPRESA';
 
 interface PrivateRouteProps {
   children: React.ReactNode;

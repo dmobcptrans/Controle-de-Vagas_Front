@@ -301,7 +301,7 @@ export default function ReservaComponent({
                     'Sua solicitação foi processada com sucesso.'}
                 </p>
                 <button
-                  onClick={() => router.push('/motorista/reservas')}
+                  onClick={() => router.push('/reservas')}
                   className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all shadow-lg active:scale-95"
                 >
                   Ir para minhas reservas

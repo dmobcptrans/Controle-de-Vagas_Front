@@ -211,6 +211,7 @@ export default function FormularioMotorista({
               }
             }}
           />
+
         </div>
 
         {/* ETAPA 2: CNH */}

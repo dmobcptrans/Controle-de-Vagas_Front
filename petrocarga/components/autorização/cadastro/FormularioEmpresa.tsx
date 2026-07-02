@@ -10,7 +10,8 @@ type FormularioEmpresaProps = {
   onSuccess?: () => void;
 };
 
-const etapas = ['Dados da empresa', 'Responsável'];
+
+const etapas = ['Dados da empresa', 'Informações complementares'];
 
 export default function FormularioEmpresa({
   onSuccess,
@@ -20,14 +21,12 @@ export default function FormularioEmpresa({
   const [mostrarModalTermos, setMostrarModalTermos] = useState(false);
 
   const [formData, setFormData] = useState({
-    razaoSocial: '',
-    cnpj: '',
     nome: '',
-    cpf: '',
     telefone: '',
     email: '',
     senha: '',
     confirmarSenha: '',
+    cnpj: '',
     aceitouTermos: false,
   });
 
@@ -46,14 +45,12 @@ export default function FormularioEmpresa({
     formRef.current?.reset();
 
     setFormData({
-      razaoSocial: '',
-      cnpj: '',
       nome: '',
-      cpf: '',
       telefone: '',
       email: '',
       senha: '',
       confirmarSenha: '',
+      cnpj: '',
       aceitouTermos: false,
     });
 
@@ -145,11 +142,11 @@ export default function FormularioEmpresa({
           {/* STEP 0 */}
           <div data-step={0} className={step === 0 ? 'space-y-5' : 'hidden'}>
             <Input
-              name="razaoSocial"
-              label="Razão social"
+              name="nome"
+              label="Nome da Empresa"
               placeholder="Ex: Transportadora Silva"
               required
-              value={formData.razaoSocial}
+              value={formData.nome}
               onChange={handleChange}
             />
 
@@ -167,28 +164,6 @@ export default function FormularioEmpresa({
 
           {/* STEP 1 */}
           <div data-step={1} className={step === 1 ? 'space-y-5' : 'hidden'}>
-            <Input
-              name="nome"
-              label="Nome completo"
-              placeholder="Ex: João Silva"
-              required
-              value={formData.nome}
-              onChange={handleChange}
-            />
-
-            <Input
-              name="cpf"
-              label="CPF"
-              placeholder="000.000.000-00"
-              required
-              inputMode="numeric"
-              maxLength={11}
-              value={formData.cpf}
-              onChange={(e) => {
-                e.target.value = e.target.value.replace(/\D/g, '');
-                handleChange(e);
-              }}
-            />
 
             <Input
               name="telefone"

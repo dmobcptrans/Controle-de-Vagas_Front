@@ -63,17 +63,17 @@ self.addEventListener('notificationclick', (event) => {
 
   switch (data?.tipo) {
     case 'DENUNCIA':
-      url = '/motorista/reservas/minhas-denuncias';
+      url = '/reservas/minhas-denuncias';
       break;
     case 'MOTORISTA':
       url = '/motoristas/reservas';
       break;
     case 'VAGA':
     case 'RESERVA':
-      url = '/motorista/reservas';
+      url = '/reservas';
       break;
     case 'VEICULO':
-      url = '/motorista/veiculos/meus-veiculos';
+      url = '/veiculos/meus-veiculos';
       break;
   }
 

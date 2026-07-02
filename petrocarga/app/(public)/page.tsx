@@ -22,10 +22,13 @@ export default function Home() {
           router.replace('/gestor/visualizar-vagas');
           break;
         case 'MOTORISTA':
-          router.replace('/motorista/reservar-vaga');
+          router.replace('/reservar-vaga');
           break;
         case 'AGENTE':
           router.replace('/agente/reserva-rapida');
+          break;
+        case 'EMPRESA':
+          router.replace('/reserva-vaga');
           break;
       }
     }

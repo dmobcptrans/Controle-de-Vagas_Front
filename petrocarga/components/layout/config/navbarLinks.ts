@@ -7,8 +7,8 @@ export const NAVBAR_LINKS = {
   ],
 
   MOTORISTA: [
-    { href: '/motorista/reservar-vaga', label: 'Reservar Vaga' },
-    { href: '/motorista/historico', label: 'Histórico' },
+    { href: '/reservar-vaga', label: 'Reservar Vaga' },
+    { href: '/historico', label: 'Histórico' },
   ],
 
   AGENTE: [

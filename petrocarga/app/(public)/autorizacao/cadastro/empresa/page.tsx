@@ -16,7 +16,13 @@ export default function CadastroEmpresaPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
-      <main className="mx-auto flex max-w-4xl justify-center px-4 py-8">
+      <main className="flex-col justify-center items-center">
+         <div className="text-center mb-8 mt-6">
+          <h1 className="text-3xl font-bold text-blue-800">
+            Cadastro de Empresa
+          </h1>
+        </div>
+        <div className="mx-auto flex max-w-4xl justify-center animate-in slide-in-from-bottom-6 fade-in duration-500 ">
         {!cadastroConcluido ? (
           <FormularioEmpresa
             onSuccess={() => setCadastroConcluido(true)}
@@ -27,6 +33,7 @@ export default function CadastroEmpresaPage() {
             onAtivarConta={() => setMostrarModal(true)}
           />
         )}
+        </div>
       </main>
 
       <ModalAtivacaoConta

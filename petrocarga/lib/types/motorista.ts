@@ -86,7 +86,6 @@ export type Motorista = {
  */
 export type MotoristaUsuario = {
   nome: string;
-  cpf: string;
   telefone: string;
   email: string;
   senha: string;
@@ -120,6 +119,7 @@ export type MotoristaUsuario = {
  */
 export type MotoristaPayload = {
   usuario: MotoristaUsuario;
+  cpf: string;
   tipoCnh: string;
   numeroCnh: string;
   dataValidadeCnh: string;

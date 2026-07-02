@@ -216,7 +216,7 @@ export default function ReservaLista({
 function EmptyState() {
   return (
     <Link
-      href="/motorista/reservar-vaga"
+      href="/reservar-vaga"
       className="flex items-center justify-between bg-[#071D41] hover:bg-[#0C3D8A] transition-colors rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]"
     >
       <div>

@@ -17,7 +17,7 @@ interface UserData {
   id: string;
   nome: string;
   login: string;
-  permissao: 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE';
+  permissao: 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE' | 'EMPRESA';
   cpf?: string;
   veiculos: Veiculo[];
 }

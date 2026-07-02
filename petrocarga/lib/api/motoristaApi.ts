@@ -78,11 +78,11 @@ export async function addMotorista(
   const payload: MotoristaPayload = {
     usuario: {
       nome: formData.get('nome') as string,
-      cpf: formData.get('cpf') as string,
       telefone: formData.get('telefone') as string,
       email: (formData.get('email') as string).toLowerCase(),
       senha: formData.get('senha') as string,
     },
+    cpf: formData.get('cpf') as string,
     tipoCnh: (formData.get('tipoCnh') as string)?.toUpperCase(),
     numeroCnh: formData.get('numeroCnh') as string,
     dataValidadeCnh: formData.get('dataValidadeCnh') as string,

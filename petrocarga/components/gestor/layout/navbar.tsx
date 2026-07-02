@@ -133,7 +133,7 @@ export function Navbar() {
                     <Link href="/gestor/disponibilidade-vagas">Disponibilidade</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/gestor/reservas">Reservas</Link>
+                    <Link href="/reservas">Reservas</Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -160,7 +160,7 @@ export function Navbar() {
             </li>
 
             <li className="hover:text-gray-300">
-              <Link href="/gestor/consulta">Consultar Reserva</Link>
+              <Link href="/consulta">Consultar Reserva</Link>
             </li>
 
             <li className="hover:text-gray-300">
@@ -309,10 +309,10 @@ export function Navbar() {
             <Link href="/gestor/disponibilidade-vagas" onClick={() => setMenuAberto(false)} className="pl-2">
               Disponibilidade
             </Link>
-            <Link href="/gestor/reservas" onClick={() => setMenuAberto(false)} className="pl-2">
+            <Link href="/reservas" onClick={() => setMenuAberto(false)} className="pl-2">
               Reservas
             </Link>
-            <Link href="/gestor/consulta" onClick={() => setMenuAberto(false)} className="pl-2">
+            <Link href="/consulta" onClick={() => setMenuAberto(false)} className="pl-2">
               Consultar Reserva
             </Link>
           </li>

@@ -107,7 +107,7 @@ export default function OriginVehicleStep({
 
   const handleVehicleChange = (value: string) => {
     if (value === 'add-new') {
-      router.push('/motorista/veiculos/cadastrar-veiculos');
+      router.push('/veiculos/cadastrar-veiculos');
       return;
     }
     setLocalVehicleId(value);

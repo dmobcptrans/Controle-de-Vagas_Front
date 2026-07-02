@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 type CTAProps = {
   href: string;
   title: string;
-  description: string;
+  description?: string;
   icon: ReactNode;
   variant?: "dark" | "light";
 };
