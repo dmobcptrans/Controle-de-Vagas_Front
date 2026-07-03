@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   CalendarPlus,
   Archive,
@@ -13,12 +13,12 @@ import {
   Truck,
   CarIcon,
 } from 'lucide-react';
-import { getReservasRapidas } from '@/lib/api/reservaApi';
-import { getDenuncias } from '@/lib/api/denunciaApi';
+import { getReservasRapidas } from '@/services/api/reservaApi';
+import { getDenuncias } from '@/services/api/denunciaApi';
 import { useCallback, useEffect, useState } from 'react';
-import { Denuncia } from '@/lib/types/denuncias';
+import { Denuncia } from '@/lib/types/denuncia';
 import toast from 'react-hot-toast';
-import { ReservaRapida } from '@/lib/types/reservaRapida';
+import { ReservaRapida } from '@/lib/types/reservas/reservaRapida';
 
 /**
  * Configuração de cores e rótulos para cada status de reserva rápida

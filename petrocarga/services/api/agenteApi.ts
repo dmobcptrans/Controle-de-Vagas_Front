@@ -2,7 +2,7 @@
 
 import { clientApi } from '../clientApi';
 
-import type { AgenteInput, AgenteResponse } from '@/lib/types/agente';
+import type { AgenteInput, AgenteResponse } from '@/lib/types/personas/agente';
 
 /**
  * @module agenteApi

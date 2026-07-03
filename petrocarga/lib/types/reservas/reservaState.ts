@@ -1,4 +1,4 @@
-import { Veiculo } from './veiculo';
+import { Veiculo } from "../veiculo";
 
 /**
  * @module types/reservaState

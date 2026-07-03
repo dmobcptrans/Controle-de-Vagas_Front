@@ -1,6 +1,6 @@
 import CalendarioReservas from '@/components/gestor/calendario/CalendarioReservasGestor';
 import CalendarioInfoCTA from '@/components/ui/CTA/CalendarioInfoCTA';
-import { CalendarioMesProvider } from '@/context/CalendarioMesContext';
+import { CalendarioMesProvider } from '@/contexts/CalendarioMesContext';
 import { Info } from 'lucide-react';
 import Link from 'next/link';
 

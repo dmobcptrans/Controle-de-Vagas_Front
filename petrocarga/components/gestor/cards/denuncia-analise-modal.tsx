@@ -1,6 +1,6 @@
 'use client';
 
-import { Denuncia } from '@/lib/types/denuncias';
+import { Denuncia } from '@/lib/types/denuncia';
 import { useState, useEffect, useCallback, memo } from 'react';
 import {
   X,
@@ -15,7 +15,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { finalizarAnaliseDenuncia } from '@/lib/api/denunciaApi';
+import { finalizarAnaliseDenuncia } from '@/services/api/denunciaApi';
 import toast from 'react-hot-toast';
 
 const RESPOSTA_LIMITE = 300;

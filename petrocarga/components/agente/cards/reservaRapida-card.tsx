@@ -1,7 +1,7 @@
 'use client';
 
 import { buttonVariants } from '@/components/ui/button';
-import { ReservaRapida } from '@/lib/types/reservaRapida';
+import { ReservaRapida } from '@/lib/types/reservas/reservaRapida';
 import { cn } from '@/lib/utils';
 import {
   Calendar,

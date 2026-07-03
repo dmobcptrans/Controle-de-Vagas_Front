@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Maven_Pro } from 'next/font/google';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import './globals.css';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 import {GoogleOAuthProvider} from '@react-oauth/google'
 import { NotificationWrapper } from '@/components/notification/notificationWrapper';
 import { Toaster } from 'react-hot-toast';
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    apple: '/web-app-manifest-192x192.png',
+    apple: '/icons/icon-192.png',
   },
 };
 

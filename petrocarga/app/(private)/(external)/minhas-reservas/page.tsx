@@ -7,7 +7,7 @@ import {
   getReservasPorUsuario,
   checkoutReserva,
   getGerarComprovanteReserva,
-} from '@/lib/api/reservaApi';
+} from '@/services/api/reservaApi';
 import {
   AlertCircle,
   Info,
@@ -17,7 +17,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import ReservaLista from '@/components/reserva/minhasReservas/ReservaLista';
-import { ReservaGet, PaginatedReservaResponse } from '@/lib/types/reserva';
+import { ReservaGet, PaginatedReservaResponse } from '@/lib/types/reservas/reserva';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

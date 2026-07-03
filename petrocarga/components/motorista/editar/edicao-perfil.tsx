@@ -9,12 +9,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { atualizarMotorista } from '@/lib/api/motoristaApi';
+import { atualizarMotorista } from '@/services/api/motoristaApi';
 import { CheckCircle, CircleAlert, UserIcon } from 'lucide-react';
 import Form from 'next/form';
 import { useActionState, useEffect } from 'react';
 import FormItem from '@/components/form/form-item';
-import { Motorista } from '@/lib/types/motorista';
+import { Motorista } from '@/lib/types/personas/motorista';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 
 interface EditarMotoristaProps {

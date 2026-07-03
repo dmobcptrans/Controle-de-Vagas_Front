@@ -15,7 +15,7 @@ import {
   marcarNotificacaoComoLida,
   marcarTodasNotificacoesComoLidas,
   deletarNotificacoesSelecionadas,
-} from '@/lib/api/notificacaoApi';
+} from '@/services/api/notificacaoApi';
 import type {
   Notification as AppNotification,
   NotificationContextData,

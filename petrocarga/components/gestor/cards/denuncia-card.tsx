@@ -1,11 +1,11 @@
 'use client';
 
-import { Denuncia } from '@/lib/types/denuncias';
+import { Denuncia } from '@/lib/types/denuncia';
 import { useState, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { MapPin, FileText, Tag, Clock } from 'lucide-react';
 import { DenunciaAnaliseModal } from './denuncia-analise-modal';
-import { iniciarAnaliseDenuncia } from '@/lib/api/denunciaApi';
+import { iniciarAnaliseDenuncia } from '@/services/api/denunciaApi';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import {

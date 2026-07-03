@@ -9,12 +9,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { atualizarGestor } from '@/lib/api/gestorApi';
+import { atualizarGestor } from '@/services/api/gestorApi';
 import { CheckCircle, CircleAlert, UserIcon } from 'lucide-react';
 import Form from 'next/form';
 import { useActionState, useEffect } from 'react';
 import FormItem from '@/components/form/form-item';
-import { Gestor } from '@/lib/types/gestor';
+import { Gestor } from '@/lib/types/personas/gestor';
 
 interface EditarGestorProps {
   gestor: Gestor;

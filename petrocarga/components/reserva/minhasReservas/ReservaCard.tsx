@@ -13,7 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
-import { ReservaGet } from '@/lib/types/reserva';
+import { ReservaGet } from '@/lib/types/reservas/reserva';
 import ReservaEditarModal from '../../modal/reserva/ReservaEditarModal/ReservaEditarModal';
 import ReservaCheckinModal from '../../modal/reserva/ReservaCheckinModal/ReservaCheckinModal';
 

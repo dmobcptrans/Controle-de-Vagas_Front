@@ -1,7 +1,7 @@
 'use client';
 
-import { useAuth } from '@/context/AuthContext'; // Use o hook correto
-import { NotificationProvider } from '@/context/NotificationContext';
+import { useAuth } from '@/contexts/AuthContext'; // Use o hook correto
+import { NotificationProvider } from '@/contexts/NotificationContext';
 import { ReactNode } from 'react';
 
 interface NotificationWrapperProps {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
-import { RelatorioSumario, RelatorioKpis } from '@/lib/api/dashboardApi';
+import { RelatorioSumario, RelatorioKpis } from '@/services/api/dashboardApi';
 import { DashboardSummary, DashboardKPIs } from '@/lib/types/dashboard';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { VehicleTypesChart } from '@/components/dashboard/VehicleTypesChart';

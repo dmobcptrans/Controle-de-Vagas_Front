@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
-import { getGestores } from '@/lib/api/gestorApi';
-import { FiltrosGestor } from '@/lib/types/gestor';
+import { getGestores } from '@/services/api/gestorApi';
+import { FiltrosGestor } from '@/lib/types/personas/gestor';
 import {
   Loader2,
   Search,
@@ -13,7 +13,7 @@ import {
   XCircle,
   Menu,
 } from 'lucide-react';
-import { Gestor } from '@/lib/types/gestor';
+import { Gestor } from '@/lib/types/personas/gestor';
 import GestorCard from '@/components/gestor/cards/gestores-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
 

@@ -180,9 +180,9 @@
 
 'use client';
 
-import { deleteGestor } from '@/lib/api/gestorApi';
-import { reativarUsuario } from '@/lib/api/recuperacaoApi';
-import { Gestor } from '@/lib/types/gestor';
+import { deleteGestor } from '@/services/api/gestorApi';
+import { reativarUsuario } from '@/services/api/recuperacaoApi';
+import { Gestor } from '@/lib/types/personas/gestor';
 import { cn } from '@/lib/utils';
 import { Mail, Phone, Trash2, UserCircle, UserCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';

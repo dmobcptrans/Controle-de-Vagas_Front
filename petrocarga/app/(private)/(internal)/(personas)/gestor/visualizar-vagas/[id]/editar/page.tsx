@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import EditarVaga from '@/components/gestor/editar/edicao-vaga';
 import { Vaga } from '@/lib/types/vaga';
 import { useAuth } from '@/components/hooks/useAuth';
-import { getVagaById } from '@/lib/api/vagaApi';
+import { getVagaById } from '@/services/api/vagaApi';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';

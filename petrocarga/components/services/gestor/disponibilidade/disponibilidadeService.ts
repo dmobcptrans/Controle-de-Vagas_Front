@@ -3,7 +3,7 @@ import {
   addDisponibilidadeVagas,
   editarDisponibilidadeVagas,
   deleteDisponibilidadeVagas,
-} from '@/lib/api/disponibilidadeVagasApi';
+} from '@/services/api/disponibilidadeVagasApi';
 
 /**
  * @module disponibilidadeService

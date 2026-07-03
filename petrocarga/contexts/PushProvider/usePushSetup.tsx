@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getToken } from 'firebase/messaging';
 import { getMessagingInstance } from '@/lib/firebase';
-import { clientApi } from '@/lib/clientApi';
+import { clientApi } from '@/services/clientApi';
 import { useAuth } from '../AuthContext';
 
 type PushStatus = 'idle' | 'prompted' | 'loading' | 'granted' | 'denied' | 'error';
@@ -37,10 +37,14 @@ async function registerAndSendToken(): Promise<void> {
     throw new Error('messaging_unavailable');
   }
 
-  const registration = await navigator.serviceWorker.register(
-    '/firebase-messaging-sw.js'
-  );
-  await navigator.serviceWorker.ready;
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  for (const reg of registrations) {
+    if (reg.active?.scriptURL.includes('firebase-messaging-sw.js')) {
+      await reg.unregister();
+    }
+  }
+
+  const registration = await navigator.serviceWorker.ready;
 
   const token = await getToken(messaging, {
     vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,

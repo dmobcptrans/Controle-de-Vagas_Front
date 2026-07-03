@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ReservaGet } from '@/lib/types/reserva';
-import { checkinReserva } from '@/lib/api/reservaApi';
+import { ReservaGet } from '@/lib/types/reservas/reserva';
+import { checkinReserva } from '@/services/api/reservaApi';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { MapPin, Clock, AlertTriangle } from 'lucide-react';

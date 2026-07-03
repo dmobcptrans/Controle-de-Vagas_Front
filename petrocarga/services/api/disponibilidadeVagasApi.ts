@@ -4,7 +4,7 @@ import { clientApi } from '../clientApi';
 import type {
   DisponibilidadeVaga,
   DisponibilidadeResponse,
-} from '@/lib//types/disponibilidadeVagas';
+} from '@/lib/types/disponibilidadeVaga';
 
 /**
  * @module disponibilidadeApi

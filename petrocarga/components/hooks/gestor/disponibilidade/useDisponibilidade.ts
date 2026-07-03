@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
-import { getDisponibilidadeVagas } from '@/lib/api/disponibilidadeVagasApi';
+import { Disponibilidade } from '@/lib/types/disponibilidadeVaga';
+import { getDisponibilidadeVagas } from '@/services/api/disponibilidadeVagasApi';
 
 /**
  * @hook useDisponibilidade

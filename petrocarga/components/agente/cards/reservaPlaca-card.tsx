@@ -1,4 +1,4 @@
-import { ReservaPlaca } from '@/lib/types/reservaPlaca';
+import { ReservaPlaca } from '@/lib/types/reservas/reservaPlaca';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, MapPin, User, Car, UserCheck } from 'lucide-react';

@@ -1,7 +1,7 @@
 'use client';
 
 import { clientApi } from '../clientApi';
-import type { GestorInput, GestorResponse } from '@/lib/types/gestor';
+import type { GestorInput, GestorResponse } from '@/lib/types/personas/gestor';
 
 /**
  * @module gestorApi

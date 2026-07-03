@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
-import { getAgentes } from '@/lib/api/agenteApi';
-import { FiltrosAgente } from '@/lib/types/agente';
+import { getAgentes } from '@/services/api/agenteApi';
+import { FiltrosAgente } from '@/lib/types/personas/agente';
 import {
   Loader2,
   Search,
@@ -13,7 +13,7 @@ import {
   XCircle,
   Menu,
 } from 'lucide-react';
-import { Agente } from '@/lib/types/agente';
+import { Agente } from '@/lib/types/personas/agente';
 import AgenteCard from '@/components/gestor/cards/agentes-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
 

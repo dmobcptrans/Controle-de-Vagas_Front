@@ -1,7 +1,7 @@
 'use client';
 
 import EditarMotorista from '@/components/motorista/editar/edicao-perfil';
-import { Motorista } from '@/lib/types/motorista';
+import { Motorista } from '@/lib/types/personas/motorista';
 import {
   AlertCircle,
   ArrowLeft,
@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/hooks/useAuth';
 import { useEffect, useState } from 'react';
-import { getMotoristaByUserId } from '@/lib/api/motoristaApi';
+import { getMotoristaByUserId } from '@/services/api/motoristaApi';
 
 /**
  * @component EditarMotoristaPage

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Veiculo } from '@/lib/types/veiculo';
 import { useRouter } from 'next/navigation';
-import { deleteVeiculo, atualizarVeiculo } from '@/lib/api/veiculoApi';
+import { deleteVeiculo, atualizarVeiculo } from '@/services/api/veiculoApi';
 import { CheckCircle2, AlertCircle, Edit, Trash2, Save, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';

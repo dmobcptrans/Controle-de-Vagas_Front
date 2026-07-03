@@ -1,9 +1,9 @@
 import Footer from '@/components/gestor/layout/footer';
 import { Metadata } from 'next';
-import { MapProvider } from '@/context/MapContext';
+import { MapProvider } from '@/contexts/MapContext';
 import { Navbar } from '@/components/agente/layout/navbar';
-import PrivateRoute from '@/context/PrivateRoute';
-import { PushNotificationBanner } from '@/context/PushProvider/PushNotificationBanner';
+import PrivateRoute from '@/contexts/PrivateRoute';
+import { PushNotificationBanner } from '@/contexts/PushProvider/PushNotificationBanner';
 
 /**
  * @module AgenteLayout

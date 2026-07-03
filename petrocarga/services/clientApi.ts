@@ -1,6 +1,6 @@
 'use client';
 
-import { TOKEN_KEY } from '@/service/api';
+import { TOKEN_KEY } from '@/services/api';
 
 type ClientApiOptions = RequestInit & {
   json?: unknown;

@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
-import { getMotoristas } from '@/lib/api/motoristaApi';
-import { FiltrosMotorista } from '@/lib/types/motorista';
+import { getMotoristas } from '@/services/api/motoristaApi';
+import { FiltrosMotorista } from '@/lib/types/personas/motorista';
 import {
   Loader2,
   Search,
@@ -13,7 +13,7 @@ import {
   XCircle,
   Menu,
 } from 'lucide-react';
-import { Motorista } from '@/lib/types/motorista';
+import { Motorista } from '@/lib/types/personas/motorista';
 import MotoristaCard from '@/components/gestor/cards/motoristas-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
 

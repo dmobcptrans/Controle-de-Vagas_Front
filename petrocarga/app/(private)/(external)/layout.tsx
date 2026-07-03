@@ -1,10 +1,10 @@
 import Footer from '@/components/gestor/layout/footer';
 import { Metadata } from 'next';
-import { MapProvider } from '@/context/MapContext';
+import { MapProvider } from '@/contexts/MapContext';
 import { Navbar } from '@/components/motorista/layout/navbar';
-import PrivateRoute from '@/context/PrivateRoute';
-import { PushNotificationBanner } from '@/context/PushProvider/PushNotificationBanner';
-import { OnboardingProvider } from '@/context/OnboardingContext';
+import PrivateRoute from '@/contexts/PrivateRoute';
+import { PushNotificationBanner } from '@/contexts/PushProvider/PushNotificationBanner';
+import { OnboardingProvider } from '@/contexts/OnboardingContext';
 import OnboardingModal from '@/components/modal/autorizacao/completar-cadastro/OnboardingModal';
 
 

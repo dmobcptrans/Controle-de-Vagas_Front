@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useCallback, useEffect, useState } from 'react';
-import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
+import { getVeiculosUsuario } from '@/services/api/veiculoApi';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { Veiculo } from '@/lib/types/veiculo';
 import VeiculoCard from '@/components/gestor/cards/veiculo-item';

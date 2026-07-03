@@ -1,6 +1,6 @@
 'use client';
 
-import { useOnboarding } from '@/context/OnboardingContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useState } from 'react';
 import ModalTermos from '../login/ModalTermos';
 import { Checkbox } from '@/components/ui/checkbox';

@@ -3,8 +3,8 @@
 import { buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/components/hooks/useAuth';
-import { deleteMotorista, getMotoristaByUserId } from '@/lib/api/motoristaApi';
-import { Motorista } from '@/lib/types/motorista';
+import { deleteMotorista, getMotoristaByUserId } from '@/services/api/motoristaApi';
+import { Motorista } from '@/lib/types/personas/motorista';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle,

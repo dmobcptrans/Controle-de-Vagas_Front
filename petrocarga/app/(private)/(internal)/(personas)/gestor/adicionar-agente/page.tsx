@@ -24,7 +24,7 @@ import {
   Tag,
 } from 'lucide-react';
 import FormItem from '@/components/form/form-item';
-import { addAgente } from '@/lib/api/agenteApi';
+import { addAgente } from '@/services/api/agenteApi';
 import Link from 'next/link';
 
 /**

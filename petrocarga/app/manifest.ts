@@ -11,25 +11,25 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#3a2bc2',
     icons: [
       {
-        src: "/web-app-manifest-192x192.png",
+        src: "/icons/icon-192.png",
         sizes: "192x192",
         type: "image/png",
         purpose: "any"
       },
       {
-        src: "/web-app-manifest-512x512.png",
+        src: "/icons/icon-192.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "any"
       },
       {
-        src: "/web-app-manifest-192x192.png",
+        src: "/icons/icon-192.png",
         sizes: "192x192",
         type: "image/png",
         purpose: "maskable"
       },
       {
-        src: "/web-app-manifest-512x512.png",
+        src: "/icons/icon-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable"
@@ -37,13 +37,13 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     screenshots: [
       {
-        src: "/screenshot-desktop.png",
+        src: "/screenshots/desktop.png",
         sizes: "1280x720",
         type: "image/png",
         form_factor: "wide"
       },
       {
-        src: "/screenshot-mobile.png",
+        src: "/screenshots/mobile.png",
         sizes: "390x844",
         type: "image/png"
       }

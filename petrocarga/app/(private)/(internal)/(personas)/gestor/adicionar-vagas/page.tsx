@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { addVaga } from '@/lib/api/vagaApi';
+import { addVaga } from '@/services/api/vagaApi';
 import { ArrowLeft, ParkingSquare } from 'lucide-react';
 import Form from 'next/form';
 import { useActionState, useEffect, useState } from 'react';

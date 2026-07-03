@@ -121,7 +121,7 @@ const INPUT_FEEDBACK = {
 const ROUTES_BY_PERMISSION = {
   ADMIN: '/gestor/visualizar-vagas',
   GESTOR: '/gestor/visualizar-vagas',
-  MOTORISTA: '/dashboard',
+  MOTORISTA: '/motorista/dashboard',
   AGENTE: '/agente/dashboard',
   EMPRESA: '/empresa/dashboard'
 } as const;

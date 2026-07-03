@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ReservaGet } from '@/lib/types/reserva';
-import { Denunciar } from '@/lib/api/denunciaApi';
+import { ReservaGet } from '@/lib/types/reservas/reserva';
+import { Denunciar } from '@/services/api/denunciaApi';
 import { AlertTriangle } from 'lucide-react';
 
 interface ReservaDenunciaProps {

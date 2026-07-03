@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { atualizarVaga } from '@/lib/api/vagaApi';
+import { atualizarVaga } from '@/services/api/vagaApi';
 import { CircleAlert } from 'lucide-react';
 import Form from 'next/form';
 import { useActionState, useCallback, useEffect, useState } from 'react';

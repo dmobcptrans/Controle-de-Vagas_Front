@@ -1,8 +1,8 @@
 'use client';
 
-import { deleteAgente } from '@/lib/api/agenteApi';
-import { reativarUsuario } from '@/lib/api/recuperacaoApi';
-import { Agente } from '@/lib/types/agente';
+import { deleteAgente } from '@/services/api/agenteApi';
+import { reativarUsuario } from '@/services/api/recuperacaoApi';
+import { Agente } from '@/lib/types/personas/agente';
 import { cn } from '@/lib/utils';
 import {
   IdCard,

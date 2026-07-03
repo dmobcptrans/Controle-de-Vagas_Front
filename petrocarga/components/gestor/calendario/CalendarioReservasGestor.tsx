@@ -8,10 +8,10 @@ import { ReservaModal } from '@/components/modal/gestor/calendario/ReservaModal'
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { toDateKey, dayStartISO } from '../../utils/gestor/calendario/utils';
 import type { EventClickArg, EventInput } from '@fullcalendar/core';
-import { getVagaById } from '@/lib/api/vagaApi';
-import type { Reserva } from '@/lib/types/reserva';
+import { getVagaById } from '@/services/api/vagaApi';
+import type { Reserva } from '@/lib/types/reservas/reserva';
 import type { Vaga } from '@/lib/types/vaga';
-import { useCalendarioMes } from '@/context/CalendarioMesContext';
+import { useCalendarioMes } from '@/contexts/CalendarioMesContext';
 
 // ==================== TIPOS ====================
 

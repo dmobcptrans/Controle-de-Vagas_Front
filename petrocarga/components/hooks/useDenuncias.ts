@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Denuncia } from '@/lib/types/denuncias';
-import { getDenuncias } from '@/lib/api/denunciaApi';
+import { Denuncia } from '@/lib/types/denuncia';
+import { getDenuncias } from '@/services/api/denunciaApi';
 import toast from 'react-hot-toast';
 
 /**

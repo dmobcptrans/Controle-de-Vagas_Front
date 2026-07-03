@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import Logo from '@/public/Logo.png';
+import Logo from '@/public/images/logo.png';
 import Image from 'next/image';
 import { LogoutButton } from '@/components/logoutButton/logoutButton';
 import { useAuth } from '@/components/hooks/useAuth';
-import { useNotifications } from '@/context/NotificationContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import {
   DropdownMenu,
   DropdownMenuContent,

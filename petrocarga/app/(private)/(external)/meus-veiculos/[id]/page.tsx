@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
-import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
+import { getVeiculosUsuario } from '@/services/api/veiculoApi';
 import {
   AlertCircle,
   ArrowLeft,
@@ -90,7 +90,7 @@ import { CTA } from '@/components/ui/CTA/CTA';
  * - VeiculoDetalhes: Formulário de edição (filho)
  * - useAuth: Hook de autenticação
  * - getVeiculosUsuario: API de listagem
- * - /veiculos/meus-veiculos: Página de listagem (retorno)
+ * - /meus-veiculos: Página de listagem (retorno)
  *
  * @example
  * ```tsx
@@ -194,7 +194,7 @@ export default function EditarVeiculoPage() {
           <Button onClick={fetchVeiculo} variant="outline">
             Tentar novamente
           </Button>
-          <Link href="/veiculos/meus-veiculos">
+          <Link href="/meus-veiculos">
             <Button variant="ghost">Voltar para todos os veículos</Button>
           </Link>
         </div>

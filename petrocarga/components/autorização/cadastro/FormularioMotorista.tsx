@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState, useRef } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { addMotorista } from '@/lib/api/motoristaApi';
+import { addMotorista } from '@/services/api/motoristaApi';
 import toast from 'react-hot-toast';
 import ButtonLoginGoogle from '@/components/ui/buttonLoginGoogle';
 

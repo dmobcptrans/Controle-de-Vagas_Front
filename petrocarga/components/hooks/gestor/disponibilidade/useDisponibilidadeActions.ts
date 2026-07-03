@@ -5,7 +5,7 @@ import {
 } from '@/components/services/gestor/disponibilidade/disponibilidadeService';
 
 import toast from 'react-hot-toast';
-import { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
+import { Disponibilidade } from '@/lib/types/disponibilidadeVaga';
 import { Vaga } from '@/lib/types/vaga';
 
 interface UseDisponibilidadeActionsProps {

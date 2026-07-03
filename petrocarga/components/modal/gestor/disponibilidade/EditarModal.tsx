@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
-import { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
+import { Disponibilidade } from '@/lib/types/disponibilidadeVaga';
 
 /**
  * Estados do modal para navegação hierárquica

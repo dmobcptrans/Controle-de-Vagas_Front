@@ -2,8 +2,8 @@ import {
   getReservasBloqueios,
   reservarVaga,
   reservarVagaAgente,
-} from '@/lib/api/reservaApi';
-import { getDisponibilidadeVagasByVagaId } from '@/lib/api/disponibilidadeVagasApi';
+} from '@/services/api/reservaApi';
+import { getDisponibilidadeVagasByVagaId } from '@/services/api/disponibilidadeVagasApi';
 import { ConfirmResult } from '@/lib/types/confirmResult';
 
 /**

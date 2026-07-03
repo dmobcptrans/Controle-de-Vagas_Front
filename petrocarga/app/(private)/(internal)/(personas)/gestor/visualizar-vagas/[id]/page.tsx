@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import VagaDetalhes from '@/components/gestor/cards/vaga-card';
-import { getVagaById } from '@/lib/api/vagaApi';
+import { getVagaById } from '@/services/api/vagaApi';
 import { Vaga } from '@/lib/types/vaga';
 import { useParams } from 'next/navigation';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';

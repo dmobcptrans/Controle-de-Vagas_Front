@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useCalendarioMes } from '@/context/CalendarioMesContext';
+import { useCalendarioMes } from '@/contexts/CalendarioMesContext';
 
 const MESES_PT = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',

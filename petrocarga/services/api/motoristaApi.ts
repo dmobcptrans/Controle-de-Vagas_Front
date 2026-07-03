@@ -5,7 +5,7 @@ import {
   MotoristaPayload,
   MotoristaPatchPayload,
   MotoristaResult,
-} from '../types/motorista';
+} from '../../lib/types/personas/motorista';
 
 /**
  * @module motoristaApi

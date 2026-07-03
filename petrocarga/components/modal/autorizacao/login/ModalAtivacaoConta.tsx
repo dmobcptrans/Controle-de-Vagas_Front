@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Key, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
-import { ativarConta, reenviarCodigoAtivacao } from '@/lib/api/recuperacaoApi';
+import { ativarConta, reenviarCodigoAtivacao } from '@/services/api/recuperacaoApi';
 import ModalTermos from './ModalTermos';
 
 interface ModalAtivacaoContaProps {

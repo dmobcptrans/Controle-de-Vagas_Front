@@ -1,7 +1,7 @@
 'use client';
 
 import { clientApi } from '../clientApi';
-import { DashboardKPIs, DashboardSummary } from '../types/dashboard';
+import { DashboardKPIs, DashboardSummary } from '../../lib/types/dashboard';
 
 /**
  * @module dashboardApi

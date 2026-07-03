@@ -1,6 +1,6 @@
 'use client';
 
-import { Motorista } from '@/lib/types/motorista';
+import { Motorista } from '@/lib/types/personas/motorista';
 import { cn } from '@/lib/utils';
 import { Mail, Phone, UserCircle, Bell, Car, Truck } from 'lucide-react';
 import Link from 'next/link';

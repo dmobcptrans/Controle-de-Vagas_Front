@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import FormItem from '@/components/form/form-item';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
-import { addVeiculo } from '@/lib/api/veiculoApi';
+import { addVeiculo } from '@/services/api/veiculoApi';
 import { useAuth } from '@/components/hooks/useAuth';
 
 const TIPO_OPTIONS = [

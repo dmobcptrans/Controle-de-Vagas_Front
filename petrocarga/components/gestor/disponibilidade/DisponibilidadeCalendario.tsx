@@ -17,8 +17,8 @@ import { useDisponibilidadeActions } from '../../hooks/gestor/disponibilidade/us
 import { useVagas } from '../../hooks/gestor/disponibilidade/useVagas';
 import { useCalendarEvents } from '../../hooks/gestor/disponibilidade/useCalendarEvents';
 
-import type { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
-import { useCalendarioMes } from '@/context/CalendarioMesContext';
+import type { Disponibilidade } from '@/lib/types/disponibilidadeVaga';
+import { useCalendarioMes } from '@/contexts/CalendarioMesContext';
 
 /* --------------------------------------------------------------------- */
 /* ----------------------- TIPOS (Manutenção) -------------------------- */

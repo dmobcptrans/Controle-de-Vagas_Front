@@ -9,7 +9,7 @@ import {
   useMemo,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, TOKEN_KEY } from '@/service/api';
+import { api, TOKEN_KEY } from '@/services/api';
 import { AxiosError } from 'axios';
 import { Veiculo } from '@/lib/types/veiculo';
 

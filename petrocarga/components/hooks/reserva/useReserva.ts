@@ -2,13 +2,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import { DIAS_SEMANA } from './reservaHelpers';
 import { Veiculo } from '@/lib/types/veiculo';
-import { Reserva } from '@/lib/types/reserva';
 import { DiaSemana, Vaga } from '@/lib/types/vaga';
-import { ReservaState } from '@/lib/types/reservaState';
+import { ReservaState } from '@/lib/types/reservas/reservaState';
 import { ConfirmResult } from '@/lib/types/confirmResult';
 
-import { getMotoristaByUserId } from '@/lib/api/motoristaApi';
-import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
+import { getMotoristaByUserId } from '@/services/api/motoristaApi';
+import { getVeiculosUsuario } from '@/services/api/veiculoApi';
 
 import {
   gerarHorariosDia,

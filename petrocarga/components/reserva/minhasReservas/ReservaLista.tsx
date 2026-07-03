@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { ChevronDown, ChevronUp, Archive, CopyPlus } from 'lucide-react';
 import Link from 'next/link';
 import ReservaCard from './ReservaCard';
-import { ReservaGet } from '@/lib/types/reserva';
+import { ReservaGet } from '@/lib/types/reservas/reserva';
 
 // ==================== CONSTANTES (Fora do componente) ====================
 /**

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import VagaItem from '@/components/gestor/cards/vagas-item';
 import { Vaga } from '@/lib/types/vaga';
-import * as vagaActions from '@/lib/api/vagaApi';
+import * as vagaActions from '@/services/api/vagaApi';
 
 /**
  * @function useDebounce

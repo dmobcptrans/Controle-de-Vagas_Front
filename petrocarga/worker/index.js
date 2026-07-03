@@ -18,34 +18,29 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 const tipoImagem = {
-  DENUNCIA: '/image-firebase/imag-denuncia.webp',
-  MOTORISTA: '/image-firebase/imag-motorista.webp',
-  VAGA: '/image-firebase/imag-vaga.webp',
-  RESERVA: '/image-firebase/imag-reserva.webp',
-  VEICULO: '/image-firebase/imag-veiculo.webp',
+  DENUNCIA: 'images/firebase/imag-denuncia.webp',
+  MOTORISTA: 'images/firebase/imag-motorista.webp',
+  VAGA: 'images/firebase/imag-vaga.webp',
+  RESERVA: 'images/firebase/imag-reserva.webp',
+  VEICULO: 'images/firebase/imag-veiculo.webp',
 };
 
 messaging.onBackgroundMessage((payload) => {
   const data = payload.data || {};
-
-  const image = tipoImagem[data.tipo] || '/web-app-manifest-512x512.png';
+  const image = tipoImagem[data.tipo] || '/icons/icon-512.png';
 
   self.registration.showNotification(data.title || 'PetroCarga', {
     body: data.body || 'Você tem uma nova atualização',
-    icon: '/web-app-manifest-192x192.png',
+    icon: '/icons/icon-192.png',
     badge: '/badge.png',
     image,
-
     vibrate: [100, 50, 100],
-
     tag: data.notificacaoId || 'petrocarga',
     renotify: true,
-
     actions: [
       { action: 'abrir', title: 'Ver detalhes' },
       { action: 'fechar', title: 'Ignorar' },
     ],
-
     data: {
       id: data.notificacaoId,
       tipo: data.tipo,
@@ -55,7 +50,6 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-
   if (event.action === 'fechar') return;
 
   const data = event.notification.data;
@@ -63,17 +57,17 @@ self.addEventListener('notificationclick', (event) => {
 
   switch (data?.tipo) {
     case 'DENUNCIA':
-      url = '/reservas/minhas-denuncias';
+      url = '/minhas-denuncias';
       break;
     case 'MOTORISTA':
-      url = '/motoristas/reservas';
+      url = '/minhas-reservas';
       break;
     case 'VAGA':
     case 'RESERVA':
-      url = '/reservas';
+      url = '/minhas-reservas';
       break;
     case 'VEICULO':
-      url = '/veiculos/meus-veiculos';
+      url = '/meus-veiculos';
       break;
   }
 
@@ -82,7 +76,8 @@ self.addEventListener('notificationclick', (event) => {
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
         for (const client of clientList) {
-          if (client.url.includes(self.location.origin)) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            client.navigate(url);
             return client.focus();
           }
         }

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { getVagas } from '@/lib/api/vagaApi';
+import { getVagas } from '@/services/api/vagaApi';
 import { Vaga } from '@/lib/types/vaga';
 
 /**

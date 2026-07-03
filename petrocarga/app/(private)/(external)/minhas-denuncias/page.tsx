@@ -1,9 +1,9 @@
 'use client';
 
-import { useAuth } from '@/context/AuthContext';
-import { getDenunciasByUsuario } from '@/lib/api/denunciaApi';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDenunciasByUsuario } from '@/services/api/denunciaApi';
 import DenunciaLista from '@/components/motorista/cards/denuncia/DenunciaLista';
-import { Denuncia } from '@/lib/types/denuncias';
+import { Denuncia } from '@/lib/types/denuncia';
 import { AlertCircle, Info, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';

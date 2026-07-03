@@ -2,7 +2,7 @@
 
 import toast from 'react-hot-toast';
 import { clientApi } from '../clientApi';
-import { ConfirmResult } from '../types/confirmResult';
+import { ConfirmResult } from '../../lib/types/confirmResult';
 
 /**
  * @module denunciaApi

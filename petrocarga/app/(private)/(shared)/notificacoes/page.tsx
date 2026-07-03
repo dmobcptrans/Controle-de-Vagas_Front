@@ -1,6 +1,6 @@
 'use client';
 
-import { useNotifications } from '@/context/NotificationContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { NotificationHeader } from '@/components/notification/notificationHeader';
 import { NotificationList } from '@/components/notification/notificationList';
 import { NotificationModals } from '@/components/modal/notification/notificationModals';

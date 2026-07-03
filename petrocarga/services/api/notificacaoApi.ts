@@ -1,7 +1,7 @@
 'use client';
 
 import { clientApi } from '../clientApi';
-import { PaginatedNotificationResponse } from '../types/notificacao';
+import { PaginatedNotificationResponse } from '../../lib/types/notificacao';
 
 /**
  * @module notificacaoApi

@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CardMap from '@/components/map/cardMap';
-import { deleteVaga } from '@/lib/api/vagaApi';
+import { deleteVaga } from '@/services/api/vagaApi';
 import toast from 'react-hot-toast';
 
 type VagaDetalhesProps = {

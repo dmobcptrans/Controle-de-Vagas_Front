@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useDisponibilidade } from './useDisponibilidade';
-import { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
+import { Disponibilidade } from '@/lib/types/disponibilidadeVaga';
 
 /**
  * @hook useDisponibilidadesData

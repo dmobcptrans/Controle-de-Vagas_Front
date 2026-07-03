@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   CalendarPlus,
   Archive,
@@ -12,15 +12,15 @@ import {
   Clock,
   Truck,
 } from 'lucide-react';
-import { getReservasPorUsuario } from '@/lib/api/reservaApi';
-import { getEmpresaByUsuarioId } from '@/lib/api/empresaApi';
-import { getDenunciasByUsuario } from '@/lib/api/denunciaApi';
+import { getReservasPorUsuario } from '@/services/api/reservaApi';
+import { getEmpresaByUsuarioId } from '@/services/api/empresaApi';
+import { getDenunciasByUsuario } from '@/services/api/denunciaApi';
 import { useCallback, useEffect, useState } from 'react';
-import { ReservaGet } from '@/lib/types/reserva';
-import { Denuncia } from '@/lib/types/denuncias';
+import { ReservaGet } from '@/lib/types/reservas/reserva';
+import { Denuncia } from '@/lib/types/denuncia';
 import toast from 'react-hot-toast';
 import { CTA } from '@/components/ui/CTA/CTA';
-import { MotoristaEmpresa } from '@/lib/types/empresa';
+import { MotoristaEmpresa } from '@/lib/types/personas/empresa';
 
 /**
  * Configuração de cores e rótulos para cada status de reserva
@@ -246,14 +246,14 @@ export default function Dashboard() {
       iconClass: 'bg-amber-50 text-amber-700',
     },
     {
-      href: '/reservas/minhas-denuncias',
+      href: '/minhas-denuncias',
       icon: <TriangleAlert className="h-5 w-5" />,
       label: 'Denúncias',
       desc: 'Ocorrências',
       iconClass: 'bg-red-50 text-red-700',
     },
     {
-      href: '/veiculos/meus-veiculos',
+      href: '/meus-veiculos',
       icon: <Truck className="h-5 w-5" />,
       label: 'Meu veículo',
       desc: 'Ver cadastro',

@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
-import { getMotoristas } from '@/lib/api/motoristaApi';
+import { getMotoristas } from '@/services/api/motoristaApi';
 import {
   enviarNotificacaoParaUsuario,
   enviarNotificacaoPorPermissao,
-} from '@/lib/api/notificacaoApi';
-import { Motorista } from '@/lib/types/motorista';
+} from '@/services/api/notificacaoApi';
+import { Motorista } from '@/lib/types/personas/motorista';
 import {
   Loader2,
   Send,

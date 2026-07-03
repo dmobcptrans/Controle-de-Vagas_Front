@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Vaga } from '@/lib/types/vaga';
-import * as vagaApi from '@/lib/api/vagaApi';
+import * as vagaApi from '@/services/api/vagaApi';
 
 /**
  * @hook useVagas

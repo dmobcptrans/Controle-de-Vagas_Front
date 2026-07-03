@@ -11,7 +11,7 @@ import {
   VagaItem,
   ReservaItem,
 } from '@/components/gestor/calendario/ListItems';
-import { Reserva } from '@/lib/types/reserva';
+import { Reserva } from '@/lib/types/reservas/reserva';
 import { Vaga } from '@/lib/types/vaga';
 
 export type ModalState =

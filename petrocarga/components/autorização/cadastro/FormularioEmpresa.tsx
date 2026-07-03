@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState, useRef } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { addEmpresa } from '@/lib/api/empresaApi';
+import { addEmpresa } from '@/services/api/empresaApi';
 import ModalTermos from '@/components/modal/autorizacao/login/ModalTermos';
 import toast from 'react-hot-toast';
 

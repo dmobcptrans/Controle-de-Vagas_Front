@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { getToken } from 'firebase/messaging';
 import { getMessagingInstance } from '@/lib/firebase';
-import { clientApi } from '@/lib/clientApi';
+import { clientApi } from '@/services/clientApi';
 import {
   atualizarStatusPushToken,
   buscarStatusPushToken,
-} from '@/lib/api/notificacaoApi';
+} from '@/services/api/notificacaoApi';
 
 const Push_TOKEN_KEY = 'pushToken';
 
@@ -37,8 +37,13 @@ async function registerAndSendToken(): Promise<void> {
   const messaging = await getMessagingInstance();
   if (!messaging) throw new Error('messaging_unavailable');
 
-  const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-  await navigator.serviceWorker.ready;
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  for (const reg of registrations) {
+    if (reg.active?.scriptURL.includes('firebase-messaging-sw.js')) {
+      await reg.unregister();
+    }
+  }
+  const registration = await navigator.serviceWorker.ready;
 
   const token = await getToken(messaging, {
     vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,

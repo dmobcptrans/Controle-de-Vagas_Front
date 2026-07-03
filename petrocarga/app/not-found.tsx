@@ -1,6 +1,6 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import coneImg from '@/public/cone.png';
+import coneImg from '@/public/images/cone.png';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 

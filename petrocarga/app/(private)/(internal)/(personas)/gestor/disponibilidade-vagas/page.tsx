@@ -1,6 +1,6 @@
 import DisponibilidadeCalendario from '@/components/gestor/disponibilidade/DisponibilidadeCalendario';
 import CalendarioInfoCTA from '@/components/ui/CTA/CalendarioInfoCTA';
-import { CalendarioMesProvider } from '@/context/CalendarioMesContext';
+import { CalendarioMesProvider } from '@/contexts/CalendarioMesContext';
 import { Info } from 'lucide-react';
 import Link from 'next/dist/client/link';
 

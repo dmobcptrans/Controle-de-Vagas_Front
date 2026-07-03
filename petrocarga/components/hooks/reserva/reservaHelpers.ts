@@ -1,5 +1,5 @@
 import { DiaSemana, OperacoesVaga } from '@/lib/types/vaga';
-import { Reserva } from '@/lib/types/reserva';
+import { Reserva } from '@/lib/types/reservas/reserva';
 import { Vaga } from '@/lib/types/vaga';
 
 

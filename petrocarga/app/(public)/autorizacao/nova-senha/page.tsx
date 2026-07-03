@@ -10,7 +10,7 @@ import {
   EyeOff,
   KeyRound,
 } from 'lucide-react';
-import { redefinirSenhaComCodigo } from '@/lib/api/recuperacaoApi';
+import { redefinirSenhaComCodigo } from '@/services/api/recuperacaoApi';
 import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
 import FeedbackSenha from '@/components/feedback/feedback-senha';
 import ModalSucessoRedefinicao from '@/components/modal/autorizacao/nova-senha/ModalSucessoRedefinicao';

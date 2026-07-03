@@ -2,10 +2,10 @@
 
 import toast from 'react-hot-toast';
 import { clientApi } from '../clientApi';
-import { ConfirmResult } from '../types/confirmResult';
-import { PaginatedReservaRapidaResponse } from '@/lib/types/reservaRapida';
-import { ReservaPlaca } from '@/lib/types/reservaPlaca';
-import { PaginatedReservaResponse } from '@/lib/types/reserva';
+import { ConfirmResult } from '../../lib/types/confirmResult';
+import { PaginatedReservaRapidaResponse } from '@/lib/types/reservas/reservaRapida';
+import { ReservaPlaca } from '@/lib/types/reservas/reservaPlaca';
+import { PaginatedReservaResponse } from '@/lib/types/reservas/reserva';
 
 /**
  * @module reservaApi

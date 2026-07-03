@@ -9,8 +9,8 @@ import {
   X,
   Info,
 } from 'lucide-react';
-import { getReservasPorPlaca } from '@/lib/api/reservaApi';
-import { ReservaPlaca } from '@/lib/types/reservaPlaca';
+import { getReservasPorPlaca } from '@/services/api/reservaApi';
+import { ReservaPlaca } from '@/lib/types/reservas/reservaPlaca';
 import ReservaPlacaCard from '@/components/agente/cards/reservaPlaca-card';
 import Link from 'next/link';
 

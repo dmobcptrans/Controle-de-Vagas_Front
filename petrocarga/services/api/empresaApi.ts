@@ -2,7 +2,7 @@ import { clientApi } from '../clientApi';
 import {
   EmpresaPayload,
   EmpresaResult,
-} from '../types/empresa';
+} from '../../lib/types/personas/empresa';
 
 export async function addEmpresa(
   prevState: EmpresaResult | null,

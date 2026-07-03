@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { EventInput } from '@fullcalendar/core';
 
 // Importando tipos necessários
-import type { Disponibilidade } from '@/lib/types/disponibilidadeVagas';
+import type { Disponibilidade } from '@/lib/types/disponibilidadeVaga';
 
 /* ----------------------- TIPOS DO EVENTO DO CALENDÁRIO ------------------- */
 

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getReservas, finalizarForcado } from '@/lib/api/reservaApi';
-import { Reserva } from '@/lib/types/reserva';
+import { getReservas, finalizarForcado } from '@/services/api/reservaApi';
+import { Reserva } from '@/lib/types/reservas/reserva';
 import { toast } from 'sonner';
 
 /**

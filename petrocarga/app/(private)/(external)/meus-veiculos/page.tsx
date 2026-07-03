@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
-import { getVeiculosUsuario } from '@/lib/api/veiculoApi';
+import { getVeiculosUsuario } from '@/services/api/veiculoApi';
 import { AlertCircle, CarIcon, Info, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Veiculo } from '@/lib/types/veiculo';

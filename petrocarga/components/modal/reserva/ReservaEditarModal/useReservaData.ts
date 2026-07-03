@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getVeiculo } from '@/lib/api/veiculoApi';
-import { getVagaById } from '@/lib/api/vagaApi';
+import { getVeiculo } from '@/services/api/veiculoApi';
+import { getVagaById } from '@/services/api/vagaApi';
 import { Veiculo } from '@/lib/types/veiculo';
 import { Vaga } from '@/lib/types/vaga';
 

@@ -20,4 +20,8 @@ export const NAVBAR_LINKS = {
     { href: '/admin/usuarios', label: 'Gerenciar Usuários' },
     { href: '/admin/config', label: 'Configurações' },
   ],
+  EMPRESA: [
+    { href: '/empresa/home', label: 'Home' },
+    { href: '/empresa/relatorio', label: 'Relatório' },
+  ],
 } as const;

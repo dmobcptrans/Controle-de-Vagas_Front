@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Mail, ArrowLeft, CheckCircle2, AlertCircle, User } from 'lucide-react';
-import { solicitarRecuperacaoSenha } from '@/lib/api/recuperacaoApi';
+import { solicitarRecuperacaoSenha } from '@/services/api/recuperacaoApi';
 import { validateEmail } from '@/lib/utils';
 import ModalConfirmacaoEnvio from '@/components/modal/autorizacao/verificacao/ModalConfirmacaoEnvio';
 import ModalSucessoEnvio from '@/components/modal/autorizacao/verificacao/ModalSucessoEnvio';

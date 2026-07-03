@@ -8,8 +8,8 @@ import {
   useMemo,
   useEffect,
 } from 'react';
-import { api } from '@/service/api';
-import { useAuth } from '@/context/AuthContext';
+import { api } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 

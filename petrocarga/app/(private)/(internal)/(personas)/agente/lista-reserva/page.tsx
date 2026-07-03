@@ -2,8 +2,8 @@
 
 import ReservaRapidaCard from '@/components/agente/cards/reservaRapida-card';
 import { useAuth } from '@/components/hooks/useAuth';
-import {  finalizarForcado, getReservasRapidas } from '@/lib/api/reservaApi';
-import { ReservaRapida } from '@/lib/types/reservaRapida';
+import {  finalizarForcado, getReservasRapidas } from '@/services/api/reservaApi';
+import { ReservaRapida } from '@/lib/types/reservas/reservaRapida';
 import {
   AlertCircle,
   ClipboardList,
