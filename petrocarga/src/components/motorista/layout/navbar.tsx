@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
+import { NotificationDrawer } from '@/components/notification/notificatioDrawer';
+import Logo from '../../../../public/images/logo.png';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,11 +16,9 @@ import {
   CarIcon,
   ChevronDown,
   User,
-  Bell,
   TriangleAlert,
   Archive,
   CalendarPlus,
-  PlusCircle,
   Info,
   BarChart,
 } from 'lucide-react';
@@ -125,11 +126,8 @@ function CardLink({
 
 export function Navbar() {
   const [menuAberto, setMenuAberto] = useState(false);
-  const { notifications, isConnected } = useNotifications();
+  const { user } = useAuth();
 
-  const unreadCount = notifications.filter(
-    (notification) => !notification.lida,
-  ).length;
 
   const fecharMenu = () => setMenuAberto(false);
 
@@ -137,20 +135,9 @@ export function Navbar() {
     <header className="bg-blue-800 text-white relative">
       <nav className="grid grid-cols-3 items-center p-4 max-w-6xl mx-auto md:flex md:justify-between">
         {/* ==================== SINO - MOBILE ==================== */}
-        <Link
-          href="/notificacoes"
-          className="md:hidden flex items-center justify-start"
-          onClick={fecharMenu}
-        >
-          <div className="relative w-8 h-8 flex items-center justify-center">
-            <Bell className="h-6 w-6" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </div>
-        </Link>
+        <div className="md:hidden flex items-center justify-start">
+          <NotificationDrawer isMobile={true} />
+        </div>
 
         {/* ==================== LOGO ==================== */}
         <Link
@@ -158,7 +145,7 @@ export function Navbar() {
           className="flex justify-center md:justify-start"
           onClick={fecharMenu}
         >
-          <Image src="/images/logo.png" alt="Logo da Cptrans" className="w-16 h-auto" />
+          <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
         </Link>
 
         {/* ==================== BOTÃO MENU - MOBILE ==================== */}
@@ -259,24 +246,7 @@ export function Navbar() {
 
           {/* Notificações Desktop */}
           <li>
-            <Link
-              href="/notificacoes"
-              className="relative flex items-center gap-1 hover:text-gray-300 p-2 rounded-lg hover:bg-blue-700 transition-colors"
-              aria-label={`Notificações${unreadCount > 0 ? `, ${unreadCount} não lidas` : ''}`}
-            >
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-              {!isConnected && (
-                <span
-                  className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full h-2 w-2 animate-pulse"
-                  title="Reconectando..."
-                />
-              )}
-            </Link>
+            <NotificationDrawer />
           </li>
         </ul>
       </nav>

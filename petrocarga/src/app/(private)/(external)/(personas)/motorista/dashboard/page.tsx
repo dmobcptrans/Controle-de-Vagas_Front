@@ -222,7 +222,7 @@ export default function Dashboard() {
   // ==================== AÇÕES DE ACESSO RÁPIDO ====================
   const acoes = [
     {
-      href: '/reservas',
+      href: '/minhas-reservas',
       icon: <Archive className="h-5 w-5" />,
       label: 'Histórico',
       desc: 'Todas as reservas',

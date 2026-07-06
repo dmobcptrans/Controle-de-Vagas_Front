@@ -25,6 +25,7 @@ export default function externalLayout({
       <PrivateRoute allowedRoles={['EMPRESA', "MOTORISTA"]}>
         <PushNotificationBanner />
         <OnboardingProvider>
+          <OnboardingModal />
           <Navbar />
 
           <main className="flex-1 relative">
