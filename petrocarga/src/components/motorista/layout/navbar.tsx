@@ -12,18 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  CarIcon,
-  ChevronDown,
-  User,
-  TriangleAlert,
-  Archive,
-  CalendarPlus,
-  Info,
-  BarChart,
-} from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { LogoutButton } from '@/components/logoutButton/logoutButton';
-import { useNotifications } from '@/contexts/NotificationContext';
+import { getNavGroupsForRole, type NavGroup } from '@/lib/nav-config';
 
 /**
  * @component CardLink
@@ -31,7 +22,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
  */
 type CardLinkProps = {
   href: string;
-  icon: React.ReactNode;
+  icon: React.ElementType;
   label: string;
   description: string;
   iconBg: string;
@@ -41,7 +32,7 @@ type CardLinkProps = {
 
 function CardLink({
   href,
-  icon,
+  icon: Icon,
   label,
   description,
   iconBg,
@@ -57,7 +48,7 @@ function CardLink({
       <div
         className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBg} ${iconColor}`}
       >
-        {icon}
+        <Icon className="h-5 w-5" />
       </div>
       <div>
         <p className="text-sm font-medium text-gray-800 leading-tight">
@@ -70,66 +61,79 @@ function CardLink({
 }
 
 /**
+ * @component DesktopGroup
+ * @description Renderiza um grupo desktop: link direto (standalone) ou dropdown
+ */
+function DesktopGroup({ group }: { group: NavGroup }) {
+  if (group.standalone) {
+    const link = group.links[0];
+    return (
+      <li className="hover:text-gray-300">
+        <Link href={link.href}>{link.label}</Link>
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
+          {group.title}
+          <ChevronDown className="h-4 w-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
+          {group.links.map((link) => {
+            const Icon = link.icon;
+            return (
+              <DropdownMenuItem key={link.key} asChild>
+                <Link
+                  href={link.href}
+                  className="flex items-center gap-2 cursor-pointer w-full"
+                >
+                  <Icon className="h-4 w-4" />
+                  {link.label}
+                </Link>
+              </DropdownMenuItem>
+            );
+          })}
+          {/* Perfil é o único grupo que carrega o botão de logout junto */}
+          {group.key === 'suporte-perfil' && (
+            <DropdownMenuItem className="p-0 m-0 focus:bg-gray-100">
+              <LogoutButton />
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </li>
+  );
+}
+
+/**
  * @component Navbar
- * @version 1.0.0
+ * @version 2.0.0
  *
- * @description Barra de navegação principal para a área do motorista.
- * Responsiva com menu mobile em formato de cards, notificações em tempo real e dropdowns.
+ * @description Barra de navegação principal, agora data-driven por permissão.
+ * Os links exibidos (desktop e mobile) vêm de `getNavGroupsForRole(role)`,
+ * definido em `lib/nav-config.ts`. Adicionar/remover/restringir um link
+ * é uma mudança na config, não neste componente.
  *
- * ----------------------------------------------------------------------------
- * 📋 FUNCIONALIDADES:
- * ----------------------------------------------------------------------------
- *
- * 1. NAVEGAÇÃO DESKTOP:
- *    - Link principal: "Reservar Vaga"
- *    - Dropdown "Reservas": Minhas Reservas, Minhas Denúncias
- *    - Dropdown "Veículo": Meu Veículo, Adicionar Veículo
- *    - Dropdown "Perfil": Meu Perfil, Sair
- *    - Ícone de notificações com contador
- *
- * 2. NAVEGAÇÃO MOBILE (CARDS):
- *    - Seções: Reservas, Veículos, Mais Opções
- *    - Cada link em formato de card com ícone, título e descrição
- *    - Cores diferenciadas por seção (azul, âmbar, verde, vermelho, roxo)
- *
- * 3. NOTIFICAÇÕES:
- *    - Contador de não lidas (unreadCount)
- *    - Badge vermelho com número (9+)
- *    - Indicador de conexão (ponto amarelo)
- *
- * ----------------------------------------------------------------------------
- * 🎨 CORES DOS CARDS MOBILE:
- * ----------------------------------------------------------------------------
- *
- * | Seção       | Link               | Ícone       | Cor             |
- * |-------------|--------------------|-------------|-----------------|
- * | Reservas    | Reservar vaga      | CalendarPlus| 🔵 Azul         |
- * | Reservas    | Minhas reservas    | Archive     | 🟡 Amarelo      |
- * | Veículos    | Meu veículo        | CarIcon     | 🟢 Verde        |
- * | Veículos    | Adicionar veículo  | PlusCircle  | ⚪ Cinza        |
- * | Mais Opções | Minhas denúncias   | TriangleAlert| 🔴 Vermelho     |
- * | Mais Opções | Meu perfil         | User        | 🟣 Roxo         |
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - LogoutButton: Botão de logout
- * - useNotifications: Contexto de notificações
- * - DropdownMenu: Menu dropdown do shadcn/ui
+ * Como essa navbar deve viver no layout raiz (fora dos route groups),
+ * ela funciona igual em qualquer página, incluindo as de (shared).
  *
  * @example
  * ```tsx
  * <Navbar />
  * ```
  */
-
 export function Navbar() {
   const [menuAberto, setMenuAberto] = useState(false);
   const { user } = useAuth();
 
-
   const fecharMenu = () => setMenuAberto(false);
+
+  // Assumindo que useAuth() expõe user.role. Ajuste aqui se o campo
+  // tiver outro nome (ex: user.tipo, user.perfil, etc).
+  const groups = getNavGroupsForRole(user?.permissao);
 
   return (
     <header className="bg-blue-800 text-white relative">
@@ -141,7 +145,7 @@ export function Navbar() {
 
         {/* ==================== LOGO ==================== */}
         <Link
-          href="/motorista/dashboard"
+          href={`/${user?.permissao === 'ADMIN' ? 'gestor' : user?.permissao.toLocaleLowerCase()}/dashboard`}
           className="flex justify-center md:justify-start"
           onClick={fecharMenu}
         >
@@ -158,200 +162,83 @@ export function Navbar() {
 
         {/* ==================== MENU DESKTOP ==================== */}
         <ul className="hidden md:flex gap-6 text-lg items-center">
-          <li className="hover:text-gray-300">
-            <Link href="/motorista/dashboard">Menu</Link>
-          </li>
-          <li className="hover:text-gray-300">
-            <Link href="/reservar-vaga">Reservar Vaga</Link>
-          </li>
+          {groups.map((group) => (
+            <DesktopGroup key={group.key} group={group} />
+          ))}
 
-          {/* Dropdown Reservas */}
-          <li>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
-                Reservas
-                <ChevronDown className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/minhas-reservas"
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
-                    <Archive className="h-4 w-4" />
-                    Minhas Reservas
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/minhas-denuncias"
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
-                    <TriangleAlert className="h-4 w-4" />
-                    Minhas Denúncias
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </li>
+          {/* Admin não possui grupo "perfil", então adiciona um dropdown apenas com o logout */}
+          {user?.permissao === 'ADMIN' && (
+            <li>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
+                  Conta
+                  <ChevronDown className="h-4 w-4" />
+                </DropdownMenuTrigger>
 
-          {/* Dropdown Veículo */}
-          <li>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
-                Veículo
-                <ChevronDown className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/meus-veiculos"
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
-                    <CarIcon className="h-4 w-4" />
-                    Meus Veículos
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </li>
+                <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
+                  <DropdownMenuItem className="p-0 m-0 focus:bg-gray-100">
+                    <LogoutButton />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </li>
+          )}
 
-          <li className="hover:text-gray-300">
-            <Link href="/tutorial">Tutorial</Link>
-          </li>
-
-          {/* Dropdown Perfil */}
-          <li>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 hover:text-gray-300 focus:outline-none">
-                Perfil
-                <ChevronDown className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white text-gray-800 border border-gray-200">
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/perfil"
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
-                    <User className="h-4 w-4" />
-                    Meu Perfil
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="p-0 m-0 focus:bg-gray-100">
-                  <LogoutButton />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </li>
-
-          {/* Notificações Desktop */}
+          {/* Notificações */}
           <li>
             <NotificationDrawer />
           </li>
         </ul>
       </nav>
 
-      {/* ==================== MENU MOBILE (CARDS) ==================== */}
+      {/* ==================== MENU MOBILE  ==================== */}
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          menuAberto ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+          menuAberto
+            ? 'max-h-[calc(100vh-80px)] opacity-100'
+            : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="bg-blue-800 p-4  space-y-5">
-          {/* Seção: Reservas */}
-          <div>
-            <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
-              Reservas
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <CardLink
-                href="/reservar-vaga"
-                label="Reservar vaga"
-                description="Nova reserva"
-                iconBg="bg-blue-100"
-                iconColor="text-blue-700"
-                icon={<CalendarPlus className="h-5 w-5" />}
-                onClick={fecharMenu}
-              />
-              <CardLink
-                href="/minhas-reservas"
-                label="Minhas reservas"
-                description="Histórico"
-                iconBg="bg-amber-100"
-                iconColor="text-amber-700"
-                icon={<Archive className="h-5 w-5" />}
-                onClick={fecharMenu}
-              />
-            </div>
-          </div>
+        <div className="bg-blue-800 p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-80px)]">
+          {groups.map((group) => (
+            <div key={group.key} className="flex flex-col">
+              {/* Título da Categoria */}
+              <p className="text-xs font-bold text-white uppercase tracking-widest mb-3 px-1">
+                {group.title}
+              </p>
 
-          {/* Seção: Veículos */}
-          <div>
-            <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
-              Veículos
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <CardLink
-                href="/meus-veiculos"
-                label="Meus veículos"
-                description="Ver cadastro"
-                iconBg="bg-green-100"
-                iconColor="text-green-700"
-                icon={<CarIcon className="h-5 w-5" />}
-                onClick={fecharMenu}
-              />
-            </div>
-          </div>
+              {/* GRID DE CARDS COM LÓGICA DE PREENCHIMENTO */}
+              <div className="grid grid-cols-2 gap-3">
+                {group.links.map((link, index) => {
+                  // Lógica: Se o total de links for ímpar E este for o último link da lista,
+                  // ele ocupa as 2 colunas para não deixar buraco.
+                  const isLastOdd =
+                    group.links.length % 2 !== 0 &&
+                    index === group.links.length - 1;
 
-          {/* Seção: Mais Opções */}
-          <div>
-            <p className="text-xs font-semibold text-white uppercase tracking-widest mb-2 px-1">
-              Mais opções
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <CardLink
-                href="/minhas-denuncias"
-                label="Minhas denúncias"
-                description="Ver ocorrências"
-                iconBg="bg-red-100"
-                iconColor="text-red-700"
-                icon={<TriangleAlert className="h-5 w-5" />}
-                onClick={fecharMenu}
-              />
-              <CardLink
-                href="/perfil"
-                label="Meu perfil"
-                description="Dados pessoais"
-                iconBg="bg-purple-100"
-                iconColor="text-purple-700"
-                icon={<User className="h-5 w-5" />}
-                onClick={fecharMenu}
-              />
+                  return (
+                    <div
+                      key={link.key}
+                      className={isLastOdd ? 'col-span-2' : 'col-span-1'}
+                    >
+                      <CardLink
+                        href={link.href}
+                        label={link.label}
+                        description={link.description}
+                        iconBg={link.iconBg}
+                        iconColor={link.iconColor}
+                        icon={link.icon}
+                        onClick={fecharMenu}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 py-2">
-              <CardLink
-                href="/tutorial"
-                label="Tutoriais"
-                description="Guia de uso"
-                iconBg="bg-indigo-100"
-                iconColor="text-indigo-700"
-                icon={<Info className="h-5 w-5" />}
-                onClick={fecharMenu}
-              />
-              <CardLink
-                href="/dashboard"
-                label="Menu"
-                description="Visualizar relatórios"
-                iconBg="bg-blue-100"
-                iconColor="text-blue-700"
-                icon={<BarChart className="h-5 w-5" />}
-                onClick={fecharMenu}
-              />
-            </div>
-          </div>
+          ))}
 
           {/* Logout */}
-          <div className=" border-gray-200 pt-3 flex justify-end">
+          <div className="border-t border-blue-700 pt-4 flex justify-end">
             <LogoutButton mobile={true} />
           </div>
         </div>

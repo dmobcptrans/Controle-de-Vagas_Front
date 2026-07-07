@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
+import Logo from '../../../public/images/logo.png';
 
 /**
  * @component Navbar
@@ -69,7 +70,7 @@ export function Navbar() {
           href="/"
           className="flex items-center space-x-2 text-xl font-bold hover:text-gray-300"
         >
-          <Image src="/images/logo.png" alt="Logo da Cptrans" className="w-16 h-auto" />
+          <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
         </Link>
 
         {/* ==================== MENU DESKTOP ==================== */}

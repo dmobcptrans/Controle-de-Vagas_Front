@@ -1,7 +1,5 @@
-import Footer from '@/components/gestor/layout/footer';
 import { Metadata } from 'next';
 import { MapProvider } from '@/contexts/MapContext';
-import { Navbar } from '@/components/motorista/layout/navbar';
 import PrivateRoute from '@/contexts/PrivateRoute';
 import { PushNotificationBanner } from '@/contexts/PushProvider/PushNotificationBanner';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
@@ -26,13 +24,9 @@ export default function externalLayout({
         <PushNotificationBanner />
         <OnboardingProvider>
           <OnboardingModal />
-          <Navbar />
-
           <main className="flex-1 relative">
             <MapProvider>{children}</MapProvider>
           </main>
-
-          <Footer />
         </OnboardingProvider>
       </PrivateRoute>
     </div>

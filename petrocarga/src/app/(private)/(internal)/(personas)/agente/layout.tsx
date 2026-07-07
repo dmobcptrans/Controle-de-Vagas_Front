@@ -1,7 +1,6 @@
 import Footer from '@/components/gestor/layout/footer';
 import { Metadata } from 'next';
 import { MapProvider } from '@/contexts/MapContext';
-import { Navbar } from '@/components/agente/layout/navbar';
 import PrivateRoute from '@/contexts/PrivateRoute';
 import { PushNotificationBanner } from '@/contexts/PushProvider/PushNotificationBanner';
 
@@ -105,9 +104,6 @@ export default function AgenteLayout({
     <div className="flex min-h-screen flex-col">
       {/* Banner de notificações push */}
       <PushNotificationBanner />
-
-      {/* Barra de navegação superior (versão agente) */}
-      <Navbar />
 
       {/* Conteúdo principal com proteção de rota e contexto do mapa */}
       <main className="flex-1 relative">

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Logo from '../../../../public/images/logo.png';
 import { LogoutButton } from '@/components/logoutButton/logoutButton';
 import { useAuth } from '@/components/hooks/useAuth';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -101,7 +102,7 @@ export function Navbar() {
 
           {/* Logo Desktop */}
           <Link href="/gestor/relatorio" className="hidden md:block">
-            <Image src="/images/logo.png" alt="Logo da Cptrans" className="w-16 h-auto" />
+            <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
           </Link>
         </div>
 
@@ -109,7 +110,7 @@ export function Navbar() {
         <div className="flex items-center justify-center flex-1">
           {/* Logo Mobile */}
           <Link href="/gestor/relatorio" className="md:hidden">
-            <Image src="/images/logo.png" alt="Logo da Cptrans" className="w-16 h-auto" />
+            <Image src={Logo} alt="Logo da Cptrans" className="w-16 h-auto" />
           </Link>
 
           {/* Links Desktop */}

@@ -1,6 +1,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import Cone from '../../public/images/cone.png';
 import { useRouter } from 'next/navigation';
 
 export default function NotFound() {
@@ -13,7 +14,7 @@ export default function NotFound() {
       </h2>
       <Image
         className="mx-auto w-sm"
-        src={"/petrocarga/public/images/cone.png"}
+        src={Cone}
         alt="ilustração de um barco"
       />
       <p className="text-3xl font-extralight text-gray-400">
