@@ -5,9 +5,14 @@ import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -17,16 +22,19 @@ type NotificationDrawerProps = {
   isMobile?: boolean;
 };
 
-export function NotificationDrawer({ isMobile = false }: NotificationDrawerProps) {
+export function NotificationDrawer({
+  isMobile = false,
+}: NotificationDrawerProps) {
   const router = useRouter();
-  
-  const { notifications, markAsRead, isLoading } = useNotifications();
 
+  const { notifications, markAsRead, isLoading } = useNotifications();
+  const [open, setOpen] = useState(false);
   const latestNotifications = notifications.slice(0, 4);
   const unreadCount = notifications.filter((n) => !n.lida).length;
 
   async function handleClick(id: string) {
     await markAsRead(id);
+    setOpen(false);
     router.push('/notificacoes');
   }
 
@@ -39,7 +47,6 @@ export function NotificationDrawer({ isMobile = false }: NotificationDrawerProps
       size="icon"
       className="relative h-10 w-10 rounded-xl hover:bg-muted/20 focus-visible:ring-1 focus-visible:ring-ring"
     >
-    
       <Bell className="h-[22px] w-[22px] text-white transition-colors duration-200" />
 
       {unreadCount > 0 && (
@@ -58,16 +65,17 @@ export function NotificationDrawer({ isMobile = false }: NotificationDrawerProps
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-3.5">
         <div>
-          <h3 className="text-sm font-semibold tracking-tight">
-            Notificações
-          </h3>
+          <h3 className="text-sm font-semibold tracking-tight">Notificações</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Suas atualizações mais recentes
           </p>
         </div>
 
         {unreadCount > 0 && (
-          <Badge variant="secondary" className="rounded-md px-2 py-0.5 text-xs font-medium bg-secondary/80 text-secondary-foreground">
+          <Badge
+            variant="secondary"
+            className="rounded-md px-2 py-0.5 text-xs font-medium bg-secondary/80 text-secondary-foreground"
+          >
             {unreadCount} novas
           </Badge>
         )}
@@ -101,30 +109,40 @@ export function NotificationDrawer({ isMobile = false }: NotificationDrawerProps
                 }`}
               >
                 {/* Ícone Lateral interno da lista */}
-                <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                  !notification.lida 
-                    ? 'bg-primary/10 text-primary dark:bg-primary/20' 
-                    : 'bg-muted text-muted-foreground'
-                }`}>
+                <div
+                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                    !notification.lida
+                      ? 'bg-primary/10 text-primary dark:bg-primary/20'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
                   <Bell className="h-4 w-4" />
                 </div>
 
                 {/* Textos */}
                 <div className="flex-1 space-y-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <h4 className={`text-xs leading-none truncate ${
-                      !notification.lida ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground'
-                    }`}>
+                    <h4
+                      className={`text-xs leading-none truncate ${
+                        !notification.lida
+                          ? 'font-semibold text-foreground'
+                          : 'font-medium text-muted-foreground'
+                      }`}
+                    >
                       {notification.titulo}
                     </h4>
                     {!notification.lida && (
                       <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                     )}
                   </div>
-                  
-                  <p className={`text-xs leading-normal line-clamp-2 ${
-                    !notification.lida ? 'text-foreground/90' : 'text-muted-foreground/90'
-                  }`}>
+
+                  <p
+                    className={`text-xs leading-normal line-clamp-2 ${
+                      !notification.lida
+                        ? 'text-foreground/90'
+                        : 'text-muted-foreground/90'
+                    }`}
+                  >
                     {notification.mensagem}
                   </p>
 
@@ -147,7 +165,10 @@ export function NotificationDrawer({ isMobile = false }: NotificationDrawerProps
           variant="ghost"
           size="sm"
           className="w-full justify-between rounded-lg px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          onClick={() => router.push('/notificacoes')}
+          onClick={() => {
+            setOpen(false);
+            router.push('/notificacoes');
+          }}
         >
           <span>Ver todas as notificações</span>
           <ChevronRight className="h-3.5 w-3.5" />
@@ -161,12 +182,13 @@ export function NotificationDrawer({ isMobile = false }: NotificationDrawerProps
   // =========================
   if (isMobile) {
     return (
-      <Sheet>
-        <SheetTrigger asChild>
-          {TriggerButton}
-        </SheetTrigger>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>{TriggerButton}</SheetTrigger>
         {/* Lado alterado para "left", largura definida para w-1/2 (metade da tela) e cantos arredondados na direita */}
-        <SheetContent side="left" className="w-6/7 h-full p-0 rounded-r-[20px] overflow-hidden border-r">
+        <SheetContent
+          side="left"
+          className="w-6/7 h-full p-0 rounded-r-[20px] overflow-hidden border-r"
+        >
           {NotificationContent}
         </SheetContent>
       </Sheet>
@@ -177,10 +199,8 @@ export function NotificationDrawer({ isMobile = false }: NotificationDrawerProps
   // DESKTOP → POPOVER
   // =========================
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        {TriggerButton}
-      </PopoverTrigger>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{TriggerButton}</PopoverTrigger>
       <PopoverContent
         align="end"
         sideOffset={8}

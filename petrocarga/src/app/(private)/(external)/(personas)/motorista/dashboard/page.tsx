@@ -344,7 +344,7 @@ export default function Dashboard() {
                 .map((r) => (
                   <Link
                     key={r.id}
-                    href="/reservas"
+                    href="/minhas-reservas"
                     className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all border-l-4 border-[#1351B4]"
                   >
                     <div className="flex-1 flex flex-col gap-1 min-w-0">
