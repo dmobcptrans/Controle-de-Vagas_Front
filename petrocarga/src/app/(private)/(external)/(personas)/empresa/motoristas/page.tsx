@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { getMotoristaEmpresaByUsuarioId } from '@/services/api/empresaApi';
 import { MotoristaCard } from '@/components/empresa/cards/MotoristaCard';
 import { CTA } from '@/components/ui/CTA/CTA';
+import CadastroMotoristaModal from '@/components/empresa/modal/CadastroMotoristaModal';
 
 function PaginationControls({
   currentPage,
@@ -139,6 +140,7 @@ export default function MotoristasEmpresa() {
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [modalAberto, setModalAberto] = useState(false);
 
   // ==================== BUSCA DE MOTORISTAS (PAGINADA) ====================
   const fetchMotoristas = useCallback(
@@ -253,10 +255,10 @@ export default function MotoristasEmpresa() {
         {/* ==================== CTA DINÂMICO ==================== */}
         <div className="-mt-4 mb-5">
           <CTA
-            href="/reservar-vaga"
             title="Adicionar Motorista"
             description="Traga algum motorista para a sua empresa"
             icon={<User2 className="h-5 w-5 text-white" />}
+            onClick={() => setModalAberto(true)}
           />
         </div>
         {/* ==================== BANNER OFFLINE ==================== */}
@@ -332,6 +334,12 @@ export default function MotoristasEmpresa() {
           </div>
         </Link>
       </main>
+      <CadastroMotoristaModal
+        open={modalAberto}
+        empresaId={user?.id || "" }
+        onOpenChange={setModalAberto}
+        onSuccess={fetchMotoristas}
+      />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 'use client';
+import { MotoristaEmpresaPayload } from './../../lib/types/personas/motorista';
 
 import { clientApi } from '../clientApi';
 import {
@@ -100,6 +101,39 @@ export async function addMotorista(
       message:
         err instanceof Error ? err.message : 'Erro ao cadastrar motorista',
       valores: payload,
+    };
+  }
+}
+
+export async function addMotoristaEmpresa(
+  empresaId: string,
+  formData: FormData,
+): Promise<MotoristaResult> {
+  const payload: MotoristaEmpresaPayload = {
+    nome: formData.get('nome') as string,
+    telefone: formData.get('telefone') as string,
+    email: (formData.get('email') as string).toLowerCase(),
+    cpf: formData.get('cpf') as string,
+    tipoCnh: (formData.get('tipoCnh') as string)?.toUpperCase(),
+    numeroCnh: formData.get('numeroCnh') as string,
+    dataValidadeCnh: formData.get('dataValidadeCnh') as string,
+  };
+
+  try {
+    await clientApi(`/petrocarga/motoristas/cadastroEmpresa/${empresaId}`, {
+      method: 'POST',
+      json: payload,
+    });
+
+    return {
+      error: false,
+      message: 'Motorista cadastrado com sucesso!',
+    };
+  } catch (err: unknown) {
+    return {
+      error: true,
+      message:
+        err instanceof Error ? err.message : 'Erro ao cadastrar motorista',
     };
   }
 }

@@ -216,3 +216,13 @@ export interface FiltrosMotorista {
   telefone?: string;
   ativo?: boolean;
 }
+
+export interface MotoristaEmpresaPayload {
+  nome: string;
+  telefone: string;
+  email: string;
+  cpf: string;
+  numeroCnh: string;
+  tipoCnh: string;
+  dataValidadeCnh: string;
+}

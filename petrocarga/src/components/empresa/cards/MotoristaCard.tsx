@@ -110,7 +110,7 @@ export function MotoristaCard({
           {motorista.ativo ? 'ATIVO' : 'INATIVO'}
         </span>
 
-        <div className="flex flex-col  sm:items-center gap-2 mt-2 w-full sm:w-auto">
+        <div className="flex flex-col  sm:items-center gap-2F mt-2 w-full sm:w-auto">
           {/* Ver mais */}
           <Link
             href={`/empresas/motoristas/${motorista.id}`}

@@ -2,10 +2,11 @@ import Link from "next/link";
 import { ReactNode } from "react";
 
 type CTAProps = {
-  href: string;
+  href?: string;
   title: string;
   description?: string;
   icon: ReactNode;
+  onClick?: () => void;
   variant?: "dark" | "light";
 };
 
@@ -15,6 +16,7 @@ export function CTA({
   description,
   icon,
   variant = "dark",
+  onClick,
 }: CTAProps) {
   const styles = {
     dark: {
@@ -33,27 +35,34 @@ export function CTA({
 
   const current = styles[variant];
 
+  const content = (
+    <>
+      <div>
+        <p className="font-semibold text-[15px] mb-0.5">{title}</p>
+        <p className={`text-xs ${current.description}`}>{description}</p>
+      </div>
+
+      <div
+        className={`rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 ${current.iconWrapper}`}
+      >
+        {icon}
+      </div>
+    </>
+  );
+
+  const className = `flex items-center justify-between transition-colors rounded-2xl px-5 py-4 border-l-4 w-full text-left ${current.container}`;
+
   return (
     <div className="-mt-4 mb-5">
-      <Link
-        href={href}
-        className={`flex items-center justify-between transition-colors rounded-2xl px-5 py-4 border-l-4 ${current.container}`}
-      >
-        <div>
-          <p className="font-semibold text-[15px] mb-0.5">
-            {title}
-          </p>
-          <p className={`text-xs ${current.description}`}>
-            {description}
-          </p>
-        </div>
-
-        <div
-          className={`rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 ${current.iconWrapper}`}
-        >
-          {icon}
-        </div>
-      </Link>
+      {href ? (
+        <Link href={href} className={className}>
+          {content}
+        </Link>
+      ) : (
+        <button type="button" onClick={onClick} className={className}>
+          {content}
+        </button>
+      )}
     </div>
   );
 }
