@@ -1,8 +1,10 @@
+import { Paginacao } from "../paginacao";
+
 export type EmpresaPayload = {
-    nome: string;
-    telefone: string;
-    email: string;
-    senha: string;
+  nome: string;
+  telefone: string;
+  email: string;
+  senha: string;
   cnpj: string;
   aceitouTermos: boolean;
 };
@@ -14,7 +16,6 @@ export type EmpresaResult = {
 };
 
 /////////////////////////////////////
-
 
 export interface Veiculo {
   id: string;
@@ -40,7 +41,6 @@ export interface UsuarioEmpresa {
 
 export interface MotoristaEmpresa {
   id: string;
-  usuarioId: string;
   nome: string;
   ativo: boolean;
   empresaId: string;
@@ -48,9 +48,10 @@ export interface MotoristaEmpresa {
   empresaRazaoSocial: string;
 }
 
+export type MotoristaResponse = Paginacao<MotoristaEmpresa>;
+
 export interface EmpresaResponse {
   id: string;
   usuario: UsuarioEmpresa;
   cnpj: string;
-  motoristas: MotoristaEmpresa[];
 }

@@ -13,14 +13,16 @@ import {
   Truck,
 } from 'lucide-react';
 import { getReservasPorUsuario } from '@/services/api/reservaApi';
-import { getEmpresaByUsuarioId } from '@/services/api/empresaApi';
+import { getMotoristaEmpresaByUsuarioId } from '@/services/api/empresaApi';
 import { getDenunciasByUsuario } from '@/services/api/denunciaApi';
 import { useCallback, useEffect, useState } from 'react';
 import { ReservaGet } from '@/lib/types/reservas/reserva';
 import { Denuncia } from '@/lib/types/denuncia';
 import toast from 'react-hot-toast';
 import { CTA } from '@/components/ui/CTA/CTA';
-import { MotoristaEmpresa } from '@/lib/types/personas/empresa';
+import {
+  MotoristaEmpresa,
+} from '@/lib/types/personas/empresa';
 
 /**
  * Configuração de cores e rótulos para cada status de reserva
@@ -176,11 +178,12 @@ export default function Dashboard() {
     }
     setLoading(true);
     try {
-      const [resReservas, resEmpresa, resDenuncias] = await Promise.allSettled([
-        getReservasPorUsuario(user.id, 0, 100),
-        getEmpresaByUsuarioId(user.id),
-        getDenunciasByUsuario(user.id),
-      ]);
+      const [resReservas, resMotoristas, resDenuncias] =
+        await Promise.allSettled([
+          getReservasPorUsuario(user.id, 0, 100),
+          getMotoristaEmpresaByUsuarioId(user.id),
+          getDenunciasByUsuario(user.id),
+        ]);
 
       // Tratamento de reservas
       if (resReservas.status === 'fulfilled') {
@@ -194,14 +197,13 @@ export default function Dashboard() {
         setReservas([]);
       }
 
-      // Tratamento da empresa
-      if (resEmpresa.status === 'fulfilled') {
-        if (resEmpresa.value.error) {
-          toast.error('Não foi possível carregar os motoristas.');
-          setMotoristas([]);
-        } else {
-          setMotoristas(resEmpresa.value.empresa.motoristas);
-        }
+      // Tratamento dos motoristas
+      if (resMotoristas.status === 'fulfilled') {
+        const motoristasData = resMotoristas.value;
+        const motoristasArray = Array.isArray(motoristasData)
+          ? motoristasData
+          : motoristasData?.content || [];
+        setMotoristas(motoristasArray.slice(0, 4));
       } else {
         toast.error('Não foi possível carregar os motoristas.');
         setMotoristas([]);
@@ -239,7 +241,7 @@ export default function Dashboard() {
   // ==================== AÇÕES DE ACESSO RÁPIDO ====================
   const acoes = [
     {
-      href: '/reservas',
+      href: '/minhas-reservas',
       icon: <Archive className="h-5 w-5" />,
       label: 'Histórico',
       desc: 'Todas as reservas',
@@ -334,7 +336,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <Link
-                href="/reservas"
+                href="/minhas-reservas"
                 className="text-xs text-[#1351B4] font-medium hover:underline"
               >
                 Ver todas
@@ -368,7 +370,7 @@ export default function Dashboard() {
                   .map((r) => (
                     <Link
                       key={r.id}
-                      href="/reservas"
+                      href="/minhas-reservas"
                       className="group flex flex-col sm:flex-row sm:items-center gap-3 bg-gray-50/60 hover:bg-gray-50 p-3.5 rounded-xl transition-all border border-gray-100"
                     >
                       <div className="w-9 h-9 rounded-lg bg-[#1351B4]/10 flex items-center justify-center shrink-0 group-hover:bg-[#1351B4]/15 transition-colors">
@@ -403,7 +405,7 @@ export default function Dashboard() {
           </div>
 
           {/* ---------- MOTORISTAS (direita, coluna menor) ---------- */}
-          <div className="lg:col-span-1 bg-white border border-gray-100 rounded-2xl shadow-sm p-4 sm:p-5">
+          <div className="lg:col-span-1 bg-white border border-gray-100 rounded-2xl shadow-sm p-4 sm:p-5 ">
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 bg-[#1351B4]/10 rounded-lg flex items-center justify-center">
@@ -429,7 +431,7 @@ export default function Dashboard() {
                   <SkeletonCard />
                 </>
               ) : motoristas.length === 0 ? (
-                <div className="bg-gray-50/60 border border-dashed border-gray-200 rounded-xl py-8 text-center">
+                <div className="bg-gray-50/60 border border-dashed border-gray-200 rounded-xl py-8 text-center ">
                   <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center mx-auto mb-2 shadow-sm">
                     <User className="h-5 w-5 text-gray-300" />
                   </div>
@@ -444,10 +446,6 @@ export default function Dashboard() {
                     href={`/empresa/motoristas/${m.id}`}
                     className="group flex items-center gap-3 bg-gray-50/60 hover:bg-gray-50 p-3 rounded-xl transition-all border border-gray-100"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-[#1351B4]/10 flex items-center justify-center shrink-0 group-hover:bg-[#1351B4]/15 transition-colors">
-                      <User className="h-4 w-4 text-[#1351B4]" />
-                    </div>
-
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate">
                         {m.nome}
@@ -469,7 +467,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        
+
         {/* ==================== ACESSO RÁPIDO ==================== */}
         <div className="mb-5">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">

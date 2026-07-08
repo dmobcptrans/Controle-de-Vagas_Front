@@ -2,6 +2,7 @@ import { clientApi } from '../clientApi';
 import {
   EmpresaPayload,
   EmpresaResult,
+  MotoristaResponse,
 } from '../../lib/types/personas/empresa';
 
 export async function addEmpresa(
@@ -58,4 +59,36 @@ export async function getEmpresaByUsuarioId(usuarioId: string) {
     error: false,
     empresa,
   };
+}
+
+export async function getMotoristaEmpresaByUsuarioId(
+  usuarioId: string,
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 10,
+): Promise<MotoristaResponse> {
+  try {
+    const res = await clientApi(
+      `/petrocarga/motoristas/byEmpresa/${usuarioId}?numeroPagina=${numeroPagina}&tamanhoPagina=${tamanhoPagina}`,
+    );
+
+    if (!res.ok) {
+      throw new Error(`Erro na requisição: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    return {
+      content: data.content ?? [],
+      totalElementos: data.totalElementos ?? 0,
+      totalPaginas: data.totalPaginas ?? 0,
+      tamanhoPagina: data.tamanhoPagina ?? tamanhoPagina,
+      pagina: data.pagina ?? numeroPagina,
+    };
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : 'Erro ao buscar motoristas da empresa.';
+    throw new Error(message);
+  }
 }
