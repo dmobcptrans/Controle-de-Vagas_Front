@@ -3,7 +3,10 @@
 import { buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/components/hooks/useAuth';
-import { deleteMotorista, getMotoristaByUserId } from '@/services/api/motoristaApi';
+import {
+  deleteMotorista,
+  getMotoristaByUserId,
+} from '@/services/api/motoristaApi';
 import { Motorista } from '@/lib/types/personas/motorista';
 import { cn } from '@/lib/utils';
 import {
@@ -186,15 +189,6 @@ export default function PerfilMotorista() {
   // RENDERIZAÇÃO CONDICIONAL
   // --------------------------------------------------------------------------
 
-  if (loading) {
-    return (
-      <div className="p-4 flex flex-col items-center justify-center min-h-[60vh] gap-2 text-center">
-        <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
-        <span className="text-gray-600">Carregando perfil...</span>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[calc(100vh-4rem)]">
@@ -217,7 +211,7 @@ export default function PerfilMotorista() {
     );
   }
 
-  if (!motorista) {
+  if (!loading && !motorista) {
     return (
       <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[calc(100vh-4rem)]">
         <div className="text-center">
@@ -228,7 +222,7 @@ export default function PerfilMotorista() {
   }
 
   // --------------------------------------------------------------------------
-  // RENDERIZAÇÃO DE SUCESSO
+  // RENDERIZAÇÃO
   // --------------------------------------------------------------------------
 
   return (
@@ -237,18 +231,30 @@ export default function PerfilMotorista() {
       <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Seu Perfil, {motorista.usuario.nome.split(' ')[0]}!
+            {loading
+              ? 'Seu Perfil!'
+              : `Seu Perfil, ${motorista!.usuario.nome.split(' ')[0]}!`}
           </h1>
+
           <p className="text-xs text-white/50 capitalize">
             Aqui você pode ver suas informações e atualizar seus dados.
           </p>
         </div>
       </header>
+
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA flutuante */}
         <div className="-mt-4 mb-2 flex justify-center">
           <CtaProfileIcon />
         </div>
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <Loader2 className="animate-spin w-7 h-7 text-blue-600" />
+            <span className="text-gray-500 text-sm">Carregando perfil...</span>
+          </div>
+        ) : (
+          <>
         <Card className="w-full max-w-4xl mx-auto shadow-sm md:shadow-lg">
           <div className="px-4 sm:px-6 pb-6 space-y-6">
             {/* Grid de informações (6 cards) */}
@@ -259,7 +265,7 @@ export default function PerfilMotorista() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-500">Nome</p>
                   <p className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                    {motorista.usuario.nome}
+                    {motorista!.usuario.nome}
                   </p>
                 </div>
               </div>
@@ -270,7 +276,7 @@ export default function PerfilMotorista() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-500">Telefone</p>
                   <p className="text-base sm:text-lg font-semibold text-gray-900">
-                    {motorista.usuario.telefone}
+                    {motorista!.usuario.telefone}
                   </p>
                 </div>
               </div>
@@ -283,7 +289,7 @@ export default function PerfilMotorista() {
                     Número da CNH
                   </p>
                   <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
-                    {motorista.numeroCnh}
+                    {motorista!.numeroCnh}
                   </p>
                 </div>
               </div>
@@ -296,7 +302,7 @@ export default function PerfilMotorista() {
                     Tipo da CNH
                   </p>
                   <p className="text-base sm:text-lg font-semibold text-gray-900">
-                    {motorista.tipoCnh}
+                    {motorista!.tipoCnh}
                   </p>
                 </div>
               </div>
@@ -307,7 +313,7 @@ export default function PerfilMotorista() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-500">CPF</p>
                   <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
-                    {motorista.usuario.cpf}
+                    {motorista!.usuario.cpf}
                   </p>
                 </div>
               </div>
@@ -318,14 +324,14 @@ export default function PerfilMotorista() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-500">Email</p>
                   <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
-                    {motorista.usuario.email}
+                    {motorista!.usuario.email}
                   </p>
                 </div>
               </div>
             </div>
             {/* Toggle de notificações push */}
             <section>
-              <PushNotificationToggle usuarioId={motorista.usuario.id} />
+              <PushNotificationToggle usuarioId={motorista!.usuario.id} />
             </section>
 
             {/* Botões de ação */}
@@ -357,31 +363,34 @@ export default function PerfilMotorista() {
           </div>
         </Card>
 
-        {/* Modal de confirmação de exclusão */}
-        <ModalConfirmacaoExclusao
-          isOpen={modalAberto}
-          onClose={() => setModalAberto(false)}
-          onConfirm={handleExcluir}
-          mensagem='Deseja mesmo desativar sua conta? Para reativar, basta ir em "Ativa Conta" no login.'
-        />
+            {/* Modal */}
+            <ModalConfirmacaoExclusao
+              isOpen={modalAberto}
+              onClose={() => setModalAberto(false)}
+              onConfirm={handleExcluir}
+              mensagem='Deseja mesmo desativar sua conta? Para reativar, basta ir em "Ativa Conta" no login.'
+            />
 
-        {/* Tutorial */}
-        <Link
-          href="/tutorial#perfil"
-          className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors mt-6"
-        >
-          <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
-            <Info className="h-5 w-5 text-[#1351B4]" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-[#071D41]">
-              Seus dados estão corretos?
-            </p>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Aprenda a manter seu perfil sempre atualizado
-            </p>
-          </div>
-        </Link>
+            {/* Tutorial */}
+            <Link
+              href="/tutorial#perfil"
+              className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors mt-6"
+            >
+              <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+                <Info className="h-5 w-5 text-[#1351B4]" />
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-[#071D41]">
+                  Seus dados estão corretos?
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Aprenda a manter seu perfil sempre atualizado
+                </p>
+              </div>
+            </Link>
+          </>
+        )}
       </main>
     </div>
   );
