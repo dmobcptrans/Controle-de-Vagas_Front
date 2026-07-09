@@ -25,6 +25,7 @@ import { useState, useEffect } from 'react';
 import { PushNotificationToggle } from '@/components/notification/PushNotificationToggle';
 import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
 import toast from 'react-hot-toast';
+import { CtaProfileIcon } from '@/components/ui/CTA/CtaProfileIcon';
 
 /**
  * @component PerfilMotorista
@@ -246,9 +247,7 @@ export default function PerfilMotorista() {
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA flutuante */}
         <div className="-mt-4 mb-2 flex justify-center">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#071D41] rounded-2xl flex items-center justify-center shadow-lg">
-            <UserIcon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-          </div>
+          <CtaProfileIcon />
         </div>
         <Card className="w-full max-w-4xl mx-auto shadow-sm md:shadow-lg">
           <div className="px-4 sm:px-6 pb-6 space-y-6">
