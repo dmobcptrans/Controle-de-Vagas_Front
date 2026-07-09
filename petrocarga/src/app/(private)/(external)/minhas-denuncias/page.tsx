@@ -4,8 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getDenunciasByUsuario } from '@/services/api/denunciaApi';
 import DenunciaLista from '@/components/motorista/cards/denuncia/DenunciaLista';
 import { Denuncia } from '@/lib/types/denuncia';
-import { AlertCircle, Info, Loader2 } from 'lucide-react';
+import { AlertCircle, Info, Loader2, TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { CTA } from '@/components/ui/CTA/CTA';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -137,9 +138,9 @@ export default function MinhasDenuncias() {
   // --------------------------------------------------------------------------
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f5f5f0]">
       {/* ── HEADER FIXO ── */}
-      <header className="bg-blue-800 px-4 pt-1 pb-3 sm:px-8">
+      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
             Suas Denúncias, {user?.nome?.split(' ')[0] || 'motorista'}
@@ -150,7 +151,15 @@ export default function MinhasDenuncias() {
         </div>
       </header>
 
-      <main className="px-4 sm:px-8 py-6 max-w-4xl mx-auto flex flex-col items-center">
+      <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
+        {/* ==================== CTA DINÂMICO ==================== */}
+        <div className="-mt-4 mb-5">
+          <CTA
+            title="Nenhuma Denúncia Em Processo"
+            description="Veja seu histórico e atualizações sobre elas"
+            icon={<TriangleAlert className="h-5 w-5 text-white" />}
+          />
+        </div>
         {loading ? (
           <div className="flex flex-col items-center justify-center min-h-[50vh] gap-2 text-center">
             <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
@@ -176,7 +185,7 @@ export default function MinhasDenuncias() {
             </p>
           </div>
         ) : (
-          <div className="w-full max-w-2xl flex flex-col gap-6">
+          <div className="w-full  flex flex-col">
             <DenunciaLista denuncias={denuncias} />
           </div>
         )}

@@ -121,7 +121,7 @@ export default function DenunciaLista({ denuncias }: DenunciaListaProps) {
   }, [denuncias]);
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
+    <div className="w-full mx-auto flex flex-col gap-6">
       
       {/* ==================== SEÇÃO PRINCIPAL (DENÚNCIAS ATIVAS) ==================== */}
       <section className="flex flex-col gap-4 animate-in fade-in duration-500">
