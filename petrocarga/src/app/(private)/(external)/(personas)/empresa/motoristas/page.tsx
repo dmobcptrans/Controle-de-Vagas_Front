@@ -16,7 +16,7 @@ import { MotoristaResponse } from '@/lib/types/personas/empresa';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { getMotoristaEmpresaByUsuarioId } from '@/services/api/empresaApi';
+import { desvincularMotoristaEmpresa, getMotoristaEmpresaByUsuarioId } from '@/services/api/empresaApi';
 import { MotoristaCard } from '@/components/empresa/cards/MotoristaCard';
 import { CTA } from '@/components/ui/CTA/CTA';
 import CadastroMotoristaModal from '@/components/empresa/modal/CadastroMotoristaModal';
@@ -200,7 +200,7 @@ export default function MotoristasEmpresa() {
 
   // ==================== HANDLERS DE AÇÕES ====================
 
-  const handleExcluirReserva = async (reservaId: string) => {
+  const handleDesvincularMotorista = async (motoristaId: string) => {
     if (!navigator.onLine) {
       toast.error(
         'Você está offline. A exclusão de reservas só é permitida com conexão à internet.',
@@ -209,7 +209,7 @@ export default function MotoristasEmpresa() {
     }
 
     try {
-      //await deleteReservaByID(reservaId, user!.id);
+      await desvincularMotoristaEmpresa(user?.id, motoristaId);
       toast.success('Motorista desvinculado com sucesso!');
       fetchMotoristas(currentPage);
     } catch {
@@ -297,7 +297,7 @@ export default function MotoristasEmpresa() {
                 <MotoristaCard
                   key={motoristas.id}
                   motorista={motoristas}
-                  onDesvincular={() => handleExcluirReserva(motoristas.id)}
+                  onDesvincular={() => handleDesvincularMotorista(motoristas.id)}
                 />
               ))}
             </section>

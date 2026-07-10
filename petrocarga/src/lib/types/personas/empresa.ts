@@ -1,4 +1,5 @@
 import { Paginacao } from "../paginacao";
+import { Veiculo } from "../veiculo";
 
 export type EmpresaPayload = {
   nome: string;
@@ -17,16 +18,6 @@ export type EmpresaResult = {
 
 /////////////////////////////////////
 
-export interface Veiculo {
-  id: string;
-  placa: string;
-  marca: string;
-  modelo: string;
-  tipo: string;
-  comprimento: number;
-  usuarioId: string;
-  cpfProprietario: string;
-}
 
 export interface UsuarioEmpresa {
   id: string;
@@ -49,6 +40,8 @@ export interface MotoristaEmpresa {
 }
 
 export type MotoristaResponse = Paginacao<MotoristaEmpresa>;
+
+export type VeiculoMotoristaEmpresaResponse = Paginacao<Veiculo>;
 
 export interface EmpresaResponse {
   id: string;

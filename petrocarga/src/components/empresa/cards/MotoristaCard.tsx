@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { User, Building2, Unlink, ArrowRight, Loader2, Car } from 'lucide-react';
+import { User, Building2, Unlink, Loader2, Car } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { MotoristaEmpresa } from '@/lib/types/personas/empresa';
@@ -113,7 +113,7 @@ export function MotoristaCard({
         <div className="flex flex-col  sm:items-center gap-2F mt-2 w-full sm:w-auto">
           {/* Ver mais */}
           <Link
-            href={`/empresas/motoristas/${motorista.id}`}
+            href={`/empresa/motoristas/${motorista.id}`}
             className={cn(
               buttonVariants({ variant: 'default' }),
               'text-sm w-full sm:w-auto text-center flex items-center justify-center gap-2 py-2',
