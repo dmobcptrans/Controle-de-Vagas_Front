@@ -109,13 +109,13 @@ export function InstallPWAButton() {
       className="
         flex items-center gap-2
         px-4 py-2
-        bg-gray-500/20
-        text-gray-700
+        bg-white-500/20
+        text-white
         text-sm font-medium
         rounded-md
         border border-gray-300
         backdrop-blur
-        hover:bg-gray-500/30
+        hover:bg-white-500/30
         transition-all
         active:scale-95
       "

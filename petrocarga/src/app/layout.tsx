@@ -5,9 +5,8 @@ import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { NotificationWrapper } from '@/components/notification/notificationWrapper';
-import { Toaster } from 'react-hot-toast';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Navbar } from '@/components/motorista/layout/navbar';
+
 
 const mavenPro = Maven_Pro({
   weight: 'variable',
@@ -45,13 +44,12 @@ export default function RootLayout({
   return (
     <html lang="pt-br" className={mavenPro.variable}>
       <body>
-        <Toaster position="top-center" />
+        
         <GoogleOAuthProvider
           clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
         >
           <AuthProvider>
             <NotificationWrapper>
-              <Navbar />
               {children}
             </NotificationWrapper>
           </AuthProvider>
