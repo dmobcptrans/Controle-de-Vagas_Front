@@ -493,9 +493,9 @@ function LoginContent() {
             >
               {/* Cabeçalho */}
               <div className="text-center mb-8">
-                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                   Bem-vindo de volta
-                </h2>
+                </h1>
                 <p className="text-sm text-gray-500 mt-2">
                   Insira seus dados para acessar o sistema
                 </p>

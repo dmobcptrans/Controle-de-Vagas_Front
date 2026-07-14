@@ -49,7 +49,7 @@ export default function CadastroPage() {
         <div className="animate-in slide-in-from-bottom-6 fade-in duration-500 grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Cadastro de Motorista */}
           <Link href="/autorizacao/cadastro/motorista">
-            <Card className="group h-full cursor-pointer border transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:shadow-lg">
+            <Card className="group h-full cursor-pointer border rounded-3xl transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:shadow-lg">
               <CardContent className="flex items-center gap-5 p-6 md:p-8">
                 <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-blue-50 transition-colors group-hover:bg-blue-100">
                   <UserIcon className="h-8 w-8 text-blue-600" />
@@ -67,7 +67,7 @@ export default function CadastroPage() {
 
           {/* Cadastro de Empresa */}
           <Link href="/autorizacao/cadastro/empresa">
-            <Card className="group h-full cursor-pointer border transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:shadow-lg">
+            <Card className="group h-full cursor-pointer border transition-all rounded-3xl duration-300 hover:-translate-y-1 hover:border-blue-500 hover:shadow-lg">
               <CardContent className="flex items-center gap-5 p-6 md:p-8">
                 <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-blue-50 transition-colors group-hover:bg-blue-100">
                   <Building2 className="h-8 w-8 text-blue-600" />

@@ -111,7 +111,7 @@ export default function FormularioEmpresa({
       <form
         ref={formRef}
         action={action}
-        className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
+        className="w-full max-w-xl rounded-4xl p-3 border border-slate-200 bg-white shadow-2xl overflow-hidden"
       >
         {/* Cabeçalho Fixo / Progresso */}
         <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-100 p-5">

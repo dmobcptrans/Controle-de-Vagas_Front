@@ -407,9 +407,45 @@ export default function RecuperacaoSenha() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-3 sm:p-4">
-        <div className="w-full max-w-sm sm:max-w-md">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl p-5 sm:p-6 md:p-8">
+      <div
+        className="
+        relative
+        flex
+        items-center
+        justify-center
+        min-h-[calc(100dvh-64px)]
+        overflow-hidden
+        bg-blue-800
+        px-6
+      "
+      >
+        {/* Blobs de fundo */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
+          <div className="absolute bottom-32 -left-32 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
+        </div>
+
+        {/* Domo */}
+        <div
+          className="
+          absolute
+          left-1/2
+          bottom-0
+          -translate-x-1/2
+          w-[150%]
+          h-[55%]
+          bg-blue-900
+          pointer-events-none
+          z-0
+        "
+          style={{
+            borderTopLeftRadius: '50%',
+            borderTopRightRadius: '50%',
+            boxShadow: '0 -20px 60px rgba(30,58,138,.35)',
+          }}
+        />
+        <div className="relative z-10 w-full max-w-md">
+          <div className="bg-white rounded-xl sm:rounded-4xl shadow-lg sm:shadow-xl p-5 sm:p-6 md:p-8">
             {/* ------------------------------------------------------------------------
               HEADER
             ------------------------------------------------------------------------ */}
@@ -417,10 +453,10 @@ export default function RecuperacaoSenha() {
               <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-indigo-100 rounded-full mb-3 sm:mb-4">
                 {inputIcon}
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-black mb-1 sm:mb-2">
                 Recuperar Senha
               </h1>
-              <p className="text-xs sm:text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-700">
                 Digite seu email ou CPF para receber o código de recuperação.
               </p>
             </div>
@@ -457,7 +493,7 @@ export default function RecuperacaoSenha() {
                 <div>
                   <label
                     htmlFor="identificador"
-                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
+                    className="block text-xs sm:text-sm font-medium text-black mb-1 sm:mb-2"
                   >
                     Email ou CPF cadastrado
                   </label>
@@ -525,7 +561,7 @@ export default function RecuperacaoSenha() {
             INFORMAÇÕES ADICIONAIS
           ------------------------------------------------------------------------ */}
           <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
-            <p className="text-center text-xs sm:text-sm text-gray-600">
+            <p className="text-center text-xs sm:text-sm text-white">
               {SUCCESS_MESSAGES.CODIGO_VALIDADE(CODIGO_VALIDADE_MINUTOS)}
             </p>
           </div>
