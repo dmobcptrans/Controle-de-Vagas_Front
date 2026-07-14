@@ -1,25 +1,11 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
-import {
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  AlertCircle,
-  Key,
-  RefreshCw,
-  User,
-} from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, AlertCircle, Key, User } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/components/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -123,7 +109,7 @@ const ROUTES_BY_PERMISSION = {
   GESTOR: '/gestor/visualizar-vagas',
   MOTORISTA: '/motorista/dashboard',
   AGENTE: '/agente/dashboard',
-  EMPRESA: '/empresa/dashboard'
+  EMPRESA: '/empresa/dashboard',
 } as const;
 
 /**
@@ -177,7 +163,7 @@ function LoginContent() {
   const [error, setError] = useState(''); // Mensagem de erro
   const [loading, setLoading] = useState(false); // Estado de loading
   const [mostrarModal, setMostrarModal] = useState(false); // Controle do modal de ativação
-
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   // Hooks
   const { login, isAuthenticated, user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -388,150 +374,273 @@ function LoginContent() {
   // --------------------------------------------------------------------------
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-100">
-      {/* Elementos decorativos de fundo (blobs animados) */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob-delayed"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob-more-delayed"></div>
-      </div>
+    <div
+      className="
+      relative
+      min-h-[calc(100dvh-64px)]
+      w-full
+      overflow-hidden
+      bg-blue-800
+    "
+    >
+      <div
+        className="
+        absolute
+        left-1/2
+        -translate-x-1/2
+        bottom-0
+        bg-blue-900/90
+        backdrop-blur-[1px]
+        pointer-events-none
+        z-0
+      "
+        style={{
+          width: '220%',
+          height: '18%',
+          borderTopLeftRadius: '50%',
+          borderTopRightRadius: '50%',
+          boxShadow: '0 -20px 60px rgba(30,58,138,0.35)',
+        }}
+      />
 
-      <Card className="w-full max-w-md relative z-10 shadow-2xl backdrop-blur-sm bg-white/90 border-0">
-        <CardHeader className="space-y-3 text-center pb-6">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <Lock className="w-8 h-8 text-white" />
-          </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-            Bem-vindo
-          </CardTitle>
-          <CardDescription className="text-base">
-            Entre com email ou CPF para acessar o sistema
-          </CardDescription>
-        </CardHeader>
+      <div className="relative z-10 w-full h-full min-h-[calc(100dvh-64px)] flex items-center justify-center p-4 sm:p-6 md:p-8">
+        {/* Container principal de duas colunas */}
+        <div
+          className="
+          relative
+          z-10
+          w-full
+          max-w-6xl
+          grid
+          grid-cols-1
+          md:grid-cols-[minmax(0,1fr)_minmax(0,420px)]
+          lg:grid-cols-2
+          items-center
+          justify-items-center
+          gap-6
+          md:gap-10
+          lg:gap-12
+          my-auto
+        "
+        >
+          {/* 2. COLUNA DA IMAGEM (Ativa apenas no desktop) */}
+          <div className="hidden md:flex items-center justify-center w-full max-w-4xl relative p-6 lg:p-12 self-stretch order-2 md:order-1">
+            <motion.div
+              initial={{ opacity: 1, scale: 0.9, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-blue-900/90 backdrop-blur-[1px] pointer-events-none"
+              style={{
+                width: '400%',
+                height: '100%',
+                borderTopLeftRadius: '50% 100%',
+                borderTopRightRadius: '50% 100%',
+                boxShadow: '0 -30px 80px rgba(30,58,138,0.35)',
+              }}
+            />
 
-        <CardContent>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleLogin();
-            }}
-            className="space-y-4"
-          >
-            {/* Mensagem de erro */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{error}</span>
-              </div>
-            )}
-
-            {/* Campo de login (email/CPF) */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Email ou CPF
-              </label>
-              <div className="relative">
-                {inputIcon}
-                <Input
-                  type="text"
-                  value={loginInput}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  placeholder="seu@email.com ou 12345678900"
-                  className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                  disabled={loading}
-                  inputMode={tipoInput === 'cpf' ? 'numeric' : 'text'}
-                />
-              </div>
-              {formatHint}
-            </div>
-
-            {/* Campo de senha */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Senha
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  placeholder="••••••••"
-                  className="pl-10 pr-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  disabled={loading}
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Links de ação (ativação e recuperação de senha) */}
-            <div className="flex items-center justify-between pt-1">
-              <button
-                type="button"
-                onClick={handleOpenModal}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors hover:underline flex items-center gap-1"
-              >
-                <Key className="w-4 h-4" />
-                Ativar Conta
-              </button>
-
-              <div className="flex-1 text-center mx-4">
-                <div className="h-px bg-gray-300"></div>
-              </div>
-
-              <Link
-                href="/autorizacao/verificacao"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors hover:underline flex items-center gap-1"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Esqueceu sua senha?
-              </Link>
-            </div>
-
-            {/* Botão de submit */}
-            <Button
-              type="submit"
-              disabled={
-                loading || !loginInput || !senha || tipoInput === 'invalido'
-              }
-              className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-70"
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 30,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 1.5,
+                ease: [0.22, 1, 0.36, 1],
+              }}
             >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Entrando...</span>
-                </div>
-              ) : (
-                'Entrar'
-              )}
-            </Button>
-          </form>
-          
-          <div className="mt-4 w-full flex items-center">
-          <ButtonLoginGoogle />
+              <Image
+                src="/images/ilustracao-login-simples.png"
+                alt="Ilustração de login"
+                width={1278}
+                height={1024}
+                priority
+                className="relative z-10 w-full h-auto object-contain drop-shadow-[0_20px_45px_rgba(0,0,0,.25)]"
+              />
+            </motion.div>
           </div>
 
-          {/* Botão de cadastro */}
-          <div className="mt-4 space-y-4">
-            <Link href="/autorizacao/cadastro">
-              <Button className="w-full h-12 bg-gradient-to-r from-blue-800 to-blue-900 hover:from-blue-900 hover:to-blue-950 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200">
-                Criar Conta
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+          {/* Card de Login à direita */}
+          <motion.div
+            initial={{
+              x: isMobile ? 0 : 80,
+              y: isMobile ? 80 : 0,
+            }}
+            animate={{
+              x: 0,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.9,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            className="w-full max-w-sm sm:max-w-md z-10 order-1 md:order-2"
+          >
+            <div
+              className="
+      w-full
+      overflow-hidden
+      rounded-4xl
+      bg-white
+      border border-gray-100
+      shadow-[0_8px_30px_rgb(0,0,0,0.08)]
+      p-8
+    "
+            >
+              {/* Cabeçalho */}
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
+                  Bem-vindo de volta
+                </h2>
+                <p className="text-sm text-gray-500 mt-2">
+                  Insira seus dados para acessar o sistema
+                </p>
+              </div>
+
+              {/* Conteúdo / Formulário */}
+              <div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleLogin();
+                  }}
+                  className="space-y-5"
+                >
+                  {/* Mensagem de erro */}
+                  {error && (
+                    <div className="bg-red-50 border border-red-100 text-red-600 p-3 rounded-lg flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-sm font-medium">{error}</span>
+                    </div>
+                  )}
+
+                  {/* Campo de login (email/CPF) */}
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email ou CPF
+                    </label>
+                    <div className="relative">
+                      <div>{inputIcon}</div>
+                      <Input
+                        type="text"
+                        value={loginInput}
+                        onChange={(e) => handleInputChange(e.target.value)}
+                        placeholder="seu@email.com ou 12345678900"
+                        className="pl-10 h-11 bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all rounded-lg w-full"
+                        disabled={loading}
+                        inputMode={tipoInput === 'cpf' ? 'numeric' : 'text'}
+                      />
+                    </div>
+                    {formatHint && <div className="mt-1">{formatHint}</div>}
+                  </div>
+
+                  {/* Campo de senha */}
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Senha
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        value={senha}
+                        onChange={(e) => setSenha(e.target.value)}
+                        placeholder="••••••••"
+                        className="pl-10 pr-10 h-11 bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all rounded-lg w-full"
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        disabled={loading}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Links de ação (Ativação e Recuperação) */}
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      type="button"
+                      onClick={handleOpenModal}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors flex items-center gap-1.5"
+                    >
+                      <Key className="w-4 h-4" />
+                      Ativar Conta
+                    </button>
+
+                    <Link
+                      href="/autorizacao/verificacao"
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors flex items-center gap-1.5"
+                    >
+                      Esqueceu a senha?
+                    </Link>
+                  </div>
+
+                  {/* Botão de submit */}
+                  <Button
+                    type="submit"
+                    disabled={
+                      loading ||
+                      !loginInput ||
+                      !senha ||
+                      tipoInput === 'invalido'
+                    }
+                    className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-2 justify-center">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Entrando...</span>
+                      </div>
+                    ) : (
+                      'Entrar no sistema'
+                    )}
+                  </Button>
+                </form>
+
+                {/* Divisor Visual */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white text-gray-500 font-medium">
+                      ou
+                    </span>
+                  </div>
+                </div>
+
+                {/* Botão do Google */}
+                <div className="w-full">
+                  <ButtonLoginGoogle />
+                </div>
+
+                {/* Botão de cadastro no rodapé (mais sutil) */}
+                <p className="text-center text-sm text-gray-600 mt-8">
+                  Ainda não tem acesso?{' '}
+                  <Link
+                    href="/autorizacao/cadastro"
+                    className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                  >
+                    Criar uma conta
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
 
       {/* Modal de ativação de conta */}
       <ModalAtivacaoConta
