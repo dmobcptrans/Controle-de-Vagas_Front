@@ -11,7 +11,7 @@ type FormularioEmpresaProps = {
 };
 
 
-const etapas = ['Dados da empresa', 'Informações complementares'];
+const etapas = ['Dados da empresa', 'Complementos'];
 
 export default function FormularioEmpresa({
   onSuccess,
@@ -155,7 +155,7 @@ export default function FormularioEmpresa({
               label="CNPJ"
               placeholder="00.000.000/0001-00"
               required
-              inputMode="numeric"
+              inputMode='numeric'
               maxLength={14}
               value={formData.cnpj}
               onChange={handleChange}
