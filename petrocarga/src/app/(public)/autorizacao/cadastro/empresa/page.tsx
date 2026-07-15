@@ -87,7 +87,7 @@ export default function CadastroEmpresaPage() {
       open={mostrarModal}
       onOpenChange={setMostrarModal}
       onClose={handleCloseModal}
-      cpfInicial=""
+      tipo='empresa'
     />
   </div>
 );

@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Mail, ArrowLeft, CheckCircle2, AlertCircle, User } from 'lucide-react';
 import { solicitarRecuperacaoSenha } from '@/services/api/recuperacaoApi';
@@ -111,6 +112,7 @@ const CODIGO_VALIDADE_MINUTOS = 15;
  * Tamanho esperado do CPF
  */
 const CPF_TAMANHO = 11;
+const CNPJ_TAMANHO = 14;
 
 /**
  * Mensagens de erro padronizadas
@@ -159,7 +161,7 @@ const INPUT_FEEDBACK = {
  */
 function identificarTipoIdentificador(
   input: string,
-): 'email' | 'cpf' | 'indeterminado' {
+): 'email' | 'cpf' | 'cnpj' | 'indeterminado' {
   if (!input.trim()) return 'indeterminado';
 
   const apenasNumeros = input.replace(/\D/g, '');
@@ -167,10 +169,16 @@ function identificarTipoIdentificador(
 
   if (emailRegex.test(input)) {
     return 'email';
-  } else if (/^\d+$/.test(input) && apenasNumeros.length === CPF_TAMANHO) {
-    return 'cpf';
-  } else if (/^\d+$/.test(input) && apenasNumeros.length > 0) {
-    return 'cpf'; // CPF incompleto ainda é identificado como CPF
+  }
+
+  if (/^\d+$/.test(apenasNumeros)) {
+    if (apenasNumeros.length <= CPF_TAMANHO) {
+      return 'cpf'; // CPF incompleto ou completo
+    }
+
+    if (apenasNumeros.length <= CNPJ_TAMANHO) {
+      return 'cnpj'; // CNPJ incompleto ou completo
+    }
   }
 
   return 'indeterminado';
@@ -356,9 +364,9 @@ export default function RecuperacaoSenha() {
    */
   const inputIcon =
     tipoInput === 'cpf' ? (
-      <User className="w-5 h-5 text-indigo-600" />
+      <User className="w-5 h-5 text-blue-600" />
     ) : (
-      <Mail className="w-5 h-5 text-indigo-600" />
+      <Mail className="w-5 h-5 text-blue-600" />
     );
 
   /**
@@ -406,9 +414,9 @@ export default function RecuperacaoSenha() {
   // --------------------------------------------------------------------------
 
   return (
-    <>
-      <div
-        className="
+  <>
+    <div
+      className="
         relative
         flex
         items-center
@@ -418,16 +426,16 @@ export default function RecuperacaoSenha() {
         bg-blue-800
         px-6
       "
-      >
-        {/* Blobs de fundo */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
-          <div className="absolute bottom-32 -left-32 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
-        </div>
+    >
+      {/* Blobs de fundo */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
+        <div className="absolute bottom-32 -left-32 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
+      </div>
 
-        {/* Domo */}
-        <div
-          className="
+      {/* Domo */}
+      <div
+        className="
           absolute
           left-1/2
           bottom-0
@@ -438,143 +446,298 @@ export default function RecuperacaoSenha() {
           pointer-events-none
           z-0
         "
-          style={{
-            borderTopLeftRadius: '50%',
-            borderTopRightRadius: '50%',
-            boxShadow: '0 -20px 60px rgba(30,58,138,.35)',
-          }}
-        />
-        <div className="relative z-10 w-full max-w-md">
-          <div className="bg-white rounded-xl sm:rounded-4xl shadow-lg sm:shadow-xl p-5 sm:p-6 md:p-8">
-            {/* ------------------------------------------------------------------------
-              HEADER
-            ------------------------------------------------------------------------ */}
-            <div className="text-center mb-6 sm:mb-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-indigo-100 rounded-full mb-3 sm:mb-4">
-                {inputIcon}
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-black mb-1 sm:mb-2">
-                Recuperar Senha
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-700">
-                Digite seu email ou CPF para receber o código de recuperação.
-              </p>
+        style={{
+          borderTopLeftRadius: '50%',
+          borderTopRightRadius: '50%',
+          boxShadow: '0 -20px 60px rgba(30,58,138,.35)',
+        }}
+      />
+
+      {/* Card principal */}
+      <motion.div
+        initial={{
+          opacity: 0,
+          y: 40,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          duration: 0.5,
+        }}
+        className="relative z-10 w-full max-w-md"
+      >
+        <div
+          className="
+            bg-white
+            rounded-xl
+            sm:rounded-4xl
+            shadow-lg
+            sm:shadow-xl
+            p-5
+            sm:p-6
+            md:p-8
+          "
+        >
+          {/* HEADER */}
+          <div className="text-center mb-6 sm:mb-8">
+            <div
+              className="
+                inline-flex
+                items-center
+                justify-center
+                w-12
+                h-12
+                sm:w-14
+                sm:h-14
+                md:w-16
+                md:h-16
+                bg-blue-900
+                rounded-full
+                mb-3
+                sm:mb-4
+              "
+            >
+              <Mail className='text-white'/>
             </div>
 
-            {/* ------------------------------------------------------------------------
-              MENSAGEM DE STATUS (antes do envio)
-            ------------------------------------------------------------------------ */}
-            {status && !mostrarModal && (
-              <div
-                className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg flex items-start gap-2 sm:gap-3 border ${
-                  status === 'success'
-                    ? 'bg-green-50 border-green-200 text-green-800'
-                    : 'bg-red-50 border-red-200 text-red-800'
-                }`}
-              >
-                {status === 'success' ? (
-                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-xs sm:text-sm">{mensagem}</p>
-              </div>
-            )}
+            <h1 className="text-xl sm:text-2xl font-bold text-black mb-1 sm:mb-2">
+              Recuperar Senha
+            </h1>
 
-            {/* ------------------------------------------------------------------------
-              RENDERIZAÇÃO CONDICIONAL: Formulário vs Modal de Sucesso
-            ------------------------------------------------------------------------ */}
-            {!codigoEnviado ? (
-              /* ========================================================================
-                FORMULÁRIO DE ENVIO
-              ======================================================================== */
-              <div className="space-y-4 sm:space-y-6">
-                {/* Campo de identificação (email/CPF) */}
-                <div>
-                  <label
-                    htmlFor="identificador"
-                    className="block text-xs sm:text-sm font-medium text-black mb-1 sm:mb-2"
-                  >
-                    Email ou CPF cadastrado
-                  </label>
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                      {inputIcon}
-                    </div>
-                    <input
-                      type="text"
-                      id="identificador"
-                      value={identificador}
-                      onChange={(e) => setIdentificador(e.target.value)}
-                      onKeyDown={aoPressionarTecla}
-                      placeholder="seu@email.com ou 12345678900"
-                      className="w-full pl-10 pr-3 sm:pl-10 sm:pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:opacity-50"
-                      disabled={estaCarregando}
-                      autoFocus
-                    />
-                  </div>
-                  {/* Feedback em tempo real */}
-                  {formatHint}
-                </div>
+            <p className="text-xs sm:text-sm text-gray-700">
+              Digite seu email, CPF ou CNPJ para receber o código de
+              recuperação.
+            </p>
+          </div>
 
-                {/* Botão de envio */}
-                <button
-                  onClick={enviarCodigoRecuperacao}
-                  disabled={estaCarregando || tipoInput === 'indeterminado'}
-                  className="w-full bg-indigo-600 text-white py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          {/* STATUS */}
+          {status && !mostrarModal && (
+            <div
+              className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg flex items-start gap-2 sm:gap-3 border ${
+                status === 'success'
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : 'bg-red-50 border-red-200 text-red-800'
+              }`}
+            >
+              {status === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
+              )}
+
+              <p className="text-xs sm:text-sm">
+                {mensagem}
+              </p>
+            </div>
+          )}
+
+          {/* FORMULÁRIO / SUCESSO */}
+          {!codigoEnviado ? (
+            <motion.div
+              initial={{
+                opacity: 0,
+              }}
+              animate={{
+                opacity: 1,
+              }}
+              transition={{
+                duration: 0.4,
+              }}
+              className="space-y-4 sm:space-y-6"
+            >
+              {/* Campo identificação */}
+              <div>
+                <label
+                  htmlFor="identificador"
+                  className="
+                    block
+                    text-xs
+                    sm:text-sm
+                    font-medium
+                    text-black
+                    mb-1
+                    sm:mb-2
+                  "
                 >
-                  {estaCarregando ? (
-                    <>
-                      <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Enviando...</span>
-                    </>
-                  ) : (
-                    'Enviar código de recuperação'
-                  )}
-                </button>
+                  Email, CPF ou CNPJ da conta
+                </label>
 
-                {/* Link para voltar ao login */}
-                <div className="mt-4 sm:mt-6 text-center">
-                  <button
-                    onClick={irParaLogin}
-                    disabled={estaCarregando}
-                    className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium inline-flex items-center gap-1 disabled:opacity-50"
+                <div className="relative">
+                  <div
+                    className="
+                      absolute
+                      left-3
+                      top-1/2
+                      transform
+                      -translate-y-1/2
+                    "
                   >
-                    <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Voltar para o login
-                  </button>
+                    {inputIcon}
+                  </div>
+
+                  <input
+                    type="text"
+                    id="identificador"
+                    value={identificador}
+                    onChange={(e) =>
+                      setIdentificador(e.target.value)
+                    }
+                    onKeyDown={aoPressionarTecla}
+                    placeholder="Digite seu email, CPF ou CNPJ"
+                    className="
+                      w-full
+                      pl-10
+                      pr-3
+                      sm:pl-10
+                      sm:pr-4
+                      py-2.5
+                      sm:py-3
+                      text-sm
+                      sm:text-base
+                      border
+                      border-gray-300
+                      rounded-lg
+                      focus:ring-2
+                      focus:ring-blue-500
+                      focus:border-transparent
+                      outline-none
+                      transition
+                      disabled:opacity-50
+                    "
+                    disabled={estaCarregando}
+                    autoFocus
+                  />
                 </div>
+
+                {formatHint}
               </div>
-            ) : (
-              /* ========================================================================
-                MODAL DE SUCESSO (pós-envio)
-              ======================================================================== */
+
+              {/* Botão */}
+              <button
+                onClick={enviarCodigoRecuperacao}
+                disabled={
+                  estaCarregando ||
+                  tipoInput === 'indeterminado'
+                }
+                className="
+                  w-full
+                  bg-blue-600
+                  text-white
+                  py-2.5
+                  sm:py-3
+                  rounded-lg
+                  text-sm
+                  sm:text-base
+                  font-medium
+                  hover:bg-blue-700
+                  transition
+                  disabled:opacity-50
+                  disabled:cursor-not-allowed
+                  flex
+                  items-center
+                  justify-center
+                  gap-2
+                "
+              >
+                {estaCarregando ? (
+                  <>
+                    <div
+                      className="
+                        w-4
+                        h-4
+                        sm:w-5
+                        sm:h-5
+                        border-2
+                        border-white
+                        border-t-transparent
+                        rounded-full
+                        animate-spin
+                      "
+                    />
+
+                    <span>Enviando...</span>
+                  </>
+                ) : (
+                  'Enviar código de recuperação'
+                )}
+              </button>
+
+              {/* Voltar */}
+              <div className="mt-4 sm:mt-6 text-center">
+                <button
+                  onClick={irParaLogin}
+                  disabled={estaCarregando}
+                  className="
+                    text-xs
+                    sm:text-sm
+                    text-blue-600
+                    hover:text-blue-700
+                    font-medium
+                    inline-flex
+                    items-center
+                    gap-1
+                    disabled:opacity-50
+                  "
+                >
+                  <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                  Voltar para o login
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 20,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.5,
+              }}
+            >
               <ModalSucessoEnvio
                 tipoInput={tipoInput}
                 onVoltarLogin={irParaLogin}
                 onTentarOutro={tentarOutroIdentificador}
               />
-            )}
-          </div>
-
-          {/* ------------------------------------------------------------------------
-            INFORMAÇÕES ADICIONAIS
-          ------------------------------------------------------------------------ */}
-          <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
-            <p className="text-center text-xs sm:text-sm text-white">
-              {SUCCESS_MESSAGES.CODIGO_VALIDADE(CODIGO_VALIDADE_MINUTOS)}
-            </p>
-          </div>
+            </motion.div>
+          )}
         </div>
-      </div>
 
-      {/* Modal de Confirmação (abre após envio bem-sucedido) */}
-      <ModalConfirmacaoEnvio
-        isOpen={mostrarModal}
-        onClose={fecharModal}
-        mensagem={mensagem}
-        status={status}
-      />
-    </>
-  );
+        {/* Informação inferior */}
+        <motion.div
+          initial={{
+            opacity: 0,
+          }}
+          animate={{
+            opacity: 1,
+          }}
+          transition={{
+            duration: 2,
+          }}
+          className="mt-4 sm:mt-6 space-y-2 sm:space-y-3"
+        >
+          <p className="text-center text-xs sm:text-sm text-white">
+            {SUCCESS_MESSAGES.CODIGO_VALIDADE(
+              CODIGO_VALIDADE_MINUTOS,
+            )}
+          </p>
+        </motion.div>
+      </motion.div>
+    </div>
+
+    {/* Modal confirmação */}
+    <ModalConfirmacaoEnvio
+      isOpen={mostrarModal}
+      onClose={fecharModal}
+      mensagem={mensagem}
+      status={status}
+    />
+  </>
+);
 }

@@ -1,180 +1,216 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+'use client';
+
+import { motion } from 'framer-motion';
 import { Building, Target, Eye, Heart, Calendar, Users } from 'lucide-react';
 
+import { Card, CardContent } from '@/components/ui/card';
+
 export default function QuemSomos() {
+  const pilares = [
+    {
+      icon: Target,
+      title: 'Missão',
+      description:
+        'Otimizar a gestão do transporte municipal através de soluções inovadoras, garantindo eficiência e segurança nas operações.',
+    },
+    {
+      icon: Eye,
+      title: 'Visão',
+      description:
+        'Ser referência em gestão de mobilidade urbana, promovendo tecnologia, organização e desenvolvimento sustentável.',
+    },
+    {
+      icon: Heart,
+      title: 'Valores',
+      description:
+        'Transparência, inovação, eficiência, compromisso com o cidadão e responsabilidade social.',
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-8 md:py-8">
-        <div className="w-full max-w-5xl mx-auto">
-          <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6 text-center">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 px-4 py-8 md:py-12">
+      <div className="mx-auto w-full max-w-5xl space-y-10">
+        {/* HERO */}
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <span className="inline-flex rounded-full bg-blue-100 px-4 py-1 text-sm font-medium text-blue-700">
+            Institucional
+          </span>
+
+          <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 md:text-5xl">
             Quem <span className="text-blue-600">Somos</span>
           </h1>
-          <Card className="mb-4 md:mb-2">
-            <div className="flex items-start gap-2 md:gap-2">
-              <h1 className="text-sm md:text-lg font-bold mb-8 md:mb-12 text-center max-w-3xl mx-auto">
-                Conheça a CPTrans - Companhia Petropolitana de Trânsito e
-                Transporte.
-              </h1>
-            </div>
-          </Card>
-        </div>
-      </section>
 
-      {/* Sobre a CPTrans */}
-      <section className="container mx-auto px-4 py-8 md:py-8">
-        <div className="w-full max-w-5xl mx-auto">
-          <Card className="mb-8 md:mb-12">
-            <CardContent className="p-4 md:p-8">
-              <div className="flex items-start gap-4 md:gap-6">
-                <Building className="h-6 w-6 md:h-8 md:w-8 text-blue-600 flex-shrink-0 mt-1" />
+          <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-600 md:text-base">
+            Conheça a CPTrans - Companhia Petropolitana de Trânsito e
+            Transporte.
+          </p>
+        </motion.section>
+
+        {/* SOBRE */}
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.1 }}
+        >
+          <Card className="rounded-3xl border-slate-200 shadow-sm">
+            <CardContent className="p-6 md:p-10">
+              <div className="flex gap-4 md:gap-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100">
+                  <Building className="h-6 w-6 text-blue-600" />
+                </div>
+
                 <div>
-                  <p className="text-lg md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">
+                  <h2 className="text-xl font-bold text-slate-900 md:text-2xl">
                     Sobre a CPTrans
-                  </p>
-                  <div className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-600">
+                  </h2>
+
+                  <div className="mt-4 space-y-4 text-sm leading-relaxed text-slate-600 md:text-base">
                     <p>
                       A CPTrans é uma empresa pública municipal dedicada ao
                       planejamento, gestão e fiscalização do sistema de
                       transporte da cidade.
                     </p>
+
                     <p>
-                      Atuamos com o compromisso de desenvolver soluções
-                      inovadoras que atendam às necessidades de mobilidade
-                      urbana, sempre priorizando a eficiência, segurança e
-                      sustentabilidade.
+                      Atua desenvolvendo soluções modernas para melhorar a
+                      mobilidade urbana, trazendo mais eficiência, segurança e
+                      organização para os cidadãos e empresas.
                     </p>
+
                     <p>
-                      No setor de carga e descarga, implementamos sistemas
-                      digitais que facilitam o agendamento e gestão das áreas
-                      destinadas a estas operações, contribuindo para a
-                      organização do trânsito e o desenvolvimento econômico
-                      local.
+                      Através da tecnologia, novos sistemas digitais são
+                      implementados para facilitar processos como o
+                      gerenciamento das operações de carga e descarga.
                     </p>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
-      </section>
+        </motion.section>
 
-      {/* Missão, Visão e Valores */}
-      <section className="container mx-auto px-4 py-8 md:py-12">
-        <div className="w-full max-w-5xl mx-auto">
-          <h2 className="text-xl md:text-3xl font-bold text-center mb-8 md:mb-12">
+        {/* PILARES */}
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+        >
+          <h2 className="mb-6 text-center text-2xl font-bold text-slate-900 md:text-3xl">
             Nossos Pilares
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {pilares.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <Card
+                  key={item.title}
+                  className="
+                    rounded-3xl
+                    border-slate-200
+                    transition-all
+                    hover:-translate-y-1
+                    hover:shadow-lg
+                  "
+                >
+                  <CardContent className="p-6 text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100">
+                      <Icon className="h-7 w-7 text-blue-600" />
+                    </div>
+
+                    <h3 className="mt-5 font-bold text-slate-900">
+                      {item.title}
+                    </h3>
+
+                    <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                      {item.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </motion.section>
+
+        {/* HISTÓRIA */}
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+        >
+          <h2 className="mb-6 text-center text-2xl font-bold text-slate-900 md:text-3xl">
+            Nossa História
+          </h2>
+
+          <div className="grid gap-5 md:grid-cols-2">
             {[
               {
-                icon: Target,
-                title: 'Missão',
-                description:
-                  'Otimizar a gestão do transporte municipal através de soluções inovadoras, garantindo eficiência e segurança nas operações de carga e descarga.',
+                icon: Calendar,
+                title: 'Fundação e Evolução',
+                text: 'Criada para modernizar a gestão do transporte municipal, a CPTrans evolui constantemente através da tecnologia.',
               },
               {
-                icon: Eye,
-                title: 'Visão',
-                description:
-                  'Ser referência nacional em gestão de transporte urbano, promovendo mobilidade sustentável e contribuindo para o desenvolvimento econômico da cidade.',
+                icon: Users,
+                title: 'Compromisso Social',
+                text: 'Buscamos soluções que aproximem o poder público, empresas e cidadãos, melhorando a mobilidade urbana.',
               },
-              {
-                icon: Heart,
-                title: 'Valores',
-                description:
-                  'Transparência, eficiência, inovação tecnológica, compromisso com o cidadão e desenvolvimento sustentável.',
-              },
-            ].map((item, index) => (
-              <Card
-                key={index}
-                className="text-center hover:shadow-lg transition-shadow"
-              >
-                <CardHeader className="p-4 md:p-6">
-                  <CardTitle className="flex justify-center">
-                    <item.icon className="h-8 w-8 md:h-12 md:w-12 text-blue-600" />
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 md:p-6 pt-0">
-                  <h3 className="font-semibold text-base md:text-lg mb-2 md:mb-3">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs md:text-sm text-gray-600">
-                    {item.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+            ].map((item) => {
+              const Icon = item.icon;
 
-      {/* Nossa História */}
-      <section className="bg-white py-8 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="w-full max-w-5xl mx-auto">
-            <h2 className="text-xl md:text-3xl font-bold text-center mb-8 md:mb-12">
-              Nossa História
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              <Card>
-                <CardContent className="p-4 md:p-6">
-                  <div className="flex items-start gap-3 md:gap-4">
-                    <Calendar className="h-5 w-5 md:h-6 md:w-6 text-blue-600 flex-shrink-0 mt-1" />
-                    <div>
-                      <h3 className="font-semibold text-base md:text-lg mb-2 md:mb-3">
-                        Fundação e Evolução
-                      </h3>
-                      <p className="text-xs md:text-sm text-gray-600">
-                        Criada para modernizar a gestão do transporte municipal,
-                        a CPTrans tem evoluído constantemente, incorporando
-                        tecnologias avançadas para melhor atender às
-                        necessidades da população e do setor empresarial.
-                      </p>
+              return (
+                <Card key={item.title} className="rounded-3xl border-slate-200">
+                  <CardContent className="flex gap-4 p-6">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100">
+                      <Icon className="h-5 w-5 text-blue-600" />
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardContent className="p-4 md:p-6">
-                  <div className="flex items-start gap-3 md:gap-4">
-                    <Users className="h-5 w-5 md:h-6 md:w-6 text-blue-600 flex-shrink-0 mt-1" />
                     <div>
-                      <h3 className="font-semibold text-base md:text-lg mb-2 md:mb-3">
-                        Compromisso Social
-                      </h3>
-                      <p className="text-xs md:text-sm text-gray-600">
-                        Trabalhamos em parceria com a comunidade, empresas e
-                        órgãos públicos para desenvolver soluções que equilibrem
-                        as necessidades do transporte com a qualidade de vida
-                        urbana.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
+                      <h3 className="font-bold text-slate-900">{item.title}</h3>
 
-      {/* Compromisso com a Inovação */}
-      <section className="bg-blue-600 text-white py-8 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="w-full max-w-5xl mx-auto text-center">
-            <h2 className="text-xl md:text-3xl font-bold mb-3 md:mb-4">
+                      <p className="mt-2 text-sm text-slate-600">{item.text}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </motion.section>
+
+        {/* FINAL */}
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
+        >
+          <div
+            className="
+            rounded-3xl
+            bg-blue-600
+            px-6
+            py-10
+            text-center
+            text-white
+            shadow-lg
+            md:px-12
+          "
+          >
+            <h2 className="text-2xl font-bold md:text-3xl">
               Compromisso com a Inovação
             </h2>
-            <p className="text-blue-100 text-sm md:text-base mb-6 md:mb-8 max-w-2xl mx-auto">
-              Investimos continuamente em tecnologia para oferecer soluções
-              digitais que simplifiquem o agendamento e gestão das áreas de
-              carga e descarga, promovendo mais eficiência e transparência para
-              todos os usuários.
+
+            <p className="mx-auto mt-4 max-w-2xl text-sm text-blue-100 md:text-base">
+              Investimos em tecnologia para criar soluções digitais que
+              simplificam processos, aumentam a eficiência e melhoram a
+              experiência dos usuários.
             </p>
           </div>
-        </div>
-      </section>
-    </div>
+        </motion.section>
+      </div>
+    </main>
   );
 }

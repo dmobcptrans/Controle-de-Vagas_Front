@@ -95,10 +95,16 @@ const ERROR_MESSAGES = {
  */
 const INPUT_FEEDBACK = {
   EMAIL_VALID: '✓ Formato de email válido',
+
   CPF_VALID: '✓ CPF válido (11 dígitos)',
   CPF_INCOMPLETE: (current: number) => `⚠ CPF: ${current}/11 dígitos`,
-  INVALID: '✗ Formato inválido. Use email ou CPF (apenas números)',
-  HINT: 'Digite seu email ou CPF (11 dígitos)',
+
+  CNPJ_VALID: '✓ CNPJ válido (14 dígitos)',
+  CNPJ_INCOMPLETE: (current: number) => `⚠ CNPJ: ${current}/14 dígitos`,
+
+  INVALID: '✗ Formato inválido. Use email, CPF ou CNPJ (apenas números)',
+
+  HINT: 'Digite seu email, CPF ou CNPJ',
 } as const;
 
 /**
@@ -127,22 +133,23 @@ const ROUTES_BY_PERMISSION = {
  */
 function identificarTipoLogin(
   input: string,
-): 'email' | 'cpf' | 'invalido' | 'indeterminado' {
+): 'email' | 'cpf' | 'cnpj' | 'invalido' | 'indeterminado' {
   if (!input.trim()) return 'indeterminado';
 
-  const apenasNumeros = input.replace(/\D/g, '');
+  const valor = input.trim();
+  const apenasNumeros = valor.replace(/\D/g, '');
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (emailRegex.test(input)) {
+  if (emailRegex.test(valor)) {
     return 'email';
-  } else if (/^\d+$/.test(input) && apenasNumeros.length === 11) {
+  }
+
+  if (apenasNumeros.length === 11) {
     return 'cpf';
-  } else if (
-    /^\d+$/.test(input) &&
-    apenasNumeros.length > 0 &&
-    apenasNumeros.length < 11
-  ) {
-    return 'cpf';
+  }
+
+  if (apenasNumeros.length === 14) {
+    return 'cnpj';
   }
 
   return 'invalido';
@@ -239,18 +246,16 @@ function LoginContent() {
     setError('');
 
     try {
-      // Normaliza o input conforme o tipo
       const loginProcessado =
         tipoInput === 'email'
-          ? loginInput.trim().toLowerCase() // Email em minúsculo
-          : loginInput.replace(/\D/g, ''); // CPF só números
+          ? loginInput.trim().toLowerCase()
+          : loginInput.replace(/\D/g, '');
 
       const decodedUser = await login({
         login: loginProcessado,
         senha,
       });
 
-      // Redireciona baseado na permissão
       const route =
         ROUTES_BY_PERMISSION[
           decodedUser.permissao as keyof typeof ROUTES_BY_PERMISSION
@@ -262,7 +267,6 @@ function LoginContent() {
         setError(ERROR_MESSAGES.UNKNOWN_PERMISSION);
       }
     } catch (err: unknown) {
-      // Tratamento de erro amigável
       setError((err as Error).message || ERROR_MESSAGES.GENERIC);
     } finally {
       setLoading(false);
@@ -305,14 +309,31 @@ function LoginContent() {
    * - Se for email: aceita qualquer caractere (validação apenas no submit)
    */
   const handleInputChange = (value: string) => {
-    if (tipoInput === 'cpf' || /^\d+$/.test(value)) {
-      const apenasNumeros = value.replace(/\D/g, '');
+    const apenasNumeros = value.replace(/\D/g, '');
+
+    if (tipoInput === 'cpf') {
       if (apenasNumeros.length <= 11) {
         setLoginInput(apenasNumeros);
       }
-    } else {
-      setLoginInput(value);
+      return;
     }
+
+    if (tipoInput === 'cnpj') {
+      if (apenasNumeros.length <= 14) {
+        setLoginInput(apenasNumeros);
+      }
+      return;
+    }
+
+    if (/^\d+$/.test(apenasNumeros)) {
+      if (apenasNumeros.length <= 14) {
+        setLoginInput(apenasNumeros);
+      }
+      return;
+    }
+
+    // Email
+    setLoginInput(value);
   };
 
   // --------------------------------------------------------------------------
@@ -323,7 +344,7 @@ function LoginContent() {
    * Ícone dinâmico baseado no tipo de input
    */
   const inputIcon =
-    tipoInput === 'cpf' ? (
+    tipoInput === 'cpf' || tipoInput === 'cnpj' ? (
       <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
     ) : (
       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
@@ -339,34 +360,47 @@ function LoginContent() {
           {INPUT_FEEDBACK.EMAIL_VALID}
         </span>
       );
-    } else if (tipoInput === 'cpf') {
+    }
+
+    if (tipoInput === 'cpf') {
       const apenasNumeros = loginInput.replace(/\D/g, '');
-      if (apenasNumeros.length === 11) {
-        return (
-          <span className="text-xs text-green-600 mt-1 flex items-center gap-1">
-            {INPUT_FEEDBACK.CPF_VALID}
-          </span>
-        );
-      } else {
-        return (
-          <span className="text-xs text-amber-600 mt-1">
-            {INPUT_FEEDBACK.CPF_INCOMPLETE(apenasNumeros.length)}
-          </span>
-        );
-      }
-    } else if (loginInput && tipoInput === 'invalido') {
+
+      return apenasNumeros.length === 11 ? (
+        <span className="text-xs text-green-600 mt-1 flex items-center gap-1">
+          {INPUT_FEEDBACK.CPF_VALID}
+        </span>
+      ) : (
+        <span className="text-xs text-amber-600 mt-1">
+          {INPUT_FEEDBACK.CPF_INCOMPLETE(apenasNumeros.length)}
+        </span>
+      );
+    }
+
+    if (tipoInput === 'cnpj') {
+      const apenasNumeros = loginInput.replace(/\D/g, '');
+
+      return apenasNumeros.length === 14 ? (
+        <span className="text-xs text-green-600 mt-1 flex items-center gap-1">
+          {INPUT_FEEDBACK.CNPJ_VALID}
+        </span>
+      ) : (
+        <span className="text-xs text-amber-600 mt-1">
+          {INPUT_FEEDBACK.CNPJ_INCOMPLETE(apenasNumeros.length)}
+        </span>
+      );
+    }
+
+    if (loginInput && tipoInput === 'invalido') {
       return (
         <span className="text-xs text-red-600 mt-1">
           {INPUT_FEEDBACK.INVALID}
         </span>
       );
-    } else {
-      return (
-        <span className="text-xs text-gray-500 mt-1">
-          {INPUT_FEEDBACK.HINT}
-        </span>
-      );
     }
+
+    return (
+      <span className="text-xs text-gray-500 mt-1">{INPUT_FEEDBACK.HINT}</span>
+    );
   })();
 
   // --------------------------------------------------------------------------
@@ -518,23 +552,30 @@ function LoginContent() {
                     </div>
                   )}
 
-                  {/* Campo de login (email/CPF) */}
+                  {/* Campo de login (Email/CPF/CNPJ) */}
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-gray-700">
-                      Email ou CPF
+                      Email, CPF ou CNPJ
                     </label>
+
                     <div className="relative">
                       <div>{inputIcon}</div>
+
                       <Input
                         type="text"
                         value={loginInput}
                         onChange={(e) => handleInputChange(e.target.value)}
-                        placeholder="seu@email.com ou 12345678900"
+                        placeholder="seu@email.com, 12345678900 ou 12345678000190"
                         className="pl-10 h-11 bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all rounded-lg w-full"
                         disabled={loading}
-                        inputMode={tipoInput === 'cpf' ? 'numeric' : 'text'}
+                        inputMode={
+                          tipoInput === 'cpf' || tipoInput === 'cnpj'
+                            ? 'numeric'
+                            : 'text'
+                        }
                       />
                     </div>
+
                     {formatHint && <div className="mt-1">{formatHint}</div>}
                   </div>
 
@@ -573,7 +614,7 @@ function LoginContent() {
                     <button
                       type="button"
                       onClick={handleOpenModal}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors flex items-center gap-1.5"
+                      className="text-sm text-blue-600 cursor-pointer hover:text-blue-700 font-medium transition-colors flex items-center gap-1.5"
                     >
                       <Key className="w-4 h-4" />
                       Ativar Conta
@@ -647,7 +688,7 @@ function LoginContent() {
         open={mostrarModal}
         onOpenChange={setMostrarModal}
         onClose={handleCloseModal}
-        cpfInicial={tipoInput === 'cpf' ? loginInput.replace(/\D/g, '') : ''}
+        tipo="generico"
       />
     </div>
   );

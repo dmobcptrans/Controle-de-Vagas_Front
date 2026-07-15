@@ -69,7 +69,7 @@ return (
         </p>
       </div>
 
-      <div className="w-full flex justify-center animate-in slide-in-from-bottom-6 fade-in duration-500">
+      <div className="w-full flex mb-8 justify-center animate-in slide-in-from-bottom-6 fade-in duration-500">
         {!cadastroConcluido ? (
           <FormularioMotorista onSuccess={() => setCadastroConcluido(true)} />
         ) : (
@@ -85,7 +85,7 @@ return (
       open={mostrarModal}
       onOpenChange={setMostrarModal}
       onClose={handleCloseModal}
-      cpfInicial=""
+      tipo='motorista'
     />
   </div>
 );

@@ -37,9 +37,7 @@ function normalizeUserData(data: Record<string, unknown>): UserData {
     permissao: (data.permissao as UserData['permissao']) ?? 'MOTORISTA',
     cpf: data.cpf ? String(data.cpf) : undefined,
     cnpj: data.cnpj ? String(data.cnpj) : undefined,
-    veiculos: Array.isArray(data.veiculos)
-      ? (data.veiculos as Veiculo[])
-      : [],
+    veiculos: Array.isArray(data.veiculos) ? (data.veiculos as Veiculo[]) : [],
   };
 }
 
@@ -162,26 +160,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser();
   }, [refreshUser]);
 
-  // ==================== IDENTIFICAR TIPO DE LOGIN ====================
-  const identificarTipoLogin = useCallback(
-    (identificador: string): 'email' | 'cpf' | 'invalido' => {
-      if (!identificador.trim()) return 'invalido';
+// ==================== IDENTIFICAR TIPO DE LOGIN ====================
+const identificarTipoLogin = useCallback(
+  (
+    identificador: string,
+  ): 'email' | 'cpf' | 'cnpj' | 'invalido' => {
+    if (!identificador.trim()) return 'invalido';
 
-      const apenasNumeros = identificador.replace(/\D/g, '');
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const valor = identificador.trim();
+    const apenasNumeros = valor.replace(/\D/g, '');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-      if (emailRegex.test(identificador)) {
-        return 'email';
-      } else if (apenasNumeros.length === 11 && /^\d+$/.test(identificador)) {
-        return 'cpf';
-      } else if (apenasNumeros.length > 0 && /^\d+$/.test(identificador)) {
-        return 'cpf';
-      }
+    if (emailRegex.test(valor)) {
+      return 'email';
+    }
 
-      return 'invalido';
-    },
-    [],
-  );
+    if (apenasNumeros.length === 11) {
+      return 'cpf';
+    }
+
+    if (apenasNumeros.length === 14) {
+      return 'cnpj';
+    }
+
+    return 'invalido';
+  },
+  [],
+);
 
   // ==================== LOGIN ====================
   const login = useCallback(
@@ -197,9 +202,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (tipo === 'invalido') {
           throw new Error(
-            'Formato inválido. Use email ou CPF (apenas números)',
+            'Formato inválido. Use email, CPF ou CNPJ (apenas números)',
           );
         }
+
+        const documentoLimpo = identificador.replace(/\D/g, '');
 
         const dadosLogin =
           tipo === 'email'
@@ -207,10 +214,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: identificador.trim().toLowerCase(),
                 senha,
               }
-            : {
-                cpf: identificador.replace(/\D/g, ''),
-                senha,
-              };
+            : tipo === 'cpf'
+              ? {
+                  cpf: documentoLimpo,
+                  senha,
+                }
+              : {
+                  cnpj: documentoLimpo,
+                  senha,
+                };
 
         const loginResponse = await api.post(
           '/petrocarga/auth/login',
@@ -255,7 +267,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 mensagemErro = 'Erro na requisição. Verifique seus dados.';
                 break;
               case 401:
-                mensagemErro = 'CPF/Email ou senha incorretos.';
+                mensagemErro = 'CPF/CNPJ/Email ou senha incorretos.';
                 break;
               case 403:
                 mensagemErro = 'Conta não ativada.';

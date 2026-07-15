@@ -22,7 +22,7 @@ export async function addEmpresa(
   };
 
   try {
-    await clientApi('/petrocarga/empresas', {
+    await clientApi('/petrocarga/empresas/cadastro', {
       method: 'POST',
       json: payload,
     });

@@ -72,15 +72,29 @@ export async function solicitarRecuperacaoSenha(
   identificador: string,
 ): Promise<void> {
   try {
-    const isEmail = identificador.includes('@');
-    const cpfLimpo = identificador.replace(/\D/g, '');
+    const valor = identificador.trim();
+    const isEmail = valor.includes('@');
+    const documentoLimpo = valor.replace(/\D/g, '');
 
-    const jsonBody = isEmail
-      ? { email: identificador.trim().toLowerCase() }
-      : { cpf: cpfLimpo };
+    let jsonBody:
+      | { email: string }
+      | { cpf: string }
+      | { cnpj: string };
 
-    if (!isEmail && cpfLimpo.length !== 11) {
-      throw new Error('CPF deve conter 11 dígitos');
+    if (isEmail) {
+      jsonBody = {
+        email: valor.toLowerCase(),
+      };
+    } else if (documentoLimpo.length === 11) {
+      jsonBody = {
+        cpf: documentoLimpo,
+      };
+    } else if (documentoLimpo.length === 14) {
+      jsonBody = {
+        cnpj: documentoLimpo,
+      };
+    } else {
+      throw new Error('CPF deve conter 11 dígitos ou CNPJ deve conter 14 dígitos');
     }
 
     const res = await clientApi('/petrocarga/auth/forgot-password', {
@@ -126,23 +140,39 @@ export async function solicitarRecuperacaoSenha(
  * }
  * ```
  */
-export async function reenviarCodigoAtivacao(cpf: string): Promise<{
+export async function reenviarCodigoAtivacao(
+  tipo: 'empresa' | 'motorista',
+  documento: string,
+): Promise<{
   valido: boolean;
   message: string;
   [key: string]: unknown;
 }> {
   try {
-    const cpfLimpo = cpf.replace(/\D/g, '');
+    const documentoLimpo = documento.replace(/\D/g, '');
 
-    if (cpfLimpo.length !== 11) {
-      throw new Error('CPF deve conter 11 dígitos');
+    const body: {
+      cpf?: string;
+      cnpj?: string;
+    } = {};
+
+    if (tipo === 'empresa') {
+      if (documentoLimpo.length !== 14) {
+        throw new Error('CNPJ deve conter exatamente 14 dígitos');
+      }
+
+      body.cnpj = documentoLimpo;
+    } else {
+      if (documentoLimpo.length !== 11) {
+        throw new Error('CPF deve conter exatamente 11 dígitos');
+      }
+
+      body.cpf = documentoLimpo;
     }
 
     const res = await clientApi('/petrocarga/auth/resend-code', {
       method: 'POST',
-      json: {
-        cpf: cpfLimpo,
-      },
+      json: body,
     });
 
     const data = await res.json();
@@ -243,37 +273,51 @@ export async function redefinirSenhaComCodigo(
  * ```
  */
 export async function ativarConta(
-  cpf: string,
+  tipo: 'empresa' | 'motorista',
+  documento: string,
   codigo: string,
-  aceitarTermos: boolean,
 ): Promise<void> {
   try {
-    const cpfLimpo = cpf.replace(/\D/g, '');
+    const documentoLimpo = documento.replace(/\D/g, '');
 
-    if (cpfLimpo.length !== 11) {
-      throw new Error('CPF deve conter exatamente 11 dígitos');
-    }
+    const body: {
+      cnpj?: string;
+      cpf?: string;
+      codigo: string;
+      aceitarTermos: boolean;
+    } = {
+      codigo: codigo.trim().toUpperCase(),
+      aceitarTermos: true,
+    };
 
-    if (!aceitarTermos) {
-      throw new Error(
-        'É necessário aceitar os termos de uso e política de privacidade',
-      );
+    if (tipo === 'empresa') {
+      if (documentoLimpo.length !== 14) {
+        throw new Error('CNPJ deve conter exatamente 14 dígitos');
+      }
+
+      body.cnpj = documentoLimpo;
+    } else {
+      if (documentoLimpo.length !== 11) {
+        throw new Error('CPF deve conter exatamente 11 dígitos');
+      }
+
+      body.cpf = documentoLimpo;
     }
 
     const res = await clientApi('/petrocarga/auth/activate', {
       method: 'POST',
-      json: {
-        cpf: cpfLimpo,
-        codigo: codigo.trim().toUpperCase(),
-        aceitarTermos: true,
-      },
+      json: body,
     });
 
     const data = await res.json();
 
-    if (!data.success) {
+    // Se a API retornou erro (4xx ou 5xx)
+    if (!res.ok) {
       throw new Error(data.message || 'Não foi possível ativar a conta');
     }
+
+    // Sucesso
+    return;
   } catch (error: unknown) {
     throw new Error(extractMessage(error));
   }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Maven_Pro } from 'next/font/google';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
+import { Toaster } from "react-hot-toast";
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -49,6 +50,7 @@ export default function RootLayout({
           clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
         >
           <AuthProvider>
+                    <Toaster position="top-center" />
             <NotificationWrapper>
               {children}
             </NotificationWrapper>

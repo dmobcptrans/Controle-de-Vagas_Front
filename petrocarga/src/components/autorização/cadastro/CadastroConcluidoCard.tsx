@@ -7,7 +7,7 @@ type CadastroConcluidoCardProps = {
   onAtivarConta?: () => void;
 };
 
-const TEMPO_TOTAL = 7 * 60;
+const TEMPO_TOTAL = 15 * 60;
 
 export default function CadastroConcluidoCard({
   tipo,
