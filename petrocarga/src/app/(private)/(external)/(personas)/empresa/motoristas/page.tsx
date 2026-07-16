@@ -12,7 +12,7 @@ import {
   User2,
 } from 'lucide-react';
 
-import { MotoristaResponse } from '@/lib/types/personas/empresa';
+import { MotoristaEmpresaResponse } from '@/lib/types/personas/empresa';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -134,7 +134,7 @@ const updateOnlineStatus = (setIsOffline: (v: boolean) => void) => {
 
 export default function MotoristasEmpresa() {
   const { user } = useAuth();
-  const [paginatedData, setPaginatedData] = useState<MotoristaResponse | null>(
+  const [paginatedData, setPaginatedData] = useState<MotoristaEmpresaResponse | null>(
     null,
   );
   const [loading, setLoading] = useState(true);

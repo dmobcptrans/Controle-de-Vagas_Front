@@ -41,6 +41,7 @@ export interface MotoristaEmpresa {
 }
 
 export type MotoristaResponse = Paginacao<Motorista>;
+export type MotoristaEmpresaResponse = Paginacao<MotoristaEmpresa>;
 
 export type VeiculoMotoristaEmpresaResponse = Paginacao<Veiculo>;
 

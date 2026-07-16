@@ -141,7 +141,7 @@ export default function MotoristasPage() {
         if (result.error) {
           setError(result.message || 'Erro ao carregar os motoristas');
         } else {
-          setMotoristas(result.motoristas || []);
+          setMotoristas(result.motoristas.content || []);
         }
       } catch {
         setError(

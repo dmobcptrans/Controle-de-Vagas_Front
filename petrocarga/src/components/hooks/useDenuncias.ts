@@ -88,7 +88,7 @@ export function useDenuncias() {
     setError(null);
     try {
       const result = await getDenuncias();
-      setDenuncias(result ?? []);
+      setDenuncias(result.content ?? []);
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : 'Erro ao carregar denúncias. Por favor, tente novamente.';

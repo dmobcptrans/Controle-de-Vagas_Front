@@ -20,9 +20,7 @@ import { ReservaGet } from '@/lib/types/reservas/reserva';
 import { Denuncia } from '@/lib/types/denuncia';
 import toast from 'react-hot-toast';
 import { CTA } from '@/components/ui/CTA/CTA';
-import {
-  MotoristaEmpresa,
-} from '@/lib/types/personas/empresa';
+import { MotoristaEmpresa } from '@/lib/types/personas/empresa';
 
 /**
  * Configuração de cores e rótulos para cada status de reserva
@@ -211,7 +209,12 @@ export default function Dashboard() {
 
       // Tratamento de denúncias
       if (resDenuncias.status === 'fulfilled') {
-        setDenuncias(resDenuncias.value ?? []);
+        const denunciasData = resDenuncias.value;
+        const denunciasArray = Array.isArray(denunciasData)
+          ? denunciasData
+          : denunciasData?.content || [];
+
+        setDenuncias(denunciasArray);
       } else {
         toast.error('Não foi possível carregar suas denúncias.');
         setDenuncias([]);

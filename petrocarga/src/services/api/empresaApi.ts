@@ -2,6 +2,7 @@ import { clientApi } from '../clientApi';
 import {
   EmpresaPayload,
   EmpresaResult,
+  MotoristaEmpresaResponse,
   MotoristaResponse,
   VeiculoMotoristaEmpresaResponse,
 } from '../../lib/types/personas/empresa';
@@ -66,7 +67,7 @@ export async function getMotoristaEmpresaByUsuarioId(
   usuarioId: string,
   numeroPagina: number = 0,
   tamanhoPagina: number = 10,
-): Promise<MotoristaResponse> {
+): Promise<MotoristaEmpresaResponse> {
   try {
     const res = await clientApi(
       `/petrocarga/motoristas/byEmpresa/${usuarioId}?numeroPagina=${numeroPagina}&tamanhoPagina=${tamanhoPagina}`,
