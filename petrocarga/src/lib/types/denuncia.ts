@@ -10,6 +10,8 @@
  * 2. Denuncia - Denúncia completa com todas as informações
  */
 
+import { Paginacao } from "./paginacao";
+
 /**
  * @type EnderecoVaga
  * @description Endereço da vaga associada à denúncia.
@@ -175,3 +177,5 @@ export type Denuncia = {
   atualizadoEm: string;
   encerradoEm: string;
 };
+
+export type DenunciaResponse = Paginacao<Denuncia>;

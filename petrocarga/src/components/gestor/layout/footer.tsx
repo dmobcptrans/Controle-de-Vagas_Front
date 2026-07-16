@@ -2,8 +2,8 @@ import { MapPin, Phone, Mail } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-card mt-auto">
-      <div className="bg-blue-800 w-full mx-auto px-4 py-8">
+    <footer className="border-none border-border bg-card mt-auto">
+      <div className="bg-blue-900 w-full mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <h3 className="font-bold text-lg mb-3 text-foreground text-white">

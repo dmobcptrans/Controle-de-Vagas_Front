@@ -3,6 +3,7 @@
 import toast from 'react-hot-toast';
 import { clientApi } from '../clientApi';
 import { ConfirmResult } from '../../lib/types/confirmResult';
+import { DenunciaResponse } from '@/lib/types/denuncia';
 
 /**
  * @module denunciaApi
@@ -64,11 +65,7 @@ import { ConfirmResult } from '../../lib/types/confirmResult';
  * ```
  */
 
-type StatusDenuncia = 
-  | 'ABERTA'
-  | 'EM_ANALISE'
-  | 'PROCEDENTE'
-  | 'IMPROCEDENTE';
+type StatusDenuncia = 'ABERTA' | 'EM_ANALISE' | 'PROCEDENTE' | 'IMPROCEDENTE';
 
 export async function Denunciar(formData: FormData): Promise<ConfirmResult> {
   const body = {
@@ -114,24 +111,42 @@ export async function Denunciar(formData: FormData): Promise<ConfirmResult> {
  * }
  * ```
  */
-export async function getDenuncias(status?: StatusDenuncia) {
+export async function getDenuncias(
+  status?: StatusDenuncia,
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 10,
+): Promise<DenunciaResponse> {
   try {
-    // monta a URL dinamicamente
-    const url = status
-      ? `/petrocarga/denuncias/all?listaStatus=${status}`
-      : '/petrocarga/denuncias/all';
+    const params = new URLSearchParams({
+      numeroPagina: numeroPagina.toString(),
+      tamanhoPagina: tamanhoPagina.toString(),
+    });
 
-    const res = await clientApi(url);
-    return res.json();
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : 'Erro ao buscar denúncias.';
-    throw new Error(message);
+    if (status) {
+      params.append('listaStatus', status);
+    }
+
+    const res = await clientApi(`/petrocarga/denuncias/all?${params}`);
+
+    if (!res.ok) {
+      throw new Error(`Erro na requisição: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    return {
+      content: data.content ?? [],
+      totalElementos: data.totalElementos ?? 0,
+      totalPaginas: data.totalPaginas ?? 0,
+      tamanhoPagina: data.tamanhoPagina ?? tamanhoPagina,
+      pagina: data.pagina ?? numeroPagina,
+    };
+  } catch (err) {
+    throw new Error(
+      err instanceof Error ? err.message : 'Erro ao buscar denúncias.',
+    );
   }
 }
-
 // ----------------------
 // GET DENUNCIAS POR USUARIO
 // ----------------------
@@ -155,19 +170,42 @@ export async function getDenuncias(status?: StatusDenuncia) {
  * }
  * ```
  */
-export async function getDenunciasByUsuario(usuarioId: string) {
+export async function getDenunciasByUsuario(
+  usuarioId: string,
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 10,
+): Promise<DenunciaResponse> {
   try {
-    const res = await clientApi(`/petrocarga/denuncias/byUsuario/${usuarioId}`);
-    return res.json();
+    const params = new URLSearchParams({
+      numeroPagina: numeroPagina.toString(),
+      tamanhoPagina: tamanhoPagina.toString(),
+    });
+
+    const res = await clientApi(
+      `/petrocarga/denuncias/byUsuario/${usuarioId}?${params}`,
+    );
+
+    if (!res.ok) {
+      throw new Error(`Erro na requisição: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    return {
+      content: data.content ?? [],
+      totalElementos: data.totalElementos ?? 0,
+      totalPaginas: data.totalPaginas ?? 0,
+      tamanhoPagina: data.tamanhoPagina ?? tamanhoPagina,
+      pagina: data.pagina ?? numeroPagina,
+    };
   } catch (err: unknown) {
-    const message =
+    throw new Error(
       err instanceof Error
         ? err.message
-        : 'Erro ao buscar as denuncias por usuario.';
-    throw new Error(message);
+        : 'Erro ao buscar as denúncias do usuário.',
+    );
   }
 }
-
 // ----------------------
 // PATCH DENUNCIA INICIAR ANALISE
 // ----------------------

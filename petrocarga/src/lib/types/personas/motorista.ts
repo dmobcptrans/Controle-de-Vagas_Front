@@ -15,6 +15,8 @@
  * 7. FiltrosMotorista - Parâmetros para filtragem
  */
 
+import { Paginacao } from "../paginacao";
+
 /**
  * @type Usuario
  * @description Dados básicos de um usuário do sistema.
@@ -226,3 +228,5 @@ export interface MotoristaEmpresaPayload {
   tipoCnh: string;
   dataValidadeCnh: string;
 }
+
+export type MotoristaResponse = Paginacao<Motorista>;

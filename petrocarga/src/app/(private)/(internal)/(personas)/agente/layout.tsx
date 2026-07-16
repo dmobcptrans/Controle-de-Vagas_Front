@@ -1,8 +1,8 @@
-import Footer from '@/components/gestor/layout/footer';
+
 import { Metadata } from 'next';
 import { MapProvider } from '@/contexts/MapContext';
 import PrivateRoute from '@/contexts/PrivateRoute';
-import { PushNotificationBanner } from '@/contexts/PushProvider/PushNotificationBanner';
+
 
 /**
  * @module AgenteLayout
@@ -102,18 +102,12 @@ export default function AgenteLayout({
 }>) {
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Banner de notificações push */}
-      <PushNotificationBanner />
-
       {/* Conteúdo principal com proteção de rota e contexto do mapa */}
       <main className="flex-1 relative">
         <PrivateRoute allowedRoles={['AGENTE']}>
           <MapProvider>{children}</MapProvider>
         </PrivateRoute>
       </main>
-
-      {/* Rodapé (reutilizado do gestor) */}
-      <Footer />
     </div>
   );
 }

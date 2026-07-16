@@ -192,7 +192,12 @@ export default function Dashboard() {
 
       // Tratamento de denúncias
       if (resDenuncias.status === 'fulfilled') {
-        setDenuncias(resDenuncias.value ?? []);
+        const denunciasData = resDenuncias.value;
+        const denunciasArray = Array.isArray(denunciasData)
+          ? denunciasData
+          : denunciasData?.content || [];
+
+        setDenuncias(denunciasArray);
       } else {
         toast.error('Não foi possível carregar suas denúncias.');
         setDenuncias([]);
@@ -267,10 +272,12 @@ export default function Dashboard() {
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA principal - Reservar vaga */}
         <div className="-mt-4 mb-5">
-          <CTA href="/reservar-vaga"
+          <CTA
+            href="/reservar-vaga"
             title="Reservar uma vaga"
             description="Encontre e faça uma reserva rápida"
-            icon={<CalendarPlus className="h-5 w-5 text-white" />} />
+            icon={<CalendarPlus className="h-5 w-5 text-white" />}
+          />
         </div>
 
         {/* ==================== CARDS DE ESTATÍSTICAS ==================== */}
@@ -308,7 +315,7 @@ export default function Dashboard() {
               Últimas reservas
             </p>
             <Link
-              href="/reservas"
+              href="/minhas-reservas"
               className="text-xs text-[#1351B4] font-medium hover:underline"
             >
               Ver todas

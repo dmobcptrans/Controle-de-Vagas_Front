@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
+// Importamos a tipagem correta da API
 import { getMotoristas } from '@/services/api/motoristaApi';
 import {
   enviarNotificacaoParaUsuario,
   enviarNotificacaoPorPermissao,
 } from '@/services/api/notificacaoApi';
-import { Motorista } from '@/lib/types/personas/motorista';
 import {
   Loader2,
   Send,
@@ -17,81 +17,117 @@ import {
   Check,
   X,
   Search,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Motorista } from '@/lib/types/personas/motorista';
 
-/**
- * @component EnviarNotificacoesPage
- * @version 1.0.0
- *
- * @description Página de envio de notificações para motoristas.
- * Permite enviar notificações individuais ou em grupo com diferentes tipos.
- *
- * ----------------------------------------------------------------------------
- * 📋 FLUXO COMPLETO:
- * ----------------------------------------------------------------------------
- *
- * 1. CARREGAMENTO INICIAL:
- *    - Verifica autenticação (user?.id)
- *    - Carrega lista de motoristas via getMotoristas()
- *
- * 2. MODOS DE ENVIO:
- *    a) INDIVIDUAL:
- *       - Busca motoristas por nome/email
- *       - Seleção múltipla de motoristas
- *       - Envio para IDs específicos
- *
- *    b) GRUPO:
- *       - Envio para todos os motoristas
- *       - Usa permissão 'MOTORISTA' como filtro
- *
- * 3. FORMULÁRIO DE NOTIFICAÇÃO:
- *    - Título (obrigatório)
- *    - Mensagem (obrigatório)
- *    - Tipo (RESERVA, VAGA, VEICULO, MOTORISTA, SISTEMA)
- *
- * 4. PROCESSAMENTO:
- *    - Valida campos obrigatórios
- *    - Loading state durante envio
- *    - Resultado detalhado (sucessos/erros)
- *    - Feedback com toast
- *
- * 5. ESTADOS DE UI:
- *    - Loading inicial: spinner centralizado
- *    - Envio em andamento: botão desabilitado com spinner
- *    - Resultado: card resumo com contadores
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - useMemo: Filtro de motoristas otimizado (busca em memória)
- * - Promise.all: Envio paralelo para motoristas selecionados
- * - useAuth: Garante que apenas gestores autenticados acessem
- * - Grid responsivo: 1 coluna mobile, 2 colunas desktop
- * - Sticky sidebar: Resumo sempre visível em telas grandes
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - getMotoristas: API de listagem de motoristas
- * - enviarNotificacaoParaUsuario: API de envio individual
- * - enviarNotificacaoPorPermissao: API de envio em grupo
- * - toast: Feedback visual (react-hot-toast)
- *
- * @example
- * // Uso em rota de gestor
- * <EnviarNotificacoesPage />
- */
+// --------------------------------------------------------------------------
+// COMPONENTE DE PAGINAÇÃO
+// --------------------------------------------------------------------------
+function PaginationControls({
+  currentPage,
+  totalPages,
+  totalElements,
+  currentPageSize,
+  onPageChange,
+  isLoading,
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalElements: number;
+  currentPageSize: number;
+  onPageChange: (page: number) => void;
+  isLoading: boolean;
+}) {
+  const startItem = currentPage * currentPageSize + 1;
+  const endItem = Math.min((currentPage + 1) * currentPageSize, totalElements);
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisiblePages =
+      typeof window !== 'undefined' && window.innerWidth < 640 ? 3 : 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 0; i < totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 2) {
+        for (let i = 0; i < 3; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages - 1);
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(0);
+        pages.push('...');
+        for (let i = totalPages - 3; i < totalPages; i++) pages.push(i);
+      } else {
+        pages.push(0);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages - 1);
+      }
+    }
+    return pages;
+  };
+
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex flex-col items-center gap-3 mt-4 px-2 pb-2">
+      <div className="text-xs sm:text-sm text-gray-600 text-center">
+        Mostrando {startItem} - {endItem} de {totalElements} motoristas
+      </div>
+
+      <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 0 || isLoading}
+          className="p-1 sm:px-2 sm:py-1 flex items-center text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        {getPageNumbers().map((page, index) => (
+          <button
+            key={index}
+            onClick={() => typeof page === 'number' ? onPageChange(page) : null}
+            disabled={page === '...' || isLoading}
+            className={`min-w-[32px] px-2 py-1 text-sm border rounded-md transition-colors ${
+              page === currentPage
+                ? 'bg-blue-600 border-blue-600 text-white'
+                : page === '...'
+                ? 'border-transparent text-gray-400 cursor-default'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {page !== '...' ? Number(page) + 1 : page}
+          </button>
+        ))}
+
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages - 1 || isLoading}
+          className="p-1 sm:px-2 sm:py-1 flex items-center text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function EnviarNotificacoesPage() {
   // --------------------------------------------------------------------------
-  // HOOKS E ESTADOS
+  // HOOKS E ESTADOS (Agora utilizando MotoristaEmpresa[])
   // --------------------------------------------------------------------------
 
   const { user } = useAuth();
   const [motoristas, setMotoristas] = useState<Motorista[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [modoEnvio, setModoEnvio] = useState<'INDIVIDUAL' | 'GRUPO'>(
     'INDIVIDUAL',
@@ -116,34 +152,50 @@ export default function EnviarNotificacoesPage() {
   // EFEITO INICIAL (CARREGAR MOTORISTAS)
   // --------------------------------------------------------------------------
 
+  const fetchMotoristas = async (page = 0) => {
+    console.log('Buscando página', page);
+    setLoading(true);
+
+    try {
+      // CORREÇÃO: Passando undefined para a busca de filtros, posicionando a página corretamente
+      const response = await getMotoristas(undefined, page);
+
+      if (!response.error) {
+        setMotoristas(response.motoristas.content);
+        setCurrentPage(response.motoristas.pagina);
+        setTotalPages(response.motoristas.totalPaginas);
+        setTotalElements(response.motoristas.totalElementos);
+        setPageSize(response.motoristas.tamanhoPagina);
+      }
+    } catch {
+      toast.error(
+        'Erro ao carregar motoristas. Por favor, tente novamente mais tarde.',
+      );
+      setMotoristas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!user?.id) {
       setLoading(false);
       return;
     }
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const motoristasRes = await getMotoristas();
-        if (!motoristasRes.error) {
-          setMotoristas(motoristasRes.motoristas || []);
-        }
-      } catch {
-        toast.error(
-          'Erro ao carregar motoristas. Por favor, tente novamente mais tarde.',
-        );
-        setMotoristas([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchMotoristas(0);
   }, [user?.id]);
 
+const handlePageChange = (page: number) => {
+  console.log('Mudando para página', page);
+
+  if (page !== currentPage && page >= 0 && page < totalPages) {
+    fetchMotoristas(page);
+  }
+};
+
   // --------------------------------------------------------------------------
-  // FILTRO DE MOTORISTAS (BUSCA EM TEMPO REAL)
+  // FILTRO DE MOTORISTAS (Acesso direto a .nome e .email)
   // --------------------------------------------------------------------------
 
   const motoristasFiltrados = useMemo(() => {
@@ -172,7 +224,7 @@ export default function EnviarNotificacoesPage() {
   const deselecionarTodos = () => setMotoristasSelecionados([]);
 
   const selecionarTodosFiltrados = () => {
-    setMotoristasSelecionados(motoristasFiltrados.map((m) => m.usuario.id));
+    setMotoristasSelecionados(motoristasFiltrados.map((m) => m.id));
   };
 
   // --------------------------------------------------------------------------
@@ -209,7 +261,11 @@ export default function EnviarNotificacoesPage() {
       const enviadas = resultados.filter((r) => !r.error).length;
       const erros = resultados.filter((r) => r.error).length;
 
-      setResultado({ sucesso: erros === 0, enviadas, erros });
+      setResultado({
+        sucesso: true,
+        enviadas: enviadas,
+        erros: erros,
+      });
 
       if (erros === 0) {
         setTitulo('');
@@ -256,7 +312,7 @@ export default function EnviarNotificacoesPage() {
           result.message || 'Erro ao enviar notificação para o grupo',
         );
       } else {
-        setResultado({ sucesso: true, enviadas: motoristas.length, erros: 0 });
+        setResultado({ sucesso: true, enviadas: totalElements, erros: 0 });
         setTitulo('');
         setMensagem('');
         toast.success('Notificação enviada para todos os motoristas!');
@@ -270,10 +326,10 @@ export default function EnviarNotificacoesPage() {
   };
 
   // --------------------------------------------------------------------------
-  // RENDERIZAÇÃO CONDICIONAL
+  // RENDERIZAÇÃO
   // --------------------------------------------------------------------------
 
-  if (loading) {
+  if (loading && motoristas.length === 0) {
     return (
       <div className="p-8 flex items-center justify-center min-h-screen">
         <Loader2 className="animate-spin w-8 h-8 text-blue-600" />
@@ -409,7 +465,7 @@ export default function EnviarNotificacoesPage() {
                       Enviar para Todos
                     </span>
                     <span className="text-xs text-gray-500 text-center">
-                      Todos os motoristas ({motoristas.length})
+                      Todos os motoristas ({totalElements})
                     </span>
                   </button>
                 </div>
@@ -427,7 +483,7 @@ export default function EnviarNotificacoesPage() {
                       type="text"
                       value={busca}
                       onChange={(e) => setBusca(e.target.value)}
-                      placeholder="Buscar motorista por nome ou email..."
+                      placeholder="Buscar motorista na página atual..."
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     {busca && (
@@ -444,12 +500,12 @@ export default function EnviarNotificacoesPage() {
                   <div className="flex justify-between items-center">
                     <div className="space-y-1">
                       <span className="text-sm text-gray-600">
-                        {motoristasFiltrados.length} motorista(s) encontrado(s)
+                        {motoristasFiltrados.length} motorista(s) listados
                         {busca && ` para "${busca}"`}
                       </span>
                       {busca && motoristasFiltrados.length === 0 && (
                         <p className="text-xs text-red-600">
-                          Nenhum motorista encontrado com este termo
+                          Nenhum motorista encontrado na página atual
                         </p>
                       )}
                     </div>
@@ -460,7 +516,7 @@ export default function EnviarNotificacoesPage() {
                         disabled={motoristasFiltrados.length === 0}
                         className="text-sm px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Selecionar todos
+                        Selecionar todos da página
                       </button>
                       <button
                         type="button"
@@ -472,46 +528,68 @@ export default function EnviarNotificacoesPage() {
                     </div>
                   </div>
 
-                  {/* Lista de motoristas com checkboxes */}
-                  <div className="border border-gray-200 rounded-lg overflow-hidden max-h-60 overflow-y-auto">
-                    {motoristasFiltrados.map((motorista) => (
-                      <div
-                        key={motorista.usuario.id}
-                        className={`px-4 py-3 border-b border-gray-100 flex items-center gap-3 hover:bg-gray-50 cursor-pointer ${
-                          motoristasSelecionados.includes(motorista.usuario.id)
-                            ? 'bg-blue-50'
-                            : ''
-                        }`}
-                        onClick={() => toggleMotorista(motorista.usuario.id)}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
-                            motoristasSelecionados.includes(
-                              motorista.usuario.id,
-                            )
-                              ? 'bg-blue-500 border-blue-500'
-                              : 'border-gray-300'
-                          }`}
-                        >
-                          {motoristasSelecionados.includes(
-                            motorista.usuario.id,
-                          ) && <Check className="w-3 h-3 text-white" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900 truncate">
-                            {motorista.usuario.nome}
-                          </div>
-                          <div className="text-sm text-gray-500 flex items-center gap-2">
-                            <span className="truncate">
-                              {motorista.usuario.email}
-                            </span>
-                            <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
-                              MOTORISTA
-                            </span>
-                          </div>
-                        </div>
+                  {/* Lista de motoristas */}
+                  <div className="border border-gray-200 rounded-lg flex flex-col">
+                    {loading ? (
+                      <div className="flex justify-center items-center py-10">
+                        <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
                       </div>
-                    ))}
+                    ) : (
+                      <>
+                        <div className="overflow-hidden max-h-60 overflow-y-auto">
+                          {motoristasFiltrados.map((motorista) => (
+                            <div
+                              key={motorista.id}
+                              className={`px-4 py-3 border-b border-gray-100 flex items-center gap-3 hover:bg-gray-50 cursor-pointer ${
+                                motoristasSelecionados.includes(motorista.id)
+                                  ? 'bg-blue-50'
+                                  : ''
+                              }`}
+                              onClick={() => toggleMotorista(motorista.id)}
+                            >
+                              <div
+                                className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${
+                                  motoristasSelecionados.includes(motorista.id)
+                                    ? 'bg-blue-500 border-blue-500'
+                                    : 'border-gray-300'
+                                }`}
+                              >
+                                {motoristasSelecionados.includes(motorista.id) && (
+                                  <Check className="w-3 h-3 text-white" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-gray-900 truncate">
+                                  {motorista.usuario.nome}
+                                </div>
+                                <div className="text-sm text-gray-500 flex items-center gap-2">
+                                  <span className="truncate">
+                                    {motorista.usuario.email}
+                                  </span>
+                                  <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                    MOTORISTA
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Paginação */}
+                        {totalPages > 1 && (
+                          <div className="border-t border-gray-200 bg-gray-50/50">
+                            <PaginationControls
+                              currentPage={currentPage}
+                              totalPages={totalPages}
+                              totalElements={totalElements}
+                              currentPageSize={pageSize}
+                              onPageChange={handlePageChange}
+                              isLoading={loading}
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
 
                   {/* Resumo da seleção */}
@@ -523,8 +601,7 @@ export default function EnviarNotificacoesPage() {
                             Motoristas selecionados:
                           </span>
                           <span className="text-sm text-blue-600 ml-2">
-                            {motoristasSelecionados.length} de{' '}
-                            {motoristas.length} total
+                            {motoristasSelecionados.length} no total
                           </span>
                         </div>
                         <span className="font-bold text-blue-700">
@@ -535,16 +612,15 @@ export default function EnviarNotificacoesPage() {
                   )}
 
                   {/* Dica */}
-                  {motoristas.length > 5 && (
+                  {totalElements > pageSize && (
                     <div className="p-2 bg-gray-50 rounded text-xs text-gray-600">
-                      💡 <strong>Dica:</strong> Use a busca para encontrar
-                      motoristas específicos mais rapidamente
+                      💡 <strong>Dica:</strong> Suas seleções serão mantidas mesmo navegando pelas páginas.
                     </div>
                   )}
                 </div>
               )}
 
-              {/* MODO GRUPO - Informação sobre envio para todos */}
+              {/* MODO GRUPO */}
               {modoEnvio === 'GRUPO' && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center gap-3">
@@ -555,7 +631,7 @@ export default function EnviarNotificacoesPage() {
                       </h4>
                       <p className="text-sm text-green-600 mt-1">
                         Esta notificação será enviada para todos os{' '}
-                        {motoristas.length} motoristas cadastrados no sistema.
+                        {totalElements} motoristas cadastrados no sistema.
                       </p>
                     </div>
                   </div>
@@ -575,7 +651,7 @@ export default function EnviarNotificacoesPage() {
                 (modoEnvio === 'INDIVIDUAL' &&
                   motoristasSelecionados.length === 0)
               }
-              className={`w-full px-4 py-3 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+              className={`w-full px-4 py-3 rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors ${
                 modoEnvio === 'GRUPO'
                   ? 'bg-green-600 text-white'
                   : 'bg-blue-600 text-white'
@@ -592,7 +668,7 @@ export default function EnviarNotificacoesPage() {
                 <>
                   <Send className="h-4 w-4" />
                   {modoEnvio === 'GRUPO'
-                    ? `Enviar para todos os motoristas (${motoristas.length})`
+                    ? `Enviar para todos os motoristas (${totalElements})`
                     : `Enviar para ${motoristasSelecionados.length} motorista(s)`}
                 </>
               )}
@@ -600,20 +676,19 @@ export default function EnviarNotificacoesPage() {
           </div>
         </div>
 
-        {/* COLUNA DIREITA (1/3) - RESUMO E DICAS (STICKY) */}
+        {/* COLUNA DIREITA (1/3) - RESUMO */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo</h3>
 
             <div className="space-y-4">
-              {/* Card total de motoristas */}
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-gray-700">
                     Total de Motoristas
                   </span>
                   <span className="font-bold text-2xl text-blue-700">
-                    {motoristas.length}
+                    {totalElements}
                   </span>
                 </div>
                 <p className="text-sm text-gray-600">
@@ -621,7 +696,6 @@ export default function EnviarNotificacoesPage() {
                 </p>
               </div>
 
-              {/* Card modo atual */}
               <div
                 className={`p-4 rounded-lg border ${
                   modoEnvio === 'GRUPO'
@@ -648,7 +722,6 @@ export default function EnviarNotificacoesPage() {
                 </p>
               </div>
 
-              {/* Resultado do último envio */}
               {resultado && (
                 <div
                   className={`p-4 rounded-lg border ${
@@ -696,7 +769,6 @@ export default function EnviarNotificacoesPage() {
                 </div>
               )}
 
-              {/* Dicas de uso */}
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">
                   Dicas de uso:
@@ -714,13 +786,6 @@ export default function EnviarNotificacoesPage() {
                     <span>
                       Use <strong>Enviar Individualmente</strong> para mensagens
                       específicas
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-1.5 flex-shrink-0" />
-                    <span>
-                      <strong>Busque por nome ou email</strong> para encontrar
-                      motoristas mais rapidamente
                     </span>
                   </li>
                 </ul>

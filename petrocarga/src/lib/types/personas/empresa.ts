@@ -1,5 +1,6 @@
 import { Paginacao } from "../paginacao";
 import { Veiculo } from "../veiculo";
+import { Motorista } from "./motorista";
 
 export type EmpresaPayload = {
   nome: string;
@@ -39,7 +40,7 @@ export interface MotoristaEmpresa {
   empresaRazaoSocial: string;
 }
 
-export type MotoristaResponse = Paginacao<MotoristaEmpresa>;
+export type MotoristaResponse = Paginacao<Motorista>;
 
 export type VeiculoMotoristaEmpresaResponse = Paginacao<Veiculo>;
 

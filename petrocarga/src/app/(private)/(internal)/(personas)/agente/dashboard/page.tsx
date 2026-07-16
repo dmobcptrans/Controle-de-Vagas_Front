@@ -168,9 +168,8 @@ function SkeletonCard() {
 export default function Dashboard() {
   const { user } = useAuth();
   const [reservas, setReservas] = useState<ReservaRapida[]>([]);
-  const [denuncias, setDenuncias] = useState<Denuncia[]>([]);
+  const [totalDenuncias, setTotalDenuncias] = useState(0);
   const [loading, setLoading] = useState(true);
-
 
   // ==================== BUSCA DE DADOS ====================
   const fetchDados = useCallback(async () => {
@@ -199,10 +198,10 @@ export default function Dashboard() {
 
       // Tratamento de denúncias
       if (resDenuncias.status === 'fulfilled') {
-        setDenuncias(resDenuncias.value ?? []);
+        setTotalDenuncias(resDenuncias.value.totalElementos ?? 0);
       } else {
         toast.error('Não foi possível carregar suas denúncias.');
-        setDenuncias([]);
+        setTotalDenuncias(0);
       }
     } finally {
       setLoading(false);
@@ -217,7 +216,6 @@ export default function Dashboard() {
   const primeiroNome = user?.nome?.split(' ')[0] ?? 'Motorista';
   const totalReservas = reservas.length;
   const reservasAtivas = reservas.filter((r) => r.status === 'ATIVA').length;
-  const totalDenuncias = denuncias.length;
 
   const hoje = new Date().toLocaleDateString('pt-BR', {
     weekday: 'long',

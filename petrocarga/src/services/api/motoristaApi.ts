@@ -7,6 +7,7 @@ import {
   MotoristaPatchPayload,
   MotoristaResult,
 } from '../../lib/types/personas/motorista';
+import { MotoristaResponse } from '@/lib/types/personas/empresa';
 
 /**
  * @module motoristaApi
@@ -310,27 +311,32 @@ export async function getMotoristaByUserId(userId: string) {
  * }
  * ```
  */
-export async function getMotoristas(filtros?: {
-  nome?: string;
-  cnh?: string;
-  telefone?: string;
-  ativo?: boolean;
-}) {
-  // Construir query string com filtros
-  const params = new URLSearchParams();
+export async function getMotoristas(
+  filtros?: {
+    nome?: string;
+    cnh?: string;
+    telefone?: string;
+    ativo?: boolean;
+  },
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 10,
+): Promise<
+  | { error: false; motoristas: MotoristaResponse }
+  | { error: true; message: string }
+> {
+  const params = new URLSearchParams({
+    pagina: numeroPagina.toString(),
+    tamanhoPagina: tamanhoPagina.toString(),
+  });
 
   if (filtros?.nome) params.append('nome', filtros.nome);
   if (filtros?.cnh) params.append('cnh', filtros.cnh);
   if (filtros?.telefone) params.append('telefone', filtros.telefone);
-  if (filtros?.ativo !== undefined)
+  if (filtros?.ativo !== undefined) {
     params.append('ativo', filtros.ativo.toString());
+  }
 
-  const queryString = params.toString();
-  const url = queryString
-    ? `/petrocarga/motoristas?${queryString}`
-    : `/petrocarga/motoristas`;
-
-  const res = await clientApi(url);
+  const res = await clientApi(`/petrocarga/motoristas?${params.toString()}`);
 
   if (!res.ok) {
     let msg = 'Erro ao buscar motoristas';
@@ -344,5 +350,15 @@ export async function getMotoristas(filtros?: {
   }
 
   const data = await res.json();
-  return { error: false, motoristas: data };
+
+  return {
+    error: false,
+    motoristas: {
+      content: data.content ?? [],
+      totalElementos: data.totalElementos ?? 0,
+      totalPaginas: data.totalPaginas ?? 0,
+      tamanhoPagina: data.tamanhoPagina ?? tamanhoPagina,
+      pagina: data.pagina ?? numeroPagina,
+    },
+  };
 }

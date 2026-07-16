@@ -7,7 +7,11 @@ import {
   deleteMotorista,
   getMotoristaByUserId,
 } from '@/services/api/motoristaApi';
+import { deleteAgente, getAgenteByUserId } from '@/services/api/agenteApi';
+import { deleteGestor, getGestorByUserId } from '@/services/api/gestorApi';
 import { Motorista } from '@/lib/types/personas/motorista';
+import { Agente } from '@/lib/types/personas/agente';
+import { Gestor } from '@/lib/types/personas/gestor';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle,
@@ -31,105 +35,137 @@ import toast from 'react-hot-toast';
 import { CtaProfileIcon } from '@/components/ui/CTA/CtaProfileIcon';
 
 /**
- * @component PerfilMotorista
- * @version 1.0.0
+ * @component Perfil
+ * @version 2.0.0
  *
- * @description Página de perfil do motorista.
- * Exibe informações pessoais e da CNH, permite edição e exclusão da conta.
+ * @description Página de perfil universal.
+ * Funciona para MOTORISTA, AGENTE, GESTOR e ADMIN, usando `user.permissao`
+ * (vindo do useAuth) para decidir qual API chamar e quais campos exibir.
  *
  * ----------------------------------------------------------------------------
  * 📋 FLUXO COMPLETO:
  * ----------------------------------------------------------------------------
  *
  * 1. AUTENTICAÇÃO:
- *    - Hook useAuth obtém usuário logado
- *    - Se não houver user.id, redireciona implicitamente (via erro)
+ *    - Hook useAuth obtém usuário logado (inclui `permissao`)
  *
- * 2. BUSCA DE DADOS:
- *    - useEffect dispara fetchMotorista na montagem
- *    - Chama API getMotoristaByUserId com ID do usuário
- *    - Retorna motorista com dados aninhados (usuario + CNH)
+ * 2. RESOLUÇÃO DE PERSONA:
+ *    - PERSONA_CONFIG mapeia cada `permissao` para: label de exibição,
+ *      função de busca e função de exclusão da API correspondente.
  *
- * 3. ESTADOS DE UI (5 ESTADOS):
+ * 3. BUSCA DE DADOS:
+ *    - useEffect dispara fetchPerfil na montagem, usando a config da persona
+ *    - Cada API pode retornar o objeto em uma chave diferente (motorista,
+ *      agente, gestor, admin) — normalizamos tudo para `perfil`.
  *
- *    a) LOADING INICIAL:
- *       - Spinner centralizado
- *       - Mensagem "Carregando perfil..."
+ * 4. ESTADOS DE UI:
+ *    a) LOADING INICIAL
+ *    b) ERRO DE AUTENTICAÇÃO/BUSCA (inclui permissão desconhecida)
+ *    c) PERFIL NÃO ENCONTRADO
+ *    d) SUCESSO — grid de informações comuns + campos específicos de
+ *       MOTORISTA (CNH) quando aplicável.
  *
- *    b) ERRO DE AUTENTICAÇÃO/BUSCA:
- *       - Card vermelho com ícone de alerta
- *       - Botão "Fazer Login"
- *
- *    c) MOTORISTA NÃO ENCONTRADO:
- *       - Mensagem simples "Nenhum dado encontrado"
- *
- *    d) SUCESSO:
- *       - Card principal com perfil
- *       - Saudação personalizada
- *       - Grid de informações (6 cards)
- *       - Toggle de notificações push
- *       - Botões "Editar Perfil" e "Excluir Conta"
- *
- * 4. EXCLUSÃO DE CONTA:
- *    - Modal de confirmação (ModalConfirmacaoExclusao)
- *    - Chama API deleteMotorista
- *    - Em sucesso: logout e redirecionamento para home
- *    - Feedback com toast para erro/sucesso
+ * 5. EXCLUSÃO DE CONTA:
+ *    - Modal de confirmação → chama a função de exclusão certa para a persona
  *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
  *
- * - ESTRUTURA ANINHADA: Motorista contém objeto usuario
- *   - motorista.usuario.nome
- *   - motorista.usuario.cpf
- *   - motorista.numeroCnh (direto)
+ * - CAMPOS COMUNS (nome, telefone, email, cpf): lidos com fallback duplo,
+ *   pois algumas APIs aninham em `perfil.usuario.*` (caso do Motorista) e
+ *   outras podem retornar plano (`perfil.nome`, etc — como o objeto de
+ *   `user` do useAuth). Isso evita quebrar caso o formato do Agente/Gestor/
+ *   Admin seja diferente do Motorista.
+ * - CAMPOS ESPECÍFICOS DE MOTORISTA (CNH): só renderizados quando
+ *   `permissao === 'MOTORISTA'`.
  *
- * - GRID RESPONSIVO:
- *   - Mobile: 1 coluna
- *   - Tablet: 2 colunas
- *   - Desktop: 3 colunas (com email ocupando espaço especial)
- *
- * - AÇÕES DO PERFIL:
- *   - Editar: Link para página de edição
- *   - Excluir: Modal de confirmação + toast feedback
- *
- * - SEGURANÇA:
- *   - Confirmação em modal antes de excluir
- *   - Logout automático após exclusão
- *   - Redirecionamento para home
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - PushNotificationToggle: Configuração de notificações
- * - ModalConfirmacaoExclusao: Modal de confirmação
- * - /perfil/editar-perfil: Página de edição
- * - useAuth: Hook de autenticação (com logout)
- *
- * @example
- * ```tsx
- * // Uso em rota protegida
- * <PerfilMotorista />
- * ```
- *
- * @see /lib/api/motoristaApi.ts - Funções getMotoristaByUserId e deleteMotorista
- * @see /components/notification/PushNotificationToggle.tsx - Toggle de notificações
- * @see /components/modal/confirmacaoExclusao.tsx - Modal de confirmação
+ * @see /services/api/motoristaApi.ts
+ * @see /services/api/agenteApi.ts
+ * @see /services/api/gestorApi.ts
+ * @see /services/api/adminApi.ts
  */
 
-export default function PerfilMotorista() {
+type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' ;
+
+type Perfil = Motorista | Agente | Gestor;
+
+interface FetchPerfilResultado {
+  error?: boolean;
+  message?: string;
+  perfil?: Perfil | null;
+}
+
+interface PersonaConfig {
+  label: string;
+  fetchPerfil: (userId: string) => Promise<FetchPerfilResultado>;
+  deletePerfil: (userId: string) => Promise<{ error?: boolean; message?: string } | void>;
+}
+
+// --------------------------------------------------------------------------
+// CONFIGURAÇÃO POR PERSONA
+// --------------------------------------------------------------------------
+// Se a chave de retorno de alguma API for diferente do que está aqui
+// (ex: getAgenteByUserId não retorna `resultado.agente`), ajuste apenas
+// a linha correspondente abaixo.
+const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
+  MOTORISTA: {
+    label: 'Motorista',
+    fetchPerfil: async (userId) => {
+      const resultado = await getMotoristaByUserId(userId);
+      return { error: resultado.error, message: resultado.message, perfil: resultado.motorista };
+    },
+    deletePerfil: (userId) => deleteMotorista(userId),
+  },
+  AGENTE: {
+    label: 'Agente',
+    fetchPerfil: async (userId) => {
+      const resultado = await getAgenteByUserId(userId);
+      return { error: resultado.error, message: resultado.message, perfil: resultado.agente };
+    },
+    deletePerfil: (userId) => deleteAgente(userId),
+  },
+  GESTOR: {
+    label: 'Gestor',
+    fetchPerfil: async (userId) => {
+      const resultado = await getGestorByUserId(userId);
+      return { error: resultado.error, message: resultado.message, perfil: resultado.gestor };
+    },
+    deletePerfil: (userId) => deleteGestor(userId),
+  },
+};
+
+// --------------------------------------------------------------------------
+// HELPERS DE LEITURA NORMALIZADA
+// --------------------------------------------------------------------------
+// Cobrem tanto o formato aninhado (perfil.usuario.nome, como no Motorista)
+// quanto um formato plano (perfil.nome), para não quebrar caso os outros
+// tipos não aninhem em `usuario`.
+function getCampo(perfil: Perfil | null, campo: 'nome' | 'telefone' | 'email' | 'cpf' | 'id'): string {
+  if (!perfil) return '';
+  const aninhado = (perfil as unknown as { usuario?: Record<string, string> }).usuario;
+  const plano = perfil as unknown as Record<string, string>;
+  return (aninhado?.[campo] ?? plano?.[campo] ?? '') as string;
+}
+
+function isMotorista(perfil: Perfil | null): perfil is Motorista {
+  return !!perfil && 'numeroCnh' in perfil;
+}
+
+export default function Perfil() {
   // --------------------------------------------------------------------------
   // ESTADOS
   // --------------------------------------------------------------------------
 
-  const [motorista, setMotorista] = useState<Motorista | null>(null);
+  const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const { user, logout } = useAuth();
   const router = useRouter();
+
+  const permissao = user?.permissao as Permissao | undefined;
+  const config = permissao ? PERSONA_CONFIG[permissao] : undefined;
 
   // --------------------------------------------------------------------------
   // EFEITO DE BUSCA
@@ -141,16 +177,22 @@ export default function PerfilMotorista() {
       return;
     }
 
-    const fetchMotorista = async () => {
+    if (!config) {
+      setLoading(false);
+      setError('Não foi possível identificar o tipo de perfil do usuário.');
+      return;
+    }
+
+    const fetchPerfil = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const resultado = await getMotoristaByUserId(user.id);
+        const resultado = await config.fetchPerfil(user.id);
         if (resultado.error) {
           setError(resultado.message || 'Erro ao buscar perfil');
         } else {
-          setMotorista(resultado.motorista);
+          setPerfil(resultado.perfil ?? null);
         }
       } catch {
         setError('Erro ao carregar informações do perfil. Tente novamente.');
@@ -159,20 +201,20 @@ export default function PerfilMotorista() {
       }
     };
 
-    fetchMotorista();
-  }, [user?.id]);
+    fetchPerfil();
+  }, [user?.id, config]);
 
   // --------------------------------------------------------------------------
   // HANDLER DE EXCLUSÃO
   // --------------------------------------------------------------------------
 
   const handleExcluir = async () => {
-    if (!user) return;
+    if (!user || !config) return;
 
     try {
-      const resultado = await deleteMotorista(user.id);
+      const resultado = await config.deletePerfil(user.id);
 
-      if (resultado?.error) {
+      if (resultado && 'error' in resultado && resultado.error) {
         toast.error(resultado.message || 'Erro ao excluir conta.');
         return;
       }
@@ -211,7 +253,7 @@ export default function PerfilMotorista() {
     );
   }
 
-  if (!loading && !motorista) {
+  if (!loading && !perfil) {
     return (
       <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[calc(100vh-4rem)]">
         <div className="text-center">
@@ -220,6 +262,18 @@ export default function PerfilMotorista() {
       </main>
     );
   }
+
+  // --------------------------------------------------------------------------
+  // CAMPOS NORMALIZADOS
+  // --------------------------------------------------------------------------
+
+  const nome = getCampo(perfil, 'nome');
+  const telefone = getCampo(perfil, 'telefone');
+  const email = getCampo(perfil, 'email');
+  const cpf = getCampo(perfil, 'cpf');
+  const usuarioId = getCampo(perfil, 'id') || user?.id || '';
+  const primeiroNome = nome.split(' ')[0];
+  const mostrarCamposCnh = isMotorista(perfil);
 
   // --------------------------------------------------------------------------
   // RENDERIZAÇÃO
@@ -231,9 +285,7 @@ export default function PerfilMotorista() {
       <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            {loading
-              ? 'Seu Perfil!'
-              : `Seu Perfil, ${motorista!.usuario.nome.split(' ')[0]}!`}
+            {loading ? 'Seu Perfil!' : `Seu Perfil, ${primeiroNome}!`}
           </h1>
 
           <p className="text-xs text-white/50 capitalize">
@@ -255,113 +307,117 @@ export default function PerfilMotorista() {
           </div>
         ) : (
           <>
-        <Card className="w-full max-w-4xl mx-auto shadow-sm md:shadow-lg">
-          <div className="px-4 sm:px-6 pb-6 space-y-6">
-            {/* Grid de informações (6 cards) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {/* Card 1: Nome */}
-              <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
-                <UserIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-500">Nome</p>
-                  <p className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                    {motorista!.usuario.nome}
-                  </p>
+            <Card className="w-full max-w-4xl mx-auto shadow-sm md:shadow-lg">
+              <div className="px-4 sm:px-6 pb-6 space-y-6">
+                {/* Grid de informações */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {/* Card: Nome */}
+                  <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
+                    <UserIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-500">Nome</p>
+                      <p className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                        {nome}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card: Telefone */}
+                  <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
+                    <Phone className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-500">Telefone</p>
+                      <p className="text-base sm:text-lg font-semibold text-gray-900">
+                        {telefone}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Cards específicos de MOTORISTA: Número e Tipo da CNH */}
+                  {mostrarCamposCnh && (
+                    <>
+                      <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
+                        <IdCardIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-500">
+                            Número da CNH
+                          </p>
+                          <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
+                            {(perfil as Motorista).numeroCnh}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
+                        <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-500">
+                            Tipo da CNH
+                          </p>
+                          <p className="text-base sm:text-lg font-semibold text-gray-900">
+                            {(perfil as Motorista).tipoCnh}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Card: CPF */}
+                  <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
+                    <Fingerprint className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-500">CPF</p>
+                      <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
+                        {cpf}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card: Email (ocupa espaço especial no tablet) */}
+                  <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl col-span-1 sm:col-span-2 lg:col-span-1">
+                    <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-500">Email</p>
+                      <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
+                        {email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Toggle de notificações push */}
+                <section>
+                  <PushNotificationToggle usuarioId={usuarioId} />
+                </section>
+
+                {/* Botões de ação */}
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-6">
+                  {/* Botão Editar Perfil */}
+                  <Link
+                    href="/perfil/editar-perfil"
+                    className={cn(
+                      buttonVariants({ variant: 'default' }),
+                      'flex items-center justify-center gap-2 px-8 py-3 h-12 bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base w-full sm:w-auto min-w-[150px] font-medium',
+                    )}
+                  >
+                    <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>Editar Perfil</span>
+                  </Link>
+
+                  {/* Botão Excluir Conta */}
+                  <button
+                    onClick={() => setModalAberto(true)}
+                    className={cn(
+                      buttonVariants({ variant: 'destructive' }),
+                      'flex items-center justify-center gap-2 px-8 py-3 h-12 bg-red-500 hover:bg-red-600 text-sm sm:text-base w-full sm:w-auto min-w-[150px] font-medium',
+                    )}
+                  >
+                    <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>Desativar Conta</span>
+                  </button>
                 </div>
               </div>
-
-              {/* Card 2: Telefone */}
-              <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
-                <Phone className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-500">Telefone</p>
-                  <p className="text-base sm:text-lg font-semibold text-gray-900">
-                    {motorista!.usuario.telefone}
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 3: Número da CNH */}
-              <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
-                <IdCardIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-500">
-                    Número da CNH
-                  </p>
-                  <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
-                    {motorista!.numeroCnh}
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 4: Tipo da CNH */}
-              <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
-                <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-500">
-                    Tipo da CNH
-                  </p>
-                  <p className="text-base sm:text-lg font-semibold text-gray-900">
-                    {motorista!.tipoCnh}
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 5: CPF */}
-              <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
-                <Fingerprint className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-500">CPF</p>
-                  <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
-                    {motorista!.usuario.cpf}
-                  </p>
-                </div>
-              </div>
-
-              {/* Card 6: Email (ocupa espaço especial no tablet) */}
-              <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl col-span-1 sm:col-span-2 lg:col-span-1">
-                <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-500">Email</p>
-                  <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
-                    {motorista!.usuario.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-            {/* Toggle de notificações push */}
-            <section>
-              <PushNotificationToggle usuarioId={motorista!.usuario.id} />
-            </section>
-
-            {/* Botões de ação */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-6">
-              {/* Botão Editar Perfil */}
-              <Link
-                href="/perfil/editar-perfil"
-                className={cn(
-                  buttonVariants({ variant: 'default' }),
-                  'flex items-center justify-center gap-2 px-8 py-3 h-12 bg-blue-500 hover:bg-blue-600 text-white text-sm sm:text-base w-full sm:w-auto min-w-[150px] font-medium',
-                )}
-              >
-                <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>Editar Perfil</span>
-              </Link>
-
-              {/* Botão Excluir Conta */}
-              <button
-                onClick={() => setModalAberto(true)}
-                className={cn(
-                  buttonVariants({ variant: 'destructive' }),
-                  'flex items-center justify-center gap-2 px-8 py-3 h-12 bg-red-500 hover:bg-red-600 text-sm sm:text-base w-full sm:w-auto min-w-[150px] font-medium',
-                )}
-              >
-                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>Desativar Conta</span>
-              </button>
-            </div>
-          </div>
-        </Card>
+            </Card>
 
             {/* Modal */}
             <ModalConfirmacaoExclusao

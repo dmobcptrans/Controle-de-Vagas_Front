@@ -1,9 +1,6 @@
 import { Metadata } from 'next';
 import { MapProvider } from '@/contexts/MapContext';
 import PrivateRoute from '@/contexts/PrivateRoute';
-import { OnboardingProvider } from '@/contexts/OnboardingContext';
-import OnboardingModal from '@/components/modal/autorizacao/completar-cadastro/OnboardingModal';
-
 
 export const metadata: Metadata = {
   title: 'PetroCarga',
@@ -12,20 +9,17 @@ export const metadata: Metadata = {
 };
 
 
-export default function externalLayout({
+export default function internalLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
     <div className="flex min-h-screen flex-col">
-      <PrivateRoute allowedRoles={['EMPRESA', "MOTORISTA"]}>
-        <OnboardingProvider>
-          <OnboardingModal />
+      <PrivateRoute allowedRoles={['GESTOR', "AGENTE", "ADMIN"]}>
           <main className="flex-1 relative">
             <MapProvider>{children}</MapProvider>
           </main>
-        </OnboardingProvider>
       </PrivateRoute>
     </div>
   );

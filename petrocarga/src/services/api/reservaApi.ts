@@ -481,7 +481,6 @@ export async function checkoutReserva(reservaID: string) {
       method: 'PATCH',
     });
 
-    toast.success('Checkout Realizado Com Sucesso!');
     return { success: true };
   } catch (err: unknown) {
     const message =
