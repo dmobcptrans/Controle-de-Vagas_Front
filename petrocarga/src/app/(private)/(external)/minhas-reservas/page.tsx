@@ -9,18 +9,23 @@ import {
   getGerarComprovanteReserva,
 } from '@/services/api/reservaApi';
 import {
-  AlertCircle,
   Info,
   Loader2,
   WifiOff,
   ChevronLeft,
   ChevronRight,
+  PlusIcon,
+  ListFilterPlus,
 } from 'lucide-react';
 import ReservaLista from '@/components/reserva/minhasReservas/ReservaLista';
-import { ReservaGet, PaginatedReservaResponse } from '@/lib/types/reservas/reserva';
+import {
+  ReservaGet,
+  PaginatedReservaResponse,
+} from '@/lib/types/reservas/reserva';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import EmptyState from '@/components/reserva/minhasReservas/EmptyState';
 
 /**
  * @component PaginationControls
@@ -383,11 +388,33 @@ export default function MinhasReservas() {
           </div>
         ) : reservas.length === 0 ? (
           /* ==================== ESTADO SEM RESERVAS ==================== */
-          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4">
-            <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
-            <p className="text-sm sm:text-base text-gray-500">
-              Nenhuma reserva encontrada.
-            </p>
+          <div>
+            <div className="-mt-4 mb-5">
+              <EmptyState />
+            </div>
+            <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 border-2 border-dashed border-gray-250 bg-white rounded-2xl">
+              <ListFilterPlus className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
+
+              <p className="text-sm sm:text-base text-gray-500 mb-6">
+                Nenhuma reserva encontrada.
+              </p>
+
+              <Link
+                href="/reservar-vaga"
+                className="
+      inline-flex items-center gap-2
+      rounded-xl bg-[#071D41]
+      px-5 py-3
+      text-sm font-semibold text-white
+      shadow-md transition-all duration-200
+      hover:bg-[#0C3D8A]  hover:shadow-lg hover:-translate-y-0.5
+      active:translate-y-0
+    "
+              >
+                <PlusIcon className="w-5 h-5" />
+                <span>Fazer Reserva</span>
+              </Link>
+            </div>
           </div>
         ) : (
           <>

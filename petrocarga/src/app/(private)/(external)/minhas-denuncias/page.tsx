@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getDenunciasByUsuario } from '@/services/api/denunciaApi';
 import DenunciaLista from '@/components/motorista/cards/denuncia/DenunciaLista';
 import { DenunciaResponse } from '@/lib/types/denuncia';
-import { AlertCircle, Info, Loader2, TriangleAlert } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Info, Loader2, TriangleAlert } from 'lucide-react';
 import { ChevronLeft, ChevronRight, WifiOff } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { CTA } from '@/components/ui/CTA/CTA';
@@ -378,13 +378,12 @@ return (
         </div>
       ) : denuncias.length === 0 ? (
         /* ==================== SEM DENÚNCIAS ==================== */
-        <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4">
-          <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
-
-          <p className="text-sm sm:text-base text-gray-500">
-            Nenhuma denúncia encontrada.
-          </p>
-        </div>
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 border-gray-200 border-dashed border-2 bg-white rounded-2xl">
+              <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
+              <p className="text-sm sm:text-base text-gray-500">
+                Nenhuma denúncia encontrada.
+              </p>
+            </div>
       ) : (
         <>
           {/* ==================== LISTA ==================== */}
