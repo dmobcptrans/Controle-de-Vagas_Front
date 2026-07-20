@@ -87,25 +87,35 @@ export default function StepIndicator({ step, isReservaRapida = false }: StepInd
   const segments = totalSteps - 1;
   const ratio = segments > 0 ? (step - 1) / segments : 0;
 
+  // Distância do centro da 1ª/última bolinha até a borda do container,
+  // em % — cada step ocupa 1/totalSteps da largura, e o centro fica na metade disso
+  const edgeOffset = 100 / (totalSteps * 2);
+
   return (
     <div className="relative mb-4 w-full">
 
       {/* ==================== LINHA DE PROGRESSO (FUNDO) ==================== */}
-      <div className="absolute top-5 left-0 right-0 px-5">
+      <div
+        className="absolute top-5"
+        style={{ left: `${edgeOffset}%`, right: `${edgeOffset}%` }}
+      >
         <div className="relative w-full">
           {/* Linha de fundo (cinza) */}
           <div className="h-1 bg-gray-300 rounded-full w-full"></div>
 
           {/* Linha de progresso (azul) - largura dinâmica */}
           <div
-            className="absolute left-0 top-0 h-1 bg-blue-600 rounded-full transition-all duration-300"
+            className="absolute left-0 top-0 h-1 bg-blue-800 rounded-full transition-all duration-300"
             style={{ width: `${ratio * 100}%` }}
           />
         </div>
       </div>
 
       {/* ==================== BOLINHAS E LABELS ==================== */}
-      <div className="flex justify-between w-full relative z-10">
+      <div
+        className="grid w-full relative z-10"
+        style={{ gridTemplateColumns: `repeat(${totalSteps}, minmax(0, 1fr))` }}
+      >
         {currentSteps.map((s) => {
           const isCurrent = step === s.number;
           const isCompleted = step > s.number;
@@ -113,13 +123,13 @@ export default function StepIndicator({ step, isReservaRapida = false }: StepInd
           return (
             <div
               key={s.number}
-              className="flex flex-col items-center text-center w-full"
+              className="flex flex-col items-center text-center"
             >
               {/* Bolinha */}
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold border-4 relative z-20
                 ${isCurrent
-                    ? 'bg-blue-600 border-blue-600 text-white'
+                    ? 'bg-blue-800 border-blue-800 text-white'
                     : isCompleted
                       ? 'bg-green-600 border-green-600 text-white'
                       : 'bg-white border-gray-300 text-gray-600'
