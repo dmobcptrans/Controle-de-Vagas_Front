@@ -1,12 +1,44 @@
 'use client';
 
 import { Veiculo } from '@/lib/types/veiculo';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
+import { ChevronDown } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
-interface PlaceSuggestion {
-  label: string;
-}
+const tiposVeiculo = [
+  {
+    value: 'AUTOMOVEL',
+    titulo: 'Carro',
+    descricao: 'Até 5 metros',
+    imagem: '/images/card-reserva/carro.png',
+  },
+  {
+    value: 'CAMINHONETA',
+    titulo: 'Caminhonete',
+    descricao: 'Até 6 metros',
+    imagem: '/images/card-reserva/caminhonete.png',
+  },
+  {
+    value: 'VUC',
+    titulo: 'VUC',
+    descricao: 'Até 8 metros',
+    imagem: '/images/card-reserva/vuc.png',
+  },
+  {
+    value: 'CAMINHAO_MEDIO',
+    titulo: 'Caminhão médio',
+    descricao: '9 a 12 metros',
+    imagem: '/images/card-reserva/c-medio.png',
+  },
+  {
+    value: 'CAMINHAO_LONGO',
+    titulo: 'Caminhão longo',
+    descricao: '13 a 19 metros',
+    imagem: '/images/card-reserva/c-longo.png',
+  },
+];
 
 interface StepVeiculoProps {
   tipoVeiculo: Veiculo['tipo'] | null;
@@ -43,6 +75,9 @@ export default function StepVeiculo({
     !tipoVeiculo || placa.length < 7 || vagaIncompativel || validandoVeiculo;
   const [isFocused, setIsFocused] = useState(false);
   const suggestions = useMapboxSuggestions(cidadeOrigem, true);
+  const [openTipoVeiculo, setOpenTipoVeiculo] = useState(false);
+
+  const veiculoSelecionado = tiposVeiculo.find((v) => v.value === tipoVeiculo);
 
   return (
     <div className="flex flex-col gap-5 p-2">
@@ -50,23 +85,28 @@ export default function StepVeiculo({
 
       {/* Tipo de veículo */}
       <div>
-        <p className="font-medium mb-1">Tipo de veículo</p>
-        <select
-          value={tipoVeiculo || ''}
-          onChange={(e) =>
-            onTipoVeiculoChange(e.target.value as Veiculo['tipo'])
-          }
-          className="w-full border rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        <p className="font-medium mb-2">Tipo de veículo</p>
+
+        <button
+          type="button"
+          onClick={() => setOpenTipoVeiculo(true)}
+          className="w-full rounded-2xl border bg-white px-4 py-3 flex items-center justify-between hover:border-blue-500 transition"
         >
-          <option value="">Selecione...</option>
-          <option value="AUTOMOVEL">Carro - Até 5 metros</option>
-          <option value="CAMINHONETA">Caminhonete - Até 6 metros</option>
-          <option value="VUC">VUC - Até 8 metros</option>
-          <option value="CAMINHAO_MEDIO">Caminhão médio - 9 a 12 metros</option>
-          <option value="CAMINHAO_LONGO">
-            Caminhão longo - 13 a 19 metros
-          </option>
-        </select>
+          <div className="text-left">
+            {veiculoSelecionado ? (
+              <>
+                <p className="font-medium">{veiculoSelecionado.titulo}</p>
+                <p className="text-sm text-gray-500">
+                  {veiculoSelecionado.descricao}
+                </p>
+              </>
+            ) : (
+              <p className="text-gray-400">Selecione o tipo do veículo</p>
+            )}
+          </div>
+
+          <ChevronDown className="w-5 h-5 text-gray-500" />
+        </button>
       </div>
 
       {/* Placa */}
@@ -191,6 +231,42 @@ export default function StepVeiculo({
             </select>
           </div>
         </div>
+
+        <Dialog open={openTipoVeiculo} onOpenChange={setOpenTipoVeiculo}>
+          <DialogContent className="rounded-2xl ">
+            <DialogTitle>Escolha o tipo do veículo</DialogTitle>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {tiposVeiculo.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => {
+                    onTipoVeiculoChange(item.value as Veiculo['tipo']);
+                    setOpenTipoVeiculo(false);
+                  }}
+                  className={`rounded-2xl border p-4 flex flex-col items-center text-center transition-all hover:border-blue-500 hover:bg-blue-50 ${
+                    tipoVeiculo === item.value
+                      ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-200'
+                      : 'border-gray-200'
+                  }`}
+                >
+                  <div className="relative w-20 h-20 mb-3">
+                    <Image
+                      src={item.imagem}
+                      alt={item.titulo}
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+
+                  <p className="font-semibold text-sm">{item.titulo}</p>
+                  <p className="text-xs text-gray-500 mt-1">{item.descricao}</p>
+                </button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <button

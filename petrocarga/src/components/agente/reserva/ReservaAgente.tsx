@@ -283,7 +283,7 @@ export default function ReservaAgente({
   // RENDER
   // --------------------------------------------------------------------------
   return (
-    <div className="p-4 sm:p-6 border rounded-xl shadow-lg max-w-2xl mx-auto bg-white min-h-[80vh] flex flex-col gap-4">
+    <div className="p-4 sm:p-6 border rounded-2xl shadow-2xl bg-white min-h-[80vh] flex flex-col gap-4">
       {step < 5 && <StepIndicator step={step} isReservaRapida={true} />}
 
       <div className="flex-1 flex flex-col overflow-y-auto pb-4">
