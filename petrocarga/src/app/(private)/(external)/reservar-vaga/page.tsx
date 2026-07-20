@@ -263,7 +263,7 @@ export default function ReservaPage() {
         {/* ==================== ETAPA 1: MAPA ==================== */}
         {step === 'mapa' && (
           <div className="flex flex-col items-center justify-center">
-            <div className="w-full h-[calc(75vh-120px)] md:h-[70vh] lg:h-[75vh] rounded-xl overflow-hidden shadow-md mb-4">
+            <div className="w-full h-[calc(75vh-120px)] md:h-[70vh] lg:h-[75vh] rounded-2xl overflow-hidden shadow-md mb-4">
               <MapReserva
                 onClickVaga={handleSelectVaga}
                 selectedLocation={selectedLocation}

@@ -1,6 +1,14 @@
 'use client';
 
 import { useTransition } from 'react';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Navigation,
+  Truck,
+  Loader2,
+} from 'lucide-react';
 
 interface ConfirmationProps {
   day: Date;
@@ -17,14 +25,14 @@ interface ConfirmationProps {
 /**
  * @component Confirmation
  * @version 1.0.0
- * 
+ *
  * @description Tela de resumo e confirmação da reserva.
  * Exibe os dados selecionados e permite confirmar ou reiniciar o processo.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 PROPRIEDADES:
  * ----------------------------------------------------------------------------
- * 
+ *
  * @property {Date} day - Data da reserva
  * @property {string} startHour - Horário de início
  * @property {string} endHour - Horário de fim
@@ -34,42 +42,42 @@ interface ConfirmationProps {
  * @property {string} [vehicleName] - Nome/placa do veículo
  * @property {() => Promise<void> | void} onConfirm - Callback de confirmação
  * @property {() => void} [onReset] - Callback para reiniciar o processo
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 COMPORTAMENTO:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. RESUMO:
  *    - Data formatada (toLocaleDateString)
  *    - Horário (HH:MM - HH:MM)
  *    - Origem (se fornecida)
  *    - Destino/Endereço da vaga (se fornecido)
  *    - Veículo (se fornecido)
- * 
+ *
  * 2. AÇÕES:
  *    - CONFIRMAR: Executa onConfirm com useTransition (loading)
  *    - REINICIAR: Reseta o fluxo de reserva (volta ao início)
- * 
+ *
  * 3. ESTADO DE LOADING:
  *    - Botão desabilitado durante confirmação
  *    - Spinner animado no lugar do texto
  *    - Botão "Reiniciar" também desabilitado
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - useTransition: Gerencia estado de loading sem bloquear UI
  * - SPINNER: Animação customizada com border e animate-spin
  * - ESTILOS: Botão verde (confirmar), cinza (reiniciar)
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - ReservaComponent: Pai que usa este componente
  * - useReserva: Hook com lógica de confirmação
- * 
+ *
  * @example
  * ```tsx
  * <Confirmation
@@ -106,62 +114,114 @@ export default function Confirmation({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      
+    <div className="flex flex-col w-full max-w-md mx-auto">
       {/* ==================== TÍTULO ==================== */}
-      <p className="font-semibold mb-3 text-center">Resumo da Reserva</p>
-      
-      {/* ==================== DADOS DA RESERVA ==================== */}
-      <p>
-        <strong>Data:</strong> {day.toLocaleDateString()}
-      </p>
-      <p>
-        <strong>Horário:</strong> {startHour} - {endHour}
-      </p>
-      
-      {/* Campos opcionais */}
-      {origin && (
-        <p>
-          <strong>Endereço de Entrada:</strong> {origin}
+      <div className="text-center mb-4">
+        <p className="font-semibold text-lg text-gray-900">Resumo da Reserva</p>
+        <p className="text-sm text-gray-500">
+          Confira os dados antes de confirmar
         </p>
-      )}
-      {destination && (
-        <p>
-          <strong>Endereço da Vaga:</strong> {destination}
-        </p>
-      )}
-      {vehicleName && (
-        <p>
-          <strong>Veículo:</strong> {vehicleName}
-        </p>
-      )}
+      </div>
+
+      {/* ==================== CARD DE DADOS ==================== */}
+      <div className="rounded-xl border border-gray-200 bg-gray-50 divide-y divide-gray-200 overflow-hidden">
+        {/* Data */}
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center">
+            <Calendar className="w-4 h-4 text-blue-800" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500">Data</p>
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {day.toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+
+        {/* Horário */}
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center">
+            <Clock className="w-4 h-4 text-blue-800" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500">Horário</p>
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {startHour} - {endHour}
+            </p>
+          </div>
+        </div>
+
+        {/* Endereço de entrada (opcional) */}
+        {origin && (
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center">
+              <Navigation className="w-4 h-4 text-yellow-800" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500">Endereço de Entrada</p>
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {origin}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Endereço da vaga (opcional) */}
+        {destination && (
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center">
+              <MapPin className="w-4 h-4 text-yellow-800" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500">Endereço da Vaga</p>
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {destination}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Veículo (opcional) */}
+        {vehicleName && (
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center">
+              <Truck className="w-4 h-4 text-purple-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500">Veículo</p>
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {vehicleName}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ==================== BOTÕES ==================== */}
-      <div className="mt-4 flex gap-2">
-        
+      <div className="mt-5 flex flex-col-reverse sm:flex-row gap-2">
+        {/* Botão Reiniciar */}
+        <button
+          className="w-full sm:w-auto px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors"
+          onClick={onReset}
+          disabled={isPending}
+        >
+          Reiniciar
+        </button>
+
         {/* Botão Confirmar (com loading) */}
         <button
-          className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px] transition-all"
+          className="w-full sm:flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
           onClick={handleConfirm}
           disabled={isPending}
         >
           {isPending ? (
             <>
-              <div className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2 align-middle"></div>
+              <Loader2 className="w-4 h-4 animate-spin" />
               Confirmando...
             </>
           ) : (
-            'Confirmar'
+            'Confirmar Reserva'
           )}
-        </button>
-        
-        {/* Botão Reiniciar */}
-        <button
-          className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-400 transition-colors"
-          onClick={onReset}
-          disabled={isPending}
-        >
-          Reiniciar
         </button>
       </div>
     </div>

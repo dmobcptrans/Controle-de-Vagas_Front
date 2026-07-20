@@ -125,10 +125,10 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
   }, [selectedLocation?.lat, selectedLocation?.lng, map]);
 
   return (
-    <div className="w-full h-full rounded-lg overflow-visible relative">
+    <div className="w-full h-full overflow-visible relative">
       <div
         ref={mapContainer}
-        className="w-full h-full rounded-lg shadow-md overflow-visible"
+        className="w-full h-full shadow-md overflow-visible"
         style={{ minHeight: '300px' }}
       />
 

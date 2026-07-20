@@ -99,36 +99,64 @@ export default function TimeSelection({
   const selectedClass =
     color === 'blue' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white';
 
+  // Agrupa os horários por período do dia
+  const groups = {
+    Manhã: times.filter((t) => Number(t.split(':')[0]) < 12),
+    Tarde: times.filter((t) => {
+      const h = Number(t.split(':')[0]);
+      return h >= 12 && h < 18;
+    }),
+    Noite: times.filter((t) => Number(t.split(':')[0]) >= 18),
+  };
+
   return (
-    <div className="w-full">
-      <p className="font-semibold mb-3 text-center">Escolha o horário</p>
+    <div className="w-full h-full flex flex-col">
+      <p className="font-semibold mb-3 text-center flex-shrink-0">
+        Escolha o horário
+      </p>
 
-      <div className="grid grid-cols-3 gap-3 w-full">
-        {times.map((time) => {
-          const disabled = reserved.includes(time);
-          const isSelected = selected === time;
+      {/* Área rolável — só os horários rolam, o resto fica fixo */}
+      <div className="flex-1 overflow-y-auto pr-1 -mr-1">
+        {Object.entries(groups).map(([label, group]) =>
+          group.length > 0 ? (
+            <div key={label} className="mb-4">
+              <p className="sticky top-0 bg-white/95 backdrop-blur-sm text-xs font-semibold text-gray-500 uppercase tracking-wide py-1 z-10">
+                {label}
+              </p>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                {group.map((time) => {
+                  const disabled = reserved.includes(time);
+                  const isSelected = selected === time;
 
-          return (
-            <button
-              key={time}
-              disabled={disabled}
-              onClick={() => onSelect(time)}
-              className={`p-2 rounded border text-center transition
-              ${
-                disabled
-                  ? 'bg-gray-300 cursor-not-allowed text-gray-500'
-                  : `cursor-pointer ${hoverClass}`
-              }
-              ${isSelected ? selectedClass : ''}`}
-            >
-              {time}
-            </button>
-          );
-        })}
+                  return (
+                    <button
+                      key={time}
+                      disabled={disabled}
+                      onClick={() => onSelect(time)}
+                      className={`p-2 rounded border text-center transition
+                      ${
+                        disabled
+                          ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                          : `cursor-pointer ${hoverClass}`
+                      }
+                      ${isSelected ? selectedClass : ''}`}
+                    >
+                      {time}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null
+        )}
       </div>
 
-      {onBack && (
-        <button onClick={onBack} className="mt-4 px-3 py-1 bg-gray-200 rounded">
+      {/* Botão fixo na parte de baixo */}
+       {onBack && (
+        <button
+          className="w-full sm:w-auto px-4 py-3 bg-gray-200 rounded-xl hover:bg-gray-300 text-sm sm:text-base"
+          onClick={onBack}
+        >
           Voltar
         </button>
       )}

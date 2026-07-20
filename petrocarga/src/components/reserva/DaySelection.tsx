@@ -118,22 +118,23 @@ export default function DaySelection({
   };
 
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center items-center">
       <div>
-        <p className="font-semibold mb-3 text-center">Selecione um dia</p>
 
         <DayPicker
           mode="single"
           locale={ptBR}
+          navLayout='around'
+          animate
           selected={selected}
           onDayClick={onSelect}
           className="mx-auto"
           disabled={isDisabled}
           modifiersClassNames={{
             selected:
-              'bg-blue-600 text-white w-12 h-12 flex items-center justify-center rounded-full',
+              'bg-blue-800 text-white w-12 h-12 flex items-center justify-center rounded-full',
             disabled: 'text-gray-400 opacity-50 cursor-not-allowed',
-            today: 'bg-gray-100 font-semibold',
+            today: 'bg-gray-100 font-bold',
           }}
           modifiersStyles={{
             disabled: {

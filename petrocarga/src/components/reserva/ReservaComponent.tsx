@@ -153,7 +153,7 @@ export default function ReservaComponent({
   };
 
   return (
-    <div className="p-4 sm:p-6 border rounded-xl shadow-lg max-w-2xl mx-auto bg-white min-h-[60vh] flex flex-col">
+   <div className="p-6 border rounded-2xl shadow-lg mx-auto bg-white min-h-[60vh] flex flex-col">
       
 
 
@@ -161,7 +161,7 @@ export default function ReservaComponent({
       {/* ==================== INDICADOR DE PROGRESSO ==================== */}
       {step < 6 && <StepIndicator step={step} />}
 
-      <div className="flex-1 flex flex-col overflow-y-auto pb-4">
+      <div className="flex flex-1 justify-center">
         
         {/* ==================== STEP 1: SELEÇÃO DO DIA ==================== */}
         {step === 1 && (
@@ -278,9 +278,9 @@ export default function ReservaComponent({
             {success ? (
               // Tela de Sucesso
               <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 shadow-sm animate-scale">
+                <div className="w-20 h-20 bg-green-500 text-white rounded-full flex items-center justify-center mb-6 shadow-2xl animate-scale">
                   <svg
-                    className="w-10 h-10"
+                    className="w-11 h-11"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
