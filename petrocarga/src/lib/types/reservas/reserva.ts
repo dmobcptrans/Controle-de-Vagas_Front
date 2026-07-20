@@ -257,10 +257,42 @@ export type ReservaGet = {
 
   vaga: {
     id: string;
+
     endereco: {
+      id: string;
+      codigoPmp: string;
       logradouro: string;
       bairro: string;
     };
+
+    area: 'AZUL' | 'AMARELA' | 'VERDE' | string;
+    numeroEndereco: string;
+    referenciaEndereco: string;
+    tipoVaga: string;
+
+    latitudeInicio: number;
+    longitudeInicio: number;
+    latitudeFim: number;
+    longitudeFim: number;
+
+    comprimento: number;
+    quantidade: number;
+
+    status: 'DISPONIVEL' | 'OCUPADA' | string;
+
+    operacoesVaga: {
+      id: string;
+      diaSemanaAsEnum:
+        | 'DOMINGO'
+        | 'SEGUNDA'
+        | 'TERCA'
+        | 'QUARTA'
+        | 'QUINTA'
+        | 'SEXTA'
+        | 'SABADO';
+      horaInicio: string;
+      horaFim: string;
+    }[];
   };
 
   motorista: {
@@ -280,7 +312,12 @@ export type ReservaGet = {
   fim: string;
   cidadeOrigem: string;
 
-  status: 'ATIVA' | 'CONCLUIDA' | 'RESERVADA' | 'REMOVIDA' | 'CANCELADA';
+  status:
+    | 'ATIVA'
+    | 'CONCLUIDA'
+    | 'RESERVADA'
+    | 'REMOVIDA'
+    | 'CANCELADA';
 };
 
 /**

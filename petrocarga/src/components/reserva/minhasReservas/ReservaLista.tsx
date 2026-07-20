@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Archive, CopyPlus } from 'lucide-react';
-import Link from 'next/link';
+import { ChevronDown, ChevronUp, Archive } from 'lucide-react';
 import ReservaCard from './ReservaCard';
 import { ReservaGet } from '@/lib/types/reservas/reserva';
 import EmptyState from './EmptyState';

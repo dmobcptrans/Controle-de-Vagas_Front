@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from 'react';
 import { cn } from '@/lib/utils';
+import { Navigation } from 'lucide-react';
 import {
   FileText,
   MapPin,
@@ -27,39 +28,39 @@ interface ReservaCardProps {
 /**
  * @component ReservaCard
  * @version 1.0.0
- * 
+ *
  * @description Card de exibição de reserva com ações contextuais.
  * Exibe informações da reserva e botões de ação conforme status e horário.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 AÇÕES DISPONÍVEIS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. GERAR DOCUMENTO:
  *    - Disponível sempre
  *    - Gera comprovante PDF da reserva
- * 
+ *
  * 2. CANCELAR (EXCLUIR):
  *    - Disponível apenas para status "RESERVADA"
  *    - Modal de confirmação
- * 
+ *
  * 3. EDITAR:
  *    - Disponível quando: status "RESERVADA" E minutosParaInicio > 30
  *    - Modal de edição
- * 
+ *
  * 4. CHECK-IN:
  *    - Disponível quando: status "RESERVADA" E
  *      agora >= (início - 5 min) E agora <= fim
  *    - Modal de confirmação
- * 
+ *
  * 5. CHECKOUT:
  *    - Disponível quando: status "ATIVA" E agora < fim
  *    - Modal de confirmação
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - useTransition: Gerencia loading de cada ação separadamente
  * - TEMPO REAL: Intervalo de 60s para atualizar verificação de disponibilidade
  * - CORES POR STATUS:
@@ -68,14 +69,14 @@ interface ReservaCardProps {
  *   - CONCLUIDA: border-b-blue-300
  *   - REMOVIDA: border-red-500
  *   - CANCELADA: border-b-blue-200
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - ReservaEditarModal: Modal de edição
  * - ReservaCheckinModal: Modal de check-in
- * 
+ *
  * @example
  * ```tsx
  * <ReservaCard
@@ -199,6 +200,20 @@ export default function ReservaCard({
     setModalEditarAberto(false);
   };
 
+  const handleAbrirGoogleMaps = () => {
+    const latitude =
+      (currentReserva.vaga.latitudeInicio + currentReserva.vaga.latitudeFim) /
+      2;
+
+    const longitude =
+      (currentReserva.vaga.longitudeInicio + currentReserva.vaga.longitudeFim) /
+      2;
+
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}&travelmode=driving`;
+
+    window.open(url, '_blank');
+  };
+
   // ==================== CORES POR STATUS ====================
   const statusColors = {
     ATIVA: 'border-green-900',
@@ -266,7 +281,6 @@ export default function ReservaCard({
 
       {/* ==================== AÇÕES ==================== */}
       <div className="flex flex-col items-stretch sm:items-end gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
-        
         {/* Status (mobile) */}
         <span
           className={cn(
@@ -304,7 +318,6 @@ export default function ReservaCard({
 
         {/* Botões de ação (grid) */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2 w-full sm:w-auto">
-          
           {/* Excluir (apenas RESERVADA) */}
           {currentReserva.status === 'RESERVADA' && (
             <button
@@ -404,11 +417,24 @@ export default function ReservaCard({
               )}
             </button>
           )}
+          {(currentReserva.status === 'ATIVA' ||
+            currentReserva.status === 'RESERVADA') && (
+            <button
+              onClick={handleAbrirGoogleMaps}
+              className={cn(
+                buttonVariants({ variant: 'outline' }),
+                'text-sm w-full sm:w-auto text-center flex items-center justify-center gap-2 py-2 border-blue-500 text-blue-600 hover:bg-blue-50',
+              )}
+            >
+              <Navigation className="w-4 h-4" />
+              Navegar
+            </button>
+          )}
         </div>
       </div>
 
       {/* ==================== MODAIS ==================== */}
-      
+
       {/* Modal de Exclusão */}
       {modalAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
