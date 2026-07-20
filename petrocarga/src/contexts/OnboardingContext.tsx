@@ -138,7 +138,7 @@ export function OnboardingProvider({
   const [checked, setChecked] = useState(false);
 
   const { user, refreshUser, loading } = useAuth();
-  const isVeiculoOnlyFlow = !!user?.cpf && user?.veiculos.length === 0;
+  const isVeiculoOnlyFlow = !!user?.cpf && user?.possuiVeiculoAtivo;
 
   const [data, setData] = useState<OnboardingData>({
     cpf: '',
@@ -156,7 +156,7 @@ export function OnboardingProvider({
     if (!user) return;
 
     const precisaCpf = !user.cnpj && !user.cpf;
-    const precisaVeiculo = user.veiculos.length === 0;
+    const precisaVeiculo = user.possuiVeiculoAtivo == false;
 
     // Se não precisa de cadastro complementar, não abre modal
     if (!precisaCpf && !precisaVeiculo) {
@@ -190,7 +190,7 @@ export function OnboardingProvider({
 
       if (prev === 3) {
         // Após termos, verifica se precisa de veículo
-        if (user?.veiculos.length === 0) {
+        if (user?.possuiVeiculoAtivo == false) {
           return 4; // Vai para etapa de veículo
         }
         // Se não precisa, fecha modal
@@ -230,7 +230,7 @@ export function OnboardingProvider({
 
       toast.success('Cadastro completo com sucesso!');
 
-      if (user?.veiculos.length === 0) {
+      if (user?.possuiVeiculoAtivo == false) {
         setStep(4);
         return;
       }

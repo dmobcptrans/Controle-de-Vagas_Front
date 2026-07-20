@@ -20,7 +20,7 @@ interface UserData {
   permissao: 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE' | 'EMPRESA';
   cpf?: string;
   cnpj?: string;
-  veiculos: Veiculo[];
+  possuiVeiculoAtivo: boolean;
 }
 
 /**
@@ -37,7 +37,7 @@ function normalizeUserData(data: Record<string, unknown>): UserData {
     permissao: (data.permissao as UserData['permissao']) ?? 'MOTORISTA',
     cpf: data.cpf ? String(data.cpf) : undefined,
     cnpj: data.cnpj ? String(data.cnpj) : undefined,
-    veiculos: Array.isArray(data.veiculos) ? (data.veiculos as Veiculo[]) : [],
+    possuiVeiculoAtivo: data.possuiVeiculoAtivo ? Boolean(data.possuiVeiculoAtivo) : false,
   };
 }
 
