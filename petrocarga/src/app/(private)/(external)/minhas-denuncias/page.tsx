@@ -64,7 +64,7 @@ function PaginationControls({
   return (
     <div className="flex flex-col items-center gap-3 mt-8 px-2">
       <div className="text-xs sm:text-sm text-gray-600 text-center">
-        Mostrando {startItem} - {endItem} de {totalElements} reservas
+        Mostrando {startItem} - {endItem} de {totalElements} denúncias
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2">

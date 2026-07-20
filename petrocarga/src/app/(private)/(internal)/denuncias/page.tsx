@@ -1,126 +1,38 @@
 'use client';
 
 import { useDenuncias } from '@/components/hooks/useDenuncias';
-import { AlertCircle, Info, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  AlertCircle,
+  Info,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  TriangleAlert,
+} from 'lucide-react';
 import DenunciaLista from '@/components/gestor/denuncia/DenunciaLista';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
-/**
- * @component DenunciasAgente
- * @version 1.0.0
- *
- * @description Página de visualização de denúncias para agentes/gestores.
- * Gerencia os estados de carregamento, erro e lista vazia do hook useDenuncias.
- *
- * ----------------------------------------------------------------------------
- * 📋 FLUXO COMPLETO:
- * ----------------------------------------------------------------------------
- *
- * 1. HOOK DE DADOS:
- *    - useDenuncias() gerencia toda a lógica de busca
- *    - Retorna denúncias, loading, error e função refetch
- *
- * 2. RENDERIZAÇÃO CONDICIONAL (4 ESTADOS):
- *
- *    a) LOADING:
- *       - Exibe spinner centralizado
- *       - Mensagem "Carregando denúncias..."
- *       - Atributo aria-busy para acessibilidade
- *
- *    b) ERRO:
- *       - Ícone de alerta vermelho
- *       - Mensagem de erro específica
- *       - Botão "Tentar novamente" (chama refetch)
- *
- *    c) LISTA VAZIA (sem denúncias):
- *       - Ícone de alerta cinza
- *       - Mensagem "Nenhuma denúncia encontrada"
- *       - Sem botão de ação (não há o que recarregar)
- *
- *    d) LISTA COM DADOS:
- *       - Título "Denúncias"
- *       - Componente DenunciaLista com as denúncias
- *       - Passa função onRefresh para atualizações manuais
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - COMPONENTE CLIENT: Usa 'use client' porque:
- *   - Utiliza hooks React (useDenuncias)
- *   - Tem interatividade (botão de tentar novamente)
- *   - Estados de UI condicionais
- *
- * - HOOK CUSTOMIZADO: useDenuncias encapsula:
- *   - Lógica de busca de dados
- *   - Estados de loading/error
- *   - Função de refetch para recarregar
- *   - Isolamento de responsabilidades
- *
- * - RENDERIZAÇÃO CONDICIONAL: 4 estados distintos
- *   tratados separadamente para melhor UX e manutenibilidade
- *
- * - ACESSIBILIDADE:
- *   - aria-busy="true" durante loading para leitores de tela
- *   - Estrutura semântica (section, h1)
- *   - Contraste adequado nas cores
- *
- * - LAYOUT RESPONSIVO:
- *   - max-w-2xl para legibilidade em desktop
- *   - Padding responsivo (px-4 md:px-6 lg:px-8)
- *   - min-h-screen para footer sempre no final
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - useDenuncias: Hook customizado que gerencia busca de denúncias
- * - DenunciaLista: Componente que renderiza a lista de denúncias
- * - Button: Componente UI reutilizável
- *
- * ----------------------------------------------------------------------------
- * 🎨 UX/UI:
- * ----------------------------------------------------------------------------
- *
- * - Loading: Spinner animado com mensagem clara
- * - Erro: Feedback visual vermelho com opção de retry
- * - Lista vazia: Mensagem amigável sem frustração
- * - Lista com dados: Título claro e scroll suave
- * - Todas as telas ocupam altura total (min-h-screen)
- * - Design consistente com o sistema de design
- *
- * @example
- * // Uso em rota de gestor/agente
- * <DenunciasAgente />
- *
- * @see /components/hooks/useDenuncias.ts - Hook de dados
- * @see /components/gestor/denuncia/DenunciaLista.tsx - Lista de denúncias
- */
+import { CTA } from '@/components/ui/CTA/CTA';
 
 export default function DenunciasAgente() {
-  // --------------------------------------------------------------------------
-  // HOOK DE DADOS
-  // --------------------------------------------------------------------------
+  const {
+    denuncias,
+    loading,
+    error,
+    refetch,
+    currentPage,
+    handlePageChange,
+    tamanhoPagina,
+    totalElementos,
+    totalPaginas,
+  } = useDenuncias();
 
-  /**
-   * useDenuncias gerencia:
-   * - denuncias: Array de denúncias do backend
-   * - loading: Booleano indicando busca em andamento
-   * - error: Mensagem de erro ou null
-   * - refetch: Função para recarregar dados manualmente
-   */
-  const { denuncias, loading, error, refetch } = useDenuncias();
-
+  // TODO: substitua pelo hook/contexto real de usuário (ex: useAuth())
+  const { user } = useAuth();
   // --------------------------------------------------------------------------
-  // RENDERIZAÇÃO CONDICIONAL - 4 ESTADOS
+  // ESTADO 1: LOADING
   // --------------------------------------------------------------------------
-
-  /**
-   * ESTADO 1: LOADING
-   * Exibido enquanto os dados estão sendo buscados
-   * Inclui atributo de acessibilidade para leitores de tela
-   */
   if (loading) {
     return (
       <div
@@ -137,11 +49,9 @@ export default function DenunciasAgente() {
     );
   }
 
-  /**
-   * ESTADO 2: ERRO
-   * Exibido quando a requisição falha
-   * Oferece botão para tentar novamente (refetch)
-   */
+  // --------------------------------------------------------------------------
+  // ESTADO 2: ERRO
+  // --------------------------------------------------------------------------
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 md:p-6 text-center">
@@ -165,11 +75,9 @@ export default function DenunciasAgente() {
     );
   }
 
-  /**
-   * ESTADO 3: LISTA VAZIA
-   * Exibido quando a requisição foi bem-sucedida mas não há dados
-   * Não oferece botão de retry pois não há o que recarregar
-   */
+  // --------------------------------------------------------------------------
+  // ESTADO 3: LISTA VAZIA
+  // --------------------------------------------------------------------------
   if (!denuncias.length) {
     return (
       <div className="p-4 md:p-6 flex flex-col items-center justify-center py-12 md:py-16 text-center min-h-[60vh]">
@@ -186,42 +94,115 @@ export default function DenunciasAgente() {
     );
   }
 
-  /**
-   * ESTADO 4: LISTA COM DADOS
-   * Renderiza o título e o componente de lista
-   * Passa função onRefresh para permitir atualizações manuais
-   */
-  return (
-    <section
-      className="min-h-screen bg-gray-50 py-8"
-      aria-label="Lista de denúncias"
-    >
-      <div className="w-full max-w-2xl mx-auto px-4 md:px-6 lg:px-8 flex flex-col gap-6">
-        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 text-center">
-          Denúncias
-        </h1>
-        <DenunciaLista denuncias={denuncias} onRefresh={refetch} />
+  // --------------------------------------------------------------------------
+  // ESTADO 4: LISTA COM DADOS + PAGINAÇÃO
+  // --------------------------------------------------------------------------
+  const startItem = currentPage * tamanhoPagina + 1;
+  const endItem = Math.min((currentPage + 1) * tamanhoPagina, totalElementos);
+  const isFirstPage = currentPage === 0;
+  const isLastPage = currentPage >= totalPaginas - 1;
 
-        {/* Tutorial Link */}
-        <div className="mt-6">
-          <Link
-            href="/agente/tutorial#denuncias"
-            className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors group w-full"
-          >
-            <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-              <Info className="h-5 w-5 text-[#1351B4]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-800">
-                Novo por aqui?
+  return (
+    <div className="min-h-screen bg-[#f5f5f0]">
+      {/* ==================== HEADER ==================== */}
+      <header className="bg-blue-800 px-4 pt-3 pb-6 sm:px-6 md:px-8 sm:pt-4 sm:pb-7">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1">
+            Suas Denúncias, {user?.nome?.split(' ')[0] || 'motorista'}
+          </h1>
+
+          <div className="text-xs sm:text-sm text-white/70 space-y-0.5">
+            {totalElementos > 0 ? (
+              <p className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                <span>
+                  Página {currentPage + 1} de {totalPaginas}
+                </span>
+                <span className="hidden sm:inline">•</span>
+                <span>
+                  Total: {totalElementos} denúncia
+                  {totalElementos !== 1 ? 's' : ''}
+                </span>
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Aprenda a acompanhar e responder às denúncias dos motoristas
-              </p>
-            </div>
-          </Link>
+            ) : (
+              <p>Nenhuma denúncia encontrada</p>
+            )}
+          </div>
         </div>
-      </div>
-    </section>
+      </header>
+
+      <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
+        <div className="-mt-4 mb-5">
+          <CTA
+            title="Nenhuma Denúncia Em Processo"
+            description="Veja o histórico e atualizações sobre elas"
+            icon={<TriangleAlert className="h-5 w-5 text-white" />}
+          />
+        </div>
+
+        <div className="w-full mx-auto px-4 md:px-6 lg:px-8 flex flex-col gap-6">
+          <DenunciaLista denuncias={denuncias} onRefresh={refetch} />
+
+          {/* ==================== PAGINAÇÃO ==================== */}
+          {totalPaginas > 1 && (
+            <nav
+              className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white border border-gray-100 rounded-xl p-4"
+              aria-label="Navegação de páginas"
+            >
+              <p className="text-sm text-gray-500 order-2 sm:order-1">
+                Mostrando {startItem} - {endItem} de {totalElementos} denúncias
+              </p>
+
+              <div className="flex items-center gap-2 order-1 sm:order-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={isFirstPage}
+                  aria-label="Página anterior"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline ml-1">Anterior</span>
+                </Button>
+
+                <span className="text-sm font-medium text-gray-700 px-2 tabular-nums">
+                  {currentPage + 1} / {totalPaginas}
+                </span>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={isLastPage}
+                  aria-label="Próxima página"
+                >
+                  <span className="hidden sm:inline mr-1">Próxima</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </nav>
+          )}
+
+          {/* Tutorial Link */}
+          <div className="mt-6">
+            <Link
+              href="/agente/tutorial#denuncias"
+              className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors group w-full"
+            >
+              <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
+                <Info className="h-5 w-5 text-[#1351B4]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-800">
+                  Novo por aqui?
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Aprenda a acompanhar e responder às denúncias dos motoristas
+                </p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

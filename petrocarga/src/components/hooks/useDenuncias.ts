@@ -1,114 +1,71 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Denuncia } from '@/lib/types/denuncia';
+import { DenunciaResponse } from '@/lib/types/denuncia';
 import { getDenuncias } from '@/services/api/denunciaApi';
 import toast from 'react-hot-toast';
 
-/**
- * @hook useDenuncias
- * @version 1.0.0
- * 
- * @description Hook customizado para gerenciamento de denúncias.
- * Fornece funções para carregar denúncias, estados de loading e erro.
- * 
- * ----------------------------------------------------------------------------
- * 📋 RETORNO:
- * ----------------------------------------------------------------------------
- * 
- * @property {Denuncia[]} denuncias - Lista de denúncias carregadas
- * @property {boolean} loading - Estado de carregamento
- * @property {string | null} error - Mensagem de erro (se houver)
- * @property {() => Promise<void>} refetch - Função para recarregar denúncias
- * 
- * ----------------------------------------------------------------------------
- * 📋 FLUXO COMPLETO:
- * ----------------------------------------------------------------------------
- * 
- * 1. CARREGAMENTO INICIAL:
- *    - useEffect dispara fetchDenuncias na montagem
- *    - setLoading(true) ativa estado de carregamento
- * 
- * 2. BUSCA NA API:
- *    - Chama getDenuncias()
- *    - Aguarda resposta
- * 
- * 3. TRATAMENTO:
- *    - Sucesso: setDenuncias(data)
- *    - Erro: setError(mensagem), toast.error(mensagem), setDenuncias([])
- * 
- * 4. FINALIZAÇÃO:
- *    - setLoading(false) desativa carregamento
- * 
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- * 
- * - useCallback: Memoiza fetchDenuncias para evitar re-renders
- * - FEEDBACK DUPLO: Toast + estado error para UI e notificação
- * - ARRAY VAZIO NO ERRO: Garante que o componente não quebre
- * - REFETCH: Permite recarregar dados manualmente após ações
- * 
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- * 
- * - getDenuncias: API de listagem de denúncias
- * - Denuncia: Tipo de denúncia
- * - toast: Feedback visual (react-hot-toast)
- * 
- * @example
- * ```tsx
- * function DenunciasList() {
- *   const { denuncias, loading, error, refetch } = useDenuncias();
- * 
- *   if (loading) return <Spinner />;
- *   if (error) return <ErrorMessage message={error} onRetry={refetch} />;
- * 
- *   return (
- *     <div>
- *       {denuncias.map(denuncia => (
- *         <DenunciaCard key={denuncia.id} denuncia={denuncia} />
- *       ))}
- *       <button onClick={refetch}>Atualizar</button>
- *     </div>
- *   );
- * }
- * ```
- */
-
 export function useDenuncias() {
-  const [denuncias, setDenuncias] = useState<Denuncia[]>([]);
+  const [paginatedData, setPaginatedData] =
+    useState<DenunciaResponse | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
 
-  // ==================== FUNÇÃO DE BUSCA ====================
-  const fetchDenuncias = useCallback(async () => {
+  const fetchDenuncias = useCallback(async (page: number = 0) => {
     setLoading(true);
     setError(null);
+
     try {
-      const result = await getDenuncias();
-      setDenuncias(result.content ?? []);
+      const result = await getDenuncias(undefined, page);
+
+      setPaginatedData(result);
+      setCurrentPage(result.pagina);
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : 'Erro ao carregar denúncias. Por favor, tente novamente.';
+        err instanceof Error
+          ? err.message
+          : 'Erro ao carregar denúncias. Por favor, tente novamente.';
+
       setError(msg);
       toast.error(msg);
-      setDenuncias([]);
+      setPaginatedData(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // ==================== CARREGAMENTO INICIAL ====================
+  const handlePageChange = (newPage: number) => {
+    if (
+      newPage !== currentPage &&
+      newPage >= 0 &&
+      newPage < (paginatedData?.totalPaginas ?? 0)
+    ) {
+      fetchDenuncias(newPage);
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    }
+  };
+
   useEffect(() => {
-    fetchDenuncias();
+    fetchDenuncias(0);
   }, [fetchDenuncias]);
 
   return {
-    denuncias,
+    denuncias: paginatedData?.content ?? [],
     loading,
     error,
-    refetch: fetchDenuncias,
+
+    currentPage,
+    totalPaginas: paginatedData?.totalPaginas ?? 0,
+    totalElementos: paginatedData?.totalElementos ?? 0,
+    tamanhoPagina: paginatedData?.tamanhoPagina ?? 10,
+
+    refetch: () => fetchDenuncias(currentPage),
+    handlePageChange,
   };
 }
