@@ -390,7 +390,7 @@ export default function MinhasReservas() {
           /* ==================== ESTADO SEM RESERVAS ==================== */
           <div>
             <div className="-mt-4 mb-5">
-              <EmptyState />
+              <EmptyState  tipo='motorista'/>
             </div>
             <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 border-2 border-dashed border-gray-250 bg-white rounded-2xl">
               <ListFilterPlus className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />

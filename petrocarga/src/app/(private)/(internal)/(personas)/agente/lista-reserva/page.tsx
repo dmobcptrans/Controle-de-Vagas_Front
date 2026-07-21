@@ -1,872 +1,343 @@
 'use client';
 
-import ReservaRapidaCard from '@/components/agente/cards/reservaRapida-card';
-import { useAuth } from '@/components/hooks/useAuth';
-import {  finalizarForcado, getReservasRapidas } from '@/services/api/reservaApi';
-import { ReservaRapida } from '@/lib/types/reservas/reservaRapida';
-import {
-  AlertCircle,
-  ClipboardList,
-  Loader2,
-  Search,
-  X,
-  CheckCircle2,
-  Menu,
-  CalendarClock,
-  CalendarCheck,
-  Ban,
-  Trash2,
-  Clock,
-  Info,
-} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { Paginacao } from '@/components/paginacao/paginacao';
-import Link from 'next/link';
+import { useAuth } from '@/components/hooks/useAuth';
+import {
+  finalizarForcado,
+  getReservasRapidas,
+} from '@/services/api/reservaApi';
+import {
+  Info,
+  Loader2,
+  WifiOff,
+  ChevronLeft,
+  ChevronRight,
+  PlusIcon,
+  ListFilterPlus,
+} from 'lucide-react';
+import ListaReservaRapida from '@/components/agente/reserva/ListaReservaRapida';
+import {
+  ReservaRapida,
+  PaginatedReservaRapidaResponse,
+} from '@/lib/types/reservas/reservaRapida';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
+import EmptyState from '@/components/reserva/minhasReservas/EmptyState';
+import { Button } from '@/components/ui/button';
 
-const ITENS_POR_PAGINA = 10;
+function PaginationControls({
+  currentPage,
+  totalPages,
+  totalElements,
+  currentPageSize,
+  onPageChange,
+  isLoading,
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalElements: number;
+  currentPageSize: number;
+  onPageChange: (page: number) => void;
+  isLoading: boolean;
+}) {
+  const startItem = currentPage * currentPageSize + 1;
+  const endItem = Math.min((currentPage + 1) * currentPageSize, totalElements);
 
-type FiltroStatusReserva =
-  | 'todas'
-  | 'reservada'
-  | 'ativa'
-  | 'concluida'
-  | 'cancelada'
-  | 'removida';
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisiblePages =
+      typeof window !== 'undefined' && window.innerWidth < 640 ? 3 : 5;
 
-/**
- * @component ReservaRapidaPage
- * @version 2.0.0
- *
- * @description Página de gerenciamento de reservas rápidas para agentes.
- * As reservas são paginadas e filtradas diretamente pelo backend.
- *
- * ----------------------------------------------------------------------------
- * 📋 FLUXO COMPLETO:
- * ----------------------------------------------------------------------------
- *
- * 1. CARREGAMENTO INICIAL:
- *    - Verifica autenticação (user?.id)
- *    - Busca reservas via getReservasRapidas() com paginação e filtros
- *    - Estados: loading → erro → sucesso
- *
- * 2. FILTROS (ENVIADOS AO BACKEND):
- *    - Status: Todas | Reservada | Ativa | Concluída | Cancelada | Removida
- *    - Busca textual: placa do veículo
- *    - Botão "Limpar Filtros" quando ativos
- *    - Menu mobile com drawer de filtros
- *
- * 3. PAGINAÇÃO (GERENCIADA PELO BACKEND):
- *    - 10 itens por página (ITENS_POR_PAGINA)
- *    - Controles: página atual, total de páginas, total de elementos
- *    - Scroll suave para o topo ao mudar de página
- *
- * 4. RESPONSIVIDADE:
- *    - Desktop: filtros em linha, números de página visíveis
- *    - Mobile: menu de filtros colapsável (drawer)
- *    - Grid de cards: 1 coluna mobile → 2 tablets → 3 desktop → 4 telas grandes
- *
- * 5. ESTADOS DE UI:
- *    - Loading: spinner animado com ícone CalendarClock
- *    - Erro: card vermelho com botão de retry
- *    - Vazio (sem filtros): mensagem sem reservas
- *    - Vazio (com filtros): mensagem com opção "Ver todas"
- *    - Sucesso: grid de cards + paginação + rodapé estatístico
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - FILTROS NO BACKEND: Todos os filtros (status e busca) são enviados ao backend
- * - SEM FILTRAGEM LOCAL: Não utiliza useMemo para filtragem, evitando inconsistências
- * - PAGINAÇÃO DO BACKEND: totalPaginas e totalElements vêm da API
- * - CONVERSÃO DE PÁGINA: Frontend (1-indexed) → Backend (0-indexed)
- * - MAPEAMENTO DE STATUS: Converte string do frontend para enum do backend
- *
- * ----------------------------------------------------------------------------
- * 🎨 CORES DOS STATUS:
- * ----------------------------------------------------------------------------
- *
- * | Status     | Cor Desktop (ativo) | Cor Mobile (ativo) |
- * |------------|---------------------|--------------------|
- * | Todas      | 🔵 Azul             | 🔵 Azul            |
- * | Reservada  | 🟡 Amarelo          | 🟡 Amarelo         |
- * | Ativa      | 🟢 Verde            | 🟢 Verde           |
- * | Concluída  | 🟣 Roxo             | 🟣 Roxo            |
- * | Cancelada  | 🔴 Vermelho         | 🔴 Vermelho        |
- * | Removida   | ⚫ Cinza            | ⚫ Cinza           |
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - ReservaRapidaCard: Card individual de reserva
- * - Paginacao: Componente reutilizável de paginação
- * - getReservasRapidas: API de busca com paginação e filtros
- * - useAuth: Hook de autenticação
- *
- * @example
- * ```tsx
- * // Uso em rota de agente
- * <ReservaRapidaPage />
- * ```
- *
- * @see /components/agente/cards/reservaRapida-card.tsx - Card de reserva
- * @see /lib/api/reservaApi.ts - API de reservas
- */
-
-/**
- * @function mapStatusToBackend
- * @description Converte o status do frontend para o formato aceito pelo backend
- * @param status - Status selecionado no frontend
- * @returns Array com o status no formato do backend ou undefined para 'todas'
- */
-function mapStatusToBackend(
-  status: FiltroStatusReserva,
-):
-  | Array<'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'REMOVIDA' | 'CANCELADA'>
-  | undefined {
-  if (status === 'todas') {
-    return undefined;
-  }
-
-  const statusMap: Record<
-    Exclude<FiltroStatusReserva, 'todas'>,
-    'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'REMOVIDA' | 'CANCELADA'
-  > = {
-    reservada: 'RESERVADA',
-    ativa: 'ATIVA',
-    concluida: 'CONCLUIDA',
-    cancelada: 'CANCELADA',
-    removida: 'REMOVIDA',
-  };
-
-  return [statusMap[status]];
-}
-
-export default function ReservaRapidaPage() {
-  // --------------------------------------------------------------------------
-  // HOOKS E ESTADOS
-  // --------------------------------------------------------------------------
-
-  const { user } = useAuth();
-
-  const [reservas, setReservas] = useState<ReservaRapida[]>([]);
-  const [totalReservas, setTotalReservas] = useState<number>(0);
-  const [totalPaginasBackend, setTotalPaginasBackend] = useState<number>(0);
-  const [isLoadingReservas, setIsLoadingReservas] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [busca, setBusca] = useState<string>('');
-  const [paginaAtual, setPaginaAtual] = useState<number>(1);
-  const [filtroStatus, setFiltroStatus] =
-    useState<FiltroStatusReserva>('ativa');
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState<boolean>(false);
-
-  // --------------------------------------------------------------------------
-  // BUSCA DE DADOS COM FILTROS ENVIADOS AO BACKEND
-  // --------------------------------------------------------------------------
-
-  /**
-   * @function fetchReservas
-   * @description Busca reservas do backend aplicando paginação e filtros.
-   * Os filtros de status e busca são enviados diretamente à API.
-   */
-  const fetchReservas = useCallback(async (): Promise<void> => {
-    if (!user?.id) {
-      setIsLoadingReservas(false);
-      return;
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 0; i < totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 2) {
+        for (let i = 0; i < 3; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages - 1);
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(0);
+        pages.push('...');
+        for (let i = totalPages - 3; i < totalPages; i++) pages.push(i);
+      } else {
+        pages.push(0);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages - 1);
+      }
     }
 
-    setIsLoadingReservas(true);
-    setError(null);
-
-    try {
-      // Converte página frontend (1-indexed) para backend (0-indexed)
-      const numeroPaginaBackend: number = paginaAtual - 1;
-
-      // Converte o filtro de status para o formato do backend
-      const listaStatus:
-        | Array<'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'REMOVIDA' | 'CANCELADA'>
-        | undefined = mapStatusToBackend(filtroStatus);
-
-      // Busca textual: envia a placa como filtro se houver texto
-      const placaVeiculo: string | undefined = busca.trim() || undefined;
-
-      const response = await getReservasRapidas(
-        user.id,
-        numeroPaginaBackend,
-        ITENS_POR_PAGINA,
-        undefined, // vagaId - não utilizado neste contexto
-        placaVeiculo, // placaVeiculo - filtro por placa
-        undefined, // data - não utilizado neste contexto
-        listaStatus, // listaStatus - filtro por status
-      );
-
-      setReservas(response.content);
-      setTotalReservas(response.totalElements);
-      setTotalPaginasBackend(response.totalPaginas);
-    } catch (err: unknown) {
-      const errorMessage: string =
-        err instanceof Error
-          ? err.message
-          : 'Erro ao buscar as reservas. Tente novamente mais tarde.';
-      setError(errorMessage);
-      setReservas([]);
-      setTotalReservas(0);
-      setTotalPaginasBackend(0);
-    } finally {
-      setIsLoadingReservas(false);
-    }
-  }, [user?.id, paginaAtual, filtroStatus, busca]);
-
-const handleCheckoutReserva = useCallback(async (reservaId: string) => {
-  try {
-    await finalizarForcado(reservaId);
-    toast.success('Checkout realizado com sucesso!');
-    await fetchReservas();
-  } catch {
-    toast.error('Erro ao realizar checkout da reserva.');
-  }
-}, [fetchReservas]);
-
-  // Carrega dados quando página, filtro de status ou busca mudam
-  useEffect(() => {
-    fetchReservas();
-  }, [fetchReservas]);
-
-  // Reseta página quando filtros mudam
-  useEffect(() => {
-    setPaginaAtual(1);
-  }, [filtroStatus, busca]);
-
-  // --------------------------------------------------------------------------
-  // HANDLERS DE FILTRO
-  // --------------------------------------------------------------------------
-
-  const handleFiltroStatus = (status: FiltroStatusReserva): void => {
-    setFiltroStatus(status);
-    setMobileFiltersOpen(false);
+    return pages;
   };
 
-  const mostrarTodas = (): void => {
-    setFiltroStatus('todas');
-    setBusca('');
-    setPaginaAtual(1);
-    setMobileFiltersOpen(false);
-  };
-
-  const limparBusca = (): void => {
-    setBusca('');
-    setPaginaAtual(1);
-  };
-
-  // --------------------------------------------------------------------------
-  // FUNÇÕES AUXILIARES PARA ESTATÍSTICAS
-  // --------------------------------------------------------------------------
-
-  const contarPorStatus = (status: ReservaRapida['status']): number => {
-    return reservas.filter(
-      (reserva: ReservaRapida) => reserva.status === status,
-    ).length;
-  };
-
-  // --------------------------------------------------------------------------
-  // HANDLER DE PAGINAÇÃO
-  // --------------------------------------------------------------------------
-
-  const handlePageChange = (pagina: number): void => {
-    setPaginaAtual(pagina);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // --------------------------------------------------------------------------
-  // RENDERIZAÇÃO CONDICIONAL
-  // --------------------------------------------------------------------------
-
-  // ESTADO 1: LOADING INICIAL
-  if (isLoadingReservas && !reservas.length) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col items-center justify-center p-4">
-        <div className="text-center max-w-sm w-full">
-          <div className="relative mb-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 mx-auto rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-blue-600 animate-spin" />
-            </div>
-            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-white rounded-full border-4 border-gray-50 flex items-center justify-center">
-                <CalendarClock className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-blue-600" />
-              </div>
-            </div>
-          </div>
-          <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800 mb-2">
-            Carregando reservas
-          </h3>
-          <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-            Buscando informações das reservas rápidas...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // ESTADO 2: ERRO
-  if (error && !reservas.length) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="max-w-md w-full">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8 text-center">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
-              <AlertCircle className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-red-600" />
-            </div>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 mb-3">
-              Erro ao carregar reservas
-            </h2>
-            <p className="text-gray-600 mb-6 text-xs sm:text-sm md:text-base">
-              {error}
-            </p>
-            <button
-              onClick={() => fetchReservas()}
-              className="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-sm"
-            >
-              Tentar novamente
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // --------------------------------------------------------------------------
-  // RENDERIZAÇÃO PRINCIPAL
-  // --------------------------------------------------------------------------
-
-  // Verifica se há reservas para exibir
-  const temReservas: boolean = reservas.length > 0;
-  const temFiltrosAtivos: boolean = busca !== '' || filtroStatus !== 'todas';
+  if (totalPages <= 1) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 lg:py-8">
-        {/* HEADER */}
-        <div className="mb-4 sm:mb-6 md:mb-8 lg:mb-10">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900">
-                Reservas Rápidas
-              </h1>
-              <p className="text-gray-600 mt-1 text-xs sm:text-sm md:text-base">
-                Gerencie e visualize todas as suas reservas rápidas
-              </p>
-            </div>
+    <div className="flex flex-col items-center gap-3 mt-8 px-2">
+      <div className="text-xs sm:text-sm text-gray-600 text-center">
+        Mostrando {startItem} - {endItem} de {totalElements} reservas
+      </div>
 
-            {/* Botão mobile para abrir filtros */}
+      <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 0 || isLoading}
+          className="px-2 sm:px-3 text-xs sm:text-sm"
+        >
+          <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+          <span className="hidden sm:inline">Anterior</span>
+          <span className="sm:hidden">Ant</span>
+        </Button>
+
+        <div className="flex gap-1">
+          {getPageNumbers().map((page, index) => (
             <button
-              onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-              className="lg:hidden inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+              key={index}
+              onClick={() => typeof page === 'number' && onPageChange(page)}
+              disabled={typeof page !== 'number' || isLoading}
+              className={`
+                min-w-[32px] sm:min-w-[40px] h-8 sm:h-9 px-2 sm:px-3 
+                rounded-md text-xs sm:text-sm transition-colors
+                ${
+                  typeof page !== 'number'
+                    ? 'cursor-default'
+                    : currentPage === page
+                      ? 'bg-blue-600 text-white'
+                      : 'hover:bg-gray-100 text-gray-700'
+                }
+                ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+              `}
             >
-              <Menu className="h-4 w-4" />
-              Filtros
-              {temFiltrosAtivos && (
-                <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-              )}
+              {typeof page === 'number' ? page + 1 : page}
             </button>
-          </div>
+          ))}
+        </div>
 
-          {/* BARRA DE FILTROS */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            {/* Desktop filters */}
-            <div className="hidden lg:block p-4 sm:p-6">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                {/* Campo de busca */}
-                <div className="flex-1 min-w-0">
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      value={busca}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        setBusca(e.target.value);
-                        setPaginaAtual(1);
-                      }}
-                      placeholder="Buscar por placa do veículo..."
-                      className="w-full pl-9 sm:pl-10 md:pl-12 pr-9 sm:pr-10 md:pr-12 py-2 sm:py-2.5 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm"
-                    />
-                    {busca && (
-                      <button
-                        onClick={limparBusca}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-100 rounded-r-lg p-1 transition-colors"
-                        title="Limpar busca"
-                      >
-                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 hover:text-gray-600" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages - 1 || isLoading}
+          className="px-2 sm:px-3 text-xs sm:text-sm"
+        >
+          <span className="hidden sm:inline">Próxima</span>
+          <span className="sm:hidden">Próx</span>
+          <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
-                {/* Controles de filtro */}
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="flex gap-2 p-1 bg-gray-100 rounded-lg overflow-x-auto max-w-full">
-                    <button
-                      onClick={() => handleFiltroStatus('todas')}
-                      className={`inline-flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-all text-xs sm:text-sm whitespace-nowrap ${
-                        filtroStatus === 'todas'
-                          ? 'bg-white shadow-sm text-gray-900'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Todas</span>
-                      <span className="sm:hidden">Tds</span>
-                    </button>
+const updateOnlineStatus = (setIsOffline: (v: boolean) => void) => {
+  setIsOffline(!navigator.onLine);
+};
 
-                    <button
-                      onClick={() => handleFiltroStatus('reservada')}
-                      className={`inline-flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-all text-xs sm:text-sm whitespace-nowrap ${
-                        filtroStatus === 'reservada'
-                          ? 'bg-yellow-50 shadow-sm text-yellow-700'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Reservada</span>
-                      <span className="sm:hidden">Res</span>
-                      {filtroStatus === 'reservada' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-600 hidden sm:inline-block"></span>
-                      )}
-                    </button>
+export default function ReservaRapidaPage() {
+  const { user } = useAuth();
+  const [paginatedData, setPaginatedData] =
+    useState<PaginatedReservaRapidaResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isOffline, setIsOffline] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
 
-                    <button
-                      onClick={() => handleFiltroStatus('ativa')}
-                      className={`inline-flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-all text-xs sm:text-sm whitespace-nowrap ${
-                        filtroStatus === 'ativa'
-                          ? 'bg-green-50 shadow-sm text-green-700'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Ativa</span>
-                      <span className="sm:hidden">Atv</span>
-                      {filtroStatus === 'ativa' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-600 hidden sm:inline-block"></span>
-                      )}
-                    </button>
+  const fetchReservas = useCallback(
+    async (page: number = 0) => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
 
-                    <button
-                      onClick={() => handleFiltroStatus('concluida')}
-                      className={`inline-flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-all text-xs sm:text-sm whitespace-nowrap ${
-                        filtroStatus === 'concluida'
-                          ? 'bg-purple-50 shadow-sm text-purple-700'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      <CalendarCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Concluída</span>
-                      <span className="sm:hidden">Conc</span>
-                      {filtroStatus === 'concluida' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-600 hidden sm:inline-block"></span>
-                      )}
-                    </button>
+      setLoading(true);
 
-                    <button
-                      onClick={() => handleFiltroStatus('cancelada')}
-                      className={`inline-flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-all text-xs sm:text-sm whitespace-nowrap ${
-                        filtroStatus === 'cancelada'
-                          ? 'bg-red-50 shadow-sm text-red-700'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      <Ban className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Cancelada</span>
-                      <span className="sm:hidden">Canc</span>
-                      {filtroStatus === 'cancelada' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-600 hidden sm:inline-block"></span>
-                      )}
-                    </button>
+      try {
+        const response = await getReservasRapidas(user.id, page);
+        setPaginatedData(response);
+        setCurrentPage(response.pagina);
+        setIsOffline(false);
+      } catch {
+        toast.error('Não foi possível carregar as reservas atuais.');
+        if (!navigator.onLine) setIsOffline(true);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.id],
+  );
 
-                    <button
-                      onClick={() => handleFiltroStatus('removida')}
-                      className={`inline-flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md transition-all text-xs sm:text-sm whitespace-nowrap ${
-                        filtroStatus === 'removida'
-                          ? 'bg-gray-50 shadow-sm text-gray-700'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden sm:inline">Removida</span>
-                      <span className="sm:hidden">Rem</span>
-                      {filtroStatus === 'removida' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-gray-600 hidden sm:inline-block"></span>
-                      )}
-                    </button>
-                  </div>
+  const handlePageChange = (newPage: number) => {
+    if (
+      newPage !== currentPage &&
+      newPage >= 0 &&
+      newPage < (paginatedData?.totalPaginas || 0)
+    ) {
+      fetchReservas(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
-                  {temFiltrosAtivos && (
-                    <button
-                      onClick={mostrarTodas}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-xs sm:text-sm"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Limpar Filtros</span>
-                      <span className="sm:hidden">Limpar</span>
-                    </button>
-                  )}
+  const handleCheckoutReserva = useCallback(
+    async (reservaId: string) => {
+      try {
+        await finalizarForcado(reservaId);
+        toast.success('Checkout realizado com sucesso!');
+        await fetchReservas(currentPage);
+      } catch {
+        toast.error('Erro ao realizar checkout da reserva.');
+      }
+    },
+    [fetchReservas, currentPage],
+  );
 
-                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
-                    <CalendarClock className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-800">
-                      {totalReservas} reservas
-                    </span>
-                  </div>
-                </div>
-              </div>
+  useEffect(() => {
+    fetchReservas(0);
 
-              {/* Resumo dos filtros aplicados */}
-              {temFiltrosAtivos && (
-                <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="text-xs sm:text-sm text-gray-600">
-                    {busca ? (
-                      <>
-                        Resultados para{' '}
-                        <span className="font-medium text-blue-600 break-all">
-                          {busca}
-                        </span>
-                        {filtroStatus !== 'todas' && (
-                          <>
-                            {' '}
-                            |{' '}
-                            <span className="font-medium">
-                              {filtroStatus === 'reservada'
-                                ? 'Apenas reservadas'
-                                : filtroStatus === 'ativa'
-                                  ? 'Apenas ativas'
-                                  : filtroStatus === 'concluida'
-                                    ? 'Apenas concluídas'
-                                    : filtroStatus === 'cancelada'
-                                      ? 'Apenas canceladas'
-                                      : 'Apenas removidas'}
-                            </span>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        Mostrando{' '}
-                        <span className="font-medium text-blue-600">
-                          {filtroStatus === 'reservada'
-                            ? 'apenas reservas com status "Reservada"'
-                            : filtroStatus === 'ativa'
-                              ? 'apenas reservas com status "Ativa"'
-                              : filtroStatus === 'concluida'
-                                ? 'apenas reservas concluídas'
-                                : filtroStatus === 'cancelada'
-                                  ? 'apenas reservas canceladas'
-                                  : filtroStatus === 'removida'
-                                    ? 'apenas reservas removidas'
-                                    : 'todas as reservas'}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  {!temReservas && (
-                    <button
-                      onClick={mostrarTodas}
-                      className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                    >
-                      Ver todas as reservas
-                    </button>
-                  )}
-                  {temReservas && (
-                    <div className="text-xs sm:text-sm text-gray-500">
-                      Mostrando {reservas.length} de {totalReservas} reservas
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+    const handleOnline = () => {
+      fetchReservas(currentPage);
+      toast.success('Conexão restabelecida!');
+    };
 
-            {/* Mobile filters drawer */}
-            {mobileFiltersOpen && (
-              <div className="lg:hidden border-t border-gray-200 p-4 space-y-4">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={busca}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setBusca(e.target.value);
-                      setPaginaAtual(1);
-                    }}
-                    placeholder="Buscar reservas por placa..."
-                    className="w-full pl-9 pr-9 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  />
-                  {busca && (
-                    <button
-                      onClick={limparBusca}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    >
-                      <X className="h-4 w-4 text-gray-400" />
-                    </button>
-                  )}
-                </div>
+    const handleOffline = () => updateOnlineStatus(setIsOffline);
 
-                <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => handleFiltroStatus('todas')}
-                      className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        filtroStatus === 'todas'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <CalendarClock className="h-4 w-4" />
-                      Todas
-                    </button>
-                    <button
-                      onClick={() => handleFiltroStatus('reservada')}
-                      className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        filtroStatus === 'reservada'
-                          ? 'bg-yellow-600 text-white'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <Clock className="h-4 w-4" />
-                      Reservada
-                    </button>
-                    <button
-                      onClick={() => handleFiltroStatus('ativa')}
-                      className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        filtroStatus === 'ativa'
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Ativa
-                    </button>
-                    <button
-                      onClick={() => handleFiltroStatus('concluida')}
-                      className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        filtroStatus === 'concluida'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <CalendarCheck className="h-4 w-4" />
-                      Concluída
-                    </button>
-                    <button
-                      onClick={() => handleFiltroStatus('cancelada')}
-                      className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        filtroStatus === 'cancelada'
-                          ? 'bg-red-600 text-white'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <Ban className="h-4 w-4" />
-                      Cancelada
-                    </button>
-                    <button
-                      onClick={() => handleFiltroStatus('removida')}
-                      className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        filtroStatus === 'removida'
-                          ? 'bg-gray-600 text-white'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Removida
-                    </button>
-                  </div>
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
-                  {temFiltrosAtivos && (
-                    <button
-                      onClick={mostrarTodas}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
-                    >
-                      <X className="h-4 w-4" />
-                      Limpar todos os filtros
-                    </button>
-                  )}
-                </div>
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [fetchReservas]);
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO
+  // --------------------------------------------------------------------------
 
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <CalendarClock className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-700">
-                      {totalReservas} reservas no total
-                    </span>
-                  </div>
-                  {reservas.length !== totalReservas && (
-                    <span className="text-xs text-blue-600">
-                      {reservas.length} exibidas
-                    </span>
-                  )}
-                </div>
-              </div>
+  const reservas = paginatedData?.content || [];
+  const totalPaginas = paginatedData?.totalPaginas || 0;
+  const totalElementos = paginatedData?.totalElements || 0;
+  const tamanhoPagina = paginatedData?.tamanhoPagina || 10;
+
+  return (
+    <div className="min-h-screen bg-[#f5f5f0]">
+      {/* ==================== HEADER ==================== */}
+      <header className="bg-blue-800 px-4 pt-3 pb-6 sm:px-6 md:px-8 sm:pt-4 sm:pb-7">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1">
+            Suas Reservas, {user?.nome?.split(' ')[0] || 'motorista'}
+          </h1>
+          <div className="text-xs sm:text-sm text-white/70 space-y-0.5">
+            {totalElementos > 0 ? (
+              <>
+                <p className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                  <span>
+                    Página {currentPage + 1} de {totalPaginas}
+                  </span>
+                  <span className="hidden sm:inline">•</span>
+                  <span>
+                    Total: {totalElementos} reserva
+                    {totalElementos !== 1 ? 's' : ''}
+                  </span>
+                </p>
+              </>
+            ) : (
+              <p>Nenhuma reserva encontrada</p>
             )}
           </div>
         </div>
+      </header>
 
-        {/* Loading overlay durante filtros */}
-        {isLoadingReservas && (
-          <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600 animate-spin" />
-              <span className="text-xs sm:text-sm text-blue-700">
-                Aplicando filtros...
-              </span>
-            </div>
+      <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
+        {/* ==================== BANNER OFFLINE ==================== */}
+        {isOffline && (
+          <div className="w-full mb-4 p-3 sm:p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-lg flex items-center gap-2 text-xs sm:text-sm">
+            <WifiOff size={16} className="sm:w-[18px] sm:h-[18px] shrink-0" />
+            <span>
+              Você está offline. Conecte-se para atualizar ou modificar
+              reservas.
+            </span>
           </div>
         )}
 
-        {/* LISTA DE RESERVAS */}
-        <div className="space-y-3 sm:space-y-4 md:space-y-6">
-          {!temReservas ? (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 md:p-12 text-center">
-              {temFiltrosAtivos ? (
-                <div className="max-w-md mx-auto">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Search className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-400" />
-                  </div>
-                  <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">
-                    Nenhuma reserva encontrada
-                  </h3>
-                  <p className="text-gray-600 mb-5 sm:mb-6 text-xs sm:text-sm md:text-base">
-                    {busca
-                      ? `Não encontramos reservas com a placa "${busca}".`
-                      : `Não encontramos reservas com o status selecionado.`}
-                  </p>
-                  <button
-                    onClick={mostrarTodas}
-                    className="px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm"
-                  >
-                    Ver todas as reservas
-                  </button>
-                </div>
-              ) : (
-                <div className="max-w-md mx-auto">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                    <ClipboardList className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-400" />
-                  </div>
-                  <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">
-                    Nenhuma reserva cadastrada
-                  </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-                    Você ainda não criou nenhuma reserva rápida. Comece criando
-                    sua primeira reserva.
-                  </p>
-                </div>
-              )}
+        {/* ==================== ESTADO DE LOADING ==================== */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
+            <Loader2 className="animate-spin w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+            <span className="text-sm sm:text-base text-gray-600">
+              Carregando reservas...
+            </span>
+          </div>
+        ) : reservas.length === 0 ? (
+          /* ==================== ESTADO SEM RESERVAS ==================== */
+          <div>
+            <div className="-mt-4 mb-5">
+              <EmptyState tipo='agente'/>
             </div>
-          ) : (
-            <>
-              {/* Grid de cards responsivo */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-                {reservas.map((reserva: ReservaRapida) => (
-                  <div key={reserva.id} className="h-full">
-                    <ReservaRapidaCard reserva={reserva} onCheckout={handleCheckoutReserva}/>
-                  </div>
-                ))}
-              </div>
+            <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 border-2 border-dashed border-gray-250 bg-white rounded-2xl">
+              <ListFilterPlus className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
 
-              {/* Paginação */}
-              {totalPaginasBackend > 1 && (
-                <div className="mt-6 md:mt-8">
-                  <Paginacao
-                    paginaAtual={paginaAtual}
-                    totalPaginas={totalPaginasBackend}
-                    totalItens={totalReservas}
-                    itensPorPagina={ITENS_POR_PAGINA}
-                    itemLabel="reserva"
-                    itemLabelPlural="reservas"
-                    onPageChange={handlePageChange}
-                  />
-                </div>
-              )}
-
-              {/* Rodapé com resumo estatístico detalhado */}
-              <div className="mt-8 md:mt-12 p-4 md:p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="text-center sm:text-left">
-                    <h3 className="font-semibold text-gray-900 text-base md:text-lg">
-                      Total de Reservas: {totalReservas}
-                    </h3>
-                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mt-2">
-                      <div className="flex items-center gap-1 text-xs md:text-sm text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
-                        <Clock className="h-3 w-3" />
-                        <span>Reservada: {contarPorStatus('RESERVADA')}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs md:text-sm text-green-600 bg-green-50 px-2 py-1 rounded">
-                        <CheckCircle2 className="h-3 w-3" />
-                        <span>Ativa: {contarPorStatus('ATIVA')}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs md:text-sm text-purple-600 bg-purple-50 px-2 py-1 rounded">
-                        <CalendarCheck className="h-3 w-3" />
-                        <span>Concluída: {contarPorStatus('CONCLUIDA')}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs md:text-sm text-red-600 bg-red-50 px-2 py-1 rounded">
-                        <Ban className="h-3 w-3" />
-                        <span>Cancelada: {contarPorStatus('CANCELADA')}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs md:text-sm text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                        <Trash2 className="h-3 w-3" />
-                        <span>Removida: {contarPorStatus('REMOVIDA')}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Badge com contagem atual */}
-                  <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm md:text-base font-medium">
-                    {reservas.length}{' '}
-                    {reservas.length === 1 ? 'reserva' : 'reservas'} exibidas
-                    {filtroStatus !== 'todas' && (
-                      <span className="text-xs">
-                        {' '}
-                        (
-                        {filtroStatus === 'reservada'
-                          ? 'reservadas'
-                          : filtroStatus === 'ativa'
-                            ? 'ativas'
-                            : filtroStatus === 'concluida'
-                              ? 'concluídas'
-                              : filtroStatus === 'cancelada'
-                                ? 'canceladas'
-                                : 'removidas'}
-                        )
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* ── TUTORIAL LINK ── */}
-        <div className="mt-8">
-          <Link
-            href="/agente/tutorial#historicoreservas"
-            className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors group w-full"
-          >
-            <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-              <Info className="h-5 w-5 text-[#1351B4]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#071D41]">
-                Novo por aqui?
+              <p className="text-sm sm:text-base text-gray-500 mb-6">
+                Nenhuma reserva encontrada.
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Aprenda a filtrar, buscar e gerenciar suas reservas
-              </p>
+
+              <Link
+                href="/reservar-vaga"
+                className="
+      inline-flex items-center gap-2
+      rounded-xl bg-[#071D41]
+      px-5 py-3
+      text-sm font-semibold text-white
+      shadow-md transition-all duration-200
+      hover:bg-[#0C3D8A]  hover:shadow-lg hover:-translate-y-0.5
+      active:translate-y-0
+    "
+              >
+                <PlusIcon className="w-5 h-5" />
+                <span>Fazer Reserva</span>
+              </Link>
             </div>
-          </Link>
-        </div>
-      </div>
+          </div>
+        ) : (
+          <>
+            {/* ==================== LISTA DE RESERVAS ==================== */}
+            <ListaReservaRapida
+              reservas={reservas}
+              onCheckout={handleCheckoutReserva}
+            />
+
+            {/* ==================== CONTROLES DE PAGINAÇÃO ==================== */}
+            {totalPaginas > 1 && (
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPaginas}
+                totalElements={totalElementos}
+                currentPageSize={tamanhoPagina}
+                onPageChange={handlePageChange}
+                isLoading={loading}
+              />
+            )}
+          </>
+        )}
+
+        {/* ==================== TUTORIAL LINK ==================== */}
+        <Link
+          href="/tutorial#minhasreservas"
+          className="flex items-center gap-3 sm:gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-3 sm:p-4 hover:bg-blue-50/30 transition-colors mt-6 sm:mt-8"
+        >
+          <div className="bg-blue-50 rounded-xl w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center flex-shrink-0">
+            <Info className="h-4 w-4 sm:h-5 sm:w-5 text-[#1351B4]" />
+          </div>
+          <div>
+            <p className="text-sm sm:text-base font-semibold text-[#071D41]">
+              Novo por aqui?
+            </p>
+            <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
+              Veja como usar o sistema em 3 passos simples
+            </p>
+          </div>
+        </Link>
+      </main>
     </div>
   );
 }

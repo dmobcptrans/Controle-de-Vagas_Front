@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronDown, ChevronUp, Archive } from 'lucide-react';
-import ReservaCard from './ReservaCard';
-import { ReservaGet } from '@/lib/types/reservas/reserva';
-import EmptyState from './EmptyState';
+import ReservaRapidaCard from '../cards/reservaRapida-card';
+import { ReservaRapida } from '@/lib/types/reservas/reservaRapida';
+import EmptyState from '@/components/reserva/minhasReservas/EmptyState';
 
 // ==================== CONSTANTES (Fora do componente) ====================
 /**
@@ -35,19 +35,15 @@ const HIDDEN_STATUSES = new Set(['CONCLUIDA', 'CANCELADA', 'REMOVIDA']);
  * @function sortReservas
  * @description Ordena reservas por prioridade (ATIVA > RESERVADA > CONCLUIDA > CANCELADA > REMOVIDA)
  */
-const sortReservas = (a: ReservaGet, b: ReservaGet) => {
-  const statusA = (a.status || '').toUpperCase();
-  const statusB = (b.status || '').toUpperCase();
-  const pa = PRIORIDADE[statusA] ?? 999;
-  const pb = PRIORIDADE[statusB] ?? 999;
+const sortReservas = (a: ReservaRapida, b: ReservaRapida) => {
+  const pa = PRIORIDADE[a.status] ?? 999;
+  const pb = PRIORIDADE[b.status] ?? 999;
   return pa - pb;
 };
 
 interface ReservaListaProps {
-  reservas: ReservaGet[];
-  onGerarDocumento: (reservaId: string) => void;
-  onExcluir: (id: string) => void;
-  onCheckout: (reserva: ReservaGet) => void;
+  reservas: ReservaRapida[];
+  onCheckout: (reserva: string) => void;
 }
 
 /**
@@ -101,10 +97,8 @@ interface ReservaListaProps {
  * ```
  */
 
-export default function ReservaLista({
+export default function ListaReservaRapida({
   reservas,
-  onGerarDocumento,
-  onExcluir,
   onCheckout,
 }: ReservaListaProps) {
   const [mostrarOcultas, setMostrarOcultas] = useState(true);
@@ -124,7 +118,7 @@ export default function ReservaLista({
         }
         return acc;
       },
-      { visiveis: [] as ReservaGet[], ocultas: [] as ReservaGet[] },
+      { visiveis: [] as ReservaRapida[], ocultas: [] as ReservaRapida[] },
     );
 
     return {
@@ -139,16 +133,14 @@ export default function ReservaLista({
       <section className="flex flex-col gap-4 animate-in fade-in duration-200">
         {visiveis.length > 0 ? (
           visiveis.map((reserva) => (
-            <ReservaCard
+            <ReservaRapidaCard
               key={reserva.id}
               reserva={reserva}
-              onGerarDocumento={onGerarDocumento}
-              onExcluir={onExcluir}
               onCheckout={onCheckout}
             />
           ))
         ) : (
-          <EmptyState tipo='motorista' />
+          <EmptyState tipo='agente' />
         )}
       </section>
 
@@ -193,11 +185,7 @@ export default function ReservaLista({
                     key={reserva.id}
                     className="opacity-75 hover:opacity-100 transition-opacity"
                   >
-                    <ReservaCard
-                      reserva={reserva}
-                      onGerarDocumento={onGerarDocumento}
-                      onExcluir={onExcluir}
-                    />
+                    <ReservaRapidaCard reserva={reserva} />
                   </div>
                 ))}
               </div>
@@ -208,5 +196,3 @@ export default function ReservaLista({
     </div>
   );
 }
-
-
