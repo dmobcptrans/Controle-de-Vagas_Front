@@ -16,7 +16,6 @@ import {
 import { getReservasRapidas } from '@/services/api/reservaApi';
 import { getDenuncias } from '@/services/api/denunciaApi';
 import { useCallback, useEffect, useState } from 'react';
-import { Denuncia } from '@/lib/types/denuncia';
 import toast from 'react-hot-toast';
 import { ReservaRapida } from '@/lib/types/reservas/reservaRapida';
 
@@ -234,21 +233,21 @@ export default function Dashboard() {
       iconClass: 'bg-amber-50 text-amber-700',
     },
     {
-      href: '/agente/denuncias',
+      href: '/denuncias',
       icon: <TriangleAlert className="h-5 w-5" />,
       label: 'Denúncias',
       desc: 'Ocorrências',
       iconClass: 'bg-red-50 text-red-700',
     },
     {
-      href: '/agente/consulta',
+      href: '/consulta',
       icon: <Truck className="h-5 w-5" />,
       label: 'Consultar placa',
       desc: 'Veículos e infrações',
       iconClass: 'bg-green-50 text-green-700',
     },
     {
-      href: '/agente/perfil',
+      href: '/perfil',
       icon: <User className="h-5 w-5" />,
       label: 'Meu perfil',
       desc: 'Dados pessoais',
@@ -321,7 +320,7 @@ export default function Dashboard() {
         {/* ==================== CTA CONSULTA DE PLACA ==================== */}
         <div className="mb-5">
           <Link
-            href="/agente/consulta"
+            href="/consulta"
             className="flex items-center justify-between bg-white hover:bg-black/10 transition-colors rounded-2xl px-5 py-4 border-l-4 border-green-700 shadow-sm"
           >
             <div>
