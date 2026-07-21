@@ -3,8 +3,9 @@
 import { Denuncia } from '@/lib/types/denuncia';
 import { useState, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { MapPin, FileText, Tag, Clock } from 'lucide-react';
+import { MapPin, FileText, Tag, Clock, ChevronRight } from 'lucide-react';
 import { DenunciaAnaliseModal } from './denuncia-analise-modal';
+import { DenunciaDetalhes } from '@/components/motorista/cards/denuncia/denuncia-detalhes';
 import { iniciarAnaliseDenuncia } from '@/services/api/denunciaApi';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -136,6 +137,7 @@ export default function DenunciaCard({
 }: DenunciaCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isDetalhesModalOpen, setIsDetalhesModalOpen] = useState(false);
   const [loadingInicio, setLoadingInicio] = useState(false);
   const [statusAtual, setStatusAtual] = useState(denuncia.status);
 
@@ -175,6 +177,9 @@ export default function DenunciaCard({
 
   const handleCloseModal = useCallback(() => setModalOpen(false), []);
 
+  const podeAbrirDetalhes =
+    statusAtual === 'PROCEDENTE' || statusAtual === 'IMPROCEDENTE';
+
   // ==================== DENÚNCIA ATUALIZADA PARA O MODAL ====================
   const denunciaParaModal = useMemo(
     () => ({ ...denuncia, status: statusAtual }),
@@ -184,11 +189,17 @@ export default function DenunciaCard({
   return (
     <>
       <article
+        onClick={() => {
+          if (podeAbrirDetalhes) {
+            setIsDetalhesModalOpen(true);
+          }
+        }}
         className={cn(
           'flex flex-col sm:flex-row justify-between items-start sm:items-center',
           'bg-white p-5 rounded-xl border border-slate-200 border-l-4 shadow-sm',
           'hover:shadow-md hover:border-slate-300 transition-all gap-4 w-full',
           currentStatus.border,
+          podeAbrirDetalhes && 'cursor-pointer',
         )}
       >
         {/* ==================== CONTEÚDO DO CARD ==================== */}
@@ -255,11 +266,18 @@ export default function DenunciaCard({
           </div>
         </div>
 
+        {podeAbrirDetalhes && (
+          <ChevronRight/>
+        )}
+
         {/* ==================== BOTÃO DE AÇÃO ==================== */}
         {podeAnalisar && (
           <div className="flex self-end sm:self-center">
             <Button
-              onClick={iniciarAnalise}
+              onClick={(e) => {
+                e.stopPropagation();
+                iniciarAnalise();
+              }}
               disabled={loadingInicio}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
@@ -300,6 +318,13 @@ export default function DenunciaCard({
         onClose={handleCloseModal}
         denuncia={denunciaParaModal}
         onFinalizado={handleFinalizado}
+      />
+
+      {/* Modal de detalhes */}
+      <DenunciaDetalhes
+        isOpen={isDetalhesModalOpen}
+        onClose={() => setIsDetalhesModalOpen(false)}
+        denuncia={denuncia}
       />
     </>
   );
