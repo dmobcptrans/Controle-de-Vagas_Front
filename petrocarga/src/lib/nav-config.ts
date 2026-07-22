@@ -259,7 +259,7 @@ export const navGroups: NavGroup[] = [
         icon: User,
         iconBg: 'bg-blue-100',
         iconColor: 'text-blue-700',
-        roles: [ROLES.ADMIN, ROLES.GESTOR], // Ajustado para englobar visualização
+        roles: [ROLES.ADMIN], 
       },
     ],
   },

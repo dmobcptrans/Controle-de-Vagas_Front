@@ -16,6 +16,8 @@ import {
 import { Agente } from '@/lib/types/personas/agente';
 import AgenteCard from '@/components/gestor/cards/agentes-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
+import FloatingButton from '@/components/ui/floatingButton';
+import { useRouter } from 'next/navigation';
 
 const ITENS_POR_PAGINA = 9;
 
@@ -95,6 +97,7 @@ export default function AgentesPage() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('ativos');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const router = useRouter();
 
   // ==================== PAGINAÇÃO (dados vindos da API) ====================
   const [totalPaginas, setTotalPaginas] = useState(0);
@@ -588,6 +591,7 @@ export default function AgentesPage() {
           )}
         </div>
       </div>
+      <FloatingButton label='Adicionar Agente' onClick={() => router.push("/gestor/adicionar-agente")}/>
     </div>
   );
 }
