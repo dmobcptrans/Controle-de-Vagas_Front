@@ -471,7 +471,7 @@ export default function CadastroGestores() {
                           placeholder="gestor@organizacao.com"
                           required
                           value={email}
-                          onChange={(e) => setEmail(e.target.value.toLowerCase)}
+                          onChange={(e) => setEmail(e.target.value.toLowerCase())}
                           autoComplete="email"
                         />
                         {/* Ícone de email */}
