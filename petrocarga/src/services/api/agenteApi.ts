@@ -109,12 +109,25 @@ export async function addAgente(_: unknown, formData: FormData) {
  * }
  * ```
  */
-export async function deleteAgente(agenteId: string): Promise<AgenteResponse> {
+export async function deleteAgente(
+  agenteId: string,
+): Promise<AgenteResponse> {
   try {
-    await clientApi(`/petrocarga/agentes/${agenteId}`, { method: 'DELETE' });
-    return { error: false, message: 'Agente deletado com sucesso!' };
-  } catch (err: unknown) {
-    console.error('Erro ao deletar agente:', err);
+    const res = await clientApi(`/petrocarga/agentes/${agenteId}`, {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      throw new Error('Não foi possível desativar o agente.');
+    }
+
+    return {
+      error: false,
+      message: 'Agente desativado com sucesso!',
+    };
+  } catch (err) {
+    console.error(err);
+
     return {
       error: true,
       message: err instanceof Error ? err.message : 'Erro desconhecido',

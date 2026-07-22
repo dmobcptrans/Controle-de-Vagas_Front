@@ -154,6 +154,9 @@ export default function AgentesPage() {
     [user?.id],
   );
 
+  const recarregarAgentes = useCallback(async () => {
+    await fetchAgentes(filtroStatus, buscaDebounced, paginaAtual);
+  }, [fetchAgentes, filtroStatus, buscaDebounced, paginaAtual]);
   // Carrega dados quando status, busca (debounced) ou página mudam
   useEffect(() => {
     fetchAgentes(filtroStatus, buscaDebounced, paginaAtual);
@@ -572,7 +575,11 @@ export default function AgentesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 {agentes.map((agente) => (
                   <div key={agente.usuario.id} className="h-full">
-                    <AgenteCard agente={agente} />
+                    <AgenteCard
+                      key={agente.usuario.id}
+                      agente={agente}
+                      onStatusChange={recarregarAgentes}
+                    />
                   </div>
                 ))}
               </div>
@@ -591,7 +598,10 @@ export default function AgentesPage() {
           )}
         </div>
       </div>
-      <FloatingButton label='Adicionar Agente' onClick={() => router.push("/gestor/adicionar-agente")}/>
+      <FloatingButton
+        label="Adicionar Agente"
+        onClick={() => router.push('/gestor/adicionar-agente')}
+      />
     </div>
   );
 }

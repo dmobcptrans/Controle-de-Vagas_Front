@@ -101,20 +101,28 @@ export default function AgenteCard({
     if (isUpdating) return;
 
     setIsUpdating(true);
+
     try {
-      await deleteAgente(agente.usuario.id);
+      const result = await deleteAgente(agente.usuario.id);
+
+      if (result.error) {
+        throw new Error(result.message);
+      }
+
       setModalExcluirAberto(false);
       toast.success('Agente desativado com sucesso!');
 
-      // Atualiza a lista se o callback foi fornecido
       if (onStatusChange) {
-        onStatusChange();
-      } else {
-        // Fallback: recarrega a página se não houver callback
-        window.location.reload();
+        await onStatusChange();
       }
     } catch (err) {
-      toast.error('Erro ao desativar agente. Tente novamente.');
+      console.error(err);
+
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : 'Erro ao desativar agente. Tente novamente.',
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -133,30 +141,28 @@ export default function AgenteCard({
     if (isUpdating) return;
 
     setIsUpdating(true);
-    try {
-      // CORREÇÃO: Usando a API correta reativarUsuario
 
-      console.log('agente completo:', agente);
-      console.log('agente.usuario:', agente.usuario);
-      console.log('ID do usuário:', agente.usuario?.id);
+    try {
       await reativarUsuario(agente.usuario.id);
+
       setModalAtivarAberto(false);
       toast.success('Agente ativado com sucesso!');
 
-      // Atualiza a lista se o callback foi fornecido
       if (onStatusChange) {
-        onStatusChange();
-      } else {
-        // Fallback: recarrega a página se não houver callback
-        window.location.reload();
+        await onStatusChange();
       }
     } catch (err) {
-      toast.error('Erro ao ativar agente. Tente novamente.');
+      console.error(err);
+
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : 'Erro ao ativar agente. Tente novamente.',
+      );
     } finally {
       setIsUpdating(false);
     }
   };
-
   return (
     <>
       <article

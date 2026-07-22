@@ -324,25 +324,30 @@ export async function ativarConta(
 }
 
 export async function reativarUsuario(usuarioId: string): Promise<void> {
-  try {
-    if (!usuarioId) {
-      throw new Error('ID do usuário é obrigatório');
-    }
+  if (!usuarioId) {
+    throw new Error('ID do usuário é obrigatório');
+  }
 
-    const res = await clientApi(
-      `/petrocarga/usuarios/reativar/${usuarioId}?id=${usuarioId}`,
-      {
-        method: 'POST',
-      },
-    );
-    console.log('ID enviado:', usuarioId);
+  const res = await clientApi(
+    `/petrocarga/usuarios/reativar/${usuarioId}`,
+    {
+      method: 'POST',
+    },
+  );
 
-    const data = await res.json();
+  if (!res.ok) {
+    throw new Error('Não foi possível reativar o usuário.');
+  }
 
-    if (!data.success) {
-      throw new Error(data.message || 'Não foi possível reativar o usuário');
-    }
-  } catch (error: unknown) {
-    throw new Error(extractMessage(error));
+  // Se existir corpo, lê.
+  // Se não existir (204), simplesmente retorna.
+  const text = await res.text();
+
+  if (!text) return;
+
+  const data = JSON.parse(text);
+
+  if (data.success === false) {
+    throw new Error(data.message);
   }
 }
