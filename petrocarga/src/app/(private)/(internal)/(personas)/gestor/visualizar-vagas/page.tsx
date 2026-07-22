@@ -125,7 +125,7 @@ export default function Page() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-8 pb-16">
+      <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* ── Barra de Pesquisa ── */}
         <div className="-mt-4 mb-5 max-w-4xl mx-auto">
           <div
@@ -179,10 +179,10 @@ export default function Page() {
           </div>
         </div>
 
-        {/* ── Layout principal: Mapa (esquerda) + Lista (direita) ── */}
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Coluna esquerda — Mapa */}
-          <div className="flex-1 h-[70vh] min-h-[300px]">
+        {/* ── Layout principal: Mapa + Lista ── */}
+        <div className="flex flex-col bg-white gap-3 p-2 rounded-2xl shadow-xl">
+          {/* Mapa */}
+          <div className="flex-1">
             <ViewMap
               selectedPlace={selectedPlace}
               searchQuery={searchQuery}
@@ -190,8 +190,8 @@ export default function Page() {
             />
           </div>
 
-          {/* Coluna direita — Lista de Vagas */}
-          <div className="flex-1 flex flex-col bg-white border border-gray-100 h-[70vh] min-h-[300px] p-4 rounded-2xl shadow-md overflow-y-auto">
+          {/* Lista de Vagas */}
+          <div className="flex-1 flex flex-col h-[70vh] p-4">
             <ListaVagas
               searchQuery={searchQuery}
               onSelectFirstCoordinate={(coord) => setFirstCoord(coord)}

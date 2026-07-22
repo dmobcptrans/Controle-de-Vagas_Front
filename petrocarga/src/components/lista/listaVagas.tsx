@@ -5,15 +5,6 @@ import VagaItem from '@/components/gestor/cards/vagas-item';
 import { Vaga } from '@/lib/types/vaga';
 import * as vagaActions from '@/services/api/vagaApi';
 
-/**
- * @function useDebounce
- * @description Hook customizado para debounce de valores de input.
- * Atrasa a atualização do valor para reduzir chamadas desnecessárias.
- * 
- * @param value - Valor a ser debounced
- * @param delay - Tempo de atraso em milissegundos (padrão: 300ms)
- * @returns Valor debounced
- */
 function useDebounce(value: string, delay = 300) {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -29,53 +20,8 @@ type ListaVagasProps = {
   searchQuery: string;
   onSelectFirstCoordinate?: (coord: { lat: number; lng: number }) => void;
 };
-/**
- * @component ListaVagas
- * @version 1.0.0
- * 
- * @description Componente de listagem de vagas com filtro e ordenação.
- * Exibe vagas com busca em tempo real e ordenação por disponibilidade.
- * 
- * ----------------------------------------------------------------------------
- * 📋 FUNCIONALIDADES:
- * ----------------------------------------------------------------------------
- * 
- * 1. BUSCA/FILTRO:
- *    - Campo de texto para filtrar vagas
- *    - Filtra por: área, logradouro, bairro, referência de endereço
- *    - Debounce de 300ms para evitar chamadas excessivas
- * 
- * 2. ORDENAÇÃO:
- *    - Botão toggle para ordenar por disponibilidade
- *    - ChevronUp: disponíveis primeiro
- *    - ChevronDown: disponíveis por último
- * 
- * 3. CARREGAMENTO:
- *    - Estado de loading durante busca inicial
- *    - Tratamento de erro com mensagem
- *    - Lista vazia com mensagem amigável
- * 
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- * 
- * - DEBOUNCE: Reduz chamadas de re-render durante digitação
- * - FILTRO EM MEMÓRIA: Filtra os dados já carregados (não faz requisição extra)
- * - ORDENAÇÃO CUSTOMIZADA: Prioriza status 'DISPONIVEL' conforme toggle
- * - LAYOUT: Lista com scroll (overflow-y-auto) e altura flexível
- * 
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- * 
- * - VagaItem: Card individual de vaga
- * - getVagas: API de listagem de vagas
- * 
- * @example
- * ```tsx
- * <ListaVagas />
- * ```
- */
+
+const TAMANHO_PAGINA = 10;
 
 export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasProps) {
   const [vagas, setVagas] = useState<Vaga[]>([]);
@@ -84,51 +30,64 @@ export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasP
   const [disponiveisPrimeiro, setDisponiveisPrimeiro] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ==================== PAGINAÇÃO ====================
+  const [paginaAtual, setPaginaAtual] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [totalElementos, setTotalElementos] = useState(0);
+
   const filtroDebounced = useDebounce(filtro, 300);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // ==================== CARREGAMENTO INICIAL ====================
-useEffect(() => {
-  const fetchVagas = async () => {
-    setLoading(true);
-    try {
-      const data: Vaga[] = await vagaActions.getVagasFiltradas({
-        logradouro: debouncedSearchQuery,
-      });
+  // Reseta para a primeira página sempre que a busca mudar
+  useEffect(() => {
+    setPaginaAtual(0);
+  }, [debouncedSearchQuery]);
 
-      setVagas(data);
+  // ==================== CARREGAMENTO ====================
+  useEffect(() => {
+    const fetchVagas = async () => {
+      setLoading(true);
+      try {
+        const resultado = await vagaActions.getVagasFiltradas({
+          logradouro: debouncedSearchQuery,
+          numeroPagina: paginaAtual,
+          tamanhoPagina: TAMANHO_PAGINA,
+        });
 
-     if (
-  data.length > 0 &&
-  onSelectFirstCoordinate &&
-  debouncedSearchQuery !== ''
-) {
-  const primeira = data[0];
+        setVagas(resultado.vagas);
+        setTotalPaginas(resultado.totalPaginas);
+        setTotalElementos(resultado.totalElementos);
 
-  if (
-    primeira?.latitudeInicio !== undefined &&
-    primeira?.longitudeInicio !== undefined
-  ) {
-    onSelectFirstCoordinate({
-      lat: primeira.latitudeInicio,
-      lng: primeira.longitudeInicio,
-    });
-  }
-}
+        if (
+          resultado.vagas.length > 0 &&
+          onSelectFirstCoordinate &&
+          debouncedSearchQuery !== ''
+        ) {
+          const primeira = resultado.vagas[0];
 
-    } catch (err) {
-      console.error('Erro ao carregar vagas:', err);
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      setVagas([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+          if (
+            primeira?.latitudeInicio !== undefined &&
+            primeira?.longitudeInicio !== undefined
+          ) {
+            onSelectFirstCoordinate({
+              lat: primeira.latitudeInicio,
+              lng: primeira.longitudeInicio,
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao carregar vagas:', err);
+        setError(err instanceof Error ? err.message : 'Erro desconhecido');
+        setVagas([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchVagas();
-}, [debouncedSearchQuery]);
+    fetchVagas();
+  }, [debouncedSearchQuery, paginaAtual]);
 
-  // ==================== FILTRO ====================
+  // ==================== FILTRO (em memória, na página atual) ====================
   const vagasFiltradas = vagas.filter((vaga) => {
     const filtroLower = filtroDebounced.toLowerCase();
     return (
@@ -142,14 +101,12 @@ useEffect(() => {
   // ==================== ORDENAÇÃO ====================
   const vagasOrdenadas = [...vagasFiltradas].sort((a, b) => {
     if (disponiveisPrimeiro) {
-      // Disponíveis primeiro
       return a.status === 'DISPONIVEL' && b.status !== 'DISPONIVEL'
         ? -1
         : b.status === 'DISPONIVEL' && a.status !== 'DISPONIVEL'
         ? 1
         : 0;
     } else {
-      // Disponíveis por último
       return a.status !== 'DISPONIVEL' && b.status === 'DISPONIVEL'
         ? -1
         : b.status !== 'DISPONIVEL' && a.status === 'DISPONIVEL'
@@ -158,25 +115,49 @@ useEffect(() => {
     }
   });
 
+  const podeVoltar = paginaAtual > 0;
+  const podeAvancar = paginaAtual + 1 < totalPaginas;
+
   return (
     <div className="flex flex-col h-full">
-      
       {/* ==================== LISTA SCROLLÁVEL ==================== */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-        
-        {/* Estado: Carregando */}
         {loading ? (
           <p className="text-center text-gray-500 mt-4">Carregando vagas...</p>
         ) : vagasOrdenadas.length > 0 ? (
-          /* Estado: Com dados */
           vagasOrdenadas.map((vaga) => <VagaItem key={vaga.id} vaga={vaga} />)
         ) : (
-          /* Estado: Sem dados */
           <p className="text-gray-500 text-center mt-4">
             Nenhuma vaga encontrada.
           </p>
         )}
       </div>
+
+      {/* ==================== CONTROLES DE PAGINAÇÃO ==================== */}
+      {!loading && totalPaginas > 1 && (
+        <div className="flex items-center justify-between border-t pt-3 mt-2 px-1">
+          <button
+            onClick={() => setPaginaAtual((p) => Math.max(0, p - 1))}
+            disabled={!podeVoltar}
+            className="px-3 py-1 text-sm rounded-md border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+          >
+            Anterior
+          </button>
+
+          <span className="text-sm text-gray-600">
+            Página {paginaAtual + 1} de {totalPaginas}
+            {totalElementos > 0 && ` · ${totalElementos} vagas`}
+          </span>
+
+          <button
+            onClick={() => setPaginaAtual((p) => p + 1)}
+            disabled={!podeAvancar}
+            className="px-3 py-1 text-sm rounded-md border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+          >
+            Próxima
+          </button>
+        </div>
+      )}
     </div>
   );
 }

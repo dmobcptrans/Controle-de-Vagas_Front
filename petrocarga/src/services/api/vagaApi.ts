@@ -285,7 +285,21 @@ type GetVagasParams = {
   logradouro?: string;
 };
 
-export async function getVagasFiltradas(params?: GetVagasParams): Promise<Vaga[]> {
+export type VagasPaginadas = {
+  vagas: Vaga[];
+  paginaAtual: number;
+  totalPaginas: number;
+  totalElementos: number;
+};
+
+export async function getVagasFiltradas(params?: GetVagasParams): Promise<VagasPaginadas> {
+  const vazio: VagasPaginadas = {
+    vagas: [],
+    paginaAtual: params?.numeroPagina ?? 0,
+    totalPaginas: 0,
+    totalElementos: 0,
+  };
+
   try {
     const queryParams = new URLSearchParams();
 
@@ -311,10 +325,7 @@ export async function getVagasFiltradas(params?: GetVagasParams): Promise<Vaga[]
 
     // AJUSTE 1: Troca os sinais de '+' gerados pelo URLSearchParams por '%20'
     const queryString = queryParams.toString().replace(/\+/g, '%20');
-
-    const query = queryString
-      ? `?${queryString}`
-      : '';
+    const query = queryString ? `?${queryString}` : '';
 
     // AJUSTE 2: Remove o '/all' da rota para bater com o seu padrão
     const res = await clientApi(`/petrocarga/vagas${query}`, {
@@ -322,11 +333,28 @@ export async function getVagasFiltradas(params?: GetVagasParams): Promise<Vaga[]
     });
 
     const data = await res.json();
-    return Array.isArray(data) ? data : (data?.content ?? []);
+
+    // Caso a API retorne array puro (sem paginação)
+    if (Array.isArray(data)) {
+      return {
+        vagas: data,
+        paginaAtual: params?.numeroPagina ?? 0,
+        totalPaginas: 1,
+        totalElementos: data.length,
+      };
+    }
+
+    // Caso a API retorne objeto paginado (padrão Spring Data)
+    return {
+      vagas: data?.content ?? [],
+      paginaAtual: data?.number ?? params?.numeroPagina ?? 0,
+      totalPaginas: data?.totalPages ?? 1,
+      totalElementos: data?.totalElements ?? (data?.content?.length ?? 0),
+    };
   } catch (err) {
-    const error = err as ApiError; // Assumindo que ApiError está tipado em outro lugar
+    const error = err as ApiError;
     console.error('Erro ao buscar vagas:', error);
-    return [];
+    return vazio;
   }
 }
 

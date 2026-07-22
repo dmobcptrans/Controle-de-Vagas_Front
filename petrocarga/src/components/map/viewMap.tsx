@@ -76,9 +76,8 @@ interface MapProps {
  * ```
  */
 
-export function ViewMap({ selectedPlace, onSelectPlace, searchQuery, firstCoord }: MapProps){
+export function ViewMap({ onSelectPlace, firstCoord }: MapProps){
   const mapContainer = useRef<HTMLDivElement>(null);
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   // ==================== HOOKS ====================
@@ -124,7 +123,7 @@ useEffect(() => {
     <div className="w-full h-full rounded-2xl overflow-visible relative">
       <div
         ref={mapContainer}
-        className="w-full h-full rounded-2xl shadow-md overflow-visible"
+        className="w-full h-full rounded-2xl  overflow-visible"
         style={{ minHeight: '300px' }}
       />
       
