@@ -93,24 +93,24 @@ interface ReservaRapidaCardProps {
  */
 const STATUS_MAP: Record<string, { badge: string; border: string }> = {
   reservada: {
-    badge: 'bg-green-100 text-green-700 border-green-500',
+    badge: 'bg-green-100 border-green-500',
     border: 'border-green-500',
   },
   concluida: {
-    badge: 'bg-blue-100 text-blue-700 border-blue-300',
-    border: 'border-blue-300',
+    badge: 'bg-gray-100 border-b-blue-300',
+    border: 'border-b-blue-300',
   },
   ativa: {
-    badge: 'bg-green-100 text-green-700 border-green-900',
+    badge: 'bg-green-100 text-green-900',
     border: 'border-green-900',
   },
   removida: {
-    badge: 'bg-red-100 text-red-700 border-red-500',
+    badge: 'bg-gray-100 border-red-500',
     border: 'border-red-500',
   },
   cancelada: {
-    badge: 'bg-gray-100 text-gray-700 border-gray-300',
-    border: 'border-gray-300',
+    badge: 'bg-gray-100 border-b-blue-200',
+    border: 'border-b-blue-200',
   },
 };
 
@@ -161,142 +161,142 @@ export default function ReservaRapidaCard({
     setModalAbertoCheckout(true);
   };
 
-return (
-  <article
-    className={cn(
-      'flex flex-col bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow border-l-4 gap-4 w-full',
-      'sm:flex-row sm:justify-between',
-      'max-sm:gap-3 max-sm:p-3',
-      statusStyle.border,
-    )}
-  >
-    {/* Conteúdo */}
-    <div className="flex-1 flex flex-col gap-2 min-w-0">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-800 truncate leading-tight">
-          {reserva.logradouro} - {reserva.bairro}
-        </h3>
+  return (
+    <article
+      className={cn(
+        'flex flex-col bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow border-l-4 gap-4 w-full',
+        'sm:flex-row sm:justify-between',
+        'max-sm:gap-3 max-sm:p-3',
+        statusStyle.border,
+      )}
+    >
+      {/* Conteúdo */}
+      <div className="flex-1 flex flex-col gap-2 min-w-0">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 truncate leading-tight">
+            {reserva.logradouro} - {reserva.bairro}
+          </h3>
 
+          <span
+            className={cn(
+              'hidden sm:inline-block px-2 py-0.5 rounded-full text-xs sm:text-sm font-semibold shadow-sm',
+              statusStyle.badge,
+            )}
+          >
+            {reserva.status}
+          </span>
+        </div>
+
+        {/* Placa */}
+        <p className="text-sm sm:text-base text-gray-500 flex items-center gap-1">
+          <Truck className="w-4 h-4 text-gray-400 shrink-0" />
+          {reserva.placa}
+        </p>
+
+        {/* Cidade de origem */}
+        {reserva.cidadeOrigem !== 'Petrópolis - RJ' && (
+          <p className="text-sm sm:text-base text-gray-500 flex items-center gap-1">
+            <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
+            Local de Origem: {reserva.cidadeOrigem}
+          </p>
+        )}
+
+        {/* Data */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs sm:text-sm text-gray-600">
+          <span className="flex items-center gap-1">
+            <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+            {formatDate(reserva.inicio)}
+          </span>
+
+          <span className="flex items-center gap-1">
+            <Clock className="w-4 h-4 text-gray-400 shrink-0" />
+            {formatTime(reserva.inicio)} - {formatTime(reserva.fim)}
+          </span>
+        </div>
+      </div>
+
+      {/* Ações */}
+      <div className="flex flex-col items-stretch sm:items-end gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
+        {/* Badge Mobile */}
         <span
           className={cn(
-            'hidden sm:inline-block px-2 py-0.5 rounded-full text-xs sm:text-sm font-semibold shadow-sm border',
+            'sm:hidden px-3 py-1 rounded-full text-xs font-semibold shadow-sm text-center border',
             statusStyle.badge,
           )}
         >
           {reserva.status}
         </span>
-      </div>
 
-      {/* Placa */}
-      <p className="text-sm sm:text-base text-gray-500 flex items-center gap-1">
-        <Truck className="w-4 h-4 text-gray-400 shrink-0" />
-        {reserva.placa}
-      </p>
-
-      {/* Cidade de origem */}
-      {reserva.cidadeOrigem !== 'Petrópolis - RJ' && (
-        <p className="text-sm sm:text-base text-gray-500 flex items-center gap-1">
-          <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-          Local de Origem: {reserva.cidadeOrigem}
-        </p>
-      )}
-
-      {/* Data */}
-      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs sm:text-sm text-gray-600">
-        <span className="flex items-center gap-1">
-          <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-          {formatDate(reserva.inicio)}
-        </span>
-
-        <span className="flex items-center gap-1">
-          <Clock className="w-4 h-4 text-gray-400 shrink-0" />
-          {formatTime(reserva.inicio)} - {formatTime(reserva.fim)}
-        </span>
-      </div>
-    </div>
-
-    {/* Ações */}
-    <div className="flex flex-col items-stretch sm:items-end gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
-      {/* Badge Mobile */}
-      <span
-        className={cn(
-          'sm:hidden px-3 py-1 rounded-full text-xs font-semibold shadow-sm text-center border',
-          statusStyle.badge,
+        {podeFazerCheckout && (
+          <button
+            onClick={handleOpenCheckoutModal}
+            disabled={isCheckingOut}
+            className={cn(
+              buttonVariants({ variant: 'default' }),
+              'text-sm w-full sm:w-auto text-center flex items-center justify-center gap-2 py-2 bg-red-600 hover:bg-red-700 transition',
+              isCheckingOut && 'opacity-70 cursor-not-allowed',
+            )}
+          >
+            {isCheckingOut ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Preparando...
+              </>
+            ) : (
+              <>
+                <CheckCheck className="w-4 h-4" />
+                Checkout
+              </>
+            )}
+          </button>
         )}
-      >
-        {reserva.status}
-      </span>
+      </div>
 
-      {podeFazerCheckout && (
-        <button
-          onClick={handleOpenCheckoutModal}
-          disabled={isCheckingOut}
-          className={cn(
-            buttonVariants({ variant: 'default' }),
-            'text-sm w-full sm:w-auto text-center flex items-center justify-center gap-2 py-2 bg-red-600 hover:bg-red-700 transition',
-            isCheckingOut && 'opacity-70 cursor-not-allowed',
-          )}
-        >
-          {isCheckingOut ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Preparando...
-            </>
-          ) : (
-            <>
-              <CheckCheck className="w-4 h-4" />
-              Checkout
-            </>
-          )}
-        </button>
-      )}
-    </div>
+      {/* Modal Checkout */}
+      {modalAbertoCheckout && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setModalAbertoCheckout(false)}
+          />
 
-    {/* Modal Checkout */}
-    {modalAbertoCheckout && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div
-          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-          onClick={() => setModalAbertoCheckout(false)}
-        />
+          <div className="relative bg-white rounded-2xl p-6 w-96 max-w-full shadow-2xl flex flex-col items-center">
+            <h3 className="text-xl font-semibold text-gray-800 mb-3 text-center">
+              Confirmar Checkout
+            </h3>
 
-        <div className="relative bg-white rounded-2xl p-6 w-96 max-w-full shadow-2xl flex flex-col items-center">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3 text-center">
-            Confirmar Checkout
-          </h3>
+            <p className="text-gray-600 mb-6 text-center">
+              Tem certeza que deseja fazer Checkout? Esta ação não pode ser
+              desfeita.
+            </p>
 
-          <p className="text-gray-600 mb-6 text-center">
-            Tem certeza que deseja fazer Checkout? Esta ação não pode ser
-            desfeita.
-          </p>
+            <div className="flex justify-center gap-3 w-full">
+              <button
+                onClick={() => {
+                  setModalAbertoCheckout(false);
+                  setIsCheckingOut(false);
+                }}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
+              >
+                Cancelar
+              </button>
 
-          <div className="flex justify-center gap-3 w-full">
-            <button
-              onClick={() => {
-                setModalAbertoCheckout(false);
-                setIsCheckingOut(false);
-              }}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
-            >
-              Cancelar
-            </button>
-
-            <button
-              onClick={async () => {
-                setIsCheckingOut(true);
-                setModalAbertoCheckout(false);
-                await onCheckout?.(reserva.id);
-                setIsCheckingOut(false);
-              }}
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
-            >
-              Checkout
-            </button>
+              <button
+                onClick={async () => {
+                  setIsCheckingOut(true);
+                  setModalAbertoCheckout(false);
+                  await onCheckout?.(reserva.id);
+                  setIsCheckingOut(false);
+                }}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
+              >
+                Checkout
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </article>
-);
+      )}
+    </article>
+  );
 }

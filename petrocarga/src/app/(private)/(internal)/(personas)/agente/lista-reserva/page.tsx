@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import ListaReservaRapida from '@/components/agente/reserva/ListaReservaRapida';
 import {
-  ReservaRapida,
   PaginatedReservaRapidaResponse,
 } from '@/lib/types/reservas/reservaRapida';
 import toast from 'react-hot-toast';
