@@ -653,7 +653,7 @@ export default function GestoresPage() {
           )}
         </div>
       </div>
-      <FloatingButton label='Adicionar Gestor' onClick={() => router.push("/gestor/adicionar-gestore")}/>
+      <FloatingButton label='Adicionar Gestor' onClick={() => router.push("/gestor/adicionar-gestores")}/>
     </div>
   );
 }
