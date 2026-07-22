@@ -12,7 +12,6 @@ import {
   MapPlus,
   Car,
   IdCard,
-  UserPlus,
   Bell,
   Clock,
 } from 'lucide-react';
@@ -169,16 +168,6 @@ export const navGroups: NavGroup[] = [
         icon: SquareParking,
         iconBg: 'bg-amber-100',
         iconColor: 'text-amber-700',
-        roles: [ROLES.GESTOR, ROLES.ADMIN],
-      },
-      {
-        key: 'adicionar-vaga',
-        href: '/gestor/adicionar-vagas',
-        label: 'Adicionar Vaga',
-        description: 'Cadastrar novo espaço no sistema',
-        icon: MapPlus,
-        iconBg: 'bg-green-100',
-        iconColor: 'text-green-700',
         roles: [ROLES.GESTOR, ROLES.ADMIN],
       },
       {

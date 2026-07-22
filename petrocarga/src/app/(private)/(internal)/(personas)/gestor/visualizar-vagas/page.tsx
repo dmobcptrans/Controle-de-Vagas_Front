@@ -3,7 +3,10 @@
 import { ViewMap } from '@/components/map/viewMap';
 import { useEffect, useState } from 'react';
 import { ListaVagas } from '@/components/lista/listaVagas';
-import { Search, X } from 'lucide-react';
+import { Info, Search, X } from 'lucide-react';
+import Link from 'next/link';
+import FloatingButton from '@/components/ui/floatingButton';
+import { useRouter } from 'next/navigation';
 
 /**
  * @component Page
@@ -76,11 +79,12 @@ export default function Page() {
 
   const [searchFocused, setSearchFocused] = useState(false);
 
+  const router = useRouter();
+
   const [firstCoord, setFirstCoord] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
- 
 
   // --------------------------------------------------------------------------
   // HANDLERS
@@ -180,7 +184,7 @@ export default function Page() {
         </div>
 
         {/* ── Layout principal: Mapa + Lista ── */}
-        <div className="flex flex-col bg-white gap-3 p-2 rounded-2xl shadow-xl">
+        <div className="flex flex-col bg-white gap-3 p-2 mb-4 rounded-2xl shadow-md">
           {/* Mapa */}
           <div className="flex-1">
             <ViewMap
@@ -198,8 +202,29 @@ export default function Page() {
             />
           </div>
         </div>
-
+        {/* Tutorial */}
+        <Link
+          href="/gestor/tutorial#disponibilidade"
+          className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"
+        >
+          <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+            <Info className="h-5 w-5 text-[#1351B4]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#071D41]">
+              Novo por aqui?
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Veja como usar o sistema em 3 passos simples
+            </p>
+          </div>
+        </Link>
       </main>
+
+      <FloatingButton
+        label="Adicionar Vaga"
+        onClick={() => router.push('/gestor/adicionar-vagas')}
+      />
     </div>
   );
 }

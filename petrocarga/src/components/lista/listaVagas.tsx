@@ -119,7 +119,7 @@ export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasP
   const podeAvancar = paginaAtual + 1 < totalPaginas;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* ==================== LISTA SCROLLÁVEL ==================== */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">
         {loading ? (
