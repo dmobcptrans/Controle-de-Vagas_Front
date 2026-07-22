@@ -182,7 +182,7 @@
 
 import { deleteGestor } from '@/services/api/gestorApi';
 import { reativarUsuario } from '@/services/api/recuperacaoApi';
-import { Gestor } from '@/lib/types/personas/gestor';
+import { Gestor, GestorResult } from '@/lib/types/personas/gestor';
 import { cn } from '@/lib/utils';
 import { Mail, Phone, Trash2, UserCircle, UserCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -191,7 +191,7 @@ import toast from 'react-hot-toast';
 import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
 
 interface GestorCardProps {
-  gestor: Gestor;
+  gestor: GestorResult;
   onStatusChange?: () => void; // Callback opcional para atualizar a lista após mudança de status
 }
 
@@ -272,7 +272,7 @@ export default function GestorCard({
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Determina se o gestor está ativo
-  const isAtivo = gestor.ativo === true;
+  const isAtivo = gestor.usuario.ativo === true;
 
   /**
    * @function handleExcluir
@@ -366,13 +366,13 @@ export default function GestorCard({
 
               <div className="min-w-0">
                 <h3 className="text-base font-semibold text-gray-800 truncate">
-                  {gestor.nome.split(' ')[0]}{' '}
-                  {gestor.nome.split(' ')[gestor.nome.split(' ').length - 1]}
+                  {gestor.usuario.nome.split(' ')[0]}{' '}
+                  {gestor.usuario.nome.split(' ')[gestor.usuario.nome.split(' ').length - 1]}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
                   <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                   <p className="text-sm text-gray-600 truncate">
-                    {gestor.email}
+                    {gestor.usuario.email}
                   </p>
                 </div>
               </div>
@@ -417,7 +417,7 @@ export default function GestorCard({
                   isAtivo ? 'text-gray-800' : 'text-gray-500',
                 )}
               >
-                {gestor.telefone || 'Não informado'}
+                {gestor.usuario.telefone || 'Não informado'}
               </p>
             </div>
 

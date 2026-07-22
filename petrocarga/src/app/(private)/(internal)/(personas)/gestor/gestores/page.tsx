@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import { getGestores } from '@/services/api/gestorApi';
-import { FiltrosGestor } from '@/lib/types/personas/gestor';
+import { FiltrosGestor, GestorResult } from '@/lib/types/personas/gestor';
 import {
   Loader2,
   Search,
@@ -13,14 +13,29 @@ import {
   XCircle,
   Menu,
 } from 'lucide-react';
-import { Gestor } from '@/lib/types/personas/gestor';
 import GestorCard from '@/components/gestor/cards/gestores-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
+import { useRouter } from 'next/navigation';
+import FloatingButton from '@/components/ui/floatingButton';
 
 const ITENS_POR_PAGINA = 9;
 
 type FiltroStatus = 'ativos' | 'inativos' | 'todos';
 
+/**
+ * @function useDebounce
+ * @description Atrasa a atualização de um valor para reduzir chamadas de API.
+ */
+function useDebounce<T>(value: T, delay = 400): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 /**
  * @component GestoresPage
  * @version 1.0.0
@@ -103,22 +118,29 @@ type FiltroStatus = 'ativos' | 'inativos' | 'todos';
 export default function GestoresPage() {
   // ==================== ESTADOS ====================
   const { user } = useAuth();
-  const [gestores, setGestores] = useState<Gestor[]>([]);
+  const [gestores, setGestores] = useState<GestorResult[]>([]);
   const [isLoadingGestores, setIsLoadingGestores] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('ativos');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const router = useRouter();
+
+  // ==================== PAGINAÇÃO (dados vindos da API) ====================
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [totalElementos, setTotalElementos] = useState(0);
+
+  const buscaDebounced = useDebounce(busca, 400);
 
   // ==================== BUSCA DE DADOS ====================
   /**
    * @function fetchGestores
-   * @description Busca gestores com base no filtro de status
+   * @description Busca gestores com base no const  de status
    * @param status - 'todos', 'ativos' ou 'inativos'
    */
   const fetchGestores = useCallback(
-    async (status: FiltroStatus) => {
+    async (status: FiltroStatus, nome: string, pagina: number) => {
       if (!user?.id) return;
 
       setIsLoadingGestores(true);
@@ -133,16 +155,26 @@ export default function GestoresPage() {
           filtros.ativo = false;
         }
 
-        const result = await getGestores(filtros);
-        if (result.error) {
-          setError(result.message || 'Erro ao carregar gestores');
-        } else {
-          setGestores(result.gestores || []);
+        if (nome.trim()) {
+          filtros.nome = nome.trim();
         }
-      } catch {
-        setError(
-          'Erro ao buscar os gestores cadastrados. Tente novamente mais tarde.',
+
+        const resultado = await getGestores(
+          filtros,
+          pagina - 1, // Backend é 0-indexado
+          ITENS_POR_PAGINA,
         );
+
+        setGestores(resultado.content ?? []);
+        setTotalPaginas(resultado.totalPaginas ?? 0);
+        setTotalElementos(resultado.totalElementos ?? 0);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Erro ao buscar os gestores cadastrados. Tente novamente mais tarde.',
+        );
+        setGestores([]);
       } finally {
         setIsLoadingGestores(false);
       }
@@ -152,13 +184,13 @@ export default function GestoresPage() {
 
   // Carrega dados quando filtro de status muda
   useEffect(() => {
-    fetchGestores(filtroStatus);
-  }, [fetchGestores, filtroStatus]);
+    fetchGestores(filtroStatus, buscaDebounced, paginaAtual);
+  }, [fetchGestores, filtroStatus, buscaDebounced, paginaAtual]);
 
   // Reseta página quando filtros mudam
   useEffect(() => {
     setPaginaAtual(1);
-  }, [filtroStatus, busca]);
+  }, [filtroStatus, buscaDebounced]);
 
   // ==================== HANDLERS DE FILTRO ====================
   const handleFiltroStatus = (status: FiltroStatus) => {
@@ -177,26 +209,6 @@ export default function GestoresPage() {
     setBusca('');
     setPaginaAtual(1);
   };
-
-  // ==================== FILTRAGEM E PAGINAÇÃO ====================
-  const gestoresFiltrados = useMemo(() => {
-    if (!busca.trim()) return gestores;
-
-    const termoBusca = busca.toLowerCase().trim();
-    return gestores.filter(
-      (gestor) =>
-        gestor.nome.toLowerCase().includes(termoBusca) ||
-        gestor.email.toLowerCase().includes(termoBusca) ||
-        (gestor.telefone && gestor.telefone.includes(termoBusca)),
-    );
-  }, [gestores, busca]);
-
-  const totalPaginas = Math.ceil(gestoresFiltrados.length / ITENS_POR_PAGINA);
-
-  const gestoresPaginados = useMemo(() => {
-    const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
-    return gestoresFiltrados.slice(inicio, inicio + ITENS_POR_PAGINA);
-  }, [gestoresFiltrados, paginaAtual]);
 
   // ==================== FUNÇÕES DE NAVEGAÇÃO ====================
   const handlePageChange = (pagina: number) => {
@@ -247,7 +259,7 @@ export default function GestoresPage() {
               {error}
             </p>
             <button
-              onClick={() => fetchGestores(filtroStatus)}
+              onClick={() => fetchGestores(filtroStatus, buscaDebounced, paginaAtual)}
               className="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-sm"
             >
               Tentar novamente
@@ -424,7 +436,7 @@ export default function GestoresPage() {
                       </>
                     )}
                   </div>
-                  {gestoresFiltrados.length === 0 ? (
+                  {gestores.length === 0 ? (
                     <button
                       onClick={mostrarTodos}
                       className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
@@ -433,7 +445,7 @@ export default function GestoresPage() {
                     </button>
                   ) : (
                     <div className="text-xs sm:text-sm text-gray-500">
-                      Mostrando {gestoresFiltrados.length} de {gestores.length}{' '}
+                      Mostrando {gestores.length} de {totalElementos}{' '}
                       gestores
                     </div>
                   )}
@@ -526,9 +538,9 @@ export default function GestoresPage() {
                       {gestores.length} gestores no total
                     </span>
                   </div>
-                  {gestoresFiltrados.length !== gestores.length && (
+                  {gestores.length !== totalElementos && (
                     <span className="text-xs text-blue-600">
-                      {gestoresFiltrados.length} filtrados
+                      {gestores.length} filtrados
                     </span>
                   )}
                 </div>
@@ -551,7 +563,7 @@ export default function GestoresPage() {
 
         {/* LISTA DE GESTORES */}
         <div className="space-y-3 sm:space-y-4 md:space-y-6">
-          {gestoresFiltrados.length === 0 ? (
+          {gestores.length === 0 ? (
             // Estado vazio
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 md:p-12 text-center">
               {busca || filtroStatus !== 'todos' ? (
@@ -594,8 +606,8 @@ export default function GestoresPage() {
             <>
               {/* Grid de cards responsivo */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                {gestoresPaginados.map((gestor) => (
-                  <div key={gestor.id} className="h-full">
+                {gestores.map((gestor) => (
+                  <div key={gestor.usuario.id} className="h-full">
                     <GestorCard gestor={gestor} />
                   </div>
                 ))}
@@ -610,17 +622,17 @@ export default function GestoresPage() {
                     <span className="font-medium text-blue-600">
                       {Math.min(
                         (paginaAtual - 1) * ITENS_POR_PAGINA + 1,
-                        gestoresFiltrados.length,
+                        gestores.length,
                       )}{' '}
                       -{' '}
                       {Math.min(
                         paginaAtual * ITENS_POR_PAGINA,
-                        gestoresFiltrados.length,
+                        gestores.length,
                       )}
                     </span>{' '}
                     de{' '}
                     <span className="font-medium">
-                      {gestoresFiltrados.length}
+                      {gestores.length}
                     </span>{' '}
                     gestor(es)
                   </div>
@@ -629,7 +641,7 @@ export default function GestoresPage() {
                   <Paginacao
                     paginaAtual={paginaAtual}
                     totalPaginas={totalPaginas}
-                    totalItens={gestoresFiltrados.length}
+                    totalItens={totalElementos}
                     itensPorPagina={ITENS_POR_PAGINA}
                     itemLabel="gestor"
                     itemLabelPlural="gestores"
@@ -641,6 +653,7 @@ export default function GestoresPage() {
           )}
         </div>
       </div>
+      <FloatingButton label='Adicionar Gestor' onClick={() => router.push("/gestor/adicionar-gestore")}/>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { clientApi } from '../clientApi';
-import type { GestorInput, GestorResponse } from '@/lib/types/personas/gestor';
+import type { GestorInput, GestorPaginado, GestorResponse } from '@/lib/types/personas/gestor';
 
 /**
  * @module gestorApi
@@ -204,43 +204,52 @@ export async function atualizarGestor(
  * }
  * ```
  */
-export async function getGestores(filtros?: {
+
+export interface GestoresFiltros {
   nome?: string;
   email?: string;
   telefone?: string;
   ativo?: boolean;
-}) {
-  // Construir query string com filtros
-  const params = new URLSearchParams();
-
-  if (filtros?.nome) params.append('nome', filtros.nome);
-  if (filtros?.email) params.append('email', filtros.email);
-  if (filtros?.telefone) params.append('telefone', filtros.telefone);
-  if (filtros?.ativo !== undefined)
-    params.append('ativo', filtros.ativo.toString());
-
-  const queryString = params.toString();
-  const url = queryString
-    ? `/petrocarga/gestores?${queryString}`
-    : `/petrocarga/gestores`;
-
-  const res = await clientApi(url);
-
-  if (!res.ok) {
-    let msg = 'Erro ao buscar gestores';
-
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg };
-  }
-
-  const gestores = await res.json();
-  return { error: false, gestores };
 }
 
+export async function getGestores(
+  filtros?: GestoresFiltros,
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 10,
+): Promise<GestorPaginado> {
+  try {
+    const params = new URLSearchParams({
+      numeroPagina: numeroPagina.toString(),
+      tamanhoPagina: tamanhoPagina.toString(),
+    });
+
+    if (filtros?.nome) params.append('nome', filtros.nome);
+    if (filtros?.email) params.append('email', filtros.email);
+    if (filtros?.telefone) params.append('telefone', filtros.telefone);
+    if (filtros?.ativo !== undefined)
+      params.append('ativo', filtros.ativo.toString());
+
+    const res = await clientApi(`/petrocarga/gestores?${params}`);
+
+    if (!res.ok) {
+      throw new Error(`Erro na requisição: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    return {
+      content: data.content ?? [],
+      totalElementos: data.totalElementos ?? 0,
+      totalPaginas: data.totalPaginas ?? 0,
+      tamanhoPagina: data.tamanhoPagina ?? tamanhoPagina,
+      pagina: data.pagina ?? numeroPagina,
+    };
+  } catch (err) {
+    throw new Error(
+      err instanceof Error ? err.message : 'Erro ao buscar gestores.',
+    );
+  }
+}
 // ----------------------
 // GET GESTOR BY USER ID
 // ----------------------

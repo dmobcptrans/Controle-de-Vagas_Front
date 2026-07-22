@@ -12,6 +12,10 @@
  * 4. GestorResponse - Resposta padronizada da API
  */
 
+import { Paginacao } from "../paginacao";
+import { Agente } from "./agente";
+import { Usuario, UsuarioResponse } from "./usuario";
+
 /**
  * @type Gestor
  * @description Representa um gestor completo no sistema.
@@ -160,3 +164,11 @@ export type GestorResponse = {
   gestor?: Gestor;
   gestores?: Gestor[];
 };
+
+
+export type GestorResult = {
+  id: string;
+  usuario: UsuarioResponse;
+}
+
+export type GestorPaginado = Paginacao<GestorResult>;
