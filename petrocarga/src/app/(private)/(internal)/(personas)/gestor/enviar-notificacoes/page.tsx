@@ -91,14 +91,16 @@ function PaginationControls({
         {getPageNumbers().map((page, index) => (
           <button
             key={index}
-            onClick={() => typeof page === 'number' ? onPageChange(page) : null}
+            onClick={() =>
+              typeof page === 'number' ? onPageChange(page) : null
+            }
             disabled={page === '...' || isLoading}
             className={`min-w-[32px] px-2 py-1 text-sm border rounded-md transition-colors ${
               page === currentPage
                 ? 'bg-blue-600 border-blue-600 text-white'
                 : page === '...'
-                ? 'border-transparent text-gray-400 cursor-default'
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  ? 'border-transparent text-gray-400 cursor-default'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
           >
             {page !== '...' ? Number(page) + 1 : page}
@@ -157,8 +159,7 @@ export default function EnviarNotificacoesPage() {
     setLoading(true);
 
     try {
-      // CORREÇÃO: Passando undefined para a busca de filtros, posicionando a página corretamente
-      const response = await getMotoristas(undefined, page);
+      const response = await getMotoristas({ ativo: true }, page);
 
       if (!response.error) {
         setMotoristas(response.motoristas.content);
@@ -186,13 +187,13 @@ export default function EnviarNotificacoesPage() {
     fetchMotoristas(0);
   }, [user?.id]);
 
-const handlePageChange = (page: number) => {
-  console.log('Mudando para página', page);
+  const handlePageChange = (page: number) => {
+    console.log('Mudando para página', page);
 
-  if (page !== currentPage && page >= 0 && page < totalPages) {
-    fetchMotoristas(page);
-  }
-};
+    if (page !== currentPage && page >= 0 && page < totalPages) {
+      fetchMotoristas(page);
+    }
+  };
 
   // --------------------------------------------------------------------------
   // FILTRO DE MOTORISTAS (Acesso direto a .nome e .email)
@@ -554,9 +555,9 @@ const handlePageChange = (page: number) => {
                                     : 'border-gray-300'
                                 }`}
                               >
-                                {motoristasSelecionados.includes(motorista.id) && (
-                                  <Check className="w-3 h-3 text-white" />
-                                )}
+                                {motoristasSelecionados.includes(
+                                  motorista.id,
+                                ) && <Check className="w-3 h-3 text-white" />}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium text-gray-900 truncate">
@@ -614,7 +615,8 @@ const handlePageChange = (page: number) => {
                   {/* Dica */}
                   {totalElements > pageSize && (
                     <div className="p-2 bg-gray-50 rounded text-xs text-gray-600">
-                      💡 <strong>Dica:</strong> Suas seleções serão mantidas mesmo navegando pelas páginas.
+                      💡 <strong>Dica:</strong> Suas seleções serão mantidas
+                      mesmo navegando pelas páginas.
                     </div>
                   )}
                 </div>
