@@ -292,7 +292,9 @@ export type VagasPaginadas = {
   totalElementos: number;
 };
 
-export async function getVagasFiltradas(params?: GetVagasParams): Promise<VagasPaginadas> {
+export async function getVagasFiltradas(
+  params?: GetVagasParams
+): Promise<VagasPaginadas> {
   const vazio: VagasPaginadas = {
     vagas: [],
     paginaAtual: params?.numeroPagina ?? 0,
@@ -303,38 +305,31 @@ export async function getVagasFiltradas(params?: GetVagasParams): Promise<VagasP
   try {
     const queryParams = new URLSearchParams();
 
-    if (params?.status) {
+    if (params?.status)
       queryParams.append('status', params.status);
-    }
 
-    if (params?.numeroPagina !== undefined) {
+    if (params?.numeroPagina !== undefined)
       queryParams.append('numeroPagina', String(params.numeroPagina));
-    }
 
-    if (params?.tamanhoPagina !== undefined) {
+    if (params?.tamanhoPagina !== undefined)
       queryParams.append('tamanhoPagina', String(params.tamanhoPagina));
-    }
 
-    if (params?.ordenarPor) {
+    if (params?.ordenarPor)
       queryParams.append('ordenarPor', params.ordenarPor);
-    }
 
-    if (params?.logradouro !== undefined && params.logradouro !== "") {
-      queryParams.append('logradouro', String(params.logradouro));
-    }
+    if (params?.logradouro)
+      queryParams.append('logradouro', params.logradouro);
 
-    // AJUSTE 1: Troca os sinais de '+' gerados pelo URLSearchParams por '%20'
-    const queryString = queryParams.toString().replace(/\+/g, '%20');
-    const query = queryString ? `?${queryString}` : '';
+    const query = queryParams.toString()
+      ? `?${queryParams.toString()}`
+      : '';
 
-    // AJUSTE 2: Remove o '/all' da rota para bater com o seu padrão
     const res = await clientApi(`/petrocarga/vagas${query}`, {
       method: 'GET',
     });
 
     const data = await res.json();
 
-    // Caso a API retorne array puro (sem paginação)
     if (Array.isArray(data)) {
       return {
         vagas: data,
@@ -344,16 +339,19 @@ export async function getVagasFiltradas(params?: GetVagasParams): Promise<VagasP
       };
     }
 
-    // Caso a API retorne objeto paginado (padrão Spring Data)
     return {
       vagas: data?.content ?? [],
-      paginaAtual: data?.number ?? params?.numeroPagina ?? 0,
-      totalPaginas: data?.totalPages ?? 1,
-      totalElementos: data?.totalElements ?? (data?.content?.length ?? 0),
+      paginaAtual: data?.pagina ?? data?.number ?? 0,
+      totalPaginas: data?.totalPaginas ?? data?.totalPages ?? 1,
+      totalElementos:
+        data?.totalElementos ??
+        data?.totalElements ??
+        data?.content?.length ??
+        0,
     };
+
   } catch (err) {
-    const error = err as ApiError;
-    console.error('Erro ao buscar vagas:', error);
+    console.error('Erro ao buscar vagas:', err);
     return vazio;
   }
 }
