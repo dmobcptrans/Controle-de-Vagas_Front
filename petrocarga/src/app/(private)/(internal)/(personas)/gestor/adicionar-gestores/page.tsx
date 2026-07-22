@@ -502,7 +502,7 @@ export default function CadastroGestores() {
                           required
                           value={confirmarEmail}
                           onChange={(e) =>
-                            setConfirmarEmail(e.target.value.toLowerCase)
+                            setConfirmarEmail(e.target.value.toLowerCase())
                           }
                           autoComplete="email"
                         />
