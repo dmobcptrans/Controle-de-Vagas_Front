@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import { getAgentes } from '@/services/api/agenteApi';
 import { FiltrosAgente } from '@/lib/types/personas/agente';
@@ -22,82 +22,67 @@ const ITENS_POR_PAGINA = 9;
 type FiltroStatus = 'ativos' | 'inativos' | 'todos';
 
 /**
+ * @function useDebounce
+ * @description Atrasa a atualização de um valor para reduzir chamadas de API.
+ */
+function useDebounce<T>(value: T, delay = 400): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+/**
  * @component AgentesPage
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @description Página de listagem e gerenciamento de agentes para gestores.
- * Permite filtrar por status (ativos/inativos/todos), busca textual e paginação.
+ * Permite filtrar por status (ativos/inativos/todos), busca textual e paginação
+ * — agora com paginação server-side (numeroPagina/tamanhoPagina), coerente com
+ * o padrão de getDenuncias.
  *
  * ----------------------------------------------------------------------------
  * 📋 FLUXO COMPLETO:
  * ----------------------------------------------------------------------------
  *
- * 1. CARREGAMENTO INICIAL:
+ * 1. CARREGAMENTO:
  *    - Verifica autenticação (user?.id)
- *    - Busca agentes via getAgentes() com filtro de status
+ *    - Busca agentes via getAgentes() com filtro de status, nome e paginação
  *    - Estados: loading → erro → sucesso
  *
  * 2. FILTROS:
  *    - Status: Todos | Ativos | Inativos (botões com cores)
- *    - Busca textual: nome, email, matrícula, telefone
+ *    - Busca textual: nome (enviado ao backend, com debounce de 400ms)
  *    - Botão "Limpar Filtros" quando ativos
- *    - Resumo dos filtros aplicados
- *    - Menu mobile com drawer de filtros
  *
- * 3. PAGINAÇÃO:
- *    - 9 itens por página (ITENS_POR_PAGINA)
- *    - Controles: primeira, anterior, próxima, última
- *    - Seletor de página dropdown
- *    - Indicador de itens visíveis
- *
- * 4. RESPONSIVIDADE:
- *    - Desktop: filtros em linha, números de página visíveis
- *    - Mobile: menu de filtros colapsável (drawer)
- *    - Paginação simplificada em mobile
- *
- * 5. ESTADOS DE UI:
- *    - Loading: spinner animado com ícone Users
- *    - Erro: card vermelho com botão de retry
- *    - Vazio (sem filtros): mensagem sem agentes
- *    - Vazio (com filtros): mensagem com opção "Ver todos"
- *    - Sucesso: grid de cards + paginação
+ * 3. PAGINAÇÃO (SERVER-SIDE):
+ *    - tamanhoPagina fixo em ITENS_POR_PAGINA
+ *    - numeroPagina enviado ao backend (0-indexed)
+ *    - totalPaginas e totalElementos vêm da resposta da API
  *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
  *
- * - FILTRO POR STATUS: useCallback + useEffect com dependência
- * - FILTRO TEXTUAL: useMemo para busca em memória
- * - PAGINAÇÃO: useMemo para slice otimizado
- * - MENU MOBILE: useState com drawer de filtros
- * - CORES: Verde (ativos), Vermelho (inativos), Azul (todos)
- *
- * ----------------------------------------------------------------------------
- * 🎨 CORES DOS BOTÕES:
- * ----------------------------------------------------------------------------
- *
- * | Status   | Cor Desktop (ativo) | Cor Mobile (ativo) |
- * |----------|---------------------|--------------------|
- * | Todos    | 🔵 Azul             | 🔵 Azul            |
- * | Ativos   | 🟢 Verde            | 🟢 Verde           |
- * | Inativos | 🔴 Vermelho         | 🔴 Vermelho        |
+ * - PAGINAÇÃO NO SERVIDOR: getAgentes agora recebe numeroPagina/tamanhoPagina
+ *   e lança exceção em erro (em vez de retornar { error }), então usamos
+ *   try/catch.
+ * - BUSCA TEXTUAL: enviada como filtro `nome` para o backend, com debounce,
+ *   já que a API não filtra por múltiplos campos simultâneos (email,
+ *   matrícula, telefone) — apenas por nome.
+ * - RESET DE PÁGINA: sempre que status ou busca (debounced) mudam.
  *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
  *
  * - AgenteCard: Card individual de agente
- * - getAgentes: API de busca com filtro por ativo
+ * - getAgentes: API paginada de agentes
  * - useAuth: Hook de autenticação
- *
- * @example
- * ```tsx
- * // Uso em rota de gestor
- * <AgentesPage />
- * ```
- *
- * @see /components/gestor/cards/agentes-card.tsx - Card de agente
- * @see /lib/api/agenteApi.ts - API de agentes
  */
 
 export default function AgentesPage() {
@@ -111,14 +96,20 @@ export default function AgentesPage() {
   const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('ativos');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  // ==================== PAGINAÇÃO (dados vindos da API) ====================
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [totalElementos, setTotalElementos] = useState(0);
+
+  const buscaDebounced = useDebounce(busca, 400);
+
   // ==================== BUSCA DE DADOS ====================
   /**
    * @function fetchAgentes
-   * @description Busca agentes com base no filtro de status
-   * @param status - 'todos', 'ativos' ou 'inativos'
+   * @description Busca agentes paginados no backend, com base no status,
+   * termo de busca e página atual.
    */
   const fetchAgentes = useCallback(
-    async (status: FiltroStatus) => {
+    async (status: FiltroStatus, nome: string, pagina: number) => {
       if (!user?.id) return;
       setIsLoadingAgentes(true);
       setError(null);
@@ -132,16 +123,27 @@ export default function AgentesPage() {
           filtros.ativo = false;
         }
 
-        const result = await getAgentes(filtros);
-        if (result.error) {
-          setError(result.message || 'Erro ao buscar agentes');
-        } else {
-          setAgentes(result.agentes || []);
+        if (nome.trim()) {
+          filtros.nome = nome.trim();
         }
-      } catch {
-        setError(
-          'Erro ao buscar os agentes cadastrados. Tente novamente mais tarde.',
+
+        // numeroPagina é 0-indexed no backend; paginaAtual (UI) é 1-indexed
+        const resultado = await getAgentes(
+          filtros,
+          pagina - 1,
+          ITENS_POR_PAGINA,
         );
+
+        setAgentes(resultado.content ?? []);
+        setTotalPaginas(resultado.totalPaginas ?? 0);
+        setTotalElementos(resultado.totalElementos ?? 0);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Erro ao buscar os agentes cadastrados. Tente novamente mais tarde.',
+        );
+        setAgentes([]);
       } finally {
         setIsLoadingAgentes(false);
       }
@@ -149,15 +151,15 @@ export default function AgentesPage() {
     [user?.id],
   );
 
-  // Carrega dados quando filtro de status muda
+  // Carrega dados quando status, busca (debounced) ou página mudam
   useEffect(() => {
-    fetchAgentes(filtroStatus);
-  }, [fetchAgentes, filtroStatus]);
+    fetchAgentes(filtroStatus, buscaDebounced, paginaAtual);
+  }, [fetchAgentes, filtroStatus, buscaDebounced, paginaAtual]);
 
   // Reseta página quando filtros mudam
   useEffect(() => {
     setPaginaAtual(1);
-  }, [filtroStatus, busca]);
+  }, [filtroStatus, buscaDebounced]);
 
   // ==================== HANDLERS DE FILTRO ====================
   const handleFiltroStatus = (status: FiltroStatus) => {
@@ -177,36 +179,17 @@ export default function AgentesPage() {
     setPaginaAtual(1);
   };
 
-  // ==================== FILTRAGEM E PAGINAÇÃO ====================
-  const agentesFiltrados = useMemo(() => {
-    if (!busca.trim()) return agentes;
-    const termoBusca = busca.toLowerCase().trim();
-    return agentes.filter(
-      (agente) =>
-        agente.usuario.nome.toLowerCase().includes(termoBusca) ||
-        agente.usuario.email.toLowerCase().includes(termoBusca) ||
-        agente.matricula.toLowerCase().includes(termoBusca) ||
-        (agente.usuario.telefone &&
-          agente.usuario.telefone.includes(termoBusca)),
-    );
-  }, [agentes, busca]);
-
-  const totalPaginas = Math.ceil(agentesFiltrados.length / ITENS_POR_PAGINA);
-
-  const agentesPaginados = useMemo(() => {
-    const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
-    return agentesFiltrados.slice(inicio, inicio + ITENS_POR_PAGINA);
-  }, [agentesFiltrados, paginaAtual]);
-
-  // ==================== FUNÇÕES DE NAVEGAÇÃO ====================
+  // ==================== NAVEGAÇÃO ====================
   const handlePageChange = (pagina: number) => {
     setPaginaAtual(pagina);
   };
 
+  const filtrosAtivos = busca || filtroStatus !== 'todos';
+
   // ==================== RENDERIZAÇÃO CONDICIONAL ====================
 
   // ESTADO 1: LOADING INICIAL
-  if (isLoadingAgentes && !agentes.length) {
+  if (isLoadingAgentes && !agentes.length && !error) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col items-center justify-center p-4">
         <div className="text-center max-w-sm w-full">
@@ -247,7 +230,9 @@ export default function AgentesPage() {
               {error}
             </p>
             <button
-              onClick={() => fetchAgentes(filtroStatus)}
+              onClick={() =>
+                fetchAgentes(filtroStatus, buscaDebounced, paginaAtual)
+              }
               className="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-sm"
             >
               Tentar novamente
@@ -281,7 +266,7 @@ export default function AgentesPage() {
             >
               <Menu className="h-4 w-4" />
               Filtros
-              {(busca || filtroStatus !== 'todos') && (
+              {filtrosAtivos && (
                 <span className="w-2 h-2 rounded-full bg-blue-600"></span>
               )}
             </button>
@@ -301,11 +286,8 @@ export default function AgentesPage() {
                     <input
                       type="text"
                       value={busca}
-                      onChange={(e) => {
-                        setBusca(e.target.value);
-                        setPaginaAtual(1);
-                      }}
-                      placeholder="Buscar por nome, email, matrícula ou telefone..."
+                      onChange={(e) => setBusca(e.target.value)}
+                      placeholder="Buscar por nome..."
                       className="w-full pl-9 sm:pl-10 md:pl-12 pr-9 sm:pr-10 md:pr-12 py-2 sm:py-2.5 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm"
                     />
                     {busca && (
@@ -369,7 +351,7 @@ export default function AgentesPage() {
                     </button>
                   </div>
 
-                  {(busca || filtroStatus !== 'todos') && (
+                  {filtrosAtivos && (
                     <button
                       onClick={mostrarTodos}
                       className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-xs sm:text-sm"
@@ -383,14 +365,14 @@ export default function AgentesPage() {
                   <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
                     <Users className="h-4 w-4 text-blue-600" />
                     <span className="text-sm font-medium text-blue-800">
-                      {agentes.length} agentes
+                      {totalElementos} agentes
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Resumo dos filtros aplicados */}
-              {(busca || filtroStatus !== 'todos') && (
+              {filtrosAtivos && (
                 <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="text-xs sm:text-sm text-gray-600">
                     {busca ? (
@@ -424,7 +406,7 @@ export default function AgentesPage() {
                       </>
                     )}
                   </div>
-                  {agentesFiltrados.length === 0 ? (
+                  {agentes.length === 0 ? (
                     <button
                       onClick={mostrarTodos}
                       className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
@@ -433,8 +415,7 @@ export default function AgentesPage() {
                     </button>
                   ) : (
                     <div className="text-xs sm:text-sm text-gray-500">
-                      Mostrando {agentesFiltrados.length} de {agentes.length}{' '}
-                      agentes
+                      {totalElementos} agente(s) encontrado(s)
                     </div>
                   )}
                 </div>
@@ -452,10 +433,7 @@ export default function AgentesPage() {
                   <input
                     type="text"
                     value={busca}
-                    onChange={(e) => {
-                      setBusca(e.target.value);
-                      setPaginaAtual(1);
-                    }}
+                    onChange={(e) => setBusca(e.target.value)}
                     placeholder="Buscar agentes..."
                     className="w-full pl-9 pr-9 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   />
@@ -507,7 +485,7 @@ export default function AgentesPage() {
                     </button>
                   </div>
 
-                  {(busca || filtroStatus !== 'todos') && (
+                  {filtrosAtivos && (
                     <button
                       onClick={mostrarTodos}
                       className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
@@ -523,22 +501,17 @@ export default function AgentesPage() {
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-blue-600" />
                     <span className="text-sm font-medium text-gray-700">
-                      {agentes.length} agentes no total
+                      {totalElementos} agentes no total
                     </span>
                   </div>
-                  {agentesFiltrados.length !== agentes.length && (
-                    <span className="text-xs text-blue-600">
-                      {agentesFiltrados.length} filtrados
-                    </span>
-                  )}
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Loading overlay durante filtros */}
-        {isLoadingAgentes && (
+        {/* Loading overlay durante filtros/paginação */}
+        {isLoadingAgentes && agentes.length > 0 && (
           <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-2">
               <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600 animate-spin" />
@@ -551,10 +524,10 @@ export default function AgentesPage() {
 
         {/* LISTA DE AGENTES */}
         <div className="space-y-3 sm:space-y-4 md:space-y-6">
-          {agentesFiltrados.length === 0 ? (
+          {agentes.length === 0 && !isLoadingAgentes ? (
             // Estado vazio
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 md:p-12 text-center">
-              {busca || filtroStatus !== 'todos' ? (
+              {filtrosAtivos ? (
                 <div className="max-w-md mx-auto">
                   <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                     <Search className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-400" />
@@ -594,18 +567,18 @@ export default function AgentesPage() {
             <>
               {/* Grid de cards responsivo */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                {agentesPaginados.map((agente) => (
+                {agentes.map((agente) => (
                   <div key={agente.usuario.id} className="h-full">
                     <AgenteCard agente={agente} />
                   </div>
                 ))}
               </div>
 
-              {/* Paginação responsiva */}
+              {/* Paginação responsiva (server-side) */}
               <Paginacao
                 paginaAtual={paginaAtual}
                 totalPaginas={totalPaginas}
-                totalItens={agentesFiltrados.length}
+                totalItens={totalElementos}
                 itensPorPagina={ITENS_POR_PAGINA}
                 itemLabel="agente"
                 itemLabelPlural="agentes"

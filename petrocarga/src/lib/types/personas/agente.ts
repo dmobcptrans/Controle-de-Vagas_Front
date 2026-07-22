@@ -1,3 +1,4 @@
+
 /**
  * @module types/agente
  * @description Definições de tipos TypeScript para o módulo de Agentes.
@@ -12,6 +13,9 @@
  * 4. AgenteInput - Dados para criação/atualização
  * 5. AgenteResponse - Resposta padronizada da API
  */
+
+import { UsuarioResponse } from "./usuario";
+import { Paginacao } from '../paginacao';
 
 /**
  * @type Usuario
@@ -36,15 +40,9 @@
  * };
  * ```
  */
-export type Usuario = {
-  id: string;
-  nome: string;
-  cpf: string;
-  telefone: string;
-  email: string;
-  senha: string;
-  ativo: boolean;
-};
+
+
+
 
 /**
  * @type Agente
@@ -74,8 +72,10 @@ export type Usuario = {
 export type Agente = {
   id: string;
   matricula: string;
-  usuario: Usuario;
+  usuario: UsuarioResponse;
 };
+
+export type AgentePaginado = Paginacao<Agente>;
 
 /**
  * @interface FiltrosAgente

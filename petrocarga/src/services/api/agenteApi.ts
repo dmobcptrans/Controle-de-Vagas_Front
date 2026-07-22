@@ -2,7 +2,7 @@
 
 import { clientApi } from '../clientApi';
 
-import type { AgenteInput, AgenteResponse } from '@/lib/types/personas/agente';
+import type { AgenteInput, AgentePaginado, AgenteResponse } from '@/lib/types/personas/agente';
 
 /**
  * @module agenteApi
@@ -254,41 +254,51 @@ export async function getAgenteByUserId(userId: string) {
  * }
  * ```
  */
-export async function getAgentes(filtros?: {
+export type AgentesFiltros = {
   nome?: string;
   matricula?: string;
   telefone?: string;
   ativo?: boolean;
   email?: string;
-}) {
-  // Construir query string com filtros
-  const params = new URLSearchParams();
+};
 
-  if (filtros?.nome) params.append('nome', filtros.nome);
-  if (filtros?.matricula) params.append('matricula', filtros.matricula);
-  if (filtros?.telefone) params.append('telefone', filtros.telefone);
-  if (filtros?.email) params.append('email', filtros.email);
-  if (filtros?.ativo !== undefined)
-    params.append('ativo', filtros.ativo.toString());
+export async function getAgentes(
+  filtros?: AgentesFiltros,
+  numeroPagina: number = 0,
+  tamanhoPagina: number = 10,
+): Promise<AgentePaginado> {
+  try {
+    const params = new URLSearchParams({
+      numeroPagina: numeroPagina.toString(),
+      tamanhoPagina: tamanhoPagina.toString(),
+    });
 
-  const queryString = params.toString();
-  const url = queryString
-    ? `/petrocarga/agentes?${queryString}`
-    : `/petrocarga/agentes`;
+    if (filtros?.nome) params.append('nome', filtros.nome);
+    if (filtros?.matricula) params.append('matricula', filtros.matricula);
+    if (filtros?.telefone) params.append('telefone', filtros.telefone);
+    if (filtros?.email) params.append('email', filtros.email);
+    if (filtros?.ativo !== undefined)
+      params.append('ativo', filtros.ativo.toString());
 
-  const res = await clientApi(url);
+    const res = await clientApi(`/petrocarga/agentes?${params}`);
 
-  if (!res.ok) {
-    let msg = 'Erro ao buscar agentes';
+    if (!res.ok) {
+      throw new Error(`Erro na requisição: ${res.status}`);
+    }
 
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
+    const data = await res.json();
 
-    return { error: true, message: msg };
+    return {
+      content: data.content ?? [],
+      totalElementos: data.totalElementos ?? 0,
+      totalPaginas: data.totalPaginas ?? 0,
+      tamanhoPagina: data.tamanhoPagina ?? tamanhoPagina,
+      pagina: data.pagina ?? numeroPagina,
+    };
+  } catch (err) {
+    throw new Error(
+      err instanceof Error ? err.message : 'Erro ao buscar agentes.',
+    );
   }
-
-  const data = await res.json();
-  return { error: false, agentes: data };
 }
+
