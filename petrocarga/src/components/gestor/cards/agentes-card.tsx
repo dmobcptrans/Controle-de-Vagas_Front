@@ -163,101 +163,92 @@ export default function AgenteCard({
       setIsUpdating(false);
     }
   };
-  return (
-    <>
-      <article
-        className={cn(
-          'bg-white rounded-xl shadow-sm border overflow-hidden',
-          isAtivo
-            ? 'border-gray-200 hover:shadow-md'
-            : 'border-gray-200 bg-gray-50/30 hover:shadow-md',
-          'transition-shadow',
-        )}
-      >
-        {/* ==================== HEADER ==================== */}
-        <div className="px-5 pt-5 pb-4 border-b border-gray-100">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              {/* Ícone do agente com cor dinâmica baseada no status */}
-              <UserCircle
-                className={cn(
-                  'w-9 h-9 flex-shrink-0',
-                  isAtivo ? 'text-green-500' : 'text-gray-400',
-                )}
-              />
+ return (
+  <>
+    <article
+      className={cn(
+        'bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all',
+        !isAtivo && 'bg-gray-50/50',
+      )}
+    >
+      {/* Header */}
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <UserCircle
+            className={cn(
+              'h-10 w-10 shrink-0',
+              isAtivo ? 'text-green-500' : 'text-gray-400',
+            )}
+          />
 
-              <div className="min-w-0">
-                <h3 className="text-base font-semibold text-gray-800 truncate">
-                  {agente.usuario.nome.split(' ')[0]}{' '}
-                  {
-                    agente.usuario.nome.split(' ')[
-                      agente.usuario.nome.split(' ').length - 1
-                    ]
-                  }
-                </h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <p className="text-sm text-gray-600 truncate">
-                    {agente.usuario.email}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-gray-900 truncate leading-none">
+              {agente.usuario.nome.split(' ')[0]}{' '}
+              {agente.usuario.nome.split(' ').at(-1)}
+            </h3>
 
-            {/* Badges */}
-            <div className="flex flex-col items-end gap-1.5">
-              {/* Badge de perfil */}
-              <span className="px-2.5 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full">
-                Agente
-              </span>
+            <div className="flex items-center gap-1 mt-1">
+              <Mail className="h-3 w-3 text-gray-400 shrink-0" />
 
-              {/* Badge de status */}
-              <span
-                className={cn(
-                  'px-2.5 py-1 text-xs font-medium rounded-full',
-                  isAtivo
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 text-gray-600',
-                )}
-              >
-                {isAtivo ? 'Ativo' : 'Inativo'}
+              <span className="text-xs text-gray-500 truncate">
+                {agente.usuario.email}
               </span>
             </div>
           </div>
         </div>
 
-        {/* ==================== INFORMAÇÕES ==================== */}
-        <div className="px-5 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Telefone */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Telefone
-                </span>
-              </div>
+        <div className="flex flex-col items-end gap-1">
+
+          <span
+            className={cn(
+              'text-[11px] font-medium px-2 py-1 rounded-full',
+              isAtivo
+                ? 'bg-green-100 text-green-700'
+                : 'bg-gray-100 text-gray-600',
+            )}
+          >
+            {isAtivo ? 'Ativo' : 'Inativo'}
+          </span>
+        </div>
+      </div>
+
+      {/* Informações */}
+      <div className="px-4 py-3 border-y border-gray-100">
+        <div className="grid grid-cols-2 gap-3">
+
+          {/* Telefone */}
+          <div className="flex items-start gap-2 min-w-0">
+            <Phone className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                Telefone
+              </p>
+
               <p
                 className={cn(
-                  'text-sm font-medium pl-6',
+                  'text-sm font-medium truncate',
                   isAtivo ? 'text-gray-800' : 'text-gray-500',
                 )}
               >
                 {agente.usuario.telefone || 'Não informado'}
               </p>
             </div>
+          </div>
 
-            {/* Matrícula */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <IdCard className="w-4 h-4 text-gray-400" />
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Matrícula
-                </span>
-              </div>
+
+          {/* Matrícula */}
+          <div className="flex items-start gap-2 min-w-0">
+            <IdCard className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                Matrícula
+              </p>
+
               <p
                 className={cn(
-                  'text-sm font-medium pl-6',
+                  'text-sm font-medium truncate',
                   isAtivo ? 'text-gray-800' : 'text-gray-500',
                 )}
               >
@@ -265,68 +256,69 @@ export default function AgenteCard({
               </p>
             </div>
           </div>
-        </div>
 
-        {/* ==================== BOTÕES ==================== */}
-        <div className="px-5 pb-5 pt-4 border-t border-gray-100">
-          <div className="flex gap-3">
-            {isAtivo ? (
-              // Botão EXCLUIR (para agentes ativos)
-              <button
-                onClick={() => setModalExcluirAberto(true)}
-                disabled={isUpdating}
-                className={cn(
-                  'flex items-center justify-center gap-2',
-                  'bg-red-600 hover:bg-red-700 text-white',
-                  'rounded-lg transition-colors text-sm font-medium',
-                  'h-10 px-4 py-2.5 flex-1',
-                  isUpdating && 'opacity-50 cursor-not-allowed',
-                )}
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>{isUpdating ? 'Processando...' : 'Desativar'}</span>
-              </button>
-            ) : (
-              // Botão ATIVAR (para agentes inativos)
-              <button
-                onClick={() => setModalAtivarAberto(true)}
-                disabled={isUpdating}
-                className={cn(
-                  'flex items-center justify-center gap-2',
-                  'bg-green-600 hover:bg-green-700 text-white',
-                  'rounded-lg transition-colors text-sm font-medium',
-                  'h-10 px-4 py-2.5 flex-1',
-                  isUpdating && 'opacity-50 cursor-not-allowed',
-                )}
-              >
-                <UserCheck className="w-4 h-4" />
-                <span>{isUpdating ? 'Processando...' : 'Reativar'}</span>
-              </button>
+        </div>
+      </div>
+
+
+      {/* Ações */}
+      <div className="p-3">
+        {isAtivo ? (
+          <button
+            onClick={() => setModalExcluirAberto(true)}
+            disabled={isUpdating}
+            className={cn(
+              'w-full h-9 rounded-lg bg-red-600 hover:bg-red-700',
+              'text-white text-sm font-medium',
+              'flex items-center justify-center gap-2',
+              isUpdating && 'opacity-50 cursor-not-allowed',
             )}
-          </div>
-        </div>
-      </article>
+          >
+            <Trash2 className="h-4 w-4" />
 
-      {/* Modal de exclusão/desativação */}
-      <ModalConfirmacaoExclusao
-        isOpen={modalExcluirAberto}
-        onClose={() => setModalExcluirAberto(false)}
-        onConfirm={handleExcluir}
-        titulo="Confirmar desativação"
-        mensagem="Quer mesmo desativar este(a) agente(a)?"
-        tipo="exclusao"
-      />
+            {isUpdating ? 'Processando...' : 'Desativar'}
+          </button>
+        ) : (
+          <button
+            onClick={() => setModalAtivarAberto(true)}
+            disabled={isUpdating}
+            className={cn(
+              'w-full h-9 rounded-lg bg-green-600 hover:bg-green-700',
+              'text-white text-sm font-medium',
+              'flex items-center justify-center gap-2',
+              isUpdating && 'opacity-50 cursor-not-allowed',
+            )}
+          >
+            <UserCheck className="h-4 w-4" />
 
-      {/* Modal de ativação */}
-      <ModalConfirmacaoExclusao
-        isOpen={modalAtivarAberto}
-        onClose={() => setModalAtivarAberto(false)}
-        onConfirm={handleAtivar}
-        titulo="Confirmar ativação"
-        mensagem="Quer mesmo ativar este(a) agente(a)?"
-        textoConfirmar="Reativar"
-        tipo="ativacao"
-      />
-    </>
-  );
+            {isUpdating ? 'Processando...' : 'Reativar'}
+          </button>
+        )}
+      </div>
+    </article>
+
+
+    {/* Modal desativação */}
+    <ModalConfirmacaoExclusao
+      isOpen={modalExcluirAberto}
+      onClose={() => setModalExcluirAberto(false)}
+      onConfirm={handleExcluir}
+      titulo="Confirmar desativação"
+      mensagem="Quer mesmo desativar este agente?"
+      tipo="exclusao"
+    />
+
+
+    {/* Modal ativação */}
+    <ModalConfirmacaoExclusao
+      isOpen={modalAtivarAberto}
+      onClose={() => setModalAtivarAberto(false)}
+      onConfirm={handleAtivar}
+      titulo="Confirmar ativação"
+      mensagem="Quer mesmo ativar este agente?"
+      textoConfirmar="Reativar"
+      tipo="ativacao"
+    />
+  </>
+);
 }

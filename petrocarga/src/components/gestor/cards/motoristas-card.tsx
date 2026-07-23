@@ -66,124 +66,148 @@ export default function MotoristaCard({ motorista }: MotoristaCardProps) {
   const primeiroNome = nomeParts[0];
   const ultimoNome = nomeParts[nomeParts.length - 1];
   const nomeExibido = `${primeiroNome} ${ultimoNome}`;
+  const isAtivo = motorista.usuario.ativo === true;
 
-  return (
-    <>
-      <article
-        className={cn(
-          'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden',
-          'hover:shadow-md transition-shadow',
-        )}
-      >
-        {/* ==================== HEADER ==================== */}
-        <div className="px-5 pt-5 pb-4 border-b border-gray-100">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              {/* Ícone do motorista */}
-              <UserCircle className="w-9 h-9 text-blue-500 flex-shrink-0" />
+ return (
+  <>
+    <article
+      className={cn(
+        'bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all',
+        !isAtivo && 'bg-gray-50/50',
+      )}
+    >
+      {/* Header */}
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
 
-              <div className="min-w-0">
-                <h3 className="text-base font-semibold text-gray-800 truncate">
-                  {nomeExibido}
-                </h3>
-                <div className="flex items-center gap-2 mt-1">
-                  <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <p className="text-sm text-gray-600 truncate">
-                    {motorista.usuario.email}
-                  </p>
-                </div>
-              </div>
+          <UserCircle
+            className={cn(
+              'h-10 w-10 shrink-0',
+              isAtivo ? 'text-blue-500' : 'text-gray-400',
+            )}
+          />
+
+          <div className="min-w-0">
+            <h3 className="font-semibold text-gray-900 truncate leading-none">
+              {nomeExibido}
+            </h3>
+
+            <div className="flex items-center gap-1 mt-1">
+              <Mail className="h-3 w-3 text-gray-400 shrink-0" />
+
+              <span className="text-xs text-gray-500 truncate">
+                {motorista.usuario.email}
+              </span>
             </div>
-
-            {/* Badge de perfil */}
-            <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
-              Motorista
-            </span>
           </div>
         </div>
 
-        {/* ==================== INFORMAÇÕES ==================== */}
-        <div className="px-5 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Telefone */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Telefone
-                </span>
-              </div>
-              <p className="text-sm text-gray-800 font-medium pl-6">
-                {motorista.usuario.telefone}
+
+        {/* Badges */}
+        <div className="flex flex-col items-end gap-1">
+          <span
+            className={cn(
+              'text-[11px] font-medium px-2 py-1 rounded-full',
+              isAtivo
+                ? 'bg-green-100 text-green-700'
+                : 'bg-gray-100 text-gray-600',
+            )}
+          >
+            {isAtivo ? 'Ativo' : 'Inativo'}
+          </span>
+
+        </div>
+      </div>
+
+
+      {/* Informações */}
+      <div className="px-4 py-3 border-y border-gray-100">
+        <div className="grid grid-cols-2 gap-3">
+
+
+          {/* Telefone */}
+          <div className="flex items-start gap-2 min-w-0">
+
+            <Phone className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                Telefone
+              </p>
+
+              <p
+                className={cn(
+                  'text-sm font-medium truncate',
+                  isAtivo ? 'text-gray-800' : 'text-gray-500',
+                )}
+              >
+                {motorista.usuario.telefone || 'Não informado'}
               </p>
             </div>
 
-            {/* CNH */}
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <Car className="w-4 h-4 text-gray-400" />
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  CNH
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="h-4 w-px bg-gray-300"></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500">Número</p>
-                  <p className="text-sm text-gray-800 font-medium truncate">
-                    {motorista.numeroCnh}
-                  </p>
-                </div>
-              </div>
+          </div>
+
+
+          {/* CNH */}
+          <div className="flex items-start gap-2 min-w-0">
+
+            <Car className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wide text-gray-500">
+                CNH
+              </p>
+
+              <p
+                className={cn(
+                  'text-sm font-medium truncate',
+                  isAtivo ? 'text-gray-800' : 'text-gray-500',
+                )}
+              >
+                {motorista.numeroCnh}
+              </p>
             </div>
+
           </div>
+
+
         </div>
+      </div>
 
-        {/* ==================== BOTÕES ==================== */}
-        <div className="px-5 pb-5 pt-4 border-t border-gray-100">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Botão Notificar */}
-            <button
-              onClick={() => setIsNotificacaoModalOpen(true)}
-              className={cn(
-                'flex items-center justify-center gap-2',
-                'bg-blue-600 hover:bg-blue-700 text-white',
-                'rounded-lg transition-colors text-sm font-medium',
-                'h-10 px-4 py-2.5 flex-1 sm:flex-none sm:w-auto',
-              )}
-              title="Enviar notificação"
-            >
-              <Bell className="w-4 h-4" />
-              <span>Notificar</span>
-            </button>
 
-            {/* Botão Veículos */}
-            <Link
-              href={`/gestor/motoristas/veiculos/${motorista.usuario.id}`}
-              className={cn(
-                'flex items-center justify-center gap-2',
-                'bg-gray-100 hover:bg-gray-200 text-gray-800',
-                'rounded-lg transition-colors text-sm font-medium',
-                'h-10 px-4 py-2.5 flex-1 sm:flex-none sm:w-auto',
-                'border border-gray-300',
-              )}
-              title="Ver veículos"
-            >
-              <Truck className="w-4 h-4" />
-              <span>Veículos</span>
-            </Link>
-          </div>
-        </div>
-      </article>
+      {/* Ações */}
+      <div className="p-3 flex gap-2">
 
-      {/* ==================== MODAL DE NOTIFICAÇÃO ==================== */}
-      <NotificacaoModal
-        isOpen={isNotificacaoModalOpen}
-        onClose={() => setIsNotificacaoModalOpen(false)}
-        usuarioId={motorista.usuario.id}
-        usuarioNome={motorista.usuario.nome}
-        tipoUsuario="MOTORISTA"
-      />
-    </>
-  );
+        <button
+          onClick={() => setIsNotificacaoModalOpen(true)}
+          className="flex-1 h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium flex items-center justify-center gap-2"
+        >
+          <Bell className="h-4 w-4" />
+          Notificar
+        </button>
+
+
+        <Link
+          href={`/gestor/motoristas/veiculos/${motorista.usuario.id}`}
+          className="flex-1 h-9 rounded-lg border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-800 text-sm font-medium flex items-center justify-center gap-2"
+        >
+          <Truck className="h-4 w-4" />
+          Veículos
+        </Link>
+
+      </div>
+
+    </article>
+
+
+    {/* Modal */}
+    <NotificacaoModal
+      isOpen={isNotificacaoModalOpen}
+      onClose={() => setIsNotificacaoModalOpen(false)}
+      usuarioId={motorista.usuario.id}
+      usuarioNome={motorista.usuario.nome}
+      tipoUsuario="MOTORISTA"
+    />
+  </>
+);
 }

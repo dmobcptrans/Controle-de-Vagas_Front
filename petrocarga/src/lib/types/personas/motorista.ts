@@ -32,6 +32,7 @@ export type Usuario = {
   id: string;
   nome: string;
   email: string;
+  ativo: boolean;
   telefone: string;
   cpf: string;
 };

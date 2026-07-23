@@ -311,32 +311,66 @@ export async function getMotoristaByUserId(userId: string) {
  * }
  * ```
  */
+type GetMotoristasParams = {
+  id?: string;
+  nome?: string;
+  telefone?: string;
+  email?: string;
+  cpf?: string;
+  cnh?: string;
+  empresaId?: string;
+  empresaCnpj?: string;
+  empresaRazaoSocial?: string;
+  ativo?: boolean;
+  pagina?: number;
+  tamanhoPagina?: number;
+  ordem?: 'ASC' | 'DESC';
+};
+
 export async function getMotoristas(
-  filtros?: {
-    nome?: string;
-    cnh?: string;
-    telefone?: string;
-    ativo?: boolean;
-  },
-  numeroPagina: number = 0,
-  tamanhoPagina: number = 10,
+  params?: GetMotoristasParams,
 ): Promise<
   | { error: false; motoristas: MotoristaResponse }
   | { error: true; message: string }
 > {
-  const params = new URLSearchParams({
-    pagina: numeroPagina.toString(),
-    tamanhoPagina: tamanhoPagina.toString(),
-  });
+  const searchParams = new URLSearchParams();
 
-  if (filtros?.nome) params.append('nome', filtros.nome);
-  if (filtros?.cnh) params.append('cnh', filtros.cnh);
-  if (filtros?.telefone) params.append('telefone', filtros.telefone);
-  if (filtros?.ativo !== undefined) {
-    params.append('ativo', filtros.ativo.toString());
+  // Paginação
+  searchParams.append('pagina', String(params?.pagina ?? 0));
+  searchParams.append(
+    'tamanhoPagina',
+    String(params?.tamanhoPagina ?? 10),
+  );
+
+  // Ordenação
+  if (params?.ordem) {
+    searchParams.append('ordem', params.ordem);
   }
 
-  const res = await clientApi(`/petrocarga/motoristas?${params.toString()}`);
+  // Filtros
+  if (params?.id) searchParams.append('id', params.id);
+  if (params?.nome) searchParams.append('nome', params.nome);
+  if (params?.telefone) searchParams.append('telefone', params.telefone);
+  if (params?.email) searchParams.append('email', params.email);
+  if (params?.cpf) searchParams.append('cpf', params.cpf);
+  if (params?.cnh) searchParams.append('cnh', params.cnh);
+  if (params?.empresaId)
+    searchParams.append('empresaId', params.empresaId);
+  if (params?.empresaCnpj)
+    searchParams.append('empresaCnpj', params.empresaCnpj);
+  if (params?.empresaRazaoSocial)
+    searchParams.append(
+      'empresaRazaoSocial',
+      params.empresaRazaoSocial,
+    );
+
+  if (params?.ativo !== undefined) {
+    searchParams.append('ativo', String(params.ativo));
+  }
+
+  const res = await clientApi(
+    `/petrocarga/motoristas?${searchParams.toString()}`
+  );
 
   if (!res.ok) {
     let msg = 'Erro ao buscar motoristas';
@@ -357,8 +391,8 @@ export async function getMotoristas(
       content: data.content ?? [],
       totalElementos: data.totalElementos ?? 0,
       totalPaginas: data.totalPaginas ?? 0,
-      tamanhoPagina: data.tamanhoPagina ?? tamanhoPagina,
-      pagina: data.pagina ?? numeroPagina,
+      tamanhoPagina: data.tamanhoPagina ?? params?.tamanhoPagina ?? 10,
+      pagina: data.pagina ?? params?.pagina ?? 0,
     },
   };
 }
