@@ -159,7 +159,10 @@ export default function EnviarNotificacoesPage() {
     setLoading(true);
 
     try {
-      const response = await getMotoristas({ ativo: true }, page);
+      const response = await getMotoristas({
+        ativo: true,
+        pagina: page,
+      });
 
       if (!response.error) {
         setMotoristas(response.motoristas.content);
