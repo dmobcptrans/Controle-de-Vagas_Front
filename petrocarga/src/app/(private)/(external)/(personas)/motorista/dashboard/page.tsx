@@ -19,6 +19,7 @@ import { ReservaGet } from '@/lib/types/reservas/reserva';
 import { Denuncia } from '@/lib/types/denuncia';
 import toast from 'react-hot-toast';
 import { CTA } from '@/components/ui/CTA/CTA';
+import PageHeader from '@/components/ui/pageHeader';
 
 /**
  * Configuração de cores e rótulos para cada status de reserva
@@ -259,14 +260,14 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ==================== HEADER ==================== */}
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Bem vindo, {primeiroNome}!
-          </h1>
-          <p className="text-xs text-white/50 capitalize">{hoje}</p>
-        </div>
-      </header>
+      <PageHeader
+        title={
+          <>
+            Bem-vindo, <span className="font-bold">{primeiroNome}</span>!
+          </>
+        }
+        showCurrentDate
+      />
 
       {/* ==================== CORPO PRINCIPAL ==================== */}
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
