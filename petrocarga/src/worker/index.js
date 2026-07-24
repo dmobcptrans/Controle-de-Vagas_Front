@@ -27,12 +27,12 @@ const tipoImagem = {
 
 messaging.onBackgroundMessage((payload) => {
   const data = payload.data || {};
-  const image = tipoImagem[data.tipo] || '/icons/icon-512.png';
+  const image = tipoImagem[data.tipo] || '/icons/icon-512.webp';
 
   self.registration.showNotification(data.title || 'PetroCarga', {
     body: data.body || 'Você tem uma nova atualização',
-    icon: '/icons/icon-192.png',
-    badge: '/badge.png',
+    icon: '/icons/icon-192.webp',
+    badge: '/badge.webp',
     image,
     vibrate: [100, 50, 100],
     tag: data.notificacaoId || 'petrocarga',

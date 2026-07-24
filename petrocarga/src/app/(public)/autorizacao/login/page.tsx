@@ -488,7 +488,7 @@ function LoginContent() {
               }}
             >
               <Image
-                src="/images/ilustracao-login-simples.png"
+                src="/images/ilustracao-login-simples.webp"
                 alt="Ilustração de login"
                 width={1278}
                 height={1024}

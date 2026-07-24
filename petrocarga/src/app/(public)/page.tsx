@@ -121,7 +121,7 @@ export default function Home() {
               className="relative flex justify-center md:justify-end items-end self-stretch h-full -translate-y-8 md:-translate-y-4"
             >
               <Image
-                src="/images/ilustracao-celular.png"
+                src="/images/ilustracao-celular.webp"
                 alt="Mockup do aplicativo"
                 width={1440}
                 height={2560}
@@ -204,19 +204,19 @@ export default function Home() {
       <div className="grid w-full grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
               {[
                 {
-                  image: '/images/calendar.png',
+                  image: '/images/calendar.webp',
                   title: 'Agendamento Online',
                   description:
                     'Reserve seu horário de forma rápida e descomplicada diretamente pelo sistema.',
                 },
                 {
-                  image: '/images/check.png',
+                  image: '/images/check.webp',
                   title: 'Reserva Garantida',
                   description:
                     'Sua vaga reservada no local escolhido com confirmação digital imediata.',
                 },
                 {
-                  image: '/images/phone.png',
+                  image: '/images/phone.webp',
                   title: 'Acompanhamento',
                   description:
                     'Monitore o status e os horários da sua reserva em tempo real na palma da mão.',

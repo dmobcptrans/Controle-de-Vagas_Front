@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    apple: '/icons/icon-192.png',
+    apple: '/icons/icon-192.webp',
   },
 };
 

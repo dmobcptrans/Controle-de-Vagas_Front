@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationDrawer } from '@/components/notification/notificatioDrawer';
-import Logo from '../../../public/images/logo.png';
+import Logo from '../../../public/cache-images/logo.webp';
 import {
   DropdownMenu,
   DropdownMenuContent,

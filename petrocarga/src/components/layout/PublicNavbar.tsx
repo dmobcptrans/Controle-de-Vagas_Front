@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import Logo from '../../../public/images/logo.png';
+import Logo from '../../../public/cache-images/logo.webp';
 import Image from 'next/image';
 
 /**

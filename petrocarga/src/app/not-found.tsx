@@ -1,7 +1,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import Cone from '../../public/images/cone.png';
+import Cone from '../../public/cache-images/cone.webp';
 import { useRouter } from 'next/navigation';
 
 export default function NotFound() {

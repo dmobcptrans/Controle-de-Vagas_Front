@@ -12,31 +12,31 @@ const tiposVeiculo = [
     value: 'AUTOMOVEL',
     titulo: 'Carro',
     descricao: 'Até 5 metros',
-    imagem: '/images/card-reserva/carro.png',
+    imagem: '/cache-images/card-reserva/carro.webp',
   },
   {
     value: 'CAMINHONETA',
     titulo: 'Caminhonete',
     descricao: 'Até 6 metros',
-    imagem: '/images/card-reserva/caminhonete.png',
+    imagem: '/cache-images/card-reserva/caminhonete.webp',
   },
   {
     value: 'VUC',
     titulo: 'VUC',
     descricao: 'Até 8 metros',
-    imagem: '/images/card-reserva/vuc.png',
+    imagem: '/cache-images/card-reserva/vuc.webp',
   },
   {
     value: 'CAMINHAO_MEDIO',
     titulo: 'Caminhão médio',
     descricao: '9 a 12 metros',
-    imagem: '/images/card-reserva/c-medio.png',
+    imagem: '/cache-images/card-reserva/c-medio.webp',
   },
   {
     value: 'CAMINHAO_LONGO',
     titulo: 'Caminhão longo',
     descricao: '13 a 19 metros',
-    imagem: '/images/card-reserva/c-longo.png',
+    imagem: '/cache-images/card-reserva/c-longo.webp',
   },
 ];
 
