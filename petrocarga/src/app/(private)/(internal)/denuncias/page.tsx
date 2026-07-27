@@ -30,24 +30,7 @@ export default function DenunciasAgente() {
 
   // TODO: substitua pelo hook/contexto real de usuário (ex: useAuth())
   const { user } = useAuth();
-  // --------------------------------------------------------------------------
-  // ESTADO 1: LOADING
-  // --------------------------------------------------------------------------
-  if (loading) {
-    return (
-      <div
-        className="p-4 md:p-6 flex flex-col items-center justify-center min-h-[60vh] gap-3"
-        aria-busy="true"
-        role="status"
-        aria-label="Carregando denúncias"
-      >
-        <Loader2 className="animate-spin w-6 h-6 md:w-8 md:h-8 text-blue-600" />
-        <p className="text-gray-600 text-sm md:text-base">
-          Carregando denúncias...
-        </p>
-      </div>
-    );
-  }
+
 
   // --------------------------------------------------------------------------
   // ESTADO 2: ERRO

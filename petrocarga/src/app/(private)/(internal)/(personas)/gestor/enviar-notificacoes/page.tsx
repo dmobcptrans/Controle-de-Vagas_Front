@@ -13,12 +13,14 @@ import {
   Send,
   Users,
   Bell,
+  Menu,
   Filter,
   Check,
   X,
   Search,
   ChevronLeft,
   ChevronRight,
+  Plus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Motorista } from '@/lib/types/personas/motorista';
@@ -129,6 +131,7 @@ export default function EnviarNotificacoesPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [conteudoAberto, setConteudoAberto] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [modoEnvio, setModoEnvio] = useState<'INDIVIDUAL' | 'GRUPO'>(
@@ -333,96 +336,149 @@ export default function EnviarNotificacoesPage() {
   // RENDERIZAÇÃO
   // --------------------------------------------------------------------------
 
-  if (loading && motoristas.length === 0) {
-    return (
-      <div className="p-8 flex items-center justify-center min-h-screen">
-        <Loader2 className="animate-spin w-8 h-8 text-blue-600" />
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      {/* HEADER */}
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-          <Bell className="h-8 w-8 text-blue-600" />
-          Enviar Notificações para Motoristas
-        </h1>
-        <p className="text-gray-600">
-          Envie notificações para motoristas individualmente ou para todos de
-          uma vez
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#f5f5f0]">
+      {/* Header */}
+      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
+            Enviar Notificações aos Motoristas
+          </h1>
+          <p className="text-xs text-white/50">
+            Envie notificações para motoristas individualmente ou para todos de
+            uma vez
+          </p>
+        </div>
+      </header>
 
-      {/* GRID PRINCIPAL */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* COLUNA ESQUERDA (2/3) - FORMULÁRIO E SELEÇÃO */}
-        <div className="lg:col-span-2">
-          {/* Card de conteúdo da notificação */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Conteúdo da Notificação
-            </h2>
+      <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
+        {/* CTA: conteúdo da notificação */}
+        <div className="-mt-4 mb-5 max-w-4xl mx-auto">
+          <div
+            className="bg-[#071D41] rounded-2xl border-l-4 border-[#FFCD07] overflow-hidden"
+            style={{ boxShadow: '0 4px 16px rgba(7,29,65,0.18)' }}
+          >
+            {/* Barra principal */}
+            <div className="px-5 py-4">
+              <div className="flex items-center gap-3">
+                {/* Preview do título */}
+                <div className="relative flex-1">
+                  <div className="flex items-center gap-2 rounded-xl px-3 py-2.5 transition-all">
+                    <Bell
+                      className="h-4 w-4"
+                      style={{ color: 'rgba(255,255,255,.45)' }}
+                    />
+                    <span className="font-semibold text-[15px] mb-0.5 text-white">
+                      Clique para criar uma mensagem
+                    </span>
+                  </div>
+                </div>
 
-            <div className="space-y-4">
-              {/* Campo título */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Título *
-                </label>
-                <input
-                  type="text"
-                  value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
-                  placeholder="Ex: Nova reserva disponível"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Campo mensagem */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mensagem *
-                </label>
-                <textarea
-                  value={mensagem}
-                  onChange={(e) => setMensagem(e.target.value)}
-                  rows={4}
-                  placeholder="Digite sua mensagem aqui..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                />
-              </div>
-
-              {/* Tipo de notificação */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tipo de Notificação
-                </label>
-                <select
-                  value={tipo}
-                  onChange={(e) =>
-                    setTipo(
-                      e.target.value as
-                        | 'RESERVA'
-                        | 'VAGA'
-                        | 'VEICULO'
-                        | 'MOTORISTA'
-                        | 'SISTEMA',
-                    )
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                {/* Botão abrir/fechar */}
+                <button
+                  onClick={() => setConteudoAberto(!conteudoAberto)}
+                  className="relative cursor-pointer h-11 w-11 rounded-xl flex items-center justify-center transition-all duration-300"
+                  style={{
+                    background: conteudoAberto
+                      ? 'rgba(255,205,7,.18)'
+                      : 'rgba(255,255,255,.10)',
+                    border: conteudoAberto
+                      ? '1.5px solid rgba(255,205,7,.5)'
+                      : '1.5px solid rgba(255,255,255,.12)',
+                  }}
                 >
-                  <option value="SISTEMA">Sistema</option>
-                  <option value="RESERVA">Reserva</option>
-                  <option value="VAGA">Vaga</option>
-                  <option value="VEICULO">Veículo</option>
-                  <option value="MOTORISTA">Motorista</option>
-                </select>
+                  <Plus
+                    className={`h-5 w-5 text-white transition-transform duration-300 ${
+                      conteudoAberto ? 'rotate-90' : ''
+                    }`}
+                  />
+
+                  {(titulo || mensagem) && (
+                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#FFCD07]" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Drawer interno */}
+            <div
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                conteudoAberto
+                  ? 'max-h-[700px] opacity-100'
+                  : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="border-t border-white/10 px-5 py-5 space-y-5">
+                {/* Título */}
+                <div>
+                  <label className="block text-xs uppercase tracking-wide text-white/50 mb-2">
+                    Título *
+                  </label>
+                  <input
+                    type="text"
+                    value={titulo}
+                    onChange={(e) => setTitulo(e.target.value)}
+                    placeholder="Ex: Nova reserva disponível"
+                    className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/35 outline-none transition-all bg-white/10 border border-white/[.12] focus:bg-white/15 focus:border-[#FFCD07]/60"
+                  />
+                </div>
+
+                {/* Mensagem */}
+                <div>
+                  <label className="block text-xs uppercase tracking-wide text-white/50 mb-2">
+                    Mensagem *
+                  </label>
+                  <textarea
+                    value={mensagem}
+                    onChange={(e) => setMensagem(e.target.value)}
+                    rows={4}
+                    placeholder="Digite sua mensagem aqui..."
+                    className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/35 outline-none transition-all resize-none bg-white/10 border border-white/[.12] focus:bg-white/15 focus:border-[#FFCD07]/60"
+                  />
+                </div>
+
+                {/* Tipo de notificação */}
+                <div>
+                  <label className="block text-xs uppercase tracking-wide text-white/50 mb-2">
+                    Tipo de Notificação
+                  </label>
+                  <select
+                    value={tipo}
+                    onChange={(e) =>
+                      setTipo(
+                        e.target.value as
+                          | 'RESERVA'
+                          | 'VAGA'
+                          | 'VEICULO'
+                          | 'MOTORISTA'
+                          | 'SISTEMA',
+                      )
+                    }
+                    className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none transition-all bg-white/10 border border-white/[.12] focus:bg-white/15 focus:border-[#FFCD07]/60"
+                  >
+                    <option className="bg-[#071D41]" value="SISTEMA">
+                      Sistema
+                    </option>
+                    <option className="bg-[#071D41]" value="RESERVA">
+                      Reserva
+                    </option>
+                    <option className="bg-[#071D41]" value="VAGA">
+                      Vaga
+                    </option>
+                    <option className="bg-[#071D41]" value="VEICULO">
+                      Veículo
+                    </option>
+                    <option className="bg-[#071D41]" value="MOTORISTA">
+                      Motorista
+                    </option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
+        <div className="lg:col-span-2">
           {/* Card de seleção de destinatários */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -798,7 +854,7 @@ export default function EnviarNotificacoesPage() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
