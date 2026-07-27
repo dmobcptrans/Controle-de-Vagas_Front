@@ -101,16 +101,23 @@ export async function addDisponibilidadeVagas(formData: FormData) {
  */
 
 type GetDisponibilidadesParam = {
+  vagaId?: string;
   mes?: number;
   ano?: number;
 };
 
-export async function getDisponibilidadeVagas(params?: GetDisponibilidadesParam) {
+export async function getDisponibilidadeVagas(
+  params?: GetDisponibilidadesParam,
+) {
   try {
     let url = '/petrocarga/disponibilidade-vagas';
 
     if (params) {
       const query = new URLSearchParams();
+
+      if (params.vagaId !== undefined) {
+        query.append('vagaId', String(params.vagaId));
+      }
 
       if (params.mes !== undefined) {
         query.append('mes', String(params.mes));

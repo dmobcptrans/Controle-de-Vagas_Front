@@ -7,10 +7,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { useVagasReserva } from '../hooks/map/useVagasReserva';
 import { useMapbox } from '../hooks/map/useMapbox';
 import { addVagaMarkersReserva } from '../utils/map/markerUtilsReserva';
-import { Vaga } from '@/lib/types/vaga';
+import { VagaMapa } from '@/lib/types/vaga';
 
 interface MapReservaProps {
-  onClickVaga?: (vaga: Vaga) => void;
+  onClickVaga?: (vaga: VagaMapa) => void;
   selectedLocation?: {
     lat: number;
     lng: number;
@@ -24,6 +24,7 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
   const lastBoundsRef = useRef<string | null>(null);
 
   const { vagas, loading, error, buscarVagas } = useVagasReserva();
+
 
   const { map } = useMapbox({
     containerRef: mapContainer,
@@ -70,7 +71,7 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
 
     addVagaMarkersReserva(map, vagas, markersRef, onClickVaga);
   }, [map, vagas, onClickVaga]);
-
+  
   // ==================== INIT + MOVE MAP ====================
   useEffect(() => {
     if (!map) return;

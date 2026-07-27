@@ -163,6 +163,16 @@ export interface VagaPayload {
  * };
  * ```
  */
+
+export interface VagaMapa {
+  id: string;
+  area: 'VERMELHA' | 'AMARELA' | 'AZUL' | 'BRANCA' | string;
+  latitudeInicio: number;
+  latitudeFim: number;
+  longitudeInicio: number;
+  longitudeFim: number;
+  status: 'DISPONIVEL' | 'OCUPADO' | 'MANUTENCAO' | 'INDISPONIVEL' | string;
+}
 export interface Vaga {
   id: string;
   area: 'VERMELHA' | 'AMARELA' | 'AZUL' | 'BRANCA' | string;

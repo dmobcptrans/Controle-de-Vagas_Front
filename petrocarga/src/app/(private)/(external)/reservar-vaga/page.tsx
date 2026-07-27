@@ -3,17 +3,11 @@
 import { useState } from 'react';
 import { MapReserva } from '@/components/map/MapReserva';
 import ReservaComponent from '@/components/reserva/ReservaComponent';
-import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
-import { Vaga } from '@/lib/types/vaga';
+import { Vaga, VagaMapa } from '@/lib/types/vaga';
 import PageHeader from '@/components/ui/pageHeader';
 import ReservaCTA from '@/components/ui/CTA/CTAReserva';
 import TutorialCard from '@/components/ui/TutorialCard/TutorialCard';
-
-type Suggestion = {
-  label: string;
-  lat: number;
-  lng: number;
-};
+import { getVagaById } from '@/services/api/vagaApi';
 
 /**
  * @component ReservaPage
@@ -74,18 +68,27 @@ export default function ReservaPage() {
   // ==================== ESTADOS ====================
   const [step, setStep] = useState<'mapa' | 'reserva'>('mapa');
   const [selectedVaga, setSelectedVaga] = useState<Vaga | null>(null);
-  const [localOrigin, setLocalOrigin] = useState('');
-
-  const suggestions = useMapboxSuggestions(localOrigin, true) as Suggestion[];
+  const [loadingVaga, setLoadingVaga] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
 
   // ==================== HANDLERS ====================
-  const handleSelectVaga = (vaga: Vaga) => {
-    setSelectedVaga(vaga);
-    setStep('reserva');
+
+  const handleSelectVaga = async (vagaResumo: VagaMapa) => {
+    try {
+      setLoadingVaga(true);
+
+      const vagaDetalhes = await getVagaById(vagaResumo.id);
+
+      setSelectedVaga(vagaDetalhes);
+      setStep('reserva');
+    } catch (error) {
+      console.error('Erro ao buscar detalhes da vaga:', error);
+    } finally {
+      setLoadingVaga(false);
+    }
   };
 
   const handleBackToMap = () => {
@@ -94,6 +97,7 @@ export default function ReservaPage() {
   };
 
   // ==================== DADOS DERIVADOS ====================
+
   const vagaLabel = selectedVaga?.endereco.logradouro;
   const vagaEndereco = selectedVaga?.endereco.bairro;
   const vagaSetor = selectedVaga?.area;

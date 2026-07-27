@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Vaga } from '@/lib/types/vaga';
+import { useState } from 'react';
+import { Vaga, VagaMapa } from '@/lib/types/vaga';
 import * as vagaApi from '@/services/api/vagaApi';
 
 /**
@@ -81,7 +81,7 @@ import * as vagaApi from '@/services/api/vagaApi';
  */
 
 export function useVagasReserva() {
-  const [vagas, setVagas] = useState<Vaga[]>([]);
+  const [vagas, setVagas] = useState<VagaMapa[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 

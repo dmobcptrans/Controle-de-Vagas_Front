@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { Vaga } from '@/lib/types/vaga';
+import { VagaMapa } from '@/lib/types/vaga';
 
 /**
  * @module utils/map/markersReserva
@@ -62,9 +62,9 @@ import { Vaga } from '@/lib/types/vaga';
  */
 export function addVagaMarkersReserva(
   map: mapboxgl.Map,
-  vagas: Vaga[],
+  vagas: VagaMapa[],
   markersRef: React.MutableRefObject<mapboxgl.Marker[]>,
-  onClickVaga?: (vaga: Vaga) => void,
+  onClickVaga?: (vaga: VagaMapa) => void,
 ) {
   vagas.forEach((vaga) => {
     // Ignora vagas sem coordenadas de início
@@ -89,11 +89,6 @@ export function addVagaMarkersReserva(
     // Cria marcador com popup
     const marker = new mapboxgl.Marker(el)
       .setLngLat(coordinates)
-      .setPopup(
-        new mapboxgl.Popup({ offset: 25 }).setHTML(
-          `<strong>${vaga.endereco.logradouro}</strong><br/>${vaga.status}`,
-        ),
-      )
       .addTo(map);
 
     // Apenas vagas disponíveis são clicáveis
