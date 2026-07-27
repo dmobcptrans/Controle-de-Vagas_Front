@@ -133,12 +133,6 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
         style={{ minHeight: '300px' }}
       />
 
-      {/* Loading */}
-      {loading && (
-        <div className="absolute top-2 right-2 bg-white px-3 py-1 rounded shadow z-10">
-          Carregando...
-        </div>
-      )}
 
       {/* Error */}
       {error && (
