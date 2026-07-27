@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { MapReserva } from '@/components/map/MapReserva';
-import { Vaga } from '@/lib/types/vaga';
+import { Vaga, VagaMapa } from '@/lib/types/vaga';
 import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
 import { Info, MapIcon, MapPin, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import ReservaAgente from '@/components/agente/reserva/ReservaAgente';
 import { useReservaAgenteState } from '@/components/agente/reserva/hooks/useReservaAgenteState';
+import { getVagaById } from '@/services/api/vagaApi';
 
 type Suggestion = {
   label: string;
@@ -74,6 +75,7 @@ export default function ReservaRapidaPage() {
   // ==================== ESTADOS ====================
   const [step, setStep] = useState<'mapa' | 'reserva'>('mapa');
   const [selectedVaga, setSelectedVaga] = useState<Vaga | null>(null);
+  const [loadingVaga, setLoadingVaga] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [localOrigin, setLocalOrigin] = useState('');
   const { clearDefaults } = useReservaAgenteState();
@@ -84,10 +86,20 @@ export default function ReservaRapidaPage() {
   } | null>(null);
 
   // ==================== HANDLERS ====================
-  const handleSelectVaga = (vaga: Vaga) => {
-    setSelectedVaga(vaga);
-    setStep('reserva');
-  };
+  const handleSelectVaga = async (vagaResumo: VagaMapa) => {
+     try {
+       setLoadingVaga(true);
+ 
+       const vagaDetalhes = await getVagaById(vagaResumo.id);
+ 
+       setSelectedVaga(vagaDetalhes);
+       setStep('reserva');
+     } catch (error) {
+       console.error('Erro ao buscar detalhes da vaga:', error);
+     } finally {
+       setLoadingVaga(false);
+     }
+   };
 
   const handleBackToMap = () => {
     setStep('mapa');

@@ -3,18 +3,20 @@ import {
   reservarVaga,
   reservarVagaAgente,
 } from '@/services/api/reservaApi';
-import { getDisponibilidadeVagasByVagaId } from '@/services/api/disponibilidadeVagasApi';
+import {
+  getDisponibilidadeVagas,
+} from '@/services/api/disponibilidadeVagasApi';
 import { ConfirmResult } from '@/lib/types/confirmResult';
 
 /**
  * @module services/reservaService
  * @description Camada de serviço para operações de reserva.
  * Fornece funções para consultar bloqueios, disponibilidade e confirmar reservas.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FUNÇÕES DISPONÍVEIS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. fetchReservasBloqueios - Busca bloqueios de horário para uma vaga
  * 2. fetchDisponibilidadeByVagaId - Busca disponibilidades de uma vaga (com cache)
  * 3. confirmarReserva - Confirma reserva para motorista
@@ -28,7 +30,7 @@ import { ConfirmResult } from '@/lib/types/confirmResult';
  */
 const disponibilidadeInFlight = new Map<
   string,
-  Promise<Awaited<ReturnType<typeof getDisponibilidadeVagasByVagaId>>>
+  Promise<Awaited<ReturnType<typeof getDisponibilidadeVagas>>>
 >();
 
 // ----------------- BUSCAR BLOQUEIOS -----------------
@@ -36,12 +38,12 @@ const disponibilidadeInFlight = new Map<
 /**
  * @function fetchReservasBloqueios
  * @description Busca reservas que bloqueiam horários em uma data específica.
- * 
+ *
  * @param vagaId - ID da vaga
  * @param data - Data no formato YYYY-MM-DD
  * @param tipoVeiculo - Tipo do veículo
  * @returns Promise<Reserva[]> - Lista de reservas bloqueantes
- * 
+ *
  * @example
  * ```ts
  * const bloqueios = await fetchReservasBloqueios(
@@ -54,14 +56,19 @@ const disponibilidadeInFlight = new Map<
 export const fetchReservasBloqueios = async (
   vagaId: string,
   data: string,
-  tipoVeiculo: 'AUTOMOVEL' | 'VUC' | 'CAMINHONETA' | 'CAMINHAO_MEDIO' | 'CAMINHAO_LONGO',
+  tipoVeiculo:
+    | 'AUTOMOVEL'
+    | 'VUC'
+    | 'CAMINHONETA'
+    | 'CAMINHAO_MEDIO'
+    | 'CAMINHAO_LONGO',
 ) => {
   try {
     const bloqueios = await getReservasBloqueios(vagaId, data, tipoVeiculo);
     return bloqueios;
   } catch (error) {
     console.error('Erro ao buscar bloqueios:', error);
-    throw error; 
+    throw error;
   }
 };
 
@@ -70,14 +77,14 @@ export const fetchReservasBloqueios = async (
 /**
  * @function fetchDisponibilidadeByVagaId
  * @description Busca disponibilidades de uma vaga com cache de requisições.
- * 
+ *
  * Características:
  * - Evita chamadas duplicadas enquanto a primeira requisição está em andamento
  * - Limpa o cache após a conclusão
- * 
+ *
  * @param vagaId - ID da vaga
  * @returns Promise<Disponibilidade[]> - Lista de disponibilidades da vaga
- * 
+ *
  * @example
  * ```ts
  * // Múltiplas chamadas simultâneas para a mesma vaga
@@ -88,27 +95,40 @@ export const fetchReservasBloqueios = async (
  * ]);
  * ```
  */
-export const fetchDisponibilidadeByVagaId = async (vagaId: string) => {
-  const inFlight = disponibilidadeInFlight.get(vagaId);
+export const fetchDisponibilidadeByVagaId = async (
+  vagaId: string,
+  mes: number,
+  ano: number,
+) => {
+  const key = `${vagaId}-${mes}-${ano}`;
+
+  const inFlight = disponibilidadeInFlight.get(key);
+
   if (inFlight) {
     return await inFlight;
   }
 
   const request = (async () => {
     try {
-      const disponibilidades = await getDisponibilidadeVagasByVagaId(vagaId);
+      const disponibilidades = await getDisponibilidadeVagas({
+        vagaId,
+        mes,
+        ano,
+      });
+
       return disponibilidades;
     } catch (error) {
-      console.error(error);
+      console.error('Erro ao buscar disponibilidades:', error);
       return [];
     }
   })();
 
-  disponibilidadeInFlight.set(vagaId, request);
+  disponibilidadeInFlight.set(key, request);
+
   try {
     return await request;
   } finally {
-    disponibilidadeInFlight.delete(vagaId);
+    disponibilidadeInFlight.delete(key);
   }
 };
 
@@ -117,17 +137,17 @@ export const fetchDisponibilidadeByVagaId = async (vagaId: string) => {
 /**
  * @function confirmarReserva
  * @description Confirma uma reserva para motorista.
- * 
+ *
  * @param formData - FormData com dados da reserva
  * @returns Promise<ConfirmResult> - Resultado da operação
- * 
+ *
  * @example
  * ```ts
  * const formData = new FormData();
  * formData.append('vagaId', 'vaga123');
  * formData.append('motoristaId', 'user456');
  * // ... outros campos
- * 
+ *
  * const result = await confirmarReserva(formData);
  * if (result.success) {
  *   toast.success('Reserva confirmada!');
@@ -154,10 +174,10 @@ export const confirmarReserva = async (
 /**
  * @function confirmarReservaAgente
  * @description Confirma uma reserva rápida para agente.
- * 
+ *
  * @param formData - FormData com dados da reserva rápida
  * @returns Promise<ConfirmResult> - Resultado da operação
- * 
+ *
  * @example
  * ```ts
  * const formData = new FormData();
@@ -165,7 +185,7 @@ export const confirmarReserva = async (
  * formData.append('tipoVeiculo', 'AUTOMOVEL');
  * formData.append('placa', 'ABC1234');
  * // ... outros campos
- * 
+ *
  * const result = await confirmarReservaAgente(formData);
  * if (result.success) {
  *   toast.success('Reserva rápida confirmada!');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import StepIndicator from '@/components/reserva/StepIndicator';
 import DaySelection from '@/components/reserva/DaySelection';
@@ -19,63 +19,63 @@ interface ReservaComponentProps {
 /**
  * @component ReservaComponent
  * @version 1.0.0
- * 
+ *
  * @description Componente principal de reserva de vagas para motoristas em 6 etapas.
  * Gerencia o fluxo completo de reserva: seleção de dia, veículo/origem, horários e confirmação.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FLUXO COMPLETO (6 ETAPAS):
  * ----------------------------------------------------------------------------
- * 
+ *
  * STEP 1 - SELEÇÃO DO DIA:
  *    - Exibe dias disponíveis (DaySelection)
  *    - Avança para etapa 2
- * 
+ *
  * STEP 2 - ORIGEM E VEÍCULO:
  *    - Cidade de origem
  *    - Ponto de entrada na cidade (opcional)
  *    - Seleção do veículo (lista do usuário)
  *    - Avança para etapa 3
- * 
+ *
  * STEP 3 - HORÁRIO INICIAL:
  *    - Carregamento de horários disponíveis
  *    - Lista de horários (TimeSelection)
  *    - Avança para etapa 4
- * 
+ *
  * STEP 4 - HORÁRIO FINAL:
  *    - Filtra horários posteriores ao início
  *    - Lista de horários (TimeSelection)
  *    - Avança para etapa 5
- * 
+ *
  * STEP 5 - CONFIRMAÇÃO:
  *    - Resumo da reserva (Confirmation)
  *    - Botão "Confirmar" com loading
- * 
+ *
  * STEP 6 - FEEDBACK:
  *    - Sucesso: ícone verde, mensagem, botão "Ir para minhas reservas"
  *    - Erro: ícone vermelho, mensagem, botão "Tentar novamente"
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - HOOK PERSONALIZADO: useReserva gerencia toda a lógica de negócio
  * - LOADING HORÁRIOS: Exibe spinner enquanto carrega
  * - SEM HORÁRIOS: Mensagem amigável com botão "Voltar"
  * - FILTRO DE HORÁRIOS FINAIS: toMinutes() para comparação
  * - REDIRECIONAMENTO: Após sucesso, botão leva para página de reservas
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - useReserva: Hook com lógica de reserva
  * - StepIndicator: Indicador de progresso (5 etapas)
  * - DaySelection: Seleção de dias disponíveis
  * - OriginVehicleStep: Formulário de origem e veículo
  * - TimeSelection: Seleção de horários
  * - Confirmation: Tela de resumo e confirmação
- * 
+ *
  * @example
  * ```tsx
  * <ReservaComponent
@@ -83,7 +83,7 @@ interface ReservaComponentProps {
  *   onBack={() => setStep('mapa')}
  * />
  * ```
- * 
+ *
  * @see /components/hooks/reserva/useReserva.ts - Lógica de reserva
  */
 
@@ -152,24 +152,29 @@ export default function ReservaComponent({
     setStep(6);
   };
 
+  // ==================== BUSCA INICIAL / DIAS DISPONIVEIS ====================
+
+  useEffect(() => {
+    if (!selectedVaga || step !== 1) return;
+    reserva.fetchDiasDisponiveis(new Date());
+  }, [selectedVaga, step, reserva.fetchDiasDisponiveis]);
+
   return (
-   <div className="p-6 border rounded-2xl shadow-lg mx-auto bg-white min-h-[60vh] flex flex-col">
-      
-
-
-
+    <div className="p-6 border rounded-2xl shadow-lg mx-auto bg-white min-h-[60vh] flex flex-col">
       {/* ==================== INDICADOR DE PROGRESSO ==================== */}
       {step < 6 && <StepIndicator step={step} />}
 
       <div className="flex flex-1 justify-center">
-        
         {/* ==================== STEP 1: SELEÇÃO DO DIA ==================== */}
         {step === 1 && (
           <DaySelection
             selected={selectedDay}
-            onSelect={async (day) => {
+            onSelect={(day) => {
               setSelectedDay(day);
               setStep(2);
+            }}
+            onMonthChange={(month) => {
+              reserva.fetchDiasDisponiveis(month);
             }}
             availableDays={availableDates}
           />

@@ -7,61 +7,62 @@ interface DaySelectionProps {
   selected?: Date;
   onSelect: (day: Date) => void;
   availableDays: Date[];
+  onMonthChange: (month: Date) => void;
 }
 
 /**
  * @component DaySelection
  * @version 1.0.0
- * 
+ *
  * @description Componente de seleção de dia utilizando react-day-picker.
  * Exibe calendário com dias disponíveis destacados e desabilita dias indisponíveis.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 PROPRIEDADES:
  * ----------------------------------------------------------------------------
- * 
+ *
  * @property {Date} [selected] - Data atualmente selecionada
  * @property {(day: Date) => void} onSelect - Callback ao selecionar um dia
  * @property {Date[]} availableDays - Lista de dias disponíveis para reserva
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🎨 COMPORTAMENTO:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. DIAS DISPONÍVEIS:
  *    - Definidos pelo array availableDays
  *    - Dias com disponibilidade podem ser selecionados
- * 
+ *
  * 2. DIAS DESABILITADOS:
  *    - Dias anteriores ao dia atual (isBeforeDay)
  *    - Dias não presentes no Set de availableDays
  *    - Estilo: texto cinza, opacidade reduzida, cursor not-allowed
- * 
+ *
  * 3. DIA SELECIONADO:
  *    - Fundo azul (bg-blue-600)
  *    - Texto branco
  *    - Formato circular (rounded-full)
- * 
+ *
  * 4. DIA ATUAL:
  *    - Fundo cinza claro (bg-gray-100)
  *    - Texto semibold
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - useMemo: Cria Set de availableDays para comparação O(1)
  * - NORMALIZAÇÃO: Remove horas/minutos/segundos para comparação de datas
  * - LOCALE: ptBR para português do Brasil
  * - MODIFIERS: Classes customizadas para selected, disabled, today
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - TimeSelection: Seleção de horários
  * - StepIndicator: Indicador de progresso
- * 
+ *
  * @example
  * ```tsx
  * <DaySelection
@@ -76,6 +77,7 @@ export default function DaySelection({
   selected,
   onSelect,
   availableDays,
+  onMonthChange,
 }: DaySelectionProps) {
   const today = new Date();
 
@@ -120,14 +122,14 @@ export default function DaySelection({
   return (
     <div className="flex justify-center items-center">
       <div>
-
         <DayPicker
           mode="single"
           locale={ptBR}
-          navLayout='around'
+          navLayout="around"
           animate
           selected={selected}
           onDayClick={onSelect}
+          onMonthChange={onMonthChange}
           className="mx-auto"
           disabled={isDisabled}
           modifiersClassNames={{

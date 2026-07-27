@@ -6,7 +6,6 @@ import { DiaSemana, Vaga } from '@/lib/types/vaga';
 import { ReservaState } from '@/lib/types/reservas/reservaState';
 import { ConfirmResult } from '@/lib/types/confirmResult';
 
-import { getMotoristaByUserId } from '@/services/api/motoristaApi';
 import { getVeiculosUsuario } from '@/services/api/veiculoApi';
 
 import {
@@ -142,7 +141,7 @@ export function useReserva(selectedVaga: Vaga | null) {
     placaAgente: '',
   });
 
-  const [motoristaId, setMotoristaId] = useState<string | null>(null);
+  const motoristaId = user?.id;
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
   const [vehicles, setVehicles] = useState<Veiculo[]>([]);
   const [loadingMotorista, setLoadingMotorista] = useState(true);
@@ -172,77 +171,80 @@ export function useReserva(selectedVaga: Vaga | null) {
   }, []);
 
   // ==================== BUSCA DIAS DISPONÍVEIS ====================
-  const fetchDiasDisponiveis = useCallback(async () => {
-    if (!selectedVaga) return;
+  const fetchDiasDisponiveis = useCallback(
+    async (mesReferencia: Date) => {
+      if (!selectedVaga) return;
 
-    const diasPermitidos: DiaSemana[] =
-      selectedVaga.operacoesVaga?.map((op) => op.diaSemanaAsEnum) ?? [];
+      const diasPermitidos: DiaSemana[] =
+        selectedVaga.operacoesVaga?.map((op) => op.diaSemanaAsEnum) ?? [];
 
-    if (diasPermitidos.length === 0) {
-      setAvailableDates([]);
-      return;
-    }
+      if (diasPermitidos.length === 0) {
+        setAvailableDates([]);
+        return;
+      }
 
-    const disponibilidades = await fetchDisponibilidadeByVagaId(
-      selectedVaga.id,
-    );
+      const mes = mesReferencia.getMonth() + 1;
+      const ano = mesReferencia.getFullYear();
 
-    if (!disponibilidades || disponibilidades.length === 0) {
-      setAvailableDates([]);
-      return;
-    }
+      const disponibilidades = await fetchDisponibilidadeByVagaId(
+        selectedVaga.id,
+        mes,
+        ano,
+      );
 
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+      if (!disponibilidades || disponibilidades.length === 0) {
+        setAvailableDates([]);
+        return;
+      }
 
-    const datasValidasSet = new Set<string>();
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
 
-    for (const disp of disponibilidades) {
-      const atual = new Date(disp.inicio);
-      const fim = new Date(disp.fim);
+      const datasValidasSet = new Set<string>();
 
-      atual.setHours(0, 0, 0, 0);
-      fim.setHours(0, 0, 0, 0);
+      for (const disp of disponibilidades) {
+        const atual = new Date(disp.inicio);
+        const fim = new Date(disp.fim);
 
-      while (atual <= fim) {
-        const diaSemana: DiaSemana = DIAS_SEMANA[atual.getDay()];
+        atual.setHours(0, 0, 0, 0);
+        fim.setHours(0, 0, 0, 0);
 
-        if (diasPermitidos.includes(diaSemana) && atual >= hoje) {
-          // Se for hoje, verifica se ainda há horários disponíveis
-          if (atual.getTime() === hoje.getTime()) {
-            const operacaoHoje = selectedVaga.operacoesVaga.find(
-              (op) => op.diaSemanaAsEnum === diaSemana,
-            );
+        while (atual <= fim) {
+          const diaSemana: DiaSemana = DIAS_SEMANA[atual.getDay()];
 
-            if (!operacaoHoje) {
-              atual.setDate(atual.getDate() + 1);
-              continue;
+          if (diasPermitidos.includes(diaSemana) && atual >= hoje) {
+            if (atual.getTime() === hoje.getTime()) {
+              const operacaoHoje = selectedVaga.operacoesVaga.find(
+                (op) => op.diaSemanaAsEnum === diaSemana,
+              );
+
+              if (!operacaoHoje) {
+                atual.setDate(atual.getDate() + 1);
+                continue;
+              }
+
+              const [hFim, mFim] = operacaoHoje.horaFim.split(':').map(Number);
+
+              const dataHoraFim = new Date();
+              dataHoraFim.setHours(hFim, mFim, 0, 0);
+
+              if (new Date() >= dataHoraFim) {
+                atual.setDate(atual.getDate() + 1);
+                continue;
+              }
             }
 
-            const [hFim, mFim] = operacaoHoje.horaFim.split(':').map(Number);
-            const dataHoraFim = new Date();
-            dataHoraFim.setHours(hFim, mFim, 0, 0);
-
-            if (new Date() >= dataHoraFim) {
-              atual.setDate(atual.getDate() + 1);
-              continue;
-            }
+            datasValidasSet.add(atual.toISOString());
           }
 
-          datasValidasSet.add(atual.toISOString());
+          atual.setDate(atual.getDate() + 1);
         }
-
-        atual.setDate(atual.getDate() + 1);
       }
-    }
 
-    setAvailableDates(Array.from(datasValidasSet).map((d) => new Date(d)));
-  }, [selectedVaga]);
-
-  useEffect(() => {
-    if (!selectedVaga) return;
-    fetchDiasDisponiveis();
-  }, [selectedVaga?.id, fetchDiasDisponiveis]);
+      setAvailableDates(Array.from(datasValidasSet).map((d) => new Date(d)));
+    },
+    [selectedVaga],
+  );
 
   // ==================== BUSCA HORÁRIOS DISPONÍVEIS ====================
   const fetchHorariosDisponiveis = useCallback(
@@ -252,6 +254,7 @@ export function useReserva(selectedVaga: Vaga | null) {
 
       try {
         const operacao = getOperacaoDia(day, vaga);
+        console.log(operacao);
         const intervalo = isAgente ? INTERVALO_AGENTE : INTERVALO_MOTORISTA;
         if (!operacao) return [];
 
@@ -375,20 +378,7 @@ export function useReserva(selectedVaga: Vaga | null) {
     }));
   }, [reservaState.startHour, selectedVaga?.id, calcularReservedTimesEnd]);
 
-  // ==================== CARREGA MOTORISTA E VEÍCULOS ====================
-  useEffect(() => {
-    if (!user?.id || isAgente) return;
-
-    const fetchMotorista = async () => {
-      try {
-        const result = await getMotoristaByUserId(user.id);
-        if (!result.error) setMotoristaId(result.motoristaId);
-      } finally {
-        setLoadingMotorista(false);
-      }
-    };
-    fetchMotorista();
-  }, [user, isAgente]);
+  // ==================== CARREGA VEÍCULOS ====================
 
   useEffect(() => {
     if (!user?.id || isAgente) return;
