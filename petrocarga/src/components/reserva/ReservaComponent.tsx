@@ -177,6 +177,7 @@ export default function ReservaComponent({
               reserva.fetchDiasDisponiveis(month);
             }}
             availableDays={availableDates}
+            loading={reserva.loadingDias} 
           />
         )}
 

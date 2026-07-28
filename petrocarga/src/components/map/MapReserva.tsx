@@ -8,6 +8,7 @@ import { useVagasReserva } from '../hooks/map/useVagasReserva';
 import { useMapbox } from '../hooks/map/useMapbox';
 import { addVagaMarkersReserva } from '../utils/map/markerUtilsReserva';
 import { VagaMapa } from '@/lib/types/vaga';
+import { Loader2 } from 'lucide-react';
 
 interface MapReservaProps {
   onClickVaga?: (vaga: VagaMapa) => void;
@@ -24,7 +25,6 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
   const lastBoundsRef = useRef<string | null>(null);
 
   const { vagas, loading, error, buscarVagas } = useVagasReserva();
-
 
   const { map } = useMapbox({
     containerRef: mapContainer,
@@ -71,7 +71,7 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
 
     addVagaMarkersReserva(map, vagas, markersRef, onClickVaga);
   }, [map, vagas, onClickVaga]);
-  
+
   // ==================== INIT + MOVE MAP ====================
   useEffect(() => {
     if (!map) return;
@@ -133,6 +133,12 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
         style={{ minHeight: '300px' }}
       />
 
+      {/* Loading */}
+      {loading && (
+        <div className="absolute top-2.5 right-2.5 z-10 flex h-8 w-8 items-center justify-center rounded shadow border bg-white">
+          <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+        </div>
+      )}
 
       {/* Error */}
       {error && (

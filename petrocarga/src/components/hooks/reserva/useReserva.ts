@@ -143,6 +143,7 @@ export function useReserva(selectedVaga: Vaga | null) {
 
   const motoristaId = user?.id;
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
+  const [loadingDias, setLoadingDias] = useState(false);
   const [vehicles, setVehicles] = useState<Veiculo[]>([]);
   const [loadingMotorista, setLoadingMotorista] = useState(true);
   const [loadingHorarios, setLoadingHorarios] = useState(false);
@@ -171,18 +172,21 @@ export function useReserva(selectedVaga: Vaga | null) {
   }, []);
 
   // ==================== BUSCA DIAS DISPONÍVEIS ====================
-  const fetchDiasDisponiveis = useCallback(
-    async (mesReferencia: Date) => {
-      if (!selectedVaga) return;
+const fetchDiasDisponiveis = useCallback(
+  async (mesReferencia: Date) => {
+    if (!selectedVaga) return;
 
-      const diasPermitidos: DiaSemana[] =
-        selectedVaga.operacoesVaga?.map((op) => op.diaSemanaAsEnum) ?? [];
+    const diasPermitidos: DiaSemana[] =
+      selectedVaga.operacoesVaga?.map((op) => op.diaSemanaAsEnum) ?? [];
 
-      if (diasPermitidos.length === 0) {
-        setAvailableDates([]);
-        return;
-      }
+    if (diasPermitidos.length === 0) {
+      setAvailableDates([]);
+      return;
+    }
 
+    setLoadingDias(true); // 👈 inicia loading
+
+    try {
       const mes = mesReferencia.getMonth() + 1;
       const ano = mesReferencia.getFullYear();
 
@@ -242,9 +246,12 @@ export function useReserva(selectedVaga: Vaga | null) {
       }
 
       setAvailableDates(Array.from(datasValidasSet).map((d) => new Date(d)));
-    },
-    [selectedVaga],
-  );
+    } finally {
+      setLoadingDias(false);
+    }
+  },
+  [selectedVaga],
+);
 
   // ==================== BUSCA HORÁRIOS DISPONÍVEIS ====================
   const fetchHorariosDisponiveis = useCallback(
@@ -531,6 +538,7 @@ export function useReserva(selectedVaga: Vaga | null) {
     horariosCarregados,
     fetchDiasDisponiveis,
     availableDates,
+    loadingDias,
     setStep,
     setSelectedDay,
     setStartHour,
