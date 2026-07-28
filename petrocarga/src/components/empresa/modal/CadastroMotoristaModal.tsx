@@ -19,12 +19,14 @@ import { addMotoristaEmpresa } from '@/services/api/motoristaApi';
 import { useAuth } from '@/components/hooks/useAuth';
 
 const TIPO_CNH_OPTIONS = [
-  { value: 'A', label: 'A — Motocicletas' },
-  { value: 'B', label: 'B — Carros de passeio' },
-  { value: 'AB', label: 'AB — Moto e carro' },
-  { value: 'C', label: 'C — Caminhões' },
+  { value: 'AB', label: 'AB — Autómvel e Moto' },
+  { value: 'B', label: 'B — Autómvel' },
+  { value: 'C', label: 'C — Carga' },
+  { value: 'AC', label: 'AC — Autómvel e Carga' },
   { value: 'D', label: 'D — Ônibus' },
-  { value: 'E', label: 'E — Carretas' },
+  { value: 'AD', label: 'AD — Ônibus e Moto' },
+  { value: 'E', label: 'E — Articulados' },
+  { value: 'AE', label: 'AE — Articulados e Moto' },
 ];
 
 interface CadastroMotoristaModalProps {

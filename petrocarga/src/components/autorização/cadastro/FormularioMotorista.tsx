@@ -244,12 +244,14 @@ export default function FormularioMotorista({
                 className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-50 sm:text-sm appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236B7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.25rem] bg-[right_1rem_center] bg-no-repeat pr-10"
               >
                 <option value="">Selecione uma categoria</option>
-                <option>A</option>
-                <option>B</option>
                 <option>AB</option>
+                <option>B</option>
                 <option>C</option>
+                <option>AC</option>
                 <option>D</option>
+                <option>AD</option>
                 <option>E</option>
+                <option>AE</option>
               </select>
             </div>
           </div>
