@@ -121,7 +121,7 @@ export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasP
   return (
     <div className="flex flex-col">
       {/* ==================== LISTA SCROLLÁVEL ==================== */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+      <div className="flex-1 overflow-y-auto space-y-4">
         {loading ? (
           <p className="text-center text-gray-500 mt-4">Carregando vagas...</p>
         ) : vagasOrdenadas.length > 0 ? (
