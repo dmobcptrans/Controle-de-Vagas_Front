@@ -1,15 +1,8 @@
 'use client';
-
+import { motion } from 'framer-motion';
+import { useRef } from 'react';
 import { useState } from 'react';
-import {
-  Lock,
-  ArrowLeft,
-  CheckCircle2,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  KeyRound,
-} from 'lucide-react';
+import { Lock, ArrowLeft, Eye, EyeOff, KeyRound, Mail } from 'lucide-react';
 import { redefinirSenhaComCodigo } from '@/services/api/recuperacaoApi';
 import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
 import FeedbackSenha from '@/components/feedback/feedback-senha';
@@ -123,6 +116,8 @@ const CODIGO_VALIDADE_MINUTOS = 30;
  */
 const CODIGO_TAMANHO = 6;
 
+
+
 /**
  * Mensagens de erro padronizadas
  */
@@ -206,6 +201,75 @@ export default function ResetarSenhaComCodigo() {
   const [etapa, setEtapa] = useState<'codigo' | 'senha'>('codigo');
 
   const router = useRouter();
+
+
+  const inputsCodigoRef = useRef<(HTMLInputElement | null)[]>([]);
+
+const codigoArray = Array.from(
+  { length: CODIGO_TAMANHO },
+  (_, index) => codigo[index] || ''
+);
+
+const atualizarCodigo = (index: number, valor: string) => {
+  const caractere = valor
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(-1);
+
+  const novoCodigo = [...codigoArray];
+  novoCodigo[index] = caractere;
+
+  setCodigo(novoCodigo.join(''));
+
+  if (caractere && index < CODIGO_TAMANHO - 1) {
+    inputsCodigoRef.current[index + 1]?.focus();
+  }
+};
+
+const aoColarCodigo = (
+  e: React.ClipboardEvent<HTMLInputElement>
+) => {
+  e.preventDefault();
+
+  const valorColado = e.clipboardData
+    .getData('text')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, CODIGO_TAMANHO);
+
+  if (!valorColado) return;
+
+  setCodigo(valorColado);
+
+  const ultimoIndex = Math.min(
+    valorColado.length - 1,
+    CODIGO_TAMANHO - 1
+  );
+
+  inputsCodigoRef.current[ultimoIndex]?.focus();
+};
+
+const aoPressionarTeclaCodigo = (
+  e: React.KeyboardEvent<HTMLInputElement>,
+  index: number
+) => {
+  if (e.key === 'Backspace' && !codigoArray[index] && index > 0) {
+    inputsCodigoRef.current[index - 1]?.focus();
+  }
+
+  if (e.key === 'ArrowLeft' && index > 0) {
+    e.preventDefault();
+    inputsCodigoRef.current[index - 1]?.focus();
+  }
+
+  if (
+    e.key === 'ArrowRight' &&
+    index < CODIGO_TAMANHO - 1
+  ) {
+    e.preventDefault();
+    inputsCodigoRef.current[index + 1]?.focus();
+  }
+};
 
   // --------------------------------------------------------------------------
   // VALORES DERIVADOS
@@ -369,122 +433,303 @@ export default function ResetarSenhaComCodigo() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-3 sm:p-4">
-        <div className="w-full max-w-sm sm:max-w-md">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl p-5 sm:p-6 md:p-8">
+      <div
+        className="
+        relative
+        flex
+        items-center
+        justify-center
+        min-h-[calc(100dvh-64px)]
+        overflow-hidden
+        bg-blue-800
+        px-6
+      "
+      >
+        {/* Blobs de fundo */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
+          <div className="absolute bottom-32 -left-32 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
+        </div>
+
+        {/* Domo */}
+        <div
+          className="
+          absolute
+          left-1/2
+          bottom-0
+          -translate-x-1/2
+          w-[150%]
+          h-[55%]
+          bg-blue-900
+          pointer-events-none
+          z-0
+        "
+          style={{
+            borderTopLeftRadius: '50%',
+            borderTopRightRadius: '50%',
+            boxShadow: '0 -20px 60px rgba(30,58,138,.35)',
+          }}
+        />
+
+        {/* Card principal */}
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 40,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.5,
+          }}
+          className="relative z-10 w-full max-w-md"
+        >
+          <div
+            className="
+            bg-white
+            rounded-xl
+            sm:rounded-4xl
+            shadow-lg
+            sm:shadow-xl
+            p-5
+            sm:p-6
+            md:p-8
+          "
+          >
             {/* ------------------------------------------------------------------------
               HEADER - Dinâmico por etapa
             ------------------------------------------------------------------------ */}
             <div className="text-center mb-6 sm:mb-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-indigo-100 rounded-full mb-3 sm:mb-4">
+              <div
+                className="
+                inline-flex
+                items-center
+                justify-center
+                w-12
+                h-12
+                sm:w-14
+                sm:h-14
+                md:w-16
+                md:h-16
+                bg-blue-900
+                rounded-full
+                mb-3
+                sm:mb-4
+              "
+              >
                 {etapa === 'codigo' ? (
-                  <KeyRound className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-indigo-600" />
+                  <KeyRound className="text-white" />
                 ) : (
-                  <Lock className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-indigo-600" />
+                  <Lock className="text-white" />
                 )}
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-black mb-1 sm:mb-2">
                 {etapa === 'codigo' ? 'Validar Código' : 'Nova Senha'}
               </h1>
-              <p className="text-xs sm:text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-700">
                 {etapa === 'codigo'
                   ? 'Digite seu email e o código recebido'
                   : 'Crie sua nova senha'}
               </p>
             </div>
-
-            {/* ------------------------------------------------------------------------
-              MENSAGEM DE STATUS (Erro/Sucesso)
-            ------------------------------------------------------------------------ */}
-            {mensagem && (
-              <div
-                className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg flex items-start gap-2 sm:gap-3 border ${
-                  status === 'success'
-                    ? 'bg-green-50 border-green-200 text-green-800'
-                    : 'bg-red-50 border-red-200 text-red-800'
-                }`}
-              >
-                {status === 'success' ? (
-                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
-                )}
-                <p className="text-xs sm:text-sm">{mensagem}</p>
-              </div>
-            )}
-
             {/* ------------------------------------------------------------------------
               RENDERIZAÇÃO CONDICIONAL POR ETAPA
             ------------------------------------------------------------------------ */}
 
             {etapa === 'codigo' ? (
               /* ========================================================================
-                ETAPA 1: VALIDAÇÃO DE CÓDIGO
-              ======================================================================== */
-              <div className="space-y-4 sm:space-y-6">
+    ETAPA 1: VALIDAÇÃO DE CÓDIGO
+  ======================================================================== */
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-4 sm:space-y-6"
+              >
                 {/* Campo Email */}
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
+                    className="block text-xs sm:text-sm font-medium text-black mb-1 sm:mb-2"
                   >
                     Email
                   </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onKeyDown={aoPressionarTecla}
-                    placeholder="seu@email.com"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:opacity-50"
-                    disabled={estaCarregando}
-                  />
+
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                    </div>
+
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={aoPressionarTecla}
+                      placeholder="seu@email.com"
+                      className="
+            w-full
+            pl-10
+            pr-3
+            sm:pl-10
+            sm:pr-4
+            py-2.5
+            sm:py-3
+            text-sm
+            sm:text-base
+            border
+            border-gray-300
+            rounded-lg
+            focus:ring-2
+            focus:ring-blue-500
+            focus:border-transparent
+            outline-none
+            transition
+            disabled:opacity-50
+          "
+                      disabled={estaCarregando}
+                      autoFocus
+                    />
+                  </div>
                 </div>
 
-                {/* Campo Código */}
-                <div>
-                  <label
-                    htmlFor="codigo"
-                    className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
-                  >
-                    Código de Verificação
-                  </label>
-                  <input
-                    type="text"
-                    id="codigo"
-                    value={codigo}
-                    onChange={(e) => setCodigo(e.target.value.toUpperCase())}
-                    onKeyDown={aoPressionarTecla}
-                    placeholder="Digite o código recebido"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition disabled:opacity-50 uppercase"
-                    disabled={estaCarregando}
-                    maxLength={CODIGO_TAMANHO}
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    {INFO_MESSAGES.CODIGO_HINT}
-                  </p>
-                </div>
+{/* Campo Código */}
+<div>
+  <label
+    htmlFor="codigo-0"
+    className="block text-xs sm:text-sm font-medium text-black mb-2"
+  >
+    Código de Verificação
+  </label>
+
+  <div
+    className="flex items-center justify-center gap-2 sm:gap-3"
+    onPaste={aoColarCodigo}
+  >
+    {codigoArray.map((valor, index) => (
+      <input
+        key={index}
+        ref={(elemento) => {
+          inputsCodigoRef.current[index] = elemento;
+        }}
+        id={`codigo-${index}`}
+        type="text"
+        inputMode="text"
+        autoComplete={index === 0 ? 'one-time-code' : 'off'}
+        maxLength={1}
+        value={valor}
+        disabled={estaCarregando}
+        onChange={(e) => atualizarCodigo(index, e.target.value)}
+        onKeyDown={(e) => aoPressionarTeclaCodigo(e, index)}
+        onPaste={aoColarCodigo}
+        aria-label={`Dígito ${index + 1} do código`}
+        className={`
+          h-12
+          w-11
+          sm:h-14
+          sm:w-12
+          text-center
+          text-lg
+          sm:text-xl
+          font-semibold
+          tracking-wider
+          text-gray-900
+          bg-white
+          border
+          rounded-xl
+          outline-none
+          transition-all
+          duration-200
+          ${valor
+            ? 'border-blue-500 bg-blue-50/30'
+            : 'border-gray-300'
+          }
+          focus:border-blue-600
+          focus:ring-4
+          focus:ring-blue-500/10
+          disabled:cursor-not-allowed
+          disabled:opacity-50
+        `}
+      />
+    ))}
+  </div>
+
+  <div className="flex items-center justify-between mt-2">
+    <p className="text-xs text-gray-500">
+      Digite o código de 6 caracteres recebido.
+    </p>
+
+    <span className="text-xs font-medium text-gray-400">
+      {codigo.length}/6
+    </span>
+  </div>
+</div>
 
                 {/* Botão Continuar */}
                 <button
                   onClick={irParaEtapaSenha}
-                  className="w-full bg-indigo-600 text-white py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                  className="
+        w-full
+        bg-blue-600
+        text-white
+        py-2.5
+        sm:py-3
+        rounded-lg
+        text-sm
+        sm:text-base
+        font-medium
+        hover:bg-blue-700
+        transition
+        flex
+        items-center
+        justify-center
+        gap-2
+      "
                 >
                   Continuar
                 </button>
 
-                {/* Link para voltar ao login */}
-                <div className="mt-4 sm:mt-6 text-center">
+                {/* Voltar para login */}
+                <div className="mt-4 sm:mt-8 flex items-center justify-center">
                   <button
+                    type="button"
                     onClick={irParaLogin}
-                    className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium inline-flex items-center gap-1"
+                    disabled={estaCarregando}
+                    className="
+          group
+          inline-flex
+          items-center
+          gap-1.5
+          rounded-lg
+          px-2
+          py-1.5
+          text-xs
+          font-medium
+          text-slate-500
+          transition-all
+          duration-200
+          hover:bg-slate-50
+          hover:text-blue-600
+          disabled:pointer-events-none
+          disabled:opacity-50
+          sm:text-sm
+        "
                   >
-                    <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <ArrowLeft
+                      className="
+            h-3.5 w-3.5
+            transition-transform
+            duration-200
+            group-hover:-translate-x-0.5
+            sm:h-4 sm:w-4
+          "
+                    />
                     Voltar para o login
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ) : (
               /* ========================================================================
                 ETAPA 2: CRIAÇÃO DE NOVA SENHA
@@ -596,7 +841,7 @@ export default function ResetarSenhaComCodigo() {
                   <button
                     onClick={redefinirSenha}
                     disabled={estaCarregando}
-                    className="flex-1 bg-indigo-600 text-white py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 bg-blue-600 text-white py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {estaCarregando ? (
                       <>
@@ -626,16 +871,16 @@ export default function ResetarSenhaComCodigo() {
           <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
             {etapa === 'codigo' && (
               <>
-                <p className="text-center text-xs sm:text-sm text-gray-600">
+                <p className="text-center text-xs sm:text-sm text-white">
                   {INFO_MESSAGES.CODIGO_SPAM}
                 </p>
-                <p className="text-center text-xs text-gray-500">
+                <p className="text-center text-xs text-white">
                   {INFO_MESSAGES.CODIGO_VALIDADE(CODIGO_VALIDADE_MINUTOS)}
                 </p>
               </>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Modal de Sucesso */}

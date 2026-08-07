@@ -264,8 +264,9 @@ export type ReservaGet = {
       logradouro: string;
       bairro: string;
     };
-
-    area: 'AZUL' | 'AMARELA' | 'VERDE' | string;
+    logradouro: string;
+    bairro: string;
+    area: 'AZUL' | 'AMARELA' | 'VERMELHA' | 'BRANCA' | string;
     numeroEndereco: string;
     referenciaEndereco: string;
     tipoVaga: string;
