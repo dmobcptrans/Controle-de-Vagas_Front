@@ -237,7 +237,7 @@ export default function ReservaCard({
         {/* Header: logradouro/bairro + status (desktop) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h3 className="text-base sm:text-lg font-semibold text-gray-800 truncate leading-tight">
-            {`${currentReserva.vaga.endereco.logradouro} - ${currentReserva.vaga.endereco.bairro}` ||
+            {`${currentReserva.vaga.logradouro} - ${currentReserva.vaga.bairro}` ||
               'Local não informado'}
           </h3>
 

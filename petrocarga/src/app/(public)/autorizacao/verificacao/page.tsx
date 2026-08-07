@@ -2,7 +2,14 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { Mail, ArrowLeft, CheckCircle2, AlertCircle, User } from 'lucide-react';
+import {
+  Mail,
+  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  User,
+  ArrowRight,
+} from 'lucide-react';
 import { solicitarRecuperacaoSenha } from '@/services/api/recuperacaoApi';
 import { validateEmail } from '@/lib/utils';
 import ModalConfirmacaoEnvio from '@/components/modal/autorizacao/verificacao/ModalConfirmacaoEnvio';
@@ -355,6 +362,10 @@ export default function RecuperacaoSenha() {
     irParaLogin();
   };
 
+  const irParaCodigo = () => {
+    router.push('/autorizacao/nova-senha');
+  };
+
   // --------------------------------------------------------------------------
   // UI DINÂMICA (valores calculados para renderização)
   // --------------------------------------------------------------------------
@@ -414,9 +425,9 @@ export default function RecuperacaoSenha() {
   // --------------------------------------------------------------------------
 
   return (
-  <>
-    <div
-      className="
+    <>
+      <div
+        className="
         relative
         flex
         items-center
@@ -426,16 +437,16 @@ export default function RecuperacaoSenha() {
         bg-blue-800
         px-6
       "
-    >
-      {/* Blobs de fundo */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
-        <div className="absolute bottom-32 -left-32 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
-      </div>
+      >
+        {/* Blobs de fundo */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
+          <div className="absolute bottom-32 -left-32 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
+        </div>
 
-      {/* Domo */}
-      <div
-        className="
+        {/* Domo */}
+        <div
+          className="
           absolute
           left-1/2
           bottom-0
@@ -446,30 +457,30 @@ export default function RecuperacaoSenha() {
           pointer-events-none
           z-0
         "
-        style={{
-          borderTopLeftRadius: '50%',
-          borderTopRightRadius: '50%',
-          boxShadow: '0 -20px 60px rgba(30,58,138,.35)',
-        }}
-      />
+          style={{
+            borderTopLeftRadius: '50%',
+            borderTopRightRadius: '50%',
+            boxShadow: '0 -20px 60px rgba(30,58,138,.35)',
+          }}
+        />
 
-      {/* Card principal */}
-      <motion.div
-        initial={{
-          opacity: 0,
-          y: 40,
-        }}
-        animate={{
-          opacity: 1,
-          y: 0,
-        }}
-        transition={{
-          duration: 0.5,
-        }}
-        className="relative z-10 w-full max-w-md"
-      >
-        <div
-          className="
+        {/* Card principal */}
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 40,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.5,
+          }}
+          className="relative z-10 w-full max-w-md"
+        >
+          <div
+            className="
             bg-white
             rounded-xl
             sm:rounded-4xl
@@ -479,11 +490,11 @@ export default function RecuperacaoSenha() {
             sm:p-6
             md:p-8
           "
-        >
-          {/* HEADER */}
-          <div className="text-center mb-6 sm:mb-8">
-            <div
-              className="
+          >
+            {/* HEADER */}
+            <div className="text-center mb-6 sm:mb-8">
+              <div
+                className="
                 inline-flex
                 items-center
                 justify-center
@@ -498,60 +509,58 @@ export default function RecuperacaoSenha() {
                 mb-3
                 sm:mb-4
               "
-            >
-              <Mail className='text-white'/>
-            </div>
+              >
+                <Mail className="text-white" />
+              </div>
 
-            <h1 className="text-xl sm:text-2xl font-bold text-black mb-1 sm:mb-2">
-              Recuperar Senha
-            </h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-black mb-1 sm:mb-2">
+                Recuperar Senha
+              </h1>
 
-            <p className="text-xs sm:text-sm text-gray-700">
-              Digite seu email, CPF ou CNPJ para receber o código de
-              recuperação.
-            </p>
-          </div>
-
-          {/* STATUS */}
-          {status && !mostrarModal && (
-            <div
-              className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg flex items-start gap-2 sm:gap-3 border ${
-                status === 'success'
-                  ? 'bg-green-50 border-green-200 text-green-800'
-                  : 'bg-red-50 border-red-200 text-red-800'
-              }`}
-            >
-              {status === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
-              )}
-
-              <p className="text-xs sm:text-sm">
-                {mensagem}
+              <p className="text-xs sm:text-sm text-gray-700">
+                Digite seu email, CPF ou CNPJ para receber o código de
+                recuperação.
               </p>
             </div>
-          )}
 
-          {/* FORMULÁRIO / SUCESSO */}
-          {!codigoEnviado ? (
-            <motion.div
-              initial={{
-                opacity: 0,
-              }}
-              animate={{
-                opacity: 1,
-              }}
-              transition={{
-                duration: 0.4,
-              }}
-              className="space-y-4 sm:space-y-6"
-            >
-              {/* Campo identificação */}
-              <div>
-                <label
-                  htmlFor="identificador"
-                  className="
+            {/* STATUS */}
+            {status && !mostrarModal && (
+              <div
+                className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg flex items-start gap-2 sm:gap-3 border ${
+                  status === 'success'
+                    ? 'bg-green-50 border-green-200 text-green-800'
+                    : 'bg-red-50 border-red-200 text-red-800'
+                }`}
+              >
+                {status === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
+                )}
+
+                <p className="text-xs sm:text-sm">{mensagem}</p>
+              </div>
+            )}
+
+            {/* FORMULÁRIO / SUCESSO */}
+            {!codigoEnviado ? (
+              <motion.div
+                initial={{
+                  opacity: 0,
+                }}
+                animate={{
+                  opacity: 1,
+                }}
+                transition={{
+                  duration: 0.4,
+                }}
+                className="space-y-4 sm:space-y-6"
+              >
+                {/* Campo identificação */}
+                <div>
+                  <label
+                    htmlFor="identificador"
+                    className="
                     block
                     text-xs
                     sm:text-sm
@@ -560,33 +569,31 @@ export default function RecuperacaoSenha() {
                     mb-1
                     sm:mb-2
                   "
-                >
-                  Email, CPF ou CNPJ da conta
-                </label>
+                  >
+                    Email, CPF ou CNPJ da conta
+                  </label>
 
-                <div className="relative">
-                  <div
-                    className="
+                  <div className="relative">
+                    <div
+                      className="
                       absolute
                       left-3
                       top-1/2
                       transform
                       -translate-y-1/2
                     "
-                  >
-                    {inputIcon}
-                  </div>
+                    >
+                      {inputIcon}
+                    </div>
 
-                  <input
-                    type="text"
-                    id="identificador"
-                    value={identificador}
-                    onChange={(e) =>
-                      setIdentificador(e.target.value)
-                    }
-                    onKeyDown={aoPressionarTecla}
-                    placeholder="Digite seu email, CPF ou CNPJ"
-                    className="
+                    <input
+                      type="text"
+                      id="identificador"
+                      value={identificador}
+                      onChange={(e) => setIdentificador(e.target.value)}
+                      onKeyDown={aoPressionarTecla}
+                      placeholder="Digite seu email, CPF ou CNPJ"
+                      className="
                       w-full
                       pl-10
                       pr-3
@@ -606,138 +613,187 @@ export default function RecuperacaoSenha() {
                       transition
                       disabled:opacity-50
                     "
-                    disabled={estaCarregando}
-                    autoFocus
-                  />
+                      disabled={estaCarregando}
+                      autoFocus
+                    />
+                  </div>
+
+                  {formatHint}
                 </div>
 
-                {formatHint}
-              </div>
-
-              {/* Botão */}
-              <button
-                onClick={enviarCodigoRecuperacao}
-                disabled={
-                  estaCarregando ||
-                  tipoInput === 'indeterminado'
-                }
-                className="
-                  w-full
-                  bg-blue-600
-                  text-white
-                  py-2.5
-                  sm:py-3
-                  rounded-lg
-                  text-sm
-                  sm:text-base
-                  font-medium
-                  hover:bg-blue-700
-                  transition
-                  disabled:opacity-50
-                  disabled:cursor-not-allowed
-                  flex
-                  items-center
-                  justify-center
-                  gap-2
-                "
-              >
-                {estaCarregando ? (
-                  <>
-                    <div
-                      className="
-                        w-4
-                        h-4
-                        sm:w-5
-                        sm:h-5
-                        border-2
-                        border-white
-                        border-t-transparent
-                        rounded-full
-                        animate-spin
-                      "
-                    />
-
-                    <span>Enviando...</span>
-                  </>
-                ) : (
-                  'Enviar código de recuperação'
-                )}
-              </button>
-
-              {/* Voltar */}
-              <div className="mt-4 sm:mt-6 text-center">
+                {/* Botão */}
                 <button
-                  onClick={irParaLogin}
-                  disabled={estaCarregando}
+                  onClick={enviarCodigoRecuperacao}
+                  disabled={estaCarregando || tipoInput === 'indeterminado'}
                   className="
-                    text-xs
-                    sm:text-sm
-                    text-blue-600
-                    hover:text-blue-700
-                    font-medium
-                    inline-flex
-                    items-center
-                    gap-1
-                    disabled:opacity-50
-                  "
+    w-full
+    bg-blue-600
+    text-white
+    py-2.5
+    sm:py-3
+    rounded-lg
+    text-sm
+    sm:text-base
+    font-medium
+    hover:bg-blue-700
+    transition
+    disabled:opacity-50
+    disabled:cursor-not-allowed
+    flex
+    items-center
+    justify-center
+    gap-2
+  "
                 >
-                  <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
-                  Voltar para o login
+                  {estaCarregando ? (
+                    <>
+                      <div
+                        className="
+          w-4
+          h-4
+          sm:w-5
+          sm:h-5
+          border-2
+          border-white
+          border-t-transparent
+          rounded-full
+          animate-spin
+        "
+                      />
+
+                      <span>Enviando...</span>
+                    </>
+                  ) : (
+                    'Enviar código de recuperação'
+                  )}
                 </button>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{
-                opacity: 0,
-                y: 20,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              transition={{
-                duration: 0.5,
-              }}
-            >
-              <ModalSucessoEnvio
-                tipoInput={tipoInput}
-                onVoltarLogin={irParaLogin}
-                onTentarOutro={tentarOutroIdentificador}
-              />
-            </motion.div>
-          )}
-        </div>
 
-        {/* Informação inferior */}
-        <motion.div
-          initial={{
-            opacity: 0,
-          }}
-          animate={{
-            opacity: 1,
-          }}
-          transition={{
-            duration: 2,
-          }}
-          className="mt-4 sm:mt-6 space-y-2 sm:space-y-3"
-        >
-          <p className="text-center text-xs sm:text-sm text-white">
-            {SUCCESS_MESSAGES.CODIGO_VALIDADE(
-              CODIGO_VALIDADE_MINUTOS,
+                <div className="mt-4 sm:mt-8 flex items-center justify-between gap-4">
+                  {/* Voltar */}
+                  <button
+                    type="button"
+                    onClick={irParaLogin}
+                    disabled={estaCarregando}
+                    className="
+      group
+      inline-flex
+      items-center
+      gap-1.5
+      rounded-lg
+      px-2
+      py-1.5
+      text-xs
+      font-medium
+      text-slate-500
+      transition-all
+      duration-200
+      hover:bg-slate-50
+      hover:text-blue-600
+      disabled:pointer-events-none
+      disabled:opacity-50
+      sm:text-sm
+    "
+                  >
+                    <ArrowLeft
+                      className="
+        h-3.5 w-3.5
+        transition-transform
+        duration-200
+        group-hover:-translate-x-0.5
+        sm:h-4 sm:w-4
+      "
+                    />
+                    Voltar para o login
+                  </button>
+
+                  {/* Já tenho código */}
+                  <button
+                    type="button"
+                    onClick={irParaCodigo}
+                    disabled={estaCarregando}
+                    className="
+      group
+      inline-flex
+      items-center
+      gap-1.5
+      rounded-lg
+      px-2
+      py-1.5
+      text-xs
+      font-medium
+      text-blue-600
+      transition-all
+      duration-200
+      hover:bg-blue-50
+      hover:text-blue-700
+      disabled:pointer-events-none
+      disabled:opacity-50
+      sm:text-sm
+    "
+                  >
+                    Já tenho um código
+                    <ArrowRight
+                      className="
+        h-3.5 w-3.5
+        transition-transform
+        duration-200
+        group-hover:translate-x-0.5
+        sm:h-4 sm:w-4
+      "
+                    />
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  y: 20,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  duration: 0.5,
+                }}
+              >
+                <ModalSucessoEnvio
+                  tipoInput={tipoInput}
+                  onVoltarLogin={irParaLogin}
+                  onTentarOutro={tentarOutroIdentificador}
+                />
+              </motion.div>
             )}
-          </p>
-        </motion.div>
-      </motion.div>
-    </div>
+          </div>
 
-    {/* Modal confirmação */}
-    <ModalConfirmacaoEnvio
-      isOpen={mostrarModal}
-      onClose={fecharModal}
-      mensagem={mensagem}
-      status={status}
-    />
-  </>
-);
+          {/* Informação inferior */}
+          <motion.div
+            initial={{
+              opacity: 0,
+            }}
+            animate={{
+              opacity: 1,
+            }}
+            transition={{
+              duration: 2,
+            }}
+            className="mt-4 sm:mt-6 space-y-2 sm:space-y-3"
+          >
+            <p className="text-center text-xs sm:text-sm text-white">
+              {SUCCESS_MESSAGES.CODIGO_VALIDADE(CODIGO_VALIDADE_MINUTOS)}
+            </p>
+          </motion.div>
+        </motion.div>
+      </div>
+
+      {/* Modal confirmação */}
+      <ModalConfirmacaoEnvio
+        isOpen={mostrarModal}
+        onClose={fecharModal}
+        mensagem={mensagem}
+        status={status}
+      />
+    </>
+  );
 }
