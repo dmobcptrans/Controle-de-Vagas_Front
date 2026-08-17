@@ -366,7 +366,7 @@ const aoPressionarTeclaCodigo = (
    *    - Exibe mensagem amigável
    * 6. Finalmente, desativa loading
    */
-  const redefinirSenha = async () => {
+ const redefinirSenha = async () => {
   const erroValidacao = validarFormularioSenha();
 
   if (erroValidacao) {
@@ -381,17 +381,27 @@ const aoPressionarTeclaCodigo = (
   setMensagem('');
 
   try {
-    await redefinirSenhaComCodigo(email, codigo, novaSenha);
+    const resposta = await redefinirSenhaComCodigo(
+      email,
+      codigo,
+      novaSenha,
+    );
 
     setStatus('success');
+    setMensagem(resposta.message);
     setMostrarModalSucesso(true);
 
-    toast.success('Senha redefinida com sucesso!');
-  } catch {
+    toast.success(resposta.message);
+  } catch (error: unknown) {
     setStatus('error');
-    setMensagem(ERROR_MESSAGES.ERRO_REDEFINICAO);
 
-    toast.error(ERROR_MESSAGES.ERRO_REDEFINICAO);
+    const mensagemErro =
+      error instanceof Error
+        ? error.message
+        : 'Não foi possível redefinir a senha.';
+
+    setMensagem(mensagemErro);
+    toast.error(mensagemErro);
   } finally {
     setEstaCarregando(false);
   }

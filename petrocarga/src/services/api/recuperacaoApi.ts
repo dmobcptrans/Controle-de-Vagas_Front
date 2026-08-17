@@ -222,7 +222,7 @@ export async function redefinirSenhaComCodigo(
   email: string,
   codigo: string,
   novaSenha: string,
-): Promise<void> {
+): Promise<{ message: string; code: number }> {
   try {
     const res = await clientApi('/petrocarga/auth/reset-password', {
       method: 'POST',
@@ -235,9 +235,11 @@ export async function redefinirSenhaComCodigo(
 
     const data = await res.json();
 
-    if (!data.success) {
+    if (!res.ok) {
       throw new Error(data.message || 'Não foi possível redefinir a senha');
     }
+
+    return data;
   } catch (error: unknown) {
     throw new Error(extractMessage(error));
   }
