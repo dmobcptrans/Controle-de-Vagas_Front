@@ -308,33 +308,34 @@ function LoginContent() {
    * - Se for CPF (ou só números): limita a 11 dígitos e remove não-números
    * - Se for email: aceita qualquer caractere (validação apenas no submit)
    */
-  const handleInputChange = (value: string) => {
-    const apenasNumeros = value.replace(/\D/g, '');
+ const handleInputChange = (value: string) => {
+  const apenasNumeros = value.replace(/\D/g, '');
 
-    if (tipoInput === 'cpf') {
-      if (apenasNumeros.length <= 11) {
-        setLoginInput(apenasNumeros);
-      }
-      return;
+  if (tipoInput === 'cpf') {
+    if (apenasNumeros.length <= 11) {
+      setLoginInput(apenasNumeros);
     }
+    return;
+  }
 
-    if (tipoInput === 'cnpj') {
-      if (apenasNumeros.length <= 14) {
-        setLoginInput(apenasNumeros);
-      }
-      return;
+  if (tipoInput === 'cnpj') {
+    if (apenasNumeros.length <= 14) {
+      setLoginInput(apenasNumeros);
     }
+    return;
+  }
 
-    if (/^\d+$/.test(apenasNumeros)) {
-      if (apenasNumeros.length <= 14) {
-        setLoginInput(apenasNumeros);
-      }
-      return;
+  // Só trata como número/CPF-CNPJ se o valor digitado for TOTALMENTE numérico
+  if (/^\d+$/.test(value)) {
+    if (apenasNumeros.length <= 14) {
+      setLoginInput(apenasNumeros);
     }
+    return;
+  }
 
-    // Email
-    setLoginInput(value);
-  };
+  // Email (ou qualquer coisa com letras, @, ., etc.)
+  setLoginInput(value);
+};
 
   // --------------------------------------------------------------------------
   // UI DINÂMICA (valores calculados para renderização)
