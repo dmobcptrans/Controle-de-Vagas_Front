@@ -383,7 +383,7 @@ export default function Dashboard() {
                       <div className="flex-1 flex flex-col gap-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-semibold text-gray-800 truncate">
-                            {r.vaga.endereco.logradouro}
+                            {r.vaga.logradouro}
                           </p>
                           <StatusBadge status={r.status as StatusKey} />
                         </div>
