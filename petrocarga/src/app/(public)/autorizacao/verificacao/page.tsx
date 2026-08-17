@@ -359,7 +359,7 @@ export default function RecuperacaoSenha() {
     setMostrarModal(false);
     setStatus(null);
     setMensagem('');
-    irParaLogin();
+    irParaCodigo()
   };
 
   const irParaCodigo = () => {

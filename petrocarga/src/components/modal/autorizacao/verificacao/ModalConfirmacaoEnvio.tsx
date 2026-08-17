@@ -165,7 +165,7 @@ export default function ModalConfirmacaoEnvio({
               onClick={onClose}
               className="w-full bg-gray-100 text-gray-700 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium hover:bg-gray-200 transition"
             >
-              Voltar para o login
+              Redefinir senha
             </button>
           </div>
         </div>
