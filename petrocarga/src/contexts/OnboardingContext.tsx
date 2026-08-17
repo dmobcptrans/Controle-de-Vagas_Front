@@ -138,7 +138,8 @@ export function OnboardingProvider({
   const [checked, setChecked] = useState(false);
 
   const { user, refreshUser, loading } = useAuth();
-  const isVeiculoOnlyFlow = !!user?.cpf && user?.possuiVeiculoAtivo;
+const isVeiculoOnlyFlow =
+  (!!user?.cpf || !!user?.cnpj) && user?.possuiVeiculoAtivo === false;
 
   const [data, setData] = useState<OnboardingData>({
     cpf: '',
