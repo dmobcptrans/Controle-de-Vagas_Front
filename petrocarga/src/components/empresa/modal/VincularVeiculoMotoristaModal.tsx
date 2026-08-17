@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition, useEffect, useMemo } from 'react';
+import React, { useState, useTransition, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import {
@@ -9,9 +9,9 @@ import {
   Link2,
   X,
   TruckIcon,
+  Search,
+  Check,
 } from 'lucide-react';
-import FormItem from '@/components/form/form-item';
-import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import {
   getVeiculosUsuario,
 } from '@/services/api/veiculoApi';
@@ -48,15 +48,21 @@ export default function VincularVeiculoMotoristaModal({
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [loadingVeiculos, setLoadingVeiculos] = useState(false);
   const [veiculoId, setVeiculoId] = useState('');
+  const [busca, setBusca] = useState('');
+  const buscaInputRef = useRef<HTMLInputElement>(null);
 
-  const veiculoOptions = useMemo(
-    () =>
-      veiculos.map((v) => ({
-        value: v.id,
-        label: `${v.placa} — ${v.marca} ${v.modelo}`,
-      })),
-    [veiculos],
+  const veiculoSelecionado = useMemo(
+    () => veiculos.find((v) => v.id === veiculoId) ?? null,
+    [veiculos, veiculoId],
   );
+
+  const veiculosFiltrados = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    if (!termo) return veiculos;
+    return veiculos.filter((v) =>
+      `${v.placa} ${v.marca} ${v.modelo}`.toLowerCase().includes(termo),
+    );
+  }, [veiculos, busca]);
 
   const podeEnviar = Boolean(veiculoId) && Boolean(motoristaId);
 
@@ -85,9 +91,29 @@ export default function VincularVeiculoMotoristaModal({
     };
   }, [open, empresaId]);
 
+  // Autofoco na busca ao abrir
+  useEffect(() => {
+    if (open && !loadingVeiculos && veiculos.length > 0) {
+      const t = setTimeout(() => buscaInputRef.current?.focus(), 100);
+      return () => clearTimeout(t);
+    }
+  }, [open, loadingVeiculos, veiculos.length]);
+
+  // Fechar com ESC
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') fecharModal();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isPending]);
+
   function resetForm() {
     setVeiculoId('');
     setVeiculos([]);
+    setBusca('');
   }
 
   function fecharModal() {
@@ -133,7 +159,10 @@ export default function VincularVeiculoMotoristaModal({
   return (
     <>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 transition-opacity duration-300">
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 transition-opacity duration-300"
+          onClick={fecharModal}
+        >
           {/* Caixa do Modal */}
           <div
             className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl border border-gray-100 shadow-2xl overflow-hidden transform transition-all max-h-[90vh] sm:max-h-[85vh] flex flex-col animate-in fade-in slide-in-from-bottom sm:slide-in-from-bottom"
@@ -169,7 +198,7 @@ export default function VincularVeiculoMotoristaModal({
             </div>
 
             {/* Corpo */}
-            <div className="flex-1 px-6 py-6 overflow-y-auto custom-scrollbar space-y-5">
+            <div className="flex-1 px-6 py-5 overflow-y-auto custom-scrollbar space-y-4">
               {loadingVeiculos ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-10 text-gray-400">
                   <Loader2 className="w-6 h-6 animate-spin" />
@@ -190,52 +219,132 @@ export default function VincularVeiculoMotoristaModal({
                   </div>
                 </div>
               ) : (
-                <FormItem
-                  name="Veículo"
-                  description="Selecione um veículo cadastrado"
-                >
-                  <SelecaoCustomizada
-                    id="veiculoId"
-                    name="veiculoId"
-                    placeholder="Selecione o veículo"
-                    value={veiculoId}
-                    onChange={setVeiculoId}
-                    options={veiculoOptions}
-                  />
-                </FormItem>
+                <>
+                  {/* Busca */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <input
+                      ref={buscaInputRef}
+                      type="text"
+                      value={busca}
+                      onChange={(e) => setBusca(e.target.value)}
+                      placeholder="Buscar por placa, marca ou modelo..."
+                      className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-gray-200 bg-gray-50/60 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
+                    />
+                  </div>
+
+                  {/* Lista de veículos */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between px-0.5">
+                      <span className="text-xs font-medium text-gray-500">
+                        {veiculosFiltrados.length === veiculos.length
+                          ? `${veiculos.length} veículo(s) disponível(is)`
+                          : `${veiculosFiltrados.length} de ${veiculos.length} veículo(s)`}
+                      </span>
+                    </div>
+
+                    {veiculosFiltrados.length === 0 ? (
+                      <div className="py-8 text-center">
+                        <p className="text-sm text-gray-400">
+                          Nenhum veículo corresponde à busca.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="max-h-[280px] overflow-y-auto custom-scrollbar space-y-2 pr-0.5">
+                        {veiculosFiltrados.map((v) => {
+                          const selecionado = v.id === veiculoId;
+                          return (
+                            <button
+                              key={v.id}
+                              type="button"
+                              onClick={() => setVeiculoId(v.id)}
+                              className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                                selecionado
+                                  ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500'
+                                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              <div
+                                className={`w-10 h-10 shrink-0 rounded-lg flex items-center justify-center border ${
+                                  selecionado
+                                    ? 'bg-blue-100 border-blue-200'
+                                    : 'bg-gray-50 border-gray-100'
+                                }`}
+                              >
+                                <TruckIcon
+                                  className={`w-5 h-5 ${
+                                    selecionado ? 'text-blue-600' : 'text-gray-400'
+                                  }`}
+                                />
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 tracking-wide">
+                                  {v.placa}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {v.marca} {v.modelo}
+                                </p>
+                              </div>
+
+                              {selecionado && (
+                                <Check className="w-5 h-5 text-blue-600 shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 
             {/* Rodapé */}
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/40 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 items-center shrink-0">
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full sm:w-auto rounded-xl font-medium text-gray-500 hover:text-gray-700 transition-all"
-                disabled={isPending}
-                onClick={fecharModal}
-              >
-                Cancelar
-              </Button>
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/40 flex flex-col gap-3 shrink-0">
+              {veiculoSelecionado && (
+                <div className="flex items-center gap-2 text-xs text-gray-600 bg-white border border-gray-100 rounded-lg px-3 py-2">
+                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span>
+                    Vincular{' '}
+                    <span className="font-semibold text-gray-900">
+                      {veiculoSelecionado.placa}
+                    </span>{' '}
+                    ao motorista
+                  </span>
+                </div>
+              )}
 
-              <Button
-                type="button"
-                disabled={isPending || !podeEnviar || loadingVeiculos}
-                onClick={handleVincular}
-                className="w-full sm:w-auto rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium min-w-[160px] shadow-sm transition-all disabled:opacity-40"
-              >
-                {isPending ? (
-                  <span className="flex items-center gap-2 justify-center">
-                    <Loader2 className="w-4 h-4 animate-spin opacity-80" />
-                    Vinculando...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2 justify-center">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Vincular veículo
-                  </span>
-                )}
-              </Button>
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 items-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full sm:w-auto rounded-xl font-medium text-gray-500 hover:text-gray-700 transition-all"
+                  disabled={isPending}
+                  onClick={fecharModal}
+                >
+                  Cancelar
+                </Button>
+
+                <Button
+                  type="button"
+                  disabled={isPending || !podeEnviar || loadingVeiculos}
+                  onClick={handleVincular}
+                  className="w-full sm:w-auto rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium min-w-[160px] shadow-sm transition-all disabled:opacity-40"
+                >
+                  {isPending ? (
+                    <span className="flex items-center gap-2 justify-center">
+                      <Loader2 className="w-4 h-4 animate-spin opacity-80" />
+                      Vinculando...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2 justify-center">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Vincular veículo
+                    </span>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
