@@ -35,6 +35,8 @@ export interface MotoristaEmpresa {
   id: string;
   nome: string;
   ativo: boolean;
+  telefone: string;
+  email: string;
   empresaId: string;
   empresaCnpj: string;
   empresaRazaoSocial: string;

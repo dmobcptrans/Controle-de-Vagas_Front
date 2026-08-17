@@ -11,7 +11,7 @@ import {
   desvincularVeiculoMotoristaEmpresa,
 } from '@/services/api/empresaApi';
 import { CTA } from '@/components/ui/CTA/CTA';
-import { Car, Info, Loader2, Plus } from 'lucide-react';
+import { Info, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import VincularVeiculoMotoristaModal from '@/components/empresa/modal/VincularVeiculoMotoristaModal';
@@ -119,10 +119,11 @@ export default function MotoristaDetalhes() {
               <span className="text-gray-600">Carregando seus veículos...</span>
             </div>
           ) : veiculos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center mt-10 gap-3">
-              <p className="text-gray-500">Nenhum veículo encontrado.</p>
+            <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 border-gray-200 border-dashed border-2 bg-white rounded-2xl">
+              <p className="text-sm sm:text-base text-gray-500">Nenhum veículo encontrado.</p>
               <Button
                 onClick={() => setModalAberto(true)}
+                className="mt-4 cursor-pointer"
                 variant="outline"
                 size="sm"
               >

@@ -172,86 +172,88 @@ export function useReserva(selectedVaga: Vaga | null) {
   }, []);
 
   // ==================== BUSCA DIAS DISPONÍVEIS ====================
-const fetchDiasDisponiveis = useCallback(
-  async (mesReferencia: Date) => {
-    if (!selectedVaga) return;
+  const fetchDiasDisponiveis = useCallback(
+    async (mesReferencia: Date) => {
+      if (!selectedVaga) return;
 
-    const diasPermitidos: DiaSemana[] =
-      selectedVaga.operacoesVaga?.map((op) => op.diaSemanaAsEnum) ?? [];
+      const diasPermitidos: DiaSemana[] =
+        selectedVaga.operacoesVaga?.map((op) => op.diaSemanaAsEnum) ?? [];
 
-    if (diasPermitidos.length === 0) {
-      setAvailableDates([]);
-      return;
-    }
-
-    setLoadingDias(true); // 👈 inicia loading
-
-    try {
-      const mes = mesReferencia.getMonth() + 1;
-      const ano = mesReferencia.getFullYear();
-
-      const disponibilidades = await fetchDisponibilidadeByVagaId(
-        selectedVaga.id,
-        mes,
-        ano,
-      );
-
-      if (!disponibilidades || disponibilidades.length === 0) {
+      if (diasPermitidos.length === 0) {
         setAvailableDates([]);
         return;
       }
 
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
+      setLoadingDias(true); // 👈 inicia loading
 
-      const datasValidasSet = new Set<string>();
+      try {
+        const mes = mesReferencia.getMonth() + 1;
+        const ano = mesReferencia.getFullYear();
 
-      for (const disp of disponibilidades) {
-        const atual = new Date(disp.inicio);
-        const fim = new Date(disp.fim);
+        const disponibilidades = await fetchDisponibilidadeByVagaId(
+          selectedVaga.id,
+          mes,
+          ano,
+        );
 
-        atual.setHours(0, 0, 0, 0);
-        fim.setHours(0, 0, 0, 0);
+        if (!disponibilidades || disponibilidades.length === 0) {
+          setAvailableDates([]);
+          return;
+        }
 
-        while (atual <= fim) {
-          const diaSemana: DiaSemana = DIAS_SEMANA[atual.getDay()];
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
 
-          if (diasPermitidos.includes(diaSemana) && atual >= hoje) {
-            if (atual.getTime() === hoje.getTime()) {
-              const operacaoHoje = selectedVaga.operacoesVaga.find(
-                (op) => op.diaSemanaAsEnum === diaSemana,
-              );
+        const datasValidasSet = new Set<string>();
 
-              if (!operacaoHoje) {
-                atual.setDate(atual.getDate() + 1);
-                continue;
+        for (const disp of disponibilidades) {
+          const atual = new Date(disp.inicio);
+          const fim = new Date(disp.fim);
+
+          atual.setHours(0, 0, 0, 0);
+          fim.setHours(0, 0, 0, 0);
+
+          while (atual <= fim) {
+            const diaSemana: DiaSemana = DIAS_SEMANA[atual.getDay()];
+
+            if (diasPermitidos.includes(diaSemana) && atual >= hoje) {
+              if (atual.getTime() === hoje.getTime()) {
+                const operacaoHoje = selectedVaga.operacoesVaga.find(
+                  (op) => op.diaSemanaAsEnum === diaSemana,
+                );
+
+                if (!operacaoHoje) {
+                  atual.setDate(atual.getDate() + 1);
+                  continue;
+                }
+
+                const [hFim, mFim] = operacaoHoje.horaFim
+                  .split(':')
+                  .map(Number);
+
+                const dataHoraFim = new Date();
+                dataHoraFim.setHours(hFim, mFim, 0, 0);
+
+                if (new Date() >= dataHoraFim) {
+                  atual.setDate(atual.getDate() + 1);
+                  continue;
+                }
               }
 
-              const [hFim, mFim] = operacaoHoje.horaFim.split(':').map(Number);
-
-              const dataHoraFim = new Date();
-              dataHoraFim.setHours(hFim, mFim, 0, 0);
-
-              if (new Date() >= dataHoraFim) {
-                atual.setDate(atual.getDate() + 1);
-                continue;
-              }
+              datasValidasSet.add(atual.toISOString());
             }
 
-            datasValidasSet.add(atual.toISOString());
+            atual.setDate(atual.getDate() + 1);
           }
-
-          atual.setDate(atual.getDate() + 1);
         }
-      }
 
-      setAvailableDates(Array.from(datasValidasSet).map((d) => new Date(d)));
-    } finally {
-      setLoadingDias(false);
-    }
-  },
-  [selectedVaga],
-);
+        setAvailableDates(Array.from(datasValidasSet).map((d) => new Date(d)));
+      } finally {
+        setLoadingDias(false);
+      }
+    },
+    [selectedVaga],
+  );
 
   // ==================== BUSCA HORÁRIOS DISPONÍVEIS ====================
   const fetchHorariosDisponiveis = useCallback(
@@ -447,6 +449,8 @@ const fetchDiasDisponiveis = useCallback(
     async (extra?: {
       cidadeOrigem?: string;
       entradaCidade?: string;
+      motoristaId?: string;
+      isEmpresa?: boolean;
     }): Promise<ConfirmResult> => {
       if (!user?.id || !selectedVaga) {
         return {
@@ -503,11 +507,29 @@ const fetchDiasDisponiveis = useCallback(
         formData.append('tipoVeiculo', tipoVeiculoAgente);
         formData.append('placa', placaAgente);
       } else {
-        if (!motoristaId || !selectedVehicleId) {
-          return { success: false, message: 'Dados do motorista incompletos.' };
+        if (!selectedVehicleId) {
+          return {
+            success: false,
+            message: 'Veículo não selecionado.',
+          };
         }
 
-        formData.append('motoristaId', motoristaId);
+        // Se a empresa escolheu um motorista, usa o motorista selecionado.
+        // Caso contrário, usa o próprio usuário logado.
+        const motoristaReserva = extra?.isEmpresa
+          ? extra.motoristaId
+          : motoristaId;
+
+        if (!motoristaReserva) {
+          return {
+            success: false,
+            message: extra?.isEmpresa
+              ? 'Selecione um motorista da empresa.'
+              : 'Dados do motorista incompletos.',
+          };
+        }
+
+        formData.append('motoristaId', motoristaReserva);
         formData.append('veiculoId', selectedVehicleId);
       }
 

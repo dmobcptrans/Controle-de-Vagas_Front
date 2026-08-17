@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import {
-  AlertCircle,
   Info,
   Loader2,
   WifiOff,

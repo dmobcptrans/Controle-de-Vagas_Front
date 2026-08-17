@@ -14,8 +14,10 @@ import toast from 'react-hot-toast';
 interface ReservaComponentProps {
   selectedVaga: Vaga;
   onBack?: () => void;
-}
 
+  isEmpresa?: boolean;
+  empresaId?: string;
+}
 /**
  * @component ReservaComponent
  * @version 1.0.0
@@ -90,6 +92,8 @@ interface ReservaComponentProps {
 export default function ReservaComponent({
   selectedVaga,
   onBack,
+  isEmpresa = false,
+  empresaId,
 }: ReservaComponentProps) {
   const router = useRouter();
   const reserva = useReserva(selectedVaga);
@@ -123,6 +127,7 @@ export default function ReservaComponent({
 
   const [success, setSuccess] = useState<boolean | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [selectedDriverId, setSelectedDriverId] = useState<string>('');
 
   // ==================== FORMATAR VEÍCULOS ====================
   const vehiclesForStep = vehicles.map((v) => ({
@@ -139,7 +144,10 @@ export default function ReservaComponent({
 
   // ==================== HANDLER DE CONFIRMAÇÃO ====================
   const onConfirm = async () => {
-    const result = await handleConfirm();
+    const result = await handleConfirm({
+      motoristaId: selectedDriverId,
+      isEmpresa,
+    });
 
     if (!result.success) {
       toast.error('Erro ao confirmar reserva');
@@ -177,7 +185,7 @@ export default function ReservaComponent({
               reserva.fetchDiasDisponiveis(month);
             }}
             availableDays={availableDates}
-            loading={reserva.loadingDias} 
+            loading={reserva.loadingDias}
           />
         )}
 
@@ -188,15 +196,24 @@ export default function ReservaComponent({
             origin={origin}
             entryCity={entryCity}
             selectedVehicleId={selectedVehicleId}
+            isEmpresa={isEmpresa}
+            empresaId={empresaId}
+            selectedDriverId={selectedDriverId}
             onOriginChange={setOrigin}
             onEntryCityChange={setEntryCity}
             onVehicleChange={setSelectedVehicleId}
-            onNext={async (origin, entryCity, vehicleId) => {
+            onDriverChange={setSelectedDriverId}
+            onNext={async (origin, entryCity, vehicleId, driverId) => {
               if (!selectedDay || !selectedVaga) return;
 
               setOrigin(origin);
               setEntryCity(entryCity);
               setSelectedVehicleId(vehicleId);
+
+              if (driverId) {
+                setSelectedDriverId(driverId);
+              }
+
               setStep(3);
             }}
             onBack={() => setStep(1)}
