@@ -138,7 +138,7 @@ export default function ReservaCheckinModal({
             <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
             <div>
               <p className="font-medium text-gray-800">
-                {reserva.vaga.endereco.logradouro} – {reserva.vaga.endereco.bairro}
+                {reserva.vaga.logradouro} – {reserva.vaga.bairro}
               </p>
               <p className="text-gray-500 text-xs">
                 Origem: {reserva.cidadeOrigem}
