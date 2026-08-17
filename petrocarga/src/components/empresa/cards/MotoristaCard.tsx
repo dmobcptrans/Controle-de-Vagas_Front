@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { User, Building2, Unlink, Loader2, Car } from 'lucide-react';
+import { User, Unlink, Loader2, Car, Phone, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { MotoristaEmpresa } from '@/lib/types/personas/empresa';
@@ -12,14 +12,6 @@ interface MotoristaCardProps {
   onDesvincular: (motorista: MotoristaEmpresa) => void | Promise<void>;
 }
 
-// ==================== HELPERS ====================
-
-function formatarCnpj(cnpj: string) {
-  return cnpj.replace(
-    /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-    '$1.$2.$3/$4-$5',
-  );
-}
 
 // ==================== COMPONENTE ====================
 
@@ -82,18 +74,17 @@ export function MotoristaCard({
           </div>
         </div>
 
-        {/* Empresa */}
+        {/* Telefone */}
         <p className="text-sm sm:text-base text-gray-500 flex items-center gap-1 truncate leading-tight">
-          <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
-          {motorista.empresaRazaoSocial}
+          <Phone className="w-4 h-4 text-gray-400 shrink-0" />
+          {motorista.telefone}
         </p>
 
-        {/* CNPJ */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs sm:text-sm text-gray-600">
-          <span className="flex items-center gap-1 truncate">
-            CNPJ: {formatarCnpj(motorista.empresaCnpj)}
-          </span>
-        </div>
+        {/* Email */}
+        <p className="text-sm sm:text-base text-gray-500 flex items-center gap-1 truncate leading-tight">
+          <Mail className="w-4 h-4 text-gray-400 shrink-0" />
+          {motorista.email}
+        </p>
       </div>
 
       {/* ==================== AÇÕES ==================== */}
