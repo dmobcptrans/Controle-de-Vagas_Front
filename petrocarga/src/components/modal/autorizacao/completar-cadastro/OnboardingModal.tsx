@@ -528,10 +528,10 @@ export default function OnboardingModal({
                 <option value="CAMINHONETA">Caminhonete - Até 6 metros</option>
                 <option value="VUC">VUC - Até 8 metros</option>
                 <option value="CAMINHAO_MEDIO">
-                  Caminhão médio - 9 a 12 metros
+                  Caminhão Médio - 9 a 12 metros
                 </option>
                 <option value="CAMINHAO_LONGO">
-                  Caminhão longo - 13 a 19 metros
+                  Caminhão Longo - 13 a 19 metros
                 </option>
               </select>
             </Field>
