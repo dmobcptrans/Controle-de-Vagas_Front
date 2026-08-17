@@ -77,35 +77,33 @@ export default function useReservas() {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-
   // ==================== CARREGAR RESERVAS DO MES ====================
-const carregarReservas = useCallback(
-  async (params?: { mes?: number; ano?: number }) => {
-    setLoading(true);
-    try {
-      const data = await getReservas({
-        mes: params?.mes,
-        ano: params?.ano,
-      });
+  const carregarReservas = useCallback(
+    async (params?: { mes?: number; ano?: number }) => {
+      setLoading(true);
+      try {
+        const data = await getReservas({
+          mes: params?.mes,
+          ano: params?.ano,
+        });
 
-      setReservasDoMes(data);
-    } catch (err) {
-      console.error('Erro ao carregar reservas:', err);
-      toast.error('Erro ao carregar reservas');
-    } finally {
-      setLoading(false);
-    }
-  },
-  [],
-);
+        setReservasDoMes(data);
+      } catch (err) {
+        console.error('Erro ao carregar reservas:', err);
+        toast.error('Erro ao carregar reservas');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   // ==================== CARREGAR RESERVAS DO DIA ====================
   const carregarReservasDoDia = useCallback(async () => {
     setLoading(true);
     try {
       const hoje = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-
-      const data = await getReservas({ data: hoje, status: ['RESERVADA', 'ATIVA'] });
+      const data = await getReservas({ data: hoje });
       setReservasDoDia(data);
     } catch (err) {
       console.error('Erro ao carregar reservas do dia:', err);
@@ -117,8 +115,8 @@ const carregarReservas = useCallback(
 
   // ==================== LOAD INICIAL ====================
   useEffect(() => {
-    carregarReservas(); 
-    carregarReservasDoDia(); 
+    carregarReservas();
+    carregarReservasDoDia();
   }, [carregarReservas, carregarReservasDoDia]);
 
   // ==================== CHECKOUT FORÇADO ====================
@@ -196,7 +194,7 @@ const carregarReservas = useCallback(
     reservasDoDia,
     loading,
     actionLoading,
-    carregarReservas, 
+    carregarReservas,
     carregarReservasDoDia,
     finalizarReservaForcada,
   };

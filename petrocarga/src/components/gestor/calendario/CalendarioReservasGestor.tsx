@@ -22,13 +22,7 @@ interface ReservasPorLogradouro {
 interface ReservasPorDia {
   [dateKey: string]: ReservasPorLogradouro;
 }
-/**
- * Estados do modal para navegação hierárquica
- * - group: Visualização por dia (logradouros)
- * - vagasLogradouro: Visualização por logradouro (vagas)
- * - vaga: Visualização por vaga (reservas)
- * - reserva: Detalhes da reserva
- */
+
 type ModalState =
   | {
       type: 'group';
@@ -49,68 +43,10 @@ type ModalState =
 // COMPONENTE PRINCIPAL
 // ============================================================================
 
-/**
- * @component CalendarioReservasGestor
- * @version 1.0.0
- *
- * @description Calendário interativo para gestores visualizarem reservas por dia.
- * Permite navegação hierárquica: Dia → Logradouro → Vaga → Reserva.
- *
- * ----------------------------------------------------------------------------
- * 📋 FLUXO DE NAVEGAÇÃO:
- * ----------------------------------------------------------------------------
- *
- * 1. CALENDÁRIO:
- *    - Dias com reservas: marcados com ● e cor verde (se há ativas)
- *    - Dias apenas com finalizadas: cor vermelha
- *    - Clique no dia → abre modal com logradouros
- *
- * 2. MODAL - LOGradouros:
- *    - Lista de ruas com reservas naquele dia
- *    - Contagem: "X em andamento" / "Y finalizada(s)"
- *    - Clique em "Ver vagas" → navega para vagas do logradouro
- *
- * 3. MODAL - VAGAS:
- *    - Lista de vagas do logradouro
- *    - Indicador visual: 🟢 (ativa) / 🔴 (sem atividade)
- *    - Clique em "Ver reservas" → navega para reservas da vaga
- *
- * 4. MODAL - RESERVAS DA VAGA:
- *    - Lista de reservas da vaga
- *    - Cada reserva exibe: horário, status, placa
- *    - Clique em "Detalhes" → navega para detalhes da reserva
- *
- * 5. MODAL - DETALHES DA RESERVA:
- *    - Informações completas da reserva
- *    - Botão "Finalizar à força" (checkout forçado)
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - CACHE DE VAGAS: vagaCacheRef evita chamadas repetidas à API
- * - NAVEGAÇÃO HIERÁRQUICA: historyRef permite voltar entre níveis
- * - EVENTOS CALENDÁRIO: Agrupados por dia, com cor verde/vermelha
- * - TIPAGEM FORTE: ModalState com union types para cada nível
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - useReservas: Hook com dados e ações das reservas
- * - ReservaModal: Modal com navegação hierárquica
- * - FullCalendar: Biblioteca de calendário
- *
- * @example
- * ```tsx
- * <CalendarioReservasGestor />
- * ```
- */
-// ==================== COMPONENTE ====================
-
 export default function CalendarioReservasGestor() {
   const {
     reservasDoMes,
+    reservasDoDia,
     actionLoading,
     finalizarReservaForcada,
     carregarReservas,
@@ -127,14 +63,13 @@ export default function CalendarioReservasGestor() {
 
   useEffect(() => {
     carregarReservas(
-      {mes: mes + 1, ano: ano} 
+      { mes: mes + 1, ano: ano }
     );
 
     carregarReservasDoDia();
 
     const interval = setInterval(() => {
       carregarReservasDoDia();
-      carregarReservas();
     }, 15000); // 15 segundos
 
     return () => clearInterval(interval);
@@ -161,10 +96,20 @@ export default function CalendarioReservasGestor() {
 
   // ==================== DADOS ====================
 
+  // Mescla reservasDoMes com reservasDoDia, priorizando os dados
+  // frescos do dia atual (que vêm com TODOS os status, atualizados a cada 15s)
+  const reservasCombinadas = useMemo(() => {
+    const hojeKey = toDateKey(new Date().toISOString());
+    const semHoje = reservasDoMes.filter(
+      (r) => toDateKey(r.inicio) !== hojeKey,
+    );
+    return [...semHoje, ...reservasDoDia];
+  }, [reservasDoMes, reservasDoDia]);
+
   const reservasPorDia = useMemo<ReservasPorDia>(() => {
     const map: ReservasPorDia = {};
 
-    reservasDoMes.forEach((r) => {
+    reservasCombinadas.forEach((r) => {
       const dateKey = toDateKey(r.inicio);
 
       if (!map[dateKey]) map[dateKey] = {};
@@ -177,7 +122,7 @@ export default function CalendarioReservasGestor() {
     });
 
     return map;
-  }, [reservasDoMes]);
+  }, [reservasCombinadas]);
 
   const eventosCalendario: EventInput[] = useMemo(() => {
     return Object.entries(reservasPorDia).map(([dateStr, logradouros]) => {
