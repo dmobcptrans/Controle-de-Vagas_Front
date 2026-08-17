@@ -112,7 +112,7 @@ export default function OriginVehicleStep({
   const [localDriverId, setLocalDriverId] = useState(selectedDriverId || '');
   const [isFocused, setIsFocused] = useState(false);
   const [origem, setOrigem] = useState('');
-
+  const [modalAberto, setModalAberto] = useState(false);
   // ==================== BUSCA DE VEÍCULO (client-side) ====================
   const [vehicleSearch, setVehicleSearch] = useState('');
   const veiculosFiltrados = useMemo(() => {
@@ -442,7 +442,7 @@ export default function OriginVehicleStep({
           {/* Adicionar novo veículo */}
           <button
             type="button"
-            onClick={() => router.push('/veiculos/cadastrar-veiculos')}
+            onClick={() => router.push('/meus-veiculos')}
             className="w-full flex items-center gap-3 p-3 rounded-xl border border-dashed border-blue-300 text-left text-blue-600 hover:bg-blue-50/60 transition-all"
           >
             <div className="w-10 h-10 shrink-0 rounded-lg flex items-center justify-center bg-blue-50 border border-blue-100">
