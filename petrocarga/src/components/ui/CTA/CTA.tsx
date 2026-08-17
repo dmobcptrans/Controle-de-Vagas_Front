@@ -50,7 +50,7 @@ export function CTA({
     </>
   );
 
-  const className = `flex items-center justify-between transition-colors rounded-2xl px-5 py-4 border-l-4 w-full text-left ${current.container}`;
+  const className = `flex items-center cursor-pointer justify-between transition-colors rounded-2xl px-5 py-4 border-l-4 w-full text-left ${current.container}`;
 
   return (
     <div className="-mt-4 mb-5">

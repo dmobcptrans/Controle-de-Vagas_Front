@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   User2,
+  UserPlus2,
 } from 'lucide-react';
 
 import { MotoristaEmpresaResponse } from '@/lib/types/personas/empresa';
@@ -158,7 +159,7 @@ export default function MotoristasEmpresa() {
         setCurrentPage(response.pagina);
         setIsOffline(false);
       } catch {
-        toast.error('Não foi possível carregar suas reservas atuais.');
+        toast.error('Não foi possível carregar suas MOTORISTA atuais.');
         if (!navigator.onLine) setIsOffline(true);
       } finally {
         setLoading(false);
@@ -203,7 +204,7 @@ export default function MotoristasEmpresa() {
   const handleDesvincularMotorista = async (motoristaId: string) => {
     if (!navigator.onLine) {
       toast.error(
-        'Você está offline. A exclusão de reservas só é permitida com conexão à internet.',
+        'Você está offline. A exclusão de MOTORISTA só é permitida com conexão à internet.',
       );
       return;
     }
@@ -245,7 +246,7 @@ export default function MotoristasEmpresa() {
                 </p>
               </>
             ) : (
-              <p>Nenhuma reserva encontrada</p>
+              <p>Nenhum motorista encontrado</p>
             )}
           </div>
         </div>
@@ -253,11 +254,11 @@ export default function MotoristasEmpresa() {
 
       <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
         {/* ==================== CTA DINÂMICO ==================== */}
-        <div className="-mt-4 mb-5">
+        <div className="-mt-4 mb-5 ">
           <CTA
             title="Adicionar Motorista"
             description="Traga algum motorista para a sua empresa"
-            icon={<User2 className="h-5 w-5 text-white" />}
+            icon={<UserPlus2 className="h-5 w-5 text-white" />}
             onClick={() => setModalAberto(true)}
           />
         </div>
@@ -281,16 +282,16 @@ export default function MotoristasEmpresa() {
             </span>
           </div>
         ) : motoristas.length === 0 ? (
-          /* ==================== ESTADO SEM RESERVAS ==================== */
-          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4">
-            <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
-            <p className="text-sm sm:text-base text-gray-500">
-              Nenhum motorista encontrado.
-            </p>
-          </div>
+          /* ==================== ESTADO SEM MOTORISTA ==================== */
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 border-gray-200 border-dashed border-2 bg-white rounded-2xl">
+              <User2 className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
+              <p className="text-sm sm:text-base text-gray-500">
+                Nenhum motorista encontrado.
+              </p>
+            </div>
         ) : (
           <>
-            {/* ==================== LISTA DE RESERVAS ==================== */}
+            {/* ==================== LISTA DE MOTORISTA ==================== */}
 
             <section className="flex flex-col gap-4 animate-in fade-in duration-200">
               {motoristas.map((motoristas) => (
@@ -318,7 +319,7 @@ export default function MotoristasEmpresa() {
 
         {/* ==================== TUTORIAL LINK ==================== */}
         <Link
-          href="/tutorial#minhasreservas"
+          href="/tutorial#minhasMOTORISTA"
           className="flex items-center gap-3 sm:gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-3 sm:p-4 hover:bg-blue-50/30 transition-colors mt-6 sm:mt-8"
         >
           <div className="bg-blue-50 rounded-xl w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center flex-shrink-0">
