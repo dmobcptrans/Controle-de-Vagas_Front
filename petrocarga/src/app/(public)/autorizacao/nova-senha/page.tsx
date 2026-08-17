@@ -8,6 +8,7 @@ import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
 import FeedbackSenha from '@/components/feedback/feedback-senha';
 import ModalSucessoRedefinicao from '@/components/modal/autorizacao/nova-senha/ModalSucessoRedefinicao';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 /**
  * @component ResetarSenhaComCodigo
@@ -366,31 +367,35 @@ const aoPressionarTeclaCodigo = (
    * 6. Finalmente, desativa loading
    */
   const redefinirSenha = async () => {
-    const erroValidacao = validarFormularioSenha();
-    if (erroValidacao) {
-      setStatus('error');
-      setMensagem(erroValidacao);
-      return;
-    }
+  const erroValidacao = validarFormularioSenha();
 
-    setEstaCarregando(true);
-    setStatus(null);
-    setMensagem('');
+  if (erroValidacao) {
+    setStatus('error');
+    setMensagem(erroValidacao);
+    toast.error(erroValidacao);
+    return;
+  }
 
-    try {
-      // Chamada à API (implementada em /lib/api/recuperacaoApi)
-      await redefinirSenhaComCodigo(email, codigo, novaSenha);
+  setEstaCarregando(true);
+  setStatus(null);
+  setMensagem('');
 
-      setStatus('success');
-      setMostrarModalSucesso(true);
-    } catch {
-      // Erro genérico - API já deve retornar mensagens amigáveis
-      setStatus('error');
-      setMensagem(ERROR_MESSAGES.ERRO_REDEFINICAO);
-    } finally {
-      setEstaCarregando(false);
-    }
-  };
+  try {
+    await redefinirSenhaComCodigo(email, codigo, novaSenha);
+
+    setStatus('success');
+    setMostrarModalSucesso(true);
+
+    toast.success('Senha redefinida com sucesso!');
+  } catch {
+    setStatus('error');
+    setMensagem(ERROR_MESSAGES.ERRO_REDEFINICAO);
+
+    toast.error(ERROR_MESSAGES.ERRO_REDEFINICAO);
+  } finally {
+    setEstaCarregando(false);
+  }
+};
 
   // --------------------------------------------------------------------------
   // HANDLERS DE NAVEGAÇÃO
