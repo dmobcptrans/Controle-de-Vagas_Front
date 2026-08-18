@@ -20,7 +20,7 @@ import { ReservaGet } from '@/lib/types/reservas/reserva';
 import { Denuncia } from '@/lib/types/denuncia';
 import toast from 'react-hot-toast';
 import { CTA } from '@/components/ui/CTA/CTA';
-import { MotoristaEmpresa } from '@/lib/types/personas/empresa';
+import { MotoristaEmpresa } from '@/lib/types/personas/motorista';
 
 /**
  * Configuração de cores e rótulos para cada status de reserva

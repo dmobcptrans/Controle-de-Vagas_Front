@@ -7,7 +7,7 @@ import {
   MotoristaPatchPayload,
   MotoristaResult,
 } from '../../lib/types/personas/motorista';
-import { MotoristaResponse } from '@/lib/types/personas/empresa';
+import { MotoristaResponse } from './../../lib/types/personas/motorista';
 
 /**
  * @module motoristaApi

@@ -9,6 +9,9 @@ import {
 } from '@/services/api/motoristaApi';
 import { deleteAgente, getAgenteByUserId } from '@/services/api/agenteApi';
 import { deleteGestor, getGestorByUserId } from '@/services/api/gestorApi';
+import { getEmpresaByUsuarioId } from '@/services/api/empresaApi';
+
+import { Empresa } from '@/lib/types/personas/empresa';
 import { Motorista } from '@/lib/types/personas/motorista';
 import { Agente } from '@/lib/types/personas/agente';
 import { Gestor } from '@/lib/types/personas/gestor';
@@ -25,6 +28,7 @@ import {
   Loader2,
   Edit,
   Info,
+  Building,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -86,9 +90,9 @@ import { CtaProfileIcon } from '@/components/ui/CTA/CtaProfileIcon';
  * @see /services/api/adminApi.ts
  */
 
-type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' ;
+type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' | 'EMPRESA';
 
-type Perfil = Motorista | Agente | Gestor;
+type Perfil = Motorista | Agente | Gestor | Empresa;
 
 interface FetchPerfilResultado {
   error?: boolean;
@@ -99,7 +103,9 @@ interface FetchPerfilResultado {
 interface PersonaConfig {
   label: string;
   fetchPerfil: (userId: string) => Promise<FetchPerfilResultado>;
-  deletePerfil: (userId: string) => Promise<{ error?: boolean; message?: string } | void>;
+  deletePerfil?: (
+    userId: string,
+  ) => Promise<{ error?: boolean; message?: string } | void>;
 }
 
 // --------------------------------------------------------------------------
@@ -113,7 +119,11 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
     label: 'Motorista',
     fetchPerfil: async (userId) => {
       const resultado = await getMotoristaByUserId(userId);
-      return { error: resultado.error, message: resultado.message, perfil: resultado.motorista };
+      return {
+        error: resultado.error,
+        message: resultado.message,
+        perfil: resultado.motorista,
+      };
     },
     deletePerfil: (userId) => deleteMotorista(userId),
   },
@@ -121,17 +131,37 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
     label: 'Agente',
     fetchPerfil: async (userId) => {
       const resultado = await getAgenteByUserId(userId);
-      return { error: resultado.error, message: resultado.message, perfil: resultado.agente };
+      return {
+        error: resultado.error,
+        message: resultado.message,
+        perfil: resultado.agente,
+      };
     },
-    deletePerfil: (userId) => deleteAgente(userId),
+    // deletePerfil: (userId) => deleteAgente(userId),
   },
   GESTOR: {
     label: 'Gestor',
     fetchPerfil: async (userId) => {
       const resultado = await getGestorByUserId(userId);
-      return { error: resultado.error, message: resultado.message, perfil: resultado.gestor };
+      return {
+        error: resultado.error,
+        message: resultado.message,
+        perfil: resultado.gestor,
+      };
     },
-    deletePerfil: (userId) => deleteGestor(userId),
+    // deletePerfil: (userId) => deleteGestor(userId),
+  },
+  EMPRESA: {
+    label: 'Empresa',
+    fetchPerfil: async (userId) => {
+      const resultado = await getEmpresaByUsuarioId(userId);
+      return {
+        error: resultado.error,
+        message: resultado.message,
+        perfil: resultado.empresa,
+      };
+    },
+    // deletePerfil: (userId) => deleteEmpresa(userId),
   },
 };
 
@@ -141,9 +171,13 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
 // Cobrem tanto o formato aninhado (perfil.usuario.nome, como no Motorista)
 // quanto um formato plano (perfil.nome), para não quebrar caso os outros
 // tipos não aninhem em `usuario`.
-function getCampo(perfil: Perfil | null, campo: 'nome' | 'telefone' | 'email' | 'cpf' | 'id'): string {
+function getCampo(
+  perfil: Perfil | null,
+  campo: 'nome' | 'telefone' | 'email' | 'cpf' | 'cnpj' | 'id',
+): string {
   if (!perfil) return '';
-  const aninhado = (perfil as unknown as { usuario?: Record<string, string> }).usuario;
+  const aninhado = (perfil as unknown as { usuario?: Record<string, string> })
+    .usuario;
   const plano = perfil as unknown as Record<string, string>;
   return (aninhado?.[campo] ?? plano?.[campo] ?? '') as string;
 }
@@ -211,6 +245,11 @@ export default function Perfil() {
   const handleExcluir = async () => {
     if (!user || !config) return;
 
+    if (!config.deletePerfil) {
+      toast.error('Exclusão de conta não disponível para este tipo de perfil.');
+      return;
+    }
+
     try {
       const resultado = await config.deletePerfil(user.id);
 
@@ -271,6 +310,7 @@ export default function Perfil() {
   const telefone = getCampo(perfil, 'telefone');
   const email = getCampo(perfil, 'email');
   const cpf = getCampo(perfil, 'cpf');
+  const cnpj = getCampo(perfil, 'cnpj');
   const usuarioId = getCampo(perfil, 'id') || user?.id || '';
   const primeiroNome = nome.split(' ')[0];
   const mostrarCamposCnh = isMotorista(perfil);
@@ -326,7 +366,9 @@ export default function Perfil() {
                   <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
                     <Phone className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-500">Telefone</p>
+                      <p className="text-sm font-medium text-gray-500">
+                        Telefone
+                      </p>
                       <p className="text-base sm:text-lg font-semibold text-gray-900">
                         {telefone}
                       </p>
@@ -362,13 +404,21 @@ export default function Perfil() {
                     </>
                   )}
 
-                  {/* Card: CPF */}
+                  {/* Card: CPF ou CNPJ */}
                   <div className="flex items-start sm:items-center space-x-3 p-4 bg-gray-50 rounded-2xl">
-                    <Fingerprint className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    {cnpj ? (
+                      <Building className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    ) : (
+                      <Fingerprint className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                    )}
+
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-500">CPF</p>
+                      <p className="text-sm font-medium text-gray-500">
+                        {cnpj ? 'CNPJ' : 'CPF'}
+                      </p>
+
                       <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
-                        {cpf}
+                        {cnpj || cpf}
                       </p>
                     </div>
                   </div>

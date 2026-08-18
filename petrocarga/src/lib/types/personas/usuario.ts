@@ -16,6 +16,7 @@ export type UsuarioResponse = {
   telefone: string;
   email: string;
   cpf: string;
+  cnpj: string;
   permissao: 'AGENTE' | 'ADMIN' | 'MOTORISTA' | 'GESTOR' | 'EMPRESA';
   criadoEm: string;
   ativo: boolean;

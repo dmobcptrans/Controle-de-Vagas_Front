@@ -12,7 +12,7 @@ import {
   UserPlus2,
 } from 'lucide-react';
 
-import { MotoristaEmpresaResponse } from '@/lib/types/personas/empresa';
+import { MotoristaEmpresaResponse } from '@/lib/types/personas/motorista';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

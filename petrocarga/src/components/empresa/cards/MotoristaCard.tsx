@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { User, Unlink, Loader2, Car, Phone, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
-import { MotoristaEmpresa } from '@/lib/types/personas/empresa';
-
+import { MotoristaEmpresa } from '@/lib/types/personas/motorista';
 interface MotoristaCardProps {
   motorista: MotoristaEmpresa;
   onDesvincular: (motorista: MotoristaEmpresa) => void | Promise<void>;

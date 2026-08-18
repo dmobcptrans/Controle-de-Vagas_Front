@@ -76,6 +76,17 @@ export type Motorista = {
   usuario: Usuario;
 };
 
+export type MotoristaEmpresa = {
+  id: string;
+  nome: string;
+  telefone: string;
+  email: string;
+  ativo: boolean;
+  empresaId?: string | null;
+  empresaCnpj?: string | null;
+  empresaRazaoSocial?: string | null;
+}
+
 /**
  * @type MotoristaUsuario
  * @description Dados do usuário para criação de motorista.
@@ -231,3 +242,4 @@ export interface MotoristaEmpresaPayload {
 }
 
 export type MotoristaResponse = Paginacao<Motorista>;
+export type MotoristaEmpresaResponse = Paginacao<MotoristaEmpresa>;

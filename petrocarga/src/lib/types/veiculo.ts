@@ -10,6 +10,8 @@
  * 2. VeiculoAPI - Versão simplificada para comunicação com APIs externas
  */
 
+import { Paginacao } from "./paginacao";
+
 /**
  * @type Veiculo
  * @description Representação completa de um veículo no sistema.
@@ -58,9 +60,12 @@ export type Veiculo = {
     | 'CAMINHAO_LONGO';
   comprimento?: number;
   usuarioId?: string;
+  ativo?: boolean;
   cpfProprietario?: string | null;
   cnpjProprietario?: string | null;
 };
+
+export type VeiculoPaginado = Paginacao<Veiculo>;
 
 /**
  * @type VeiculoAPI

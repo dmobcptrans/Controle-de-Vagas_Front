@@ -1,25 +1,32 @@
+import { MotoristaEmpresaResponse } from './../../lib/types/personas/motorista';
+import { VeiculoPaginado } from '@/lib/types/veiculo';
 import { clientApi } from '../clientApi';
 import {
-  EmpresaPayload,
-  EmpresaResult,
-  MotoristaEmpresaResponse,
-  MotoristaResponse,
-  VeiculoMotoristaEmpresaResponse,
+  EmpresaInput,
+  EmpresaResponse,
 } from '../../lib/types/personas/empresa';
 
+
+/**
+ * Cadastra uma nova empresa.
+ */
 export async function addEmpresa(
-  prevState: EmpresaResult | null,
+  prevState: EmpresaResponse | null,
   formData: FormData,
-): Promise<EmpresaResult> {
-  const payload: EmpresaPayload = {
+): Promise<EmpresaResponse> {
+  const payload: EmpresaInput = {
     nome: formData.get('nome') as string,
     telefone: formData.get('telefone') as string,
     email: (formData.get('email') as string).toLowerCase(),
     senha: formData.get('senha') as string,
+    cpf: formData.get('cpf') as string,
+    matricula: formData.get('matricula') as string,
     cnpj: formData.get('cnpj') as string,
-    aceitouTermos:
-      formData.get('aceitouTermos') === 'true' ||
-      formData.get('aceitouTermos') === 'on',
+    razaoSocial: formData.get('razaoSocial') as string,
+    tipoCnh: formData.get('tipoCnh') as string,
+    numeroCnh: formData.get('numeroCnh') as string,
+    dataValidadeCnh: formData.get('dataValidadeCnh') as string,
+    empresaId: formData.get('empresaId') as string,
   };
 
   try {
@@ -35,34 +42,106 @@ export async function addEmpresa(
   } catch (err: unknown) {
     return {
       error: true,
-      message: err instanceof Error ? err.message : 'Erro ao cadastrar empresa',
+      message:
+        err instanceof Error
+          ? err.message
+          : 'Erro ao cadastrar empresa',
       valores: payload,
     };
   }
 }
 
-export async function getEmpresaByUsuarioId(usuarioId: string) {
-  const res = await clientApi(`/petrocarga/empresas/${usuarioId}`);
+/**
+ * Atualiza uma empresa existente.
+ */
+export async function atualizarEmpresa(
+  formData: FormData,
+): Promise<EmpresaResponse> {
+  const empresaId = formData.get('id') as string;
 
-  if (!res.ok) {
-    let msg = 'Erro ao buscar empresa';
-
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg };
-  }
-
-  const empresa = await res.json();
-
-  return {
-    error: false,
-    empresa,
+  const payload: EmpresaInput = {
+    id: empresaId,
+    nome: formData.get('nome') as string,
+    email: (formData.get('email') as string).toLowerCase(),
+    telefone: formData.get('telefone') as string,
+    senha: (formData.get('senha') as string) || undefined,
+    cpf: formData.get('cpf') as string,
+    matricula: formData.get('matricula') as string,
+    cnpj: formData.get('cnpj') as string,
+    razaoSocial: formData.get('razaoSocial') as string,
+    tipoCnh: formData.get('tipoCnh') as string,
+    numeroCnh: formData.get('numeroCnh') as string,
+    dataValidadeCnh: formData.get('dataValidadeCnh') as string,
+    empresaId: formData.get('empresaId') as string,
   };
+
+  try {
+    await clientApi(`/petrocarga/empresas/${empresaId}`, {
+      method: 'PATCH',
+      json: payload,
+    });
+
+    return {
+      error: false,
+      message: 'Empresa atualizada com sucesso!',
+    };
+  } catch (err: unknown) {
+    console.error('Erro ao atualizar empresa:', err);
+
+    return {
+      error: true,
+      message:
+        err instanceof Error
+          ? err.message
+          : 'Erro ao atualizar empresa',
+      valores: payload,
+    };
+  }
 }
 
+/**
+ * Busca uma empresa pelo ID do usuário.
+ */
+export async function getEmpresaByUsuarioId(
+  usuarioId: string,
+): Promise<EmpresaResponse> {
+  try {
+    const res = await clientApi(`/petrocarga/empresas/${usuarioId}`);
+
+    if (!res.ok) {
+      let msg = 'Erro ao buscar empresa';
+
+      try {
+        const err = await res.json();
+        msg = err.message ?? msg;
+      } catch {}
+
+      return {
+        error: true,
+        message: msg,
+      };
+    }
+
+    const empresa = await res.json();
+
+    return {
+      error: false,
+      empresa,
+    };
+  } catch (err: unknown) {
+    return {
+      error: true,
+      message:
+        err instanceof Error
+          ? err.message
+          : 'Erro ao buscar empresa',
+    };
+  }
+}
+
+/**
+ * Busca os motoristas vinculados à empresa.
+ */
 export async function getMotoristaEmpresaByUsuarioId(
   usuarioId: string,
   numeroPagina: number = 0,
@@ -113,34 +192,46 @@ export async function getMotoristaEmpresaByUsuarioId(
   }
 }
 
+/**
+ * Desvincula um motorista da empresa.
+ */
 export async function desvincularMotoristaEmpresa(
   usuarioId?: string,
   motoristaId?: string,
 ) {
   try {
-    const res = await clientApi(
+    await clientApi(
       `/petrocarga/motoristas/desvincularEmpresa/${usuarioId}/${motoristaId}`,
       {
         method: 'PATCH',
       },
     );
-    return { success: true };
+
+    return {
+      success: true,
+    };
   } catch (err: unknown) {
     console.error('Erro ao desvincular motorista:', err);
+
     return {
       error: true,
       message:
-        err instanceof Error ? err.message : 'Erro desconhecido ao desvincular',
+        err instanceof Error
+          ? err.message
+          : 'Erro desconhecido ao desvincular',
     };
   }
 }
 
+/**
+ * Busca os veículos vinculados a um motorista da empresa.
+ */
 export async function getVeiculosVinculadosMotoristaEmpresa(
   usuarioId: string,
   motoristaId: string,
   numeroPagina: number = 0,
   tamanhoPagina: number = 10,
-): Promise<VeiculoMotoristaEmpresaResponse> {
+): Promise<VeiculoPaginado> {
   try {
     const res = await clientApi(
       `/petrocarga/veiculoEmpresaMotorista/veiculos/${usuarioId}/${motoristaId}?numeroPagina=${numeroPagina}&tamanhoPagina=${tamanhoPagina}`,
@@ -163,11 +254,15 @@ export async function getVeiculosVinculadosMotoristaEmpresa(
     const message =
       err instanceof Error
         ? err.message
-        : 'Erro ao buscar veiculos vinculados do motorista na empresa.';
+        : 'Erro ao buscar veículos vinculados do motorista na empresa.';
+
     throw new Error(message);
   }
 }
 
+/**
+ * Vincula um veículo a um motorista da empresa.
+ */
 export async function vincularVeiculoMotoristaEmpresa(
   empresaId: string,
   veiculoId: string,
@@ -200,6 +295,9 @@ export async function vincularVeiculoMotoristaEmpresa(
   }
 }
 
+/**
+ * Desvincula um veículo de um motorista da empresa.
+ */
 export async function desvincularVeiculoMotoristaEmpresa(
   empresaId: string,
   veiculoId: string,
@@ -219,7 +317,7 @@ export async function desvincularVeiculoMotoristaEmpresa(
 
     return {
       error: false,
-      message: 'Veículo vinculado ao motorista com sucesso!',
+      message: 'Veículo desvinculado do motorista com sucesso!',
     };
   } catch (err: unknown) {
     return {
@@ -227,7 +325,7 @@ export async function desvincularVeiculoMotoristaEmpresa(
       message:
         err instanceof Error
           ? err.message
-          : 'Erro ao vincular veículo ao motorista.',
+          : 'Erro ao desvincular veículo do motorista.',
     };
   }
 }
