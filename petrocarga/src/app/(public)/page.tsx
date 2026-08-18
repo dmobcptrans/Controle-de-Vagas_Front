@@ -31,7 +31,7 @@ export default function Home() {
           router.replace('/agente/reserva-rapida');
           break;
         case 'EMPRESA':
-          router.replace('/reserva-vaga');
+          router.replace('/reservar-vaga');
           break;
       }
     }
