@@ -23,6 +23,7 @@ import {
   confirmarReserva,
   confirmarReservaAgente,
 } from './reservaService';
+import { getVeiculosVinculadosMotoristaEmpresa } from '@/services/api/empresaApi';
 
 /**
  * @hook useReserva
@@ -124,6 +125,7 @@ import {
 export function useReserva(selectedVaga: Vaga | null) {
   const { user } = useAuth();
   const isAgente = user?.permissao === 'AGENTE';
+  const isEmpresa = user?.permissao === 'EMPRESA';
 
   // ==================== ESTADO PRINCIPAL ====================
   const [reservaState, setReservaState] = useState<ReservaState>({
@@ -387,10 +389,9 @@ export function useReserva(selectedVaga: Vaga | null) {
     }));
   }, [reservaState.startHour, selectedVaga?.id, calcularReservedTimesEnd]);
 
-  // ==================== CARREGA VEÍCULOS ====================
-
+  // ==================== CARREGA VEÍCULOS (USUÁRIO COMUM) ====================
   useEffect(() => {
-    if (!user?.id || isAgente) return;
+    if (!user?.id || isAgente || isEmpresa) return; // empresa não busca aqui
     const loadVehicles = async () => {
       try {
         const r = await getVeiculosUsuario(user.id);
@@ -398,7 +399,34 @@ export function useReserva(selectedVaga: Vaga | null) {
       } catch {}
     };
     loadVehicles();
-  }, [user, isAgente]);
+  }, [user, isAgente, isEmpresa]);
+
+  // ==================== CARREGA VEÍCULOS DO MOTORISTA (EMPRESA) ====================
+  const fetchVeiculosMotorista = useCallback(
+    async (motoristaId: string) => {
+      if (!user?.id || !motoristaId) return;
+
+      try {
+        const r = await getVeiculosVinculadosMotoristaEmpresa(
+          user.id,
+          motoristaId,
+        );
+
+        const veiculosFormatados: Veiculo[] = r.content.map((v) => ({
+          id: v.id,
+          marca: v.marca,
+          modelo: v.modelo,
+          placa: v.placa,
+          tipo: v.tipo,
+        }));
+
+        setVehicles(veiculosFormatados);
+      } catch {
+        setVehicles([]);
+      }
+    },
+    [user],
+  );
 
   // ==================== TRIGGER AUTOMÁTICO DE HORÁRIOS ====================
   useEffect(() => {
@@ -544,20 +572,22 @@ export function useReserva(selectedVaga: Vaga | null) {
         };
       }
 
-      reset();
       return { success: true, message: 'Reserva confirmada com sucesso!' };
     },
-    [user, selectedVaga, motoristaId, reservaState, isAgente, reset],
+    [user, selectedVaga, motoristaId, reservaState, isAgente],
   );
 
   // ==================== RETORNO ====================
   return {
     ...reservaState,
+    isEmpresa,
+    selectedVaga,
     isAgente,
     vehicles,
     loadingMotorista,
     loadingHorarios,
     horariosCarregados,
+    fetchVeiculosMotorista,
     fetchDiasDisponiveis,
     availableDates,
     loadingDias,

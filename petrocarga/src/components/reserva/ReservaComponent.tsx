@@ -10,12 +10,11 @@ import Confirmation from '@/components/reserva/Confirmation';
 import { useReserva } from '../hooks/reserva/useReserva';
 import { Vaga } from '@/lib/types/vaga';
 import toast from 'react-hot-toast';
+import MotoristaStep from './MotoristaStep';
 
 interface ReservaComponentProps {
   selectedVaga: Vaga;
   onBack?: () => void;
-
-  isEmpresa?: boolean;
   empresaId?: string;
 }
 /**
@@ -92,7 +91,6 @@ interface ReservaComponentProps {
 export default function ReservaComponent({
   selectedVaga,
   onBack,
-  isEmpresa = false,
   empresaId,
 }: ReservaComponentProps) {
   const router = useRouter();
@@ -101,8 +99,10 @@ export default function ReservaComponent({
   // ==================== DESTRUTURAÇÃO DO HOOK ====================
   const {
     step,
+    fetchVeiculosMotorista,
     availableDates,
     setStep,
+    isEmpresa,
     selectedDay,
     setSelectedDay,
     availableTimes,
@@ -150,14 +150,15 @@ export default function ReservaComponent({
     });
 
     if (!result.success) {
-      toast.error('Erro ao confirmar reserva');
+      toast.error(result.message ?? 'Erro ao confirmar reserva');
     } else {
       toast.success('Reserva confirmada com sucesso!');
     }
 
     setSuccess(result.success);
     setFeedbackMessage(result.message ?? null);
-    setStep(6);
+
+    setStep(isEmpresa ? 7 : 6);
   };
 
   // ==================== BUSCA INICIAL / DIAS DISPONIVEIS ====================
@@ -170,7 +171,9 @@ export default function ReservaComponent({
   return (
     <div className="p-6 border rounded-2xl shadow-lg mx-auto bg-white min-h-[60vh] flex flex-col">
       {/* ==================== INDICADOR DE PROGRESSO ==================== */}
-      {step < 6 && <StepIndicator step={step} />}
+      {step < (isEmpresa ? 7 : 6) && (
+        <StepIndicator step={step} isEmpresa={isEmpresa} />
+      )}
 
       <div className="flex flex-1 justify-center">
         {/* ==================== STEP 1: SELEÇÃO DO DIA ==================== */}
@@ -189,44 +192,53 @@ export default function ReservaComponent({
           />
         )}
 
-        {/* ==================== STEP 2: ORIGEM E VEÍCULO ==================== */}
-        {step === 2 && (
+        {/* ==================== STEP 2: MOTORISTA - APENAS EMPRESA ==================== */}
+        {step === 2 && isEmpresa && (
+          <MotoristaStep
+            empresaId={empresaId!}
+            selectedDriverId={selectedDriverId}
+            onDriverChange={async (driverId) => {
+              setSelectedDriverId(driverId);
+              setSelectedVehicleId('');
+              await fetchVeiculosMotorista(driverId);
+              setStep(3);
+            }}
+          />
+        )}
+
+        {/* ==================== STEP 2/3: ORIGEM E VEÍCULO ==================== */}
+        {((step === 2 && !isEmpresa) || (step === 3 && isEmpresa)) && (
           <OriginVehicleStep
             vehicles={vehiclesForStep}
+            motoristaId={selectedDriverId}
+            isEmpresa={isEmpresa}
             origin={origin}
             entryCity={entryCity}
             selectedVehicleId={selectedVehicleId}
-            isEmpresa={isEmpresa}
-            empresaId={empresaId}
-            selectedDriverId={selectedDriverId}
             onOriginChange={setOrigin}
             onEntryCityChange={setEntryCity}
             onVehicleChange={setSelectedVehicleId}
-            onDriverChange={setSelectedDriverId}
-            onNext={async (origin, entryCity, vehicleId, driverId) => {
+            onNext={async (origin, entryCity, vehicleId) => {
               if (!selectedDay || !selectedVaga) return;
 
               setOrigin(origin);
               setEntryCity(entryCity);
               setSelectedVehicleId(vehicleId);
 
-              if (driverId) {
-                setSelectedDriverId(driverId);
-              }
-
-              setStep(3);
+              setStep(isEmpresa ? 4 : 3); // avança para horário inicial
             }}
-            onBack={() => setStep(1)}
+            onBack={() => setStep(isEmpresa ? 2 : 1)} // empresa volta para Motorista, comum volta para Dia
           />
         )}
 
-        {/* ==================== STEP 3: HORÁRIO INICIAL ==================== */}
-        {step === 3 &&
+        {/* ==================== STEP 3/4: HORÁRIO INICIAL ==================== */}
+        {((step === 3 && !isEmpresa) || (step === 4 && isEmpresa)) &&
           selectedDay &&
           (loadingHorarios || !horariosCarregados ? (
             // Loading
             <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
               <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+
               <p className="text-sm text-gray-600">
                 Carregando horários disponíveis...
               </p>
@@ -237,8 +249,9 @@ export default function ReservaComponent({
               <p className="text-sm text-gray-600">
                 Nenhum horário disponível para o dia selecionado.
               </p>
+
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(isEmpresa ? 3 : 2)}
                 className="px-3 py-2 bg-gray-200 rounded-lg text-sm"
               >
                 Voltar
@@ -252,51 +265,56 @@ export default function ReservaComponent({
               onSelect={(t) => {
                 setStartHour(t);
                 setEndHour(null);
-                setStep(4);
+                setStep(isEmpresa ? 5 : 4);
               }}
-              onBack={() => setStep(2)}
+              onBack={() => setStep(isEmpresa ? 3 : 2)}
               color="blue"
             />
           ))}
 
-        {/* ==================== STEP 4: HORÁRIO FINAL ==================== */}
-        {step === 4 && startHour && (
-          <TimeSelection
-            times={availableTimes.filter(
-              (t) => toMinutes(t) > toMinutes(startHour),
-            )}
-            reserved={reservedTimesEnd}
-            selected={endHour}
-            onSelect={(t) => {
-              setEndHour(t);
-              setStep(5);
-            }}
-            onBack={() => setStep(3)}
-            color="blue"
-          />
-        )}
+        {/* ==================== STEP 4/5: HORÁRIO FINAL ==================== */}
+        {((step === 4 && !isEmpresa) || (step === 5 && isEmpresa)) &&
+          startHour && (
+            <TimeSelection
+              times={availableTimes.filter(
+                (t) => toMinutes(t) > toMinutes(startHour),
+              )}
+              reserved={reservedTimesEnd}
+              selected={endHour}
+              onSelect={(t) => {
+                setEndHour(t);
+                setStep(isEmpresa ? 6 : 5);
+              }}
+              onBack={() => setStep(isEmpresa ? 4 : 3)}
+              color="blue"
+            />
+          )}
 
-        {/* ==================== STEP 5: CONFIRMAÇÃO ==================== */}
-        {step === 5 && (
-          <Confirmation
-            day={selectedDay!}
-            startHour={startHour!}
-            endHour={endHour!}
-            origin={origin}
-            entryCity={entryCity}
-            destination={`${selectedVaga.endereco.logradouro}, ${selectedVaga.endereco.bairro}`}
-            vehicleName={`${
-              vehiclesForStep.find((v) => v.id === selectedVehicleId)?.name
-            } - ${
-              vehiclesForStep.find((v) => v.id === selectedVehicleId)?.plate
-            }`}
-            onConfirm={onConfirm}
-            onReset={reset}
-          />
-        )}
-
-        {/* ==================== STEP 6: FEEDBACK ==================== */}
-        {step === 6 && (
+        {/* ==================== STEP 5/6: CONFIRMAÇÃO ==================== */}
+        {((step === 5 && !isEmpresa) || (step === 6 && isEmpresa)) &&
+          selectedDay &&
+          startHour &&
+          endHour && (
+            <Confirmation
+              day={selectedDay}
+              startHour={startHour}
+              endHour={endHour}
+              origin={origin}
+              entryCity={entryCity}
+              destination={`${selectedVaga.endereco.logradouro}, ${selectedVaga.endereco.bairro}`}
+              vehicleName={`${
+                vehiclesForStep.find((v) => v.id === selectedVehicleId)?.name ??
+                ''
+              } - ${
+                vehiclesForStep.find((v) => v.id === selectedVehicleId)
+                  ?.plate ?? ''
+              }`}
+              onConfirm={onConfirm}
+              onReset={reset}
+            />
+          )}
+        {/* ==================== FEEDBACK ==================== */}
+        {((step === 6 && !isEmpresa) || (step === 7 && isEmpresa)) && (
           <div className="flex-1 flex items-center justify-center w-full animate-in fade-in zoom-in duration-300">
             {success ? (
               // Tela de Sucesso
@@ -316,15 +334,20 @@ export default function ReservaComponent({
                     />
                   </svg>
                 </div>
+
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
                   Reserva confirmada!
                 </h2>
+
                 <p className="text-gray-600 max-w-sm mb-8 leading-relaxed">
                   {feedbackMessage ??
                     'Sua solicitação foi processada com sucesso.'}
                 </p>
+
                 <button
-                  onClick={() => router.push('/minhas-reservas')}
+                  onClick={() => {
+                    router.push('/minhas-reservas');
+                  }}
                   className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all shadow-lg active:scale-95"
                 >
                   Ir para minhas reservas
@@ -348,16 +371,19 @@ export default function ReservaComponent({
                     />
                   </svg>
                 </div>
+
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
                   Ops! Algo deu errado
                 </h2>
+
                 <p className="text-gray-600 max-w-sm mb-8 leading-relaxed">
                   {feedbackMessage ??
                     'Não foi possível confirmar sua reserva. Tente novamente.'}
                 </p>
+
                 <button
                   onClick={() => {
-                    setStep(5);
+                    setStep(isEmpresa ? 6 : 5);
                     setSuccess(null);
                     setFeedbackMessage(null);
                   }}

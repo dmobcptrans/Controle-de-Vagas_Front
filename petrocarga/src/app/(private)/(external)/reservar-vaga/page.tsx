@@ -71,7 +71,6 @@ export default function ReservaPage() {
   const [selectedVaga, setSelectedVaga] = useState<Vaga | null>(null);
   const [loadingVaga, setLoadingVaga] = useState(false);
   const { user } = useAuth();
-  const isEmpresa = user?.permissao === 'EMPRESA';
   const empresaId = user?.id;
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
@@ -148,7 +147,6 @@ export default function ReservaPage() {
             <ReservaComponent
               selectedVaga={selectedVaga}
               onBack={handleBackToMap}
-              isEmpresa={isEmpresa}
               empresaId={empresaId}
             />
           </div>

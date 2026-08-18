@@ -264,6 +264,7 @@ export async function getVeiculosUsuario(usuarioId: string) {
   }
 }
 
+
 // ----------------------
 // GET VEICULO POR ID
 // ----------------------

@@ -67,10 +67,27 @@ export async function getMotoristaEmpresaByUsuarioId(
   usuarioId: string,
   numeroPagina: number = 0,
   tamanhoPagina: number = 10,
+  nome?: string,
+  ativo?: boolean,
+  ordem: 'ASC' | 'DESC' = 'ASC',
 ): Promise<MotoristaEmpresaResponse> {
   try {
+    const params = new URLSearchParams({
+      pagina: numeroPagina.toString(),
+      tamanhoPagina: tamanhoPagina.toString(),
+      ordem,
+    });
+
+    if (nome?.trim()) {
+      params.append('nome', nome.trim());
+    }
+
+    if (ativo !== undefined) {
+      params.append('ativo', ativo.toString());
+    }
+
     const res = await clientApi(
-      `/petrocarga/motoristas/byEmpresa/${usuarioId}?numeroPagina=${numeroPagina}&tamanhoPagina=${tamanhoPagina}`,
+      `/petrocarga/motoristas/byEmpresa/${usuarioId}?${params.toString()}`,
     );
 
     if (!res.ok) {
@@ -91,6 +108,7 @@ export async function getMotoristaEmpresaByUsuarioId(
       err instanceof Error
         ? err.message
         : 'Erro ao buscar motoristas da empresa.';
+
     throw new Error(message);
   }
 }

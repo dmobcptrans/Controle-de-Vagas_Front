@@ -1,6 +1,7 @@
 interface StepIndicatorProps {
   step: number;
   isReservaRapida?: boolean;
+  isEmpresa?: boolean;
 }
 
 /**
@@ -12,6 +13,15 @@ const stepsMotorista = [
   { number: 3, label: 'Selecionar início' },
   { number: 4, label: 'Selecionar fim' },
   { number: 5, label: 'Confirmar reserva' },
+];
+
+const stepsEmpresa = [
+  { number: 1, label: 'Escolher dia' },
+  { number: 2, label: 'Motorista' },
+  { number: 3, label: 'Informações' },
+  { number: 4, label: 'Selecionar início' },
+  { number: 5, label: 'Selecionar fim' },
+  { number: 6, label: 'Confirmar reserva' },
 ];
 
 const stepsRapida = [
@@ -81,8 +91,17 @@ const stepsRapida = [
  * ```
  */
 
-export default function StepIndicator({ step, isReservaRapida = false }: StepIndicatorProps) {
-  const currentSteps = isReservaRapida ? stepsRapida : stepsMotorista;
+export default function StepIndicator({
+  step,
+  isReservaRapida = false,
+  isEmpresa = false,
+}: StepIndicatorProps) {
+  const currentSteps = isReservaRapida
+    ? stepsRapida
+    : isEmpresa
+      ? stepsEmpresa
+      : stepsMotorista;
+
   const totalSteps = currentSteps.length;
   const segments = totalSteps - 1;
   const ratio = segments > 0 ? (step - 1) / segments : 0;
