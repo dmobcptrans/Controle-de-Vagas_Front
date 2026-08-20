@@ -257,61 +257,60 @@ export type ReservaGet = {
 
   vaga: {
     id: string;
-
-    endereco: {
-      id: string;
-      codigoPmp: string;
-      logradouro: string;
-      bairro: string;
-    };
+    enderecoId: string;
     logradouro: string;
     bairro: string;
-    area: 'AZUL' | 'AMARELA' | 'VERMELHA' | 'BRANCA' | string;
     numeroEndereco: string;
     referenciaEndereco: string;
+    area: 'AZUL' | 'AMARELA' | 'VERMELHA' | 'BRANCA' | string;
     tipoVaga: string;
 
     latitudeInicio: number;
-    longitudeInicio: number;
     latitudeFim: number;
+    longitudeInicio: number;
     longitudeFim: number;
 
     comprimento: number;
     quantidade: number;
 
     status: 'DISPONIVEL' | 'OCUPADA' | string;
-
-    operacoesVaga: {
-      id: string;
-      diaSemanaAsEnum:
-        | 'DOMINGO'
-        | 'SEGUNDA'
-        | 'TERCA'
-        | 'QUARTA'
-        | 'QUINTA'
-        | 'SEXTA'
-        | 'SABADO';
-      horaInicio: string;
-      horaFim: string;
-    }[];
   };
 
   motorista: {
     id: string;
+    nome: string;
+    telefone: string;
+    email: string;
+    ativo: boolean;
+    empresaId: string;
+    empresaCnpj: string;
+    empresaRazaoSocial: string;
   };
 
   veiculo: {
     id: string;
+    marca: string;
+    modelo: string;
+    placa: string;
+    tipo: string;
+    comprimento: number;
   };
 
   criadoPor: {
     id: string;
+    nome: string;
+    telefone: string;
+    email: string;
+    cnpj: string;
+    permissao: string;
+    ativo: boolean;
   };
+
+  cidadeOrigem: string;
 
   criadoEm: string;
   inicio: string;
   fim: string;
-  cidadeOrigem: string;
 
   status:
     | 'ATIVA'
@@ -319,8 +318,10 @@ export type ReservaGet = {
     | 'RESERVADA'
     | 'REMOVIDA'
     | 'CANCELADA';
-};
 
+  checkedIn: boolean;
+  posicaoPerpendicular: number;
+};
 /**
  * @interface PaginatedReservaResponse
  * @description Resposta paginada da API de reservas

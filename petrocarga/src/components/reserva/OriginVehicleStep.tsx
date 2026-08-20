@@ -4,10 +4,23 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { VeiculoAPI } from '@/lib/types/veiculo';
 import { useMapboxSuggestions } from '../hooks/map/useMapboxSuggestions';
-import { Search, Check, TruckIcon, Plus } from 'lucide-react';
+import {
+  Search,
+  Check,
+  TruckIcon,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface OriginVehicleStepProps {
   vehicles: VeiculoAPI[];
+
+  vehiclePage: number;
+  vehicleTotalPages: number;
+  onVehiclePageChange: (page: number) => void;
+
   origin: string;
   entryCity: string | null;
   selectedVehicleId?: string;
@@ -80,6 +93,9 @@ function OptionCard({
 // ============================================================================
 export default function OriginVehicleStep({
   vehicles,
+  vehiclePage,
+  vehicleTotalPages,
+  onVehiclePageChange,
   origin,
   entryCity,
   selectedVehicleId,
@@ -138,6 +154,11 @@ export default function OriginVehicleStep({
 
   const handleSelectVehicle = (id: string) => {
     setLocalVehicleId(id);
+  };
+
+  const irParaPagina = (novaPagina: number) => {
+    if (novaPagina < 0 || novaPagina >= vehicleTotalPages) return;
+    onVehiclePageChange(novaPagina);
   };
 
   const handleNext = () => {
@@ -355,6 +376,7 @@ export default function OriginVehicleStep({
           />
         </div>
 
+        {/* Lista de veículos */}
         <div className="max-h-[240px] overflow-y-auto space-y-2 pr-0.5">
           {vehicles.length === 0 && isEmpresa ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center">
@@ -392,21 +414,57 @@ export default function OriginVehicleStep({
               />
             ))
           )}
-
-          {/* Adicionar novo veículo */}
-          <button
-            type="button"
-            onClick={() => router.push(adicionarVeiculoUrl)}
-            className="w-full flex items-center gap-3 p-3 rounded-xl border border-dashed border-blue-300 text-left text-blue-600 hover:bg-blue-50/60 transition-all"
-          >
-            <div className="w-10 h-10 shrink-0 rounded-lg flex items-center justify-center bg-blue-50 border border-blue-100">
-              <Plus className="w-5 h-5" />
-            </div>
-
-            <p className="text-sm font-semibold">Adicionar novo veículo</p>
-          </button>
         </div>
 
+        {/* ==================== PAGINAÇÃO DOS VEÍCULOS ==================== */}
+        {vehicleTotalPages > 1 && (
+          <div className="flex items-center justify-between mt-3 bg-white border border-gray-100 rounded-xl px-4 py-3">
+            <Button
+              type="button"
+              onClick={() => irParaPagina(vehiclePage - 1)}
+              disabled={vehiclePage === 0}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+
+            <span className="text-xs text-gray-500">
+              Página{' '}
+              <span className="font-semibold">{vehiclePage + 1}</span> de{' '}
+              <span className="font-semibold">{vehicleTotalPages}</span>
+            </span>
+
+            <Button
+              type="button"
+              onClick={() => irParaPagina(vehiclePage + 1)}
+              disabled={vehiclePage >= vehicleTotalPages - 1}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              Próxima
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* ==================== ADICIONAR VEÍCULO ==================== */}
+        <button
+          type="button"
+          onClick={() => router.push(adicionarVeiculoUrl)}
+          className="w-full flex items-center gap-3 p-3 mt-3 rounded-xl border border-dashed border-blue-300 text-left text-blue-600 hover:bg-blue-50/60 transition-all"
+        >
+          <div className="w-10 h-10 shrink-0 rounded-lg flex items-center justify-center bg-blue-50 border border-blue-100">
+            <Plus className="w-5 h-5" />
+          </div>
+
+          <p className="text-sm font-semibold">Adicionar novo veículo</p>
+        </button>
+
+        {/* Veículo selecionado */}
         {veiculoSelecionado && (
           <p className="text-xs text-gray-500 mt-2 px-0.5">
             Veículo selecionado:{' '}

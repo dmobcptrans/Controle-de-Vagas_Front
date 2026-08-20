@@ -109,6 +109,12 @@ export default function ReservaComponent({
     reservedTimesStart,
     reservedTimesEnd,
     startHour,
+
+    vehiclePage,
+    vehicleTotalPages,
+    vehiclePageSize,
+    setVehiclePage,
+
     setStartHour,
     endHour,
     setEndHour,
@@ -116,6 +122,7 @@ export default function ReservaComponent({
     setOrigin,
     entryCity,
     setEntryCity,
+    fetchHorariosDisponiveis,
     selectedVehicleId,
     setSelectedVehicleId,
     vehicles,
@@ -197,10 +204,13 @@ export default function ReservaComponent({
           <MotoristaStep
             empresaId={empresaId!}
             selectedDriverId={selectedDriverId}
-            onDriverChange={async (driverId) => {
+            onDriverChange={(driverId) => {
               setSelectedDriverId(driverId);
               setSelectedVehicleId('');
-              await fetchVeiculosMotorista(driverId);
+              setVehiclePage(0);
+
+              fetchVeiculosMotorista(driverId, 0);
+
               setStep(3);
             }}
           />
@@ -210,6 +220,9 @@ export default function ReservaComponent({
         {((step === 2 && !isEmpresa) || (step === 3 && isEmpresa)) && (
           <OriginVehicleStep
             vehicles={vehiclesForStep}
+            vehiclePage={vehiclePage}
+            vehicleTotalPages={vehicleTotalPages}
+            onVehiclePageChange={setVehiclePage}
             motoristaId={selectedDriverId}
             isEmpresa={isEmpresa}
             origin={origin}
@@ -221,13 +234,29 @@ export default function ReservaComponent({
             onNext={async (origin, entryCity, vehicleId) => {
               if (!selectedDay || !selectedVaga) return;
 
-              setOrigin(origin);
-              setEntryCity(entryCity);
-              setSelectedVehicleId(vehicleId);
+              try {
+                await fetchHorariosDisponiveis(
+                  selectedDay,
+                  selectedVaga,
+                  vehicleId,
+                );
 
-              setStep(isEmpresa ? 4 : 3); // avança para horário inicial
+                setOrigin(origin);
+                setEntryCity(entryCity);
+                setSelectedVehicleId(vehicleId);
+
+                setStep(isEmpresa ? 4 : 3);
+              } catch (error) {
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : 'O veículo não pode operar nesta vaga.',
+                );
+
+                return;
+              }
             }}
-            onBack={() => setStep(isEmpresa ? 2 : 1)} // empresa volta para Motorista, comum volta para Dia
+            onBack={() => setStep(isEmpresa ? 2 : 1)}
           />
         )}
 
@@ -244,7 +273,6 @@ export default function ReservaComponent({
               </p>
             </div>
           ) : availableTimes.length === 0 ? (
-            // Sem horários
             <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
               <p className="text-sm text-gray-600">
                 Nenhum horário disponível para o dia selecionado.

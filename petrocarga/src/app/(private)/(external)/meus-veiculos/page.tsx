@@ -2,13 +2,25 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
-import { getVeiculosUsuario } from '@/services/api/veiculoApi';
-import { AlertCircle, CarIcon, Info, Loader2 } from 'lucide-react';
+import {
+  getVeiculosUsuario,
+  FiltrosVeiculosUsuario,
+} from '@/services/api/veiculoApi';
+import {
+  AlertCircle,
+  CarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Loader2,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Veiculo } from '@/lib/types/veiculo';
 import VeiculoCard from '@/components/motorista/cards/veiculo-item';
 import { Button } from '@/components/ui/button';
 import CadastroVeiculoModal from '@/components/modal/cadastroVeiculo/Cadastroveiculomodal';
+
+const TAMANHO_PAGINA = 10;
 
 export default function VeiculosPage() {
   const { user } = useAuth();
@@ -16,32 +28,55 @@ export default function VeiculosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Estado de paginação
+  const [pagina, setPagina] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [totalElementos, setTotalElementos] = useState(0);
+
   // Controla a abertura do modal a partir daqui, já que o botão
   // que o dispara ("Adicionar novo veículo") não é mais um <Link>.
   const [modalAberto, setModalAberto] = useState(false);
 
-  const fetchVeiculos = useCallback(async () => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
+  const fetchVeiculos = useCallback(
+    async (paginaAlvo: number = pagina) => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
 
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
 
-    try {
-      const result = await getVeiculosUsuario(user.id);
-      setVeiculos(result.veiculos);
-    } catch {
-      setError('Erro ao buscar seus veículos. Tente novamente mais tarde.');
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
+      try {
+        const filtros: FiltrosVeiculosUsuario = {
+          pagina: paginaAlvo,
+          tamanhoPagina: TAMANHO_PAGINA,
+          ordem: 'ASC',
+        };
+
+        const result = await getVeiculosUsuario(user.id, filtros);
+
+        setVeiculos(result.content);
+        setTotalPaginas(result.totalPaginas);
+        setTotalElementos(result.totalElementos);
+        setPagina(result.pagina);
+      } catch {
+        setError('Erro ao buscar seus veículos. Tente novamente mais tarde.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.id, pagina],
+  );
 
   useEffect(() => {
-    fetchVeiculos();
-  }, [fetchVeiculos]);
+    fetchVeiculos(0);
+  }, [user?.id]);
+
+  const irParaPagina = (novaPagina: number) => {
+    if (novaPagina < 0 || novaPagina >= totalPaginas) return;
+    fetchVeiculos(novaPagina);
+  };
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
@@ -92,7 +127,7 @@ export default function VeiculosPage() {
                 Erro ao carregar veículos
               </h3>
               <p className="text-gray-500 text-sm mb-6">{error}</p>
-              <Button onClick={fetchVeiculos} variant="outline">
+              <Button onClick={() => fetchVeiculos(pagina)} variant="outline">
                 Tentar novamente
               </Button>
             </div>
@@ -108,11 +143,51 @@ export default function VeiculosPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-4 w-full mt-4">
-              {veiculos.map((veiculo) => (
-                <VeiculoCard key={veiculo.id} veiculo={veiculo} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-4 w-full mt-4">
+                {veiculos.map((veiculo) => (
+                  <VeiculoCard key={veiculo.id} veiculo={veiculo} />
+                ))}
+              </div>
+
+              {/* ==================== PAGINAÇÃO ==================== */}
+              {totalPaginas > 1 && (
+                <div className="flex items-center justify-between mt-6 bg-white border border-gray-100 rounded-xl px-4 py-3">
+                  <Button
+                    onClick={() => irParaPagina(pagina - 1)}
+                    disabled={pagina === 0}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Anterior
+                  </Button>
+
+                  <div className="text-xs text-gray-500 text-center">
+                    <p>
+                      Página <span className="font-semibold">{pagina + 1}</span>{' '}
+                      de <span className="font-semibold">{totalPaginas}</span>
+                    </p>
+                    <p className="text-gray-400">
+                      {totalElementos} veículo
+                      {totalElementos !== 1 ? 's' : ''} no total
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={() => irParaPagina(pagina + 1)}
+                    disabled={pagina >= totalPaginas - 1}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    Próxima
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
 
           {/* Tutorial */}
@@ -137,7 +212,7 @@ export default function VeiculosPage() {
       <CadastroVeiculoModal
         open={modalAberto}
         onOpenChange={setModalAberto}
-        onSuccess={fetchVeiculos}
+        onSuccess={() => fetchVeiculos(pagina)}
       />
     </div>
   );

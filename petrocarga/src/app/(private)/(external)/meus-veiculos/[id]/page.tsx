@@ -118,38 +118,38 @@ export default function EditarVeiculoPage() {
   // FUNÇÃO DE BUSCA
   // --------------------------------------------------------------------------
 
-  const fetchVeiculo = useCallback(async () => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
+const fetchVeiculo = useCallback(async () => {
+  if (!user?.id) {
+    setLoading(false);
+    return;
+  }
+
+  setLoading(true);
+  setError('');
+
+  try {
+    const result = await getVeiculosUsuario(user.id, {
+      pagina: 0,
+      tamanhoPagina: 100,
+      ativo: true,
+    });
+
+    const v = result.content.find((v) => v.id === params.id);
+
+    if (!v) {
+      setError('Veículo não encontrado.');
+      setVeiculo(null);
+    } else {
+      setVeiculo(v);
     }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const result = await getVeiculosUsuario(user.id);
-
-      if (result.error) {
-        toast.error(result.message || 'Erro ao buscar veículo');
-        setError(result.message);
-        setVeiculo(null);
-      } else {
-        const v = result.veiculos.find((v) => v.id === params.id);
-        if (!v) {
-          setError('Veículo não encontrado.');
-        } else {
-          setVeiculo(v);
-        }
-      }
-    } catch {
-      toast.error('Erro ao carregar os dados do veículo. Tente novamente.');
-      setError('Erro ao buscar veículo.');
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, params.id]);
-
+  } catch {
+    toast.error('Erro ao carregar os dados do veículo. Tente novamente.');
+    setError('Erro ao buscar veículo.');
+    setVeiculo(null);
+  } finally {
+    setLoading(false);
+  }
+}, [user?.id, params.id]);
   // --------------------------------------------------------------------------
   // EFEITO INICIAL
   // --------------------------------------------------------------------------

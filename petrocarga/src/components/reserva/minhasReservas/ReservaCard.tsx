@@ -266,6 +266,19 @@ export default function ReservaCard({
           {`Local de Origem: ${currentReserva.cidadeOrigem}`}
         </p>
 
+        {/* Motorista - exibido apenas para reservas criadas por empresa */}
+        {currentReserva.criadoPor?.cnpj && (
+          <div className="flex flex-col gap-1 text-sm sm:text-base text-gray-600">
+            <span>
+              Motorista: <strong>{currentReserva.motorista?.nome}</strong>
+            </span>
+
+            <span className="text-gray-500">
+              Telefone: {currentReserva.motorista?.telefone}
+            </span>
+          </div>
+        )}
+
         {/* Datas */}
         <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs sm:text-sm text-gray-600">
           <span className="flex items-center gap-1 truncate">

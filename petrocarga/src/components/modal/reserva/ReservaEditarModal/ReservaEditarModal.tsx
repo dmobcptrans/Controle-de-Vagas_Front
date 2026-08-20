@@ -117,25 +117,28 @@ export default function ReservaEditarModal({
   } = useReservaData(form.veiculoId, reserva.vaga.id);
 
   const {
-    step,
-    setStep,
-    setSelectedDay,
-    fetchHorariosDisponiveis,
-    availableTimes,
-    reservedTimesStart,
-    reservedTimesEnd,
-    startHour,
-    setStartHour,
-    endHour,
-    setEndHour,
-    vehicles,
-    origin,
-    setOrigin,
-    entryCity,
-    setEntryCity,
-    selectedVehicleId,
-    setSelectedVehicleId,
-  } = useReserva(vaga);
+  step,
+  setStep,
+  setSelectedDay,
+  fetchHorariosDisponiveis,
+  availableTimes,
+  reservedTimesStart,
+  reservedTimesEnd,
+  startHour,
+  setStartHour,
+  endHour,
+  setEndHour,
+  vehicles,
+  vehiclePage,
+  vehicleTotalPages,
+  setVehiclePage,
+  origin,
+  setOrigin,
+  entryCity,
+  setEntryCity,
+  selectedVehicleId,
+  setSelectedVehicleId,
+} = useReserva(vaga);
 
   const vehiclesForStep = vehicles.map((v) => ({
     id: v.id,
@@ -309,13 +312,16 @@ export default function ReservaEditarModal({
           {/* MODO EDIÇÃO DE VEÍCULO/ORIGEM */}
           {editField === 'veiculo-origem' && (
             <OriginVehicleStep
-              vehicles={vehiclesForStep}
-              origin={origin}
-              entryCity={entryCity}
-              selectedVehicleId={selectedVehicleId}
-              onOriginChange={setOrigin}
-              onEntryCityChange={setEntryCity}
-              onVehicleChange={setSelectedVehicleId}
+  vehicles={vehiclesForStep}
+  vehiclePage={vehiclePage}
+  vehicleTotalPages={vehicleTotalPages}
+  onVehiclePageChange={setVehiclePage}
+  origin={origin}
+  entryCity={entryCity}
+  selectedVehicleId={selectedVehicleId}
+  onOriginChange={setOrigin}
+  onEntryCityChange={setEntryCity}
+  onVehicleChange={setSelectedVehicleId}
               onNext={(cidade, entradaCidade, veiculoId) => {
                 if (!veiculoId) return;
 

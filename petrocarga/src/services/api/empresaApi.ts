@@ -226,15 +226,71 @@ export async function desvincularMotoristaEmpresa(
 /**
  * Busca os veículos vinculados a um motorista da empresa.
  */
+export interface FiltrosVeiculosVinculadosMotorista {
+  placa?: string;
+  marca?: string;
+  modelo?: string;
+  tipo?:
+    | 'AUTOMOVEL'
+    | 'CAMINHONETA'
+    | 'VUC'
+    | 'CAMINHAO_MEDIO'
+    | 'CAMINHAO_LONGO';
+  telefoneUsuario?: string;
+  cpfProprietario?: string;
+  cnpjProprietario?: string;
+  ativo?: boolean;
+  pagina?: number;
+  tamanhoPagina?: number;
+  ordem?: 'ASC' | 'DESC';
+}
+
 export async function getVeiculosVinculadosMotoristaEmpresa(
   usuarioId: string,
   motoristaId: string,
-  numeroPagina: number = 0,
-  tamanhoPagina: number = 10,
+  filtros: FiltrosVeiculosVinculadosMotorista = {},
 ): Promise<VeiculoPaginado> {
   try {
+    const params = new URLSearchParams();
+
+    if (filtros.placa) {
+      params.append('placa', filtros.placa);
+    }
+
+    if (filtros.marca) {
+      params.append('marca', filtros.marca);
+    }
+
+    if (filtros.modelo) {
+      params.append('modelo', filtros.modelo);
+    }
+
+    if (filtros.tipo) {
+      params.append('tipo', filtros.tipo);
+    }
+
+    if (filtros.telefoneUsuario) {
+      params.append('telefoneUsuario', filtros.telefoneUsuario);
+    }
+
+    if (filtros.cpfProprietario) {
+      params.append('cpfProprietario', filtros.cpfProprietario);
+    }
+
+    if (filtros.cnpjProprietario) {
+      params.append('cnpjProprietario', filtros.cnpjProprietario);
+    }
+
+    if (filtros.ativo !== undefined) {
+      params.append('ativo', String(filtros.ativo));
+    }
+
+    params.append('pagina', String(filtros.pagina ?? 0));
+    params.append('tamanhoPagina', String(filtros.tamanhoPagina ?? 10));
+    params.append('ordem', filtros.ordem ?? 'ASC');
+
     const res = await clientApi(
-      `/petrocarga/veiculoEmpresaMotorista/veiculos/${usuarioId}/${motoristaId}?numeroPagina=${numeroPagina}&tamanhoPagina=${tamanhoPagina}`,
+      `/petrocarga/veiculoEmpresaMotorista/veiculos/${usuarioId}/${motoristaId}?${params.toString()}`,
     );
 
     if (!res.ok) {
@@ -247,8 +303,8 @@ export async function getVeiculosVinculadosMotoristaEmpresa(
       content: data.content ?? [],
       totalElementos: data.totalElementos ?? 0,
       totalPaginas: data.totalPaginas ?? 0,
-      tamanhoPagina: data.tamanhoPagina ?? tamanhoPagina,
-      pagina: data.pagina ?? numeroPagina,
+      tamanhoPagina: data.tamanhoPagina ?? filtros.tamanhoPagina ?? 10,
+      pagina: data.pagina ?? filtros.pagina ?? 0,
     };
   } catch (err: unknown) {
     const message =

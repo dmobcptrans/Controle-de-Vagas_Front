@@ -147,6 +147,12 @@ export function useReserva(selectedVaga: Vaga | null) {
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
   const [loadingDias, setLoadingDias] = useState(false);
   const [vehicles, setVehicles] = useState<Veiculo[]>([]);
+  const [vehiclePage, setVehiclePage] = useState(0);
+  const [vehiclePageSize] = useState(5);
+  const [vehicleTotalPages, setVehicleTotalPages] = useState(0);
+  const [motoristaSelecionadoId, setMotoristaSelecionadoId] = useState<
+    string | null
+  >(null);
   const [loadingMotorista, setLoadingMotorista] = useState(true);
   const [loadingHorarios, setLoadingHorarios] = useState(false);
   const [horariosCarregados, setHorariosCarregados] = useState(false);
@@ -186,7 +192,7 @@ export function useReserva(selectedVaga: Vaga | null) {
         return;
       }
 
-      setLoadingDias(true); // 👈 inicia loading
+      setLoadingDias(true); 
 
       try {
         const mes = mesReferencia.getMonth() + 1;
@@ -258,66 +264,93 @@ export function useReserva(selectedVaga: Vaga | null) {
   );
 
   // ==================== BUSCA HORÁRIOS DISPONÍVEIS ====================
-  const fetchHorariosDisponiveis = useCallback(
-    async (day: Date, vaga: Vaga, vehicleId?: string): Promise<string[]> => {
-      setLoadingHorarios(true);
-      setHorariosCarregados(false);
+const fetchHorariosDisponiveis = useCallback(
+  async (
+    day: Date,
+    vaga: Vaga,
+    vehicleId?: string,
+  ): Promise<string[]> => {
+    setLoadingHorarios(true);
+    setHorariosCarregados(false);
 
-      try {
-        const operacao = getOperacaoDia(day, vaga);
-        console.log(operacao);
-        const intervalo = isAgente ? INTERVALO_AGENTE : INTERVALO_MOTORISTA;
-        if (!operacao) return [];
+    try {
+      const operacao = getOperacaoDia(day, vaga);
 
-        let tipoVeiculo: Veiculo['tipo'] | undefined;
+      console.log(operacao);
 
-        if (!isAgente) {
-          const v = vehicles.find((x) => x.id === vehicleId);
-          if (!v) return [];
-          tipoVeiculo = v.tipo;
-        } else {
-          tipoVeiculo = reservaState.tipoVeiculoAgente;
-        }
+      const intervalo = isAgente
+        ? INTERVALO_AGENTE
+        : INTERVALO_MOTORISTA;
 
-        if (!tipoVeiculo) return [];
+      if (!operacao) return [];
 
-        const dataFormatada = day.toISOString().split('T')[0];
-        const bloqueios = await fetchReservasBloqueios(
-          vaga.id,
-          dataFormatada,
-          tipoVeiculo,
-        );
+      let tipoVeiculo: Veiculo['tipo'] | undefined;
 
-        const horariosOcupadosInicio = gerarHorariosOcupadosInicio(
+      if (!isAgente) {
+        const v = vehicles.find((x) => x.id === vehicleId);
+
+        if (!v) return [];
+
+        tipoVeiculo = v.tipo;
+      } else {
+        tipoVeiculo = reservaState.tipoVeiculoAgente;
+      }
+
+      if (!tipoVeiculo) return [];
+
+      const dataFormatada = day.toISOString().split('T')[0];
+
+      const bloqueios = await fetchReservasBloqueios(
+        vaga.id,
+        dataFormatada,
+        tipoVeiculo,
+      );
+
+      const horariosOcupadosInicio =
+        gerarHorariosOcupadosInicio(
           bloqueios,
           intervalo,
         );
-        const horariosOcupadosFim = gerarHorariosOcupadosFim(
+
+      const horariosOcupadosFim =
+        gerarHorariosOcupadosFim(
           bloqueios,
           intervalo,
         );
 
-        const todosHorarios = gerarHorariosDia(operacao, intervalo);
-        const horariosFiltradosHoje = removerHorariosPassadosDeHoje(
+      const todosHorarios = gerarHorariosDia(
+        operacao,
+        intervalo,
+      );
+
+      const horariosFiltradosHoje =
+        removerHorariosPassadosDeHoje(
           day,
           todosHorarios,
         );
 
-        reservedTimesEndBaseRef.current = horariosOcupadosFim;
-        setReservaState((prev) => ({
-          ...prev,
-          availableTimes: horariosFiltradosHoje,
-          reservedTimesStart: horariosOcupadosInicio,
-          reservedTimesEnd: horariosOcupadosFim,
-        }));
-        return horariosFiltradosHoje;
-      } finally {
-        setLoadingHorarios(false);
-        setHorariosCarregados(true);
-      }
-    },
-    [vehicles, reservaState.tipoVeiculoAgente, isAgente],
-  );
+      reservedTimesEndBaseRef.current =
+        horariosOcupadosFim;
+
+      setReservaState((prev) => ({
+        ...prev,
+        availableTimes: horariosFiltradosHoje,
+        reservedTimesStart: horariosOcupadosInicio,
+        reservedTimesEnd: horariosOcupadosFim,
+      }));
+
+      return horariosFiltradosHoje;
+    } finally {
+      setLoadingHorarios(false);
+      setHorariosCarregados(true);
+    }
+  },
+  [
+    vehicles,
+    reservaState.tipoVeiculoAgente,
+    isAgente,
+  ],
+);
 
   // ==================== CÁLCULO DE HORÁRIOS FINAIS ====================
   const calcularReservedTimesEnd = useCallback(
@@ -344,7 +377,6 @@ export function useReserva(selectedVaga: Vaga | null) {
           reservaState.availableTimes.indexOf(start),
       );
 
-      // ✅ Lê do ref (dados brutos da API), nunca do estado que ele mesmo escreve
       const ocupados = reservedTimesEndBaseRef.current;
 
       return horariosPossiveis.filter((h) => {
@@ -359,11 +391,9 @@ export function useReserva(selectedVaga: Vaga | null) {
     [
       reservaState.selectedDay,
       reservaState.availableTimes,
-      // ✅ ref removida das dependências — refs não causam re-render
     ],
   );
 
-  // useEffect sem loop: só depende de startHour e da função de cálculo
   useEffect(() => {
     if (!reservaState.startHour || !selectedVaga) return;
     const bloqueados = calcularReservedTimesEnd(
@@ -376,7 +406,6 @@ export function useReserva(selectedVaga: Vaga | null) {
     }));
   }, [reservaState.startHour, selectedVaga?.id, calcularReservedTimesEnd]);
 
-  // Atualiza horários finais quando horário inicial muda
   useEffect(() => {
     if (!reservaState.startHour || !selectedVaga) return;
     const bloqueados = calcularReservedTimesEnd(
@@ -390,26 +419,45 @@ export function useReserva(selectedVaga: Vaga | null) {
   }, [reservaState.startHour, selectedVaga?.id, calcularReservedTimesEnd]);
 
   // ==================== CARREGA VEÍCULOS (USUÁRIO COMUM) ====================
+
   useEffect(() => {
-    if (!user?.id || isAgente || isEmpresa) return; // empresa não busca aqui
+    if (!user?.id || isAgente || isEmpresa) return;
+
     const loadVehicles = async () => {
       try {
-        const r = await getVeiculosUsuario(user.id);
-        if (!r.error) setVehicles(r.veiculos);
-      } catch {}
-    };
-    loadVehicles();
-  }, [user, isAgente, isEmpresa]);
+        const r = await getVeiculosUsuario(user.id, {
+          ativo: true,
+          pagina: vehiclePage,
+          tamanhoPagina: vehiclePageSize,
+        });
 
-  // ==================== CARREGA VEÍCULOS DO MOTORISTA (EMPRESA) ====================
+        setVehicles(r.content);
+        setVehicleTotalPages(r.totalPaginas);
+      } catch (err) {
+        console.error('Erro ao carregar veículos:', err);
+        setVehicles([]);
+        setVehicleTotalPages(0);
+      }
+    };
+
+    loadVehicles();
+  }, [user, isAgente, isEmpresa, vehiclePage, vehiclePageSize]);
+
   const fetchVeiculosMotorista = useCallback(
-    async (motoristaId: string) => {
+    async (motoristaId: string, pagina?: number) => {
       if (!user?.id || !motoristaId) return;
 
       try {
+        const paginaAtual = pagina ?? vehiclePage;
+
         const r = await getVeiculosVinculadosMotoristaEmpresa(
           user.id,
           motoristaId,
+          {
+            ativo: true,
+            pagina: paginaAtual,
+            tamanhoPagina: vehiclePageSize,
+          },
         );
 
         const veiculosFormatados: Veiculo[] = r.content.map((v) => ({
@@ -418,16 +466,26 @@ export function useReserva(selectedVaga: Vaga | null) {
           modelo: v.modelo,
           placa: v.placa,
           tipo: v.tipo,
+          comprimento: v.comprimento,
         }));
 
         setVehicles(veiculosFormatados);
-      } catch {
+        setVehicleTotalPages(r.totalPaginas);
+        setMotoristaSelecionadoId(motoristaId);
+      } catch (err) {
+        console.error('Erro ao carregar veículos do motorista:', err);
         setVehicles([]);
+        setVehicleTotalPages(0);
       }
     },
-    [user],
+    [user?.id, vehiclePage, vehiclePageSize],
   );
 
+  useEffect(() => {
+    if (!isEmpresa || !motoristaSelecionadoId) return;
+
+    fetchVeiculosMotorista(motoristaSelecionadoId, vehiclePage);
+  }, [isEmpresa, motoristaSelecionadoId, vehiclePage, fetchVeiculosMotorista]);
   // ==================== TRIGGER AUTOMÁTICO DE HORÁRIOS ====================
   useEffect(() => {
     if (!selectedVaga || !reservaState.selectedDay) return;
@@ -542,8 +600,6 @@ export function useReserva(selectedVaga: Vaga | null) {
           };
         }
 
-        // Se a empresa escolheu um motorista, usa o motorista selecionado.
-        // Caso contrário, usa o próprio usuário logado.
         const motoristaReserva = extra?.isEmpresa
           ? extra.motoristaId
           : motoristaId;
@@ -583,14 +639,22 @@ export function useReserva(selectedVaga: Vaga | null) {
     isEmpresa,
     selectedVaga,
     isAgente,
+
     vehicles,
+    vehiclePage,
+    vehicleTotalPages,
+    vehiclePageSize,
+    setVehiclePage,
+
     loadingMotorista,
     loadingHorarios,
     horariosCarregados,
+
     fetchVeiculosMotorista,
     fetchDiasDisponiveis,
     availableDates,
     loadingDias,
+
     setStep,
     setSelectedDay,
     setStartHour,
@@ -600,6 +664,7 @@ export function useReserva(selectedVaga: Vaga | null) {
     setSelectedVehicleId,
     setTipoVeiculoAgente,
     setPlacaAgente,
+
     fetchHorariosDisponiveis,
     handleConfirm,
     reset,

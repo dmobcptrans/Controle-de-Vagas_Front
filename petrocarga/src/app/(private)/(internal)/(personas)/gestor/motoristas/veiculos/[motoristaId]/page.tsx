@@ -93,30 +93,31 @@ export default function GestorVeiculosPage({ params }: PageProps) {
   // FUNÇÃO DE BUSCA
   // --------------------------------------------------------------------------
 
-  const fetchVeiculos = useCallback(async () => {
-    // Verifica se há ID do motorista
-    if (!motoristaId) {
-      setLoading(false);
-      return;
-    }
+const fetchVeiculos = useCallback(async () => {
+  // Verifica se há ID do motorista
+  if (!motoristaId) {
+    setLoading(false);
+    return;
+  }
 
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
 
-    try {
-      const result = await getVeiculosUsuario(motoristaId);
+  try {
+    const result = await getVeiculosUsuario(motoristaId, {
+      pagina: 0,
+      tamanhoPagina: 100,
+      ativo: true,
+    });
 
-      if (result.error) {
-        setError(result.message);
-      } else {
-        setVeiculos(result.veiculos);
-      }
-    } catch {
-      setError('Erro ao buscar os veículos. Tente novamente mais tarde.');
-    } finally {
-      setLoading(false);
-    }
-  }, [motoristaId]);
+    setVeiculos(result.content);
+  } catch {
+    setError('Erro ao buscar os veículos. Tente novamente mais tarde.');
+    setVeiculos([]);
+  } finally {
+    setLoading(false);
+  }
+}, [motoristaId]);
 
   // --------------------------------------------------------------------------
   // EFEITO INICIAL

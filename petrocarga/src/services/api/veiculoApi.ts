@@ -1,6 +1,6 @@
 'use client';
 
-import { Veiculo } from '@/lib/types/veiculo';
+import { Veiculo, VeiculoPaginado } from '@/lib/types/veiculo';
 import { clientApi } from '../clientApi';
 
 /**
@@ -247,20 +247,87 @@ export async function atualizarVeiculo(formData: FormData) {
  * }
  * ```
  */
-export async function getVeiculosUsuario(usuarioId: string) {
+export interface FiltrosVeiculosUsuario {
+  placa?: string;
+  marca?: string;
+  modelo?: string;
+  tipo?: 'AUTOMOVEL' | 'CAMINHONETA' | 'VUC' | 'CAMINHAO_MEDIO' | 'CAMINHAO_LONGO';
+  telefoneUsuario?: string;
+  cpfProprietario?: string;
+  cnpjProprietario?: string;
+  ativo?: boolean;
+  pagina?: number;
+  tamanhoPagina?: number;
+  ordem?: 'ASC' | 'DESC';
+}
+
+export async function getVeiculosUsuario(
+  usuarioId: string,
+  filtros: FiltrosVeiculosUsuario = {},
+): Promise<VeiculoPaginado> {
   try {
-    const res = await clientApi(`/petrocarga/veiculos/usuario/${usuarioId}`);
-    const data: Veiculo[] = await res.json();
+    const params = new URLSearchParams();
+
+    if (filtros.placa) {
+      params.append('placa', filtros.placa);
+    }
+
+    if (filtros.marca) {
+      params.append('marca', filtros.marca);
+    }
+
+    if (filtros.modelo) {
+      params.append('modelo', filtros.modelo);
+    }
+
+    if (filtros.tipo) {
+      params.append('tipo', filtros.tipo);
+    }
+
+    if (filtros.telefoneUsuario) {
+      params.append('telefoneUsuario', filtros.telefoneUsuario);
+    }
+
+    if (filtros.cpfProprietario) {
+      params.append('cpfProprietario', filtros.cpfProprietario);
+    }
+
+    if (filtros.cnpjProprietario) {
+      params.append('cnpjProprietario', filtros.cnpjProprietario);
+    }
+
+    if (filtros.ativo !== undefined) {
+      params.append('ativo', String(filtros.ativo));
+    }
+
+    params.append('pagina', String(filtros.pagina ?? 0));
+    params.append('tamanhoPagina', String(filtros.tamanhoPagina ?? 10));
+    params.append('ordem', filtros.ordem ?? 'ASC');
+
+    const res = await clientApi(
+      `/petrocarga/veiculos/usuario/${usuarioId}?${params.toString()}`,
+    );
+
+    if (!res.ok) {
+      throw new Error(`Erro na requisição: ${res.status}`);
+    }
+
+    const data = await res.json();
+
     return {
-      error: false,
-      message: 'Veículos carregados com sucesso',
-      veiculos: data,
+      content: data.content ?? [],
+      totalElementos: data.totalElementos ?? 0,
+      totalPaginas: data.totalPaginas ?? 0,
+      tamanhoPagina: data.tamanhoPagina ?? filtros.tamanhoPagina ?? 10,
+      pagina: data.pagina ?? filtros.pagina ?? 0,
     };
   } catch (err: unknown) {
-    console.error('Erro ao buscar veículos do usuário:', err);
     const message =
-      err instanceof Error ? err.message : 'Erro ao buscar veículos do usuário';
-    return { error: true, message, veiculos: [] };
+      err instanceof Error
+        ? err.message
+        : 'Erro ao buscar veículos do usuário.';
+
+    throw new Error(message);
   }
 }
 
