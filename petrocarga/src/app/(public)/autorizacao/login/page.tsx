@@ -134,10 +134,13 @@ const ROUTES_BY_PERMISSION = {
 function identificarTipoLogin(
   input: string,
 ): 'email' | 'cpf' | 'cnpj' | 'invalido' | 'indeterminado' {
-  if (!input.trim()) return 'indeterminado';
+  if (!input.trim()) {
+    return 'indeterminado';
+  }
 
   const valor = input.trim();
   const apenasNumeros = valor.replace(/\D/g, '');
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (emailRegex.test(valor)) {
@@ -152,9 +155,12 @@ function identificarTipoLogin(
     return 'cnpj';
   }
 
+  if (apenasNumeros.length < 14) {
+    return 'indeterminado';
+  }
+
   return 'invalido';
 }
-
 /**
  * Componente interno que contém a lógica de login
  * Separado para permitir uso de useSearchParams dentro de Suspense
@@ -308,34 +314,23 @@ function LoginContent() {
    * - Se for CPF (ou só números): limita a 11 dígitos e remove não-números
    * - Se for email: aceita qualquer caractere (validação apenas no submit)
    */
- const handleInputChange = (value: string) => {
-  const apenasNumeros = value.replace(/\D/g, '');
+  const handleInputChange = (value: string) => {
+    // Se o usuário estiver digitando apenas números,
+    // trata como CPF/CNPJ.
+    if (/^\d+$/.test(value)) {
+      const apenasNumeros = value.replace(/\D/g, '');
 
-  if (tipoInput === 'cpf') {
-    if (apenasNumeros.length <= 11) {
-      setLoginInput(apenasNumeros);
+      // Permite até 14 dígitos para CPF ou CNPJ
+      if (apenasNumeros.length <= 14) {
+        setLoginInput(apenasNumeros);
+      }
+
+      return;
     }
-    return;
-  }
 
-  if (tipoInput === 'cnpj') {
-    if (apenasNumeros.length <= 14) {
-      setLoginInput(apenasNumeros);
-    }
-    return;
-  }
-
-  // Só trata como número/CPF-CNPJ se o valor digitado for TOTALMENTE numérico
-  if (/^\d+$/.test(value)) {
-    if (apenasNumeros.length <= 14) {
-      setLoginInput(apenasNumeros);
-    }
-    return;
-  }
-
-  // Email (ou qualquer coisa com letras, @, ., etc.)
-  setLoginInput(value);
-};
+    // Se não for apenas números, trata como email/texto
+    setLoginInput(value);
+  };
 
   // --------------------------------------------------------------------------
   // UI DINÂMICA (valores calculados para renderização)
@@ -636,7 +631,8 @@ function LoginContent() {
                       loading ||
                       !loginInput ||
                       !senha ||
-                      tipoInput === 'invalido'
+                      tipoInput === 'invalido' ||
+                      tipoInput === 'indeterminado'
                     }
                     className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
                   >
