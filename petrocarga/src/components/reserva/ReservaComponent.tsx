@@ -136,6 +136,8 @@ export default function ReservaComponent({
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [selectedDriverId, setSelectedDriverId] = useState<string>('');
 
+  
+
   // ==================== FORMATAR VEÍCULOS ====================
   const vehiclesForStep = vehicles.map((v) => ({
     id: v.id,
@@ -273,6 +275,7 @@ export default function ReservaComponent({
               </p>
             </div>
           ) : availableTimes.length === 0 ? (
+
             <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
               <p className="text-sm text-gray-600">
                 Nenhum horário disponível para o dia selecionado.
