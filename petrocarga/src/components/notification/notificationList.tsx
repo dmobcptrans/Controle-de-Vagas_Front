@@ -8,9 +8,15 @@ interface NotificationListProps {
   notifications: Notification[];
   selectedIds: string[];
   isLoading: boolean;
+
+  isLoadingMore?: boolean;
+  podeCarregarMais?: boolean;
+  onCarregarMais?: () => void | Promise<void>;
+
   onSelectNotification: (id: string) => void;
   onMarkAsRead: (id: string) => void;
   onRemove: (id: string) => void;
+
   showCheckboxes?: boolean;
   showActions?: boolean;
   emptyMessage?: string;
@@ -88,6 +94,9 @@ export function NotificationList({
   notifications,
   selectedIds,
   isLoading,
+  isLoadingMore = false,
+  podeCarregarMais = false,
+  onCarregarMais,
   onSelectNotification,
   onMarkAsRead,
   onRemove,
@@ -95,12 +104,13 @@ export function NotificationList({
   showActions = true,
   emptyMessage = 'Você está em dia! Não há notificações no momento.',
 }: NotificationListProps) {
-  
-  // ==================== ESTADO: LOADING ====================
+  // ==================== LOADING ====================
+
   if (isLoading && notifications.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-8 sm:p-12 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-500 mx-auto mb-4" />
+
         <h2 className="text-lg sm:text-xl font-semibold text-gray-600 mb-2">
           Carregando notificações...
         </h2>
@@ -108,20 +118,26 @@ export function NotificationList({
     );
   }
 
-  // ==================== ESTADO: LISTA VAZIA ====================
+  // ==================== LISTA VAZIA ====================
+
   if (notifications.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-8 sm:p-12 text-center">
         <BellOff className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-4" />
+
         <h2 className="text-lg sm:text-xl font-semibold text-gray-600 mb-2">
           Nenhuma notificação
         </h2>
-        <p className="text-gray-500 text-sm sm:text-base">{emptyMessage}</p>
+
+        <p className="text-gray-500 text-sm sm:text-base">
+          {emptyMessage}
+        </p>
       </div>
     );
   }
 
-  // ==================== ESTADO: LISTA COM DADOS ====================
+  // ==================== LISTA COM DADOS ====================
+
   return (
     <div className="space-y-3">
       {notifications.map((notification) => (
@@ -136,6 +152,39 @@ export function NotificationList({
           showActions={showActions}
         />
       ))}
+
+      {/* ==================== PAGINAÇÃO ==================== */}
+
+      {podeCarregarMais && (
+        <div className="flex justify-center pt-4 pb-2">
+          <button
+            type="button"
+            onClick={onCarregarMais}
+            disabled={isLoadingMore}
+            className="
+              px-5 py-2.5
+              rounded-lg
+              border border-gray-300
+              bg-white
+              text-sm font-medium
+              text-gray-700
+              hover:bg-gray-50
+              disabled:opacity-50
+              disabled:cursor-not-allowed
+              transition
+            "
+          >
+            {isLoadingMore ? (
+              <span className="flex items-center gap-2">
+                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500" />
+                Carregando...
+              </span>
+            ) : (
+              'Carregar mais'
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

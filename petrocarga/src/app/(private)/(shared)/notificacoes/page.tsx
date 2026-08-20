@@ -104,6 +104,9 @@ export default function NotificacoesMotoristaPage() {
     isConnected,
     isLoading,
     error,
+    isLoadingMore,
+  podeCarregarMais,
+  carregarMais,
     removeNotification,
     markAsRead,
     markSelectedAsRead,
@@ -208,6 +211,9 @@ export default function NotificacoesMotoristaPage() {
           notifications={motoristaNotifications}
           selectedIds={selectedIds}
           isLoading={isLoading}
+          isLoadingMore={isLoadingMore}
+          podeCarregarMais={podeCarregarMais}
+          onCarregarMais={carregarMais}
           onSelectNotification={toggleSelectNotification}
           onMarkAsRead={markAsRead}
           onRemove={removeNotification}
