@@ -130,6 +130,7 @@ export default function ReservaEditarModal({
   setEndHour,
   vehicles,
   vehiclePage,
+  vehiclesLoading,
   vehicleTotalPages,
   setVehiclePage,
   origin,
@@ -314,6 +315,7 @@ export default function ReservaEditarModal({
             <OriginVehicleStep
   vehicles={vehiclesForStep}
   vehiclePage={vehiclePage}
+  vehiclesLoading={vehiclesLoading}
   vehicleTotalPages={vehicleTotalPages}
   onVehiclePageChange={setVehiclePage}
   origin={origin}
