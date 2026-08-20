@@ -114,6 +114,7 @@ export default function ReservaComponent({
     vehiclePage,
     vehicleTotalPages,
     vehiclePageSize,
+    vehiclesLoading,
     setVehiclePage,
 
     setStartHour,
@@ -127,6 +128,7 @@ export default function ReservaComponent({
     selectedVehicleId,
     setSelectedVehicleId,
     vehicles,
+
     loadingHorarios,
     horariosCarregados,
     handleConfirm,
@@ -221,6 +223,7 @@ export default function ReservaComponent({
         {((step === 2 && !isEmpresa) || (step === 3 && isEmpresa)) && (
           <OriginVehicleStep
             vehicles={vehiclesForStep}
+            vehiclesLoading={vehiclesLoading}
             vehiclePage={vehiclePage}
             vehicleTotalPages={vehicleTotalPages}
             onVehiclePageChange={setVehiclePage}

@@ -148,6 +148,7 @@ export function useReserva(selectedVaga: Vaga | null) {
   const [loadingDias, setLoadingDias] = useState(false);
   const [vehicles, setVehicles] = useState<Veiculo[]>([]);
   const [vehiclePage, setVehiclePage] = useState(0);
+  const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [vehiclePageSize] = useState(5);
   const [vehicleTotalPages, setVehicleTotalPages] = useState(0);
   const [motoristaSelecionadoId, setMotoristaSelecionadoId] = useState<
@@ -408,6 +409,8 @@ export function useReserva(selectedVaga: Vaga | null) {
     if (!user?.id || isAgente || isEmpresa) return;
 
     const loadVehicles = async () => {
+      setVehiclesLoading(true);
+
       try {
         const r = await getVeiculosUsuario(user.id, {
           ativo: true,
@@ -421,6 +424,8 @@ export function useReserva(selectedVaga: Vaga | null) {
         console.error('Erro ao carregar veículos:', err);
         setVehicles([]);
         setVehicleTotalPages(0);
+      } finally {
+        setVehiclesLoading(false);
       }
     };
 
@@ -430,6 +435,8 @@ export function useReserva(selectedVaga: Vaga | null) {
   const fetchVeiculosMotorista = useCallback(
     async (motoristaId: string, pagina?: number) => {
       if (!user?.id || !motoristaId) return;
+
+      setVehiclesLoading(true);
 
       try {
         const paginaAtual = pagina ?? vehiclePage;
@@ -460,6 +467,8 @@ export function useReserva(selectedVaga: Vaga | null) {
         console.error('Erro ao carregar veículos do motorista:', err);
         setVehicles([]);
         setVehicleTotalPages(0);
+      } finally {
+        setVehiclesLoading(false);
       }
     },
     [user?.id, vehiclePage, vehiclePageSize],
@@ -625,6 +634,7 @@ export function useReserva(selectedVaga: Vaga | null) {
     isAgente,
 
     vehicles,
+    vehiclesLoading,
     vehiclePage,
     vehicleTotalPages,
     vehiclePageSize,

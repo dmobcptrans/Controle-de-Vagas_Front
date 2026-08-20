@@ -16,24 +16,21 @@ import { Button } from '@/components/ui/button';
 
 interface OriginVehicleStepProps {
   vehicles: VeiculoAPI[];
-
   vehiclePage: number;
   vehicleTotalPages: number;
+  vehiclesLoading: boolean; // <-- adicionar
   onVehiclePageChange: (page: number) => void;
 
   origin: string;
   entryCity: string | null;
   selectedVehicleId?: string;
-
   motoristaId?: string;
   isEmpresa?: boolean;
 
   onOriginChange: (value: string) => void;
   onEntryCityChange: (value: string | null) => void;
   onVehicleChange: (id: string) => void;
-
   onNext: (origin: string, entryCity: string | null, vehicleId: string) => void;
-
   onBack?: () => void;
 }
 
@@ -96,6 +93,7 @@ export default function OriginVehicleStep({
   vehiclePage,
   vehicleTotalPages,
   onVehiclePageChange,
+  vehiclesLoading,
   origin,
   entryCity,
   selectedVehicleId,
@@ -378,7 +376,23 @@ export default function OriginVehicleStep({
 
         {/* Lista de veículos */}
         <div className="max-h-[240px] overflow-y-auto space-y-2 pr-0.5">
-          {vehicles.length === 0 && isEmpresa ? (
+          {vehiclesLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 animate-pulse"
+                >
+                  <div className="w-10 h-10 shrink-0 rounded-lg bg-gray-100" />
+
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-24 rounded bg-gray-100" />
+                    <div className="h-2.5 w-32 rounded bg-gray-100" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : vehicles.length === 0 && isEmpresa ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center">
               <TruckIcon className="w-8 h-8 mx-auto mb-2 text-amber-500" />
 
@@ -432,8 +446,7 @@ export default function OriginVehicleStep({
             </Button>
 
             <span className="text-xs text-gray-500">
-              Página{' '}
-              <span className="font-semibold">{vehiclePage + 1}</span> de{' '}
+              Página <span className="font-semibold">{vehiclePage + 1}</span> de{' '}
               <span className="font-semibold">{vehicleTotalPages}</span>
             </span>
 
