@@ -11,6 +11,7 @@ import { useReserva } from '../hooks/reserva/useReserva';
 import { Vaga } from '@/lib/types/vaga';
 import toast from 'react-hot-toast';
 import MotoristaStep from './MotoristaStep';
+import { ArrowLeft, Clock3 } from 'lucide-react';
 
 interface ReservaComponentProps {
   selectedVaga: Vaga;
@@ -135,8 +136,6 @@ export default function ReservaComponent({
   const [success, setSuccess] = useState<boolean | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [selectedDriverId, setSelectedDriverId] = useState<string>('');
-
-  
 
   // ==================== FORMATAR VEÍCULOS ====================
   const vehiclesForStep = vehicles.map((v) => ({
@@ -275,16 +274,24 @@ export default function ReservaComponent({
               </p>
             </div>
           ) : availableTimes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 mb-4">
+                <Clock3 className="h-6 w-6 text-gray-400" />
+              </div>
 
-            <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
-              <p className="text-sm text-gray-600">
-                Nenhum horário disponível para o dia selecionado.
+              <h3 className="text-sm font-semibold text-gray-800">
+                Nenhum horário disponível
+              </h3>
+
+              <p className="mt-1 max-w-sm text-sm text-gray-500">
+                Não encontramos horários disponíveis para o dia selecionado.
               </p>
 
               <button
                 onClick={() => setStep(isEmpresa ? 3 : 2)}
-                className="px-3 py-2 bg-gray-200 rounded-lg text-sm"
+                className="mt-5 inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow focus:outline-none focus:ring-2 focus:ring-gray-200"
               >
+                <ArrowLeft className="h-4 w-4" />
                 Voltar
               </button>
             </div>
