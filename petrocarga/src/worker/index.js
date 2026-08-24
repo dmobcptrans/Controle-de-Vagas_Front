@@ -1,0 +1,87 @@
+importScripts(
+  'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
+);
+importScripts(
+  'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js',
+);
+
+firebase.initializeApp({
+  apiKey: "AIzaSyCJiidfgkv5oyzQJr5cyI7W8BZv6OWtueE",
+  authDomain: "fir-cpt-ig.firebaseapp.com",
+  projectId: "fir-cpt-ig",
+  storageBucket: "fir-cpt-ig.firebasestorage.app",
+  messagingSenderId: "569723490331",
+  appId: "1:569723490331:web:b3363e0b1b0ece99d628be",
+  measurementId: "G-WCYM3XCSQ5"
+});
+
+const messaging = firebase.messaging();
+
+const tipoImagem = {
+  DENUNCIA: 'images/firebase/imag-denuncia.webp',
+  MOTORISTA: 'images/firebase/imag-motorista.webp',
+  VAGA: 'images/firebase/imag-vaga.webp',
+  RESERVA: 'images/firebase/imag-reserva.webp',
+  VEICULO: 'images/firebase/imag-veiculo.webp',
+};
+
+messaging.onBackgroundMessage((payload) => {
+  const data = payload.data || {};
+  const image = tipoImagem[data.tipo] || '/icons/icon-512.webp';
+
+  self.registration.showNotification(data.title || 'PetroCarga', {
+    body: data.body || 'Você tem uma nova atualização',
+    icon: '/icons/icon-192.webp',
+    badge: '/badge.webp',
+    image,
+    vibrate: [100, 50, 100],
+    tag: data.notificacaoId || 'petrocarga',
+    renotify: true,
+    actions: [
+      { action: 'abrir', title: 'Ver detalhes' },
+      { action: 'fechar', title: 'Ignorar' },
+    ],
+    data: {
+      id: data.notificacaoId,
+      tipo: data.tipo,
+    },
+  });
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  if (event.action === 'fechar') return;
+
+  const data = event.notification.data;
+  let url = '/';
+
+  switch (data?.tipo) {
+    case 'DENUNCIA':
+      url = '/minhas-denuncias';
+      break;
+    case 'MOTORISTA':
+      url = '/minhas-reservas';
+      break;
+    case 'VAGA':
+    case 'RESERVA':
+      url = '/minhas-reservas';
+      break;
+    case 'VEICULO':
+      url = '/meus-veiculos';
+      break;
+  }
+
+  event.waitUntil(
+    clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            client.navigate(url);
+            return client.focus();
+          }
+        }
+        return clients.openWindow(url);
+      }),
+  );
+});
