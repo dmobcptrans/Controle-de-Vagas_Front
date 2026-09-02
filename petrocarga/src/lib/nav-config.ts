@@ -301,6 +301,16 @@ export const navGroups: NavGroup[] = [
         iconColor: 'text-red-700',
         roles: [ROLES.MOTORISTA, ROLES.EMPRESA],
       },
+      {
+        key: 'solicitacoes',
+        href: '/motorista/solicitacoes',
+        label: 'Solicitações',
+        description: 'Visualizar e gerenciar solicitações',
+        icon: Bell,
+        iconBg: 'bg-blue-100',
+        iconColor: 'text-blue-700',
+        roles: [ROLES.MOTORISTA],
+      },
     ],
   },
 
