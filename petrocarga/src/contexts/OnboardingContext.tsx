@@ -36,120 +36,89 @@ interface ApiError {
 }
 
 interface OnboardingContextData {
-  isOpen: boolean;
-  step: number;
+  // ------- Modal de complemento de cadastro (etapas 1-3) -------
+  isCadastroOpen: boolean;
+  cadastroStep: number;
   data: OnboardingData;
-  isVeiculoOnlyFlow: boolean;
 
   startOnboarding: () => void;
-  nextStep: () => void;
-  prevStep: () => void;
+  nextCadastroStep: () => void;
+  prevCadastroStep: () => void;
   updateData: (data: Partial<OnboardingData>) => void;
+  submitCadastro: () => Promise<void>;
 
-  submit: () => Promise<void>;
+  // ------- Modal de cadastro de veículo -------
+  isVeiculoOpen: boolean;
   submitVeiculo: (veiculoData: VeiculoData) => Promise<void>;
+  closeVeiculoModal: () => void;
 
   reset: () => void;
-  close: () => void;
 }
 
 const OnboardingContext = createContext({} as OnboardingContextData);
 
+const initialData: OnboardingData = {
+  cpf: '',
+  telefone: '',
+  senha: '',
+  aceitarTermos: false,
+  tipoCnh: '',
+  numeroCnh: '',
+  dataValidadeCnh: '',
+};
+
 /**
  * @component OnboardingProvider
- * @version 1.0.0
- * 
- * @description Provider para gerenciamento do fluxo de onboarding (cadastro complementar).
- * Gerencia abertura do modal, navegação entre etapas e envio de dados.
- * 
+ * @version 2.0.0
+ *
+ * @description Provider para gerenciamento do fluxo de onboarding (cadastro
+ * complementar). A partir da v2, o fluxo foi separado em DOIS modais
+ * independentes:
+ *
+ * 1) MODAL DE COMPLEMENTO DE CADASTRO (`isCadastroOpen`)
+ *    - Etapas 1 a 3: dados pessoais, habilitação (CNH) e termos.
+ *    - Não pode ser fechado pelo usuário (sem botão de fechar / sem clique
+ *      no backdrop). Só fecha após `submitCadastro()` ter sucesso.
+ *
+ * 2) MODAL DE CADASTRO DE VEÍCULO (`isVeiculoOpen`)
+ *    - Etapa única: dados do veículo.
+ *    - Pode ser fechado pelo usuário a qualquer momento via
+ *      `closeVeiculoModal()`.
+ *
  * ----------------------------------------------------------------------------
- * 📋 FLUXO COMPLETO:
+ * 📋 REGRAS DE ABERTURA AUTOMÁTICA:
  * ----------------------------------------------------------------------------
- * 
- * 1. VERIFICAÇÃO INICIAL:
- *    - Verifica se usuário está autenticado
- *    - Se user.cpf não existe → abre modal na etapa 1 (dados pessoais)
- *    - Se veiculoCadastrado === false → abre modal na etapa 4 (veículo)
- * 
- * 2. ETAPAS:
- *    - Etapa 1: Dados pessoais (CPF, telefone, senha)
- *    - Etapa 2: Habilitação (CNH)
- *    - Etapa 3: Termos e condições
- *    - Etapa 4: Veículo (apenas se necessário)
- * 
- * 3. SUBMIT:
- *    - submit(): Completa cadastro de usuário
- *    - submitVeiculo(): Cadastra veículo
- * 
- * ----------------------------------------------------------------------------
- * 📋 RETORNO DO HOOK useOnboarding:
- * ----------------------------------------------------------------------------
- * 
- * @property {boolean} isOpen - Modal está aberto
- * @property {number} step - Etapa atual (1-4)
- * @property {OnboardingData} data - Dados do formulário
- * @property {boolean} isVeiculoOnlyFlow - Apenas fluxo de veículo (sem etapas 1-3)
- * @property {() => void} startOnboarding - Abre modal na etapa 1
- * @property {() => void} nextStep - Avança para próxima etapa
- * @property {() => void} prevStep - Volta para etapa anterior
- * @property {(data: Partial<OnboardingData>) => void} updateData - Atualiza dados
- * @property {() => Promise<void>} submit - Envia dados de cadastro
- * @property {(veiculoData: VeiculoData) => Promise<void>} submitVeiculo - Envia dados do veículo
- * @property {() => void} reset - Reseta todos os estados
- * @property {() => void} close - Fecha modal
- * 
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- * 
- * - VERIFICAÇÃO AUTOMÁTICA: useEffect verifica se usuário precisa de onboarding
- * - FLUXO DE VEÍCULO APENAS: Quando usuário já tem CPF mas falta veículo
- * - REFRESH USER: Após submit, chama refreshUser para atualizar dados do usuário
- * - FEEDBACK: Toast de sucesso/erro via react-hot-toast
- * 
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- * 
- * - OnboardingModal: Modal que utiliza este contexto
- * - useAuth: Hook de autenticação
- * - api: Instância Axios para requisições
- * 
+ *
+ * - Se o usuário não possui CPF/CNPJ cadastrado -> abre o modal de cadastro
+ *   (etapa 1).
+ * - Se o usuário já possui CPF/CNPJ mas não possui veículo ativo -> abre
+ *   diretamente o modal de veículo.
+ * - Se, ao concluir o cadastro complementar, o usuário ainda não tiver
+ *   veículo, o modal de cadastro fecha e o modal de veículo abre em seguida.
+ *
  * @example
  * ```tsx
- * // Provider no layout
  * <OnboardingProvider>
  *   {children}
- *   <OnboardingModal />
+ *   <OnboardingCadastroModal />
+ *   <OnboardingVeiculoModal />
  * </OnboardingProvider>
- * 
- * // Uso do hook
- * const { isOpen, step, data, updateData, submit } = useOnboarding();
  * ```
  */
-
 export function OnboardingProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [step, setStep] = useState(1);
+  const [isCadastroOpen, setIsCadastroOpen] = useState(false);
+  const [cadastroStep, setCadastroStep] = useState(1);
+
+  const [isVeiculoOpen, setIsVeiculoOpen] = useState(false);
+
   const [checked, setChecked] = useState(false);
+  const [data, setData] = useState<OnboardingData>(initialData);
 
   const { user, refreshUser, loading } = useAuth();
-const isVeiculoOnlyFlow =
-  (!!user?.cpf || !!user?.cnpj) && user?.possuiVeiculoAtivo === false;
-
-  const [data, setData] = useState<OnboardingData>({
-    cpf: '',
-    telefone: '',
-    senha: '',
-    aceitarTermos: false,
-    tipoCnh: '',
-    numeroCnh: '',
-    dataValidadeCnh: '',
-  });
 
   // ==================== VERIFICAÇÃO AUTOMÁTICA ====================
   useEffect(() => {
@@ -157,62 +126,38 @@ const isVeiculoOnlyFlow =
     if (!user) return;
 
     const precisaCpf = !user.cnpj && !user.cpf;
-    const precisaVeiculo = user.possuiVeiculoAtivo == false;
+    const precisaVeiculo = user.possuiVeiculoAtivo === false;
 
-    // Se não precisa de cadastro complementar, não abre modal
     if (!precisaCpf && !precisaVeiculo) {
       setChecked(true);
       return;
     }
 
-    setIsOpen(true);
-
-    // Define etapa inicial baseada na necessidade
     if (precisaCpf) {
-      setStep(1); // Começa do CPF
+      // Precisa completar dados pessoais/CNH/termos primeiro
+      setCadastroStep(1);
+      setIsCadastroOpen(true);
     } else if (precisaVeiculo) {
-      setStep(4); // Vai direto para cadastro de veículo
+      // Já tem cadastro completo, falta só o veículo
+      setIsVeiculoOpen(true);
     }
 
     setChecked(true);
   }, [user, loading, checked]);
 
-  // ==================== NAVEGAÇÃO ====================
+  // ==================== NAVEGAÇÃO — CADASTRO ====================
   const startOnboarding = useCallback(() => {
-    setIsOpen(true);
-    setStep(1);
+    setCadastroStep(1);
+    setIsCadastroOpen(true);
   }, []);
 
-  const nextStep = useCallback(() => {
-    setStep((prev) => {
-      if (isVeiculoOnlyFlow) {
-        return 4; // Fluxo apenas veículo
-      }
+  const nextCadastroStep = useCallback(() => {
+    setCadastroStep((prev) => Math.min(prev + 1, 3));
+  }, []);
 
-      if (prev === 3) {
-        // Após termos, verifica se precisa de veículo
-        if (user?.possuiVeiculoAtivo == false) {
-          return 4; // Vai para etapa de veículo
-        }
-        // Se não precisa, fecha modal
-        setIsOpen(false);
-        return 1;
-      }
-
-      if (prev === 4) {
-        // Após veículo, fecha modal
-        setIsOpen(false);
-        return 1;
-      }
-
-      return prev + 1;
-    });
-  }, [user, isVeiculoOnlyFlow]);
-
-  const prevStep = useCallback(() => {
-    if (isVeiculoOnlyFlow) return;
-    setStep((prev) => Math.max(prev - 1, 1));
-  }, [isVeiculoOnlyFlow]);
+  const prevCadastroStep = useCallback(() => {
+    setCadastroStep((prev) => Math.max(prev - 1, 1));
+  }, []);
 
   // ==================== HANDLERS DE DADOS ====================
   const updateData = useCallback((newData: Partial<OnboardingData>) => {
@@ -223,7 +168,7 @@ const isVeiculoOnlyFlow =
   }, []);
 
   // ==================== SUBMIT CADASTRO DE USUÁRIO ====================
-  const submit = useCallback(async () => {
+  const submitCadastro = useCallback(async () => {
     try {
       await api.post('/petrocarga/auth/completarCadastro', data);
 
@@ -231,21 +176,23 @@ const isVeiculoOnlyFlow =
 
       toast.success('Cadastro completo com sucesso!');
 
-      if (user?.possuiVeiculoAtivo == false) {
-        setStep(4);
-        return;
-      }
+      // Fecha o modal de cadastro sempre que o submit tem sucesso
+      setIsCadastroOpen(false);
+      setCadastroStep(1);
+      setData(initialData);
 
-      setIsOpen(false);
-      setStep(1);
+      // Se o usuário ainda não tem veículo, abre o modal de veículo em seguida
+      if (user?.possuiVeiculoAtivo === false) {
+        setIsVeiculoOpen(true);
+      }
     } catch (error: unknown) {
       console.error('Erro ao completar onboarding', error);
 
       let mensagem = 'Erro ao completar cadastro';
 
       if (error instanceof AxiosError) {
-        const data = error.response?.data as ApiError;
-        mensagem = data?.erro || data?.message || mensagem;
+        const responseData = error.response?.data as ApiError;
+        mensagem = responseData?.erro || responseData?.message || mensagem;
       }
 
       toast.error(mensagem);
@@ -273,16 +220,15 @@ const isVeiculoOnlyFlow =
 
         toast.success('Veículo cadastrado com sucesso!');
 
-        setIsOpen(false);
-        setStep(1);
+        setIsVeiculoOpen(false);
       } catch (error: unknown) {
         console.error('Erro ao cadastrar veículo', error);
 
         let mensagem = 'Erro ao cadastrar veículo';
 
         if (error instanceof AxiosError) {
-          const data = error.response?.data as ApiError;
-          mensagem = data?.erro || data?.message || mensagem;
+          const responseData = error.response?.data as ApiError;
+          mensagem = responseData?.erro || responseData?.message || mensagem;
         }
 
         toast.error(mensagem);
@@ -292,54 +238,54 @@ const isVeiculoOnlyFlow =
     [refreshUser, user],
   );
 
-  // ==================== RESET E CLOSE ====================
-  const reset = useCallback(() => {
-    setData({
-      cpf: '',
-      telefone: '',
-      senha: '',
-      aceitarTermos: false,
-      tipoCnh: '',
-      numeroCnh: '',
-      dataValidadeCnh: '',
-    });
-    setStep(1);
-    setIsOpen(false);
+  // ==================== FECHAR MODAL DE VEÍCULO ====================
+  // Único modal que pode ser fechado pelo usuário. O modal de cadastro
+  // (isCadastroOpen) propositalmente NÃO possui uma função de fechar
+  // exposta para a UI.
+  const closeVeiculoModal = useCallback(() => {
+    setIsVeiculoOpen(false);
   }, []);
 
-  const close = useCallback(() => {
-    setIsOpen(false);
+  // ==================== RESET ====================
+  const reset = useCallback(() => {
+    setData(initialData);
+    setCadastroStep(1);
+    setIsCadastroOpen(false);
+    setIsVeiculoOpen(false);
+    setChecked(false);
   }, []);
 
   // ==================== MEMOIZED VALUE ====================
   const value = useMemo(
     () => ({
-      isOpen,
-      step,
+      isCadastroOpen,
+      cadastroStep,
       data,
-      isVeiculoOnlyFlow,
       startOnboarding,
-      nextStep,
-      prevStep,
+      nextCadastroStep,
+      prevCadastroStep,
       updateData,
-      submit,
+      submitCadastro,
+
+      isVeiculoOpen,
       submitVeiculo,
+      closeVeiculoModal,
+
       reset,
-      close,
     }),
     [
-      isOpen,
-      step,
+      isCadastroOpen,
+      cadastroStep,
       data,
-      isVeiculoOnlyFlow,
       startOnboarding,
-      nextStep,
-      prevStep,
+      nextCadastroStep,
+      prevCadastroStep,
       updateData,
-      submit,
+      submitCadastro,
+      isVeiculoOpen,
       submitVeiculo,
+      closeVeiculoModal,
       reset,
-      close,
     ],
   );
 

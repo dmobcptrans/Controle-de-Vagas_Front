@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { MapReserva } from '@/components/map/MapReserva';
 import ReservaComponent from '@/components/reserva/ReservaComponent';
+
 import { Vaga, VagaMapa } from '@/lib/types/vaga';
 import PageHeader from '@/components/ui/pageHeader';
 import ReservaCTA from '@/components/ui/CTA/CTAReserva';
 import TutorialCard from '@/components/ui/TutorialCard/TutorialCard';
 import { getVagaById } from '@/services/api/vagaApi';
 import { useAuth } from '@/contexts/AuthContext';
+import OnboardingVeiculoModal from '@/components/modal/autorizacao/completar-cadastro/Onboardingveiculomodal';
 
 /**
  * @component ReservaPage
@@ -158,6 +160,7 @@ export default function ReservaPage() {
           description="Veja como usar o sistema em 3 passos simples"
         />
       </main>
+         <OnboardingVeiculoModal/>
     </div>
   );
 }
