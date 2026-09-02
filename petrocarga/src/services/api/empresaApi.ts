@@ -213,13 +213,7 @@ export async function desvincularMotoristaEmpresa(
   } catch (err: unknown) {
     console.error('Erro ao desvincular motorista:', err);
 
-    return {
-      error: true,
-      message:
-        err instanceof Error
-          ? err.message
-          : 'Erro desconhecido ao desvincular',
-    };
+    throw err;
   }
 }
 

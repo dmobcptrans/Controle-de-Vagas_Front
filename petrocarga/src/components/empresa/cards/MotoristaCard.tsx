@@ -117,7 +117,7 @@ export function MotoristaCard({
           onClick={() => setModalAberto(true)}
           className={cn(
             buttonVariants({ variant: 'outline' }),
-            'text-sm w-full sm:w-auto text-center flex items-center justify-center gap-2 py-2 text-red-600',
+            'text-sm w-full sm:w-auto text-center flex items-center justify-center gap-2 py-2 text-red-600 cursor-pointer',
           )}
         >
           <Unlink className="w-4 h-4" />
