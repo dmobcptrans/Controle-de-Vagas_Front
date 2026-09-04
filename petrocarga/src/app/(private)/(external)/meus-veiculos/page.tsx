@@ -51,6 +51,7 @@ export default function VeiculosPage() {
         const filtros: FiltrosVeiculosUsuario = {
           pagina: paginaAlvo,
           tamanhoPagina: TAMANHO_PAGINA,
+          ativo: true,
           ordem: 'ASC',
         };
 
