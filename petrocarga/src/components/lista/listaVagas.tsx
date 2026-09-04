@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import VagaItem from '@/components/gestor/cards/vagas-item';
 import { Vaga } from '@/lib/types/vaga';
+
 import * as vagaActions from '@/services/api/vagaApi';
 
 function useDebounce(value: string, delay = 300) {
@@ -10,46 +12,58 @@ function useDebounce(value: string, delay = 300) {
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedValue(value), delay);
+
     return () => clearTimeout(handler);
   }, [value, delay]);
 
   return debouncedValue;
 }
 
+export type FiltroVaga = 'todas' | 'disponiveis' | 'indisponiveis';
+
 type ListaVagasProps = {
   searchQuery: string;
+
+  filtro: FiltroVaga;
+
   onSelectFirstCoordinate?: (coord: { lat: number; lng: number }) => void;
 };
 
 const TAMANHO_PAGINA = 10;
 
-export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasProps) {
+export function ListaVagas({
+  searchQuery,
+  filtro,
+  onSelectFirstCoordinate,
+}: ListaVagasProps) {
   const [vagas, setVagas] = useState<Vaga[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtro, setFiltro] = useState('');
-  const [disponiveisPrimeiro, setDisponiveisPrimeiro] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // ==================== PAGINAÇÃO ====================
+
   const [paginaAtual, setPaginaAtual] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [totalElementos, setTotalElementos] = useState(0);
 
-  const filtroDebounced = useDebounce(filtro, 300);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Reseta para a primeira página sempre que a busca mudar
-  useEffect(() => {
-    setPaginaAtual(0);
-  }, [debouncedSearchQuery]);
-
   // ==================== CARREGAMENTO ====================
+
   useEffect(() => {
     const fetchVagas = async () => {
       setLoading(true);
+      setError(null);
+
       try {
         const resultado = await vagaActions.getVagasFiltradas({
-          logradouro: debouncedSearchQuery,
+          logradouro: debouncedSearchQuery || undefined,
+          status:
+            filtro === 'todas'
+              ? undefined
+              : filtro === 'disponiveis'
+                ? 'DISPONIVEL'
+                : 'INDISPONIVEL',
           numeroPagina: paginaAtual,
           tamanhoPagina: TAMANHO_PAGINA,
         });
@@ -77,7 +91,9 @@ export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasP
         }
       } catch (err) {
         console.error('Erro ao carregar vagas:', err);
+
         setError(err instanceof Error ? err.message : 'Erro desconhecido');
+
         setVagas([]);
       } finally {
         setLoading(false);
@@ -85,45 +101,35 @@ export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasP
     };
 
     fetchVagas();
-  }, [debouncedSearchQuery, paginaAtual]);
-
-  // ==================== FILTRO (em memória, na página atual) ====================
-  const vagasFiltradas = vagas.filter((vaga) => {
-    const filtroLower = filtroDebounced.toLowerCase();
-    return (
-      vaga.area?.toLowerCase().includes(filtroLower) ||
-      vaga.referenciaEndereco?.toLowerCase().includes(filtroLower) ||
-      vaga.endereco?.logradouro?.toLowerCase().includes(filtroLower) ||
-      vaga.endereco?.bairro?.toLowerCase().includes(filtroLower)
-    );
-  });
+  }, [debouncedSearchQuery, paginaAtual, filtro]);
 
   // ==================== ORDENAÇÃO ====================
-  const vagasOrdenadas = [...vagasFiltradas].sort((a, b) => {
-    if (disponiveisPrimeiro) {
-      return a.status === 'DISPONIVEL' && b.status !== 'DISPONIVEL'
-        ? -1
-        : b.status === 'DISPONIVEL' && a.status !== 'DISPONIVEL'
+
+  const vagasOrdenadas = [...vagas].sort((a, b) => {
+    return a.status === 'DISPONIVEL' && b.status !== 'DISPONIVEL'
+      ? -1
+      : b.status === 'DISPONIVEL' && a.status !== 'DISPONIVEL'
         ? 1
         : 0;
-    } else {
-      return a.status !== 'DISPONIVEL' && b.status === 'DISPONIVEL'
-        ? -1
-        : b.status !== 'DISPONIVEL' && a.status === 'DISPONIVEL'
-        ? 1
-        : 0;
-    }
   });
 
+  // ==================== PAGINAÇÃO ====================
+
   const podeVoltar = paginaAtual > 0;
+
   const podeAvancar = paginaAtual + 1 < totalPaginas;
 
+  // ==================== RENDER ====================
+
   return (
-    <div className="flex flex-col">
-      {/* ==================== LISTA SCROLLÁVEL ==================== */}
+    <div className="flex flex-col h-full">
+      {/* ==================== LISTA ==================== */}
+
       <div className="flex-1 overflow-y-auto space-y-4">
         {loading ? (
           <p className="text-center text-gray-500 mt-4">Carregando vagas...</p>
+        ) : error ? (
+          <p className="text-center text-red-500 mt-4">{error}</p>
         ) : vagasOrdenadas.length > 0 ? (
           vagasOrdenadas.map((vaga) => <VagaItem key={vaga.id} vaga={vaga} />)
         ) : (
@@ -133,13 +139,23 @@ export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasP
         )}
       </div>
 
-      {/* ==================== CONTROLES DE PAGINAÇÃO ==================== */}
+      {/* ==================== PAGINAÇÃO ==================== */}
+
       {!loading && totalPaginas > 1 && (
         <div className="flex items-center justify-between border-t pt-3 mt-2 px-1">
           <button
+            type="button"
             onClick={() => setPaginaAtual((p) => Math.max(0, p - 1))}
             disabled={!podeVoltar}
-            className="px-3 py-1 text-sm rounded-md border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+            className="
+              px-3 py-1
+              text-sm
+              rounded-md
+              border
+              disabled:opacity-40
+              disabled:cursor-not-allowed
+              hover:bg-gray-100
+            "
           >
             Anterior
           </button>
@@ -150,9 +166,18 @@ export function ListaVagas({ searchQuery, onSelectFirstCoordinate }: ListaVagasP
           </span>
 
           <button
+            type="button"
             onClick={() => setPaginaAtual((p) => p + 1)}
             disabled={!podeAvancar}
-            className="px-3 py-1 text-sm rounded-md border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
+            className="
+              px-3 py-1
+              text-sm
+              rounded-md
+              border
+              disabled:opacity-40
+              disabled:cursor-not-allowed
+              hover:bg-gray-100
+            "
           >
             Próxima
           </button>

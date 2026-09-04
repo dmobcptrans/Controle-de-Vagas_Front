@@ -6,7 +6,9 @@ import ReservaComponent from '@/components/reserva/ReservaComponent';
 
 import { Vaga, VagaMapa } from '@/lib/types/vaga';
 import PageHeader from '@/components/ui/pageHeader';
-import ReservaCTA from '@/components/ui/CTA/CTAReserva';
+import { CTASearch } from '@/components/ui/CTA/search/CTASearch';
+import { CTAInfoReserva } from '@/components/ui/CTA/reserva/CTAInfoReserva';
+import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
 import TutorialCard from '@/components/ui/TutorialCard/TutorialCard';
 import { getVagaById } from '@/services/api/vagaApi';
 import { useAuth } from '@/contexts/AuthContext';
@@ -70,14 +72,22 @@ import OnboardingVeiculoModal from '@/components/modal/autorizacao/completar-cad
 export default function ReservaPage() {
   // ==================== ESTADOS ====================
   const [step, setStep] = useState<'mapa' | 'reserva'>('mapa');
+
   const [selectedVaga, setSelectedVaga] = useState<Vaga | null>(null);
+
   const [loadingVaga, setLoadingVaga] = useState(false);
-  const { user } = useAuth();
-  const empresaId = user?.id;
+
+  const [searchValue, setSearchValue] = useState('');
+
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
+
+  const suggestions = useMapboxSuggestions(searchValue, true);
+
+  const { user } = useAuth();
+  const empresaId = user?.id;
 
   // ==================== HANDLERS ====================
 
@@ -122,14 +132,22 @@ export default function ReservaPage() {
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* ==================== CTA DINÂMICO ==================== */}
 
-        <ReservaCTA
-          step={step}
-          onLocationSelected={setSelectedLocation}
-          vagaLabel={vagaLabel}
-          vagaEndereco={vagaEndereco}
-          vagaSetor={vagaSetor}
-          onBackToMap={handleBackToMap}
-        />
+        {step === 'mapa' && (
+          <CTASearch
+            value={searchValue}
+            onChange={setSearchValue}
+            placeholder="Pesquisar localização..."
+          />
+        )}
+
+        {step === 'reserva' && (
+          <CTAInfoReserva
+            vagaLabel={vagaLabel}
+            vagaEndereco={vagaEndereco}
+            vagaSetor={vagaSetor}
+            onBackToMap={handleBackToMap}
+          />
+        )}
 
         {/* ==================== ETAPA 1: MAPA ==================== */}
         {step === 'mapa' && (
@@ -160,7 +178,7 @@ export default function ReservaPage() {
           description="Veja como usar o sistema em 3 passos simples"
         />
       </main>
-         <OnboardingVeiculoModal/>
+      <OnboardingVeiculoModal />
     </div>
   );
 }

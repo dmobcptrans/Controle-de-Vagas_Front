@@ -4,11 +4,11 @@ import { Vaga } from '@/lib/types/vaga';
 /**
  * @module utils/map/markers
  * @description Funções utilitárias para adicionar marcadores de vagas ao mapa Mapbox GL.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FUNÇÕES DISPONÍVEIS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. parseCoordinates - Converte string de coordenadas em array [lng, lat]
  * 2. addVagaMarkers - Adiciona marcadores de vagas ao mapa
  */
@@ -67,7 +67,14 @@ export function addVagaMarkers(
 ) {
   vagas.forEach((vaga) => {
     // Ignora vagas sem coordenadas de início
-    if (!vaga.longitudeInicio || !vaga.latitudeInicio) return;
+    if (
+      vaga.longitudeInicio === undefined ||
+      vaga.longitudeInicio === null ||
+      vaga.latitudeInicio === undefined ||
+      vaga.latitudeInicio === null
+    ) {
+      return;
+    }
 
     // Cria elemento HTML do marcador
     const el = document.createElement('div');
@@ -75,7 +82,10 @@ export function addVagaMarkers(
       'vaga-marker w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-pointer';
 
     // Converte coordenadas
-    const coordinates = [vaga.longitudeInicio, vaga.latitudeInicio] as [number, number];
+    const coordinates = [vaga.longitudeInicio, vaga.latitudeInicio] as [
+      number,
+      number,
+    ];
 
     // Cria marcador com popup
     const marker = new mapboxgl.Marker(el)

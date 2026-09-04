@@ -288,14 +288,12 @@ export default function Dashboard() {
       {/* ==================== CORPO PRINCIPAL ==================== */}
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA principal - Reservar vaga */}
-        <div className="-mt-4 mb-5">
           <CTA
             href="/reservar-vaga"
             title="Reservar uma vaga"
             description="Encontre e faça uma reserva rápida"
             icon={<CalendarPlus className="h-5 w-5 text-white" />}
           />
-        </div>
 
         {/* ==================== CARDS DE ESTATÍSTICAS ==================== */}
         <div className="grid grid-cols-3 gap-2.5 mb-5">

@@ -4,12 +4,13 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/components/hooks/useAuth';
 import { getAgentes } from '@/services/api/agenteApi';
 import { FiltrosAgente } from '@/lib/types/personas/agente';
-import { Search, X, Users, CheckCircle, XCircle, Menu } from 'lucide-react';
+import { Search, Users, CheckCircle, XCircle } from 'lucide-react';
 import { Agente } from '@/lib/types/personas/agente';
 import AgenteCard from '@/components/gestor/cards/agentes-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
 import { Button } from '@/components/ui/button';
 import FloatingButton from '@/components/ui/floatingButton';
+import { CTASearch } from '@/components/ui/CTA/search/CTASearch';
 import { useRouter } from 'next/navigation';
 
 const ITENS_POR_PAGINA = 9;
@@ -18,7 +19,7 @@ type FiltroStatus = 'ativos' | 'inativos' | 'todos';
 
 /**
  * @function useDebounce
- * @description 
+ * @description
  */
 function useDebounce<T>(value: T, delay = 400): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -57,15 +58,16 @@ export default function AgentesPage() {
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const [totalPaginas, setTotalPaginas] = useState(0);
+  const [totalItens, setTotalItens] = useState(0);
   const [totalElementos, setTotalElementos] = useState(0);
 
   // Estado inicial como 'ativos' (filtro padrão)
   const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('ativos');
 
   const buscaDebounced = useDebounce(busca, 400);
+
+  const hasActiveFilters = Boolean(busca.trim()) || filtroStatus !== 'todos';
 
   // --------------------------------------------------------------------------
   // BUSCA DE DADOS
@@ -142,10 +144,6 @@ export default function AgentesPage() {
     setPaginaAtual(1);
   };
 
-  const limparBusca = () => {
-    setBusca('');
-    setPaginaAtual(1);
-  };
 
   const handlePageChange = (pagina: number) => {
     setPaginaAtual(pagina);
@@ -201,157 +199,81 @@ export default function AgentesPage() {
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA: busca + filtros */}
-        <div className="-mt-4 mb-5 max-w-4xl mx-auto">
-          <div
-            className="bg-[#071D41] rounded-2xl border-l-4 border-[#FFCD07] overflow-hidden"
-            style={{ boxShadow: '0 4px 16px rgba(7,29,65,0.18)' }}
-          >
-            {/* Barra principal */}
-            <div className="px-5 py-4">
-              <div className="flex items-center gap-3">
-                {/* Busca */}
-                <div className="relative flex-1">
-                  <div
-                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 transition-all"
-                    style={{
-                      background: searchFocused
-                        ? 'rgba(255,255,255,0.15)'
-                        : 'rgba(255,255,255,0.10)',
-                      border: searchFocused
-                        ? '1.5px solid rgba(255,205,7,.6)'
-                        : '1.5px solid rgba(255,255,255,.12)',
-                    }}
-                  >
-                    <Search
-                      className="h-4 w-4"
-                      style={{
-                        color: searchFocused
-                          ? '#FFCD07'
-                          : 'rgba(255,255,255,.45)',
-                      }}
-                    />
+        <CTASearch
+          value={busca}
+          onChange={(value) => {
+            setBusca(value);
+            setPaginaAtual(1);
+          }}
+          placeholder="Buscar por nome do agente..."
+          hasActiveFilters={hasActiveFilters}
+          onClearFilters={mostrarTodos}
+          filters={
+            <div>
+              <p className="text-xs uppercase tracking-wide text-white/50 mb-3">
+                Status
+              </p>
 
-                    <input
-                      value={busca}
-                      onChange={(e) => {
-                        setBusca(e.target.value);
-                        setPaginaAtual(1);
-                      }}
-                      onFocus={() => setSearchFocused(true)}
-                      onBlur={() => setSearchFocused(false)}
-                      placeholder="Buscar por nome..."
-                      className="flex-1 bg-transparent text-sm text-white placeholder:text-white/35 outline-none"
-                    />
-
-                    {busca && (
-                      <button onClick={limparBusca}>
-                        <X className="h-3.5 w-3.5 text-white/70" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Menu */}
-                <button
-                  onClick={() => setFiltrosAbertos(!filtrosAbertos)}
-                  className="relative cursor-pointer h-11 w-11 rounded-xl flex items-center justify-center transition-all duration-300"
-                  style={{
-                    background: filtrosAbertos
-                      ? 'rgba(255,205,7,.18)'
-                      : 'rgba(255,255,255,.10)',
-                    border: filtrosAbertos
-                      ? '1.5px solid rgba(255,205,7,.5)'
-                      : '1.5px solid rgba(255,255,255,.12)',
-                  }}
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  type="button"
+                  variant={filtroStatus === 'todos' ? 'default' : 'outline'}
+                  onClick={() => handleFiltroStatus('todos')}
                 >
-                  <Menu
-                    className={`h-5 w-5 text-white transition-transform duration-300 ${
-                      filtrosAbertos ? 'rotate-90' : ''
-                    }`}
-                  />
+                  <Users className="mr-2 h-4 w-4" />
+                  Todos
+                </Button>
 
-                  {filtrosAtivos && (
-                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#FFCD07]" />
-                  )}
-                </button>
+                <Button
+                  type="button"
+                  variant={filtroStatus === 'ativos' ? 'default' : 'outline'}
+                  onClick={() => handleFiltroStatus('ativos')}
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Ativos
+                </Button>
+
+                <Button
+                  type="button"
+                  variant={filtroStatus === 'inativos' ? 'default' : 'outline'}
+                  onClick={() => handleFiltroStatus('inativos')}
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Inativos
+                </Button>
               </div>
             </div>
+          }
+          filterSummary={
+            <>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-[#FFCD07]" />
 
-            {/* Drawer interno */}
-            <div
-              className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                filtrosAbertos
-                  ? 'max-h-[500px] opacity-100'
-                  : 'max-h-0 opacity-0'
-              }`}
-            >
-              <div className="border-t border-white/10 px-5 py-5 space-y-5">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-white/50 mb-3">
-                    Status
-                  </p>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button
-                      variant={filtroStatus === 'todos' ? 'default' : 'outline'}
-                      onClick={() => handleFiltroStatus('todos')}
-                    >
-                      <Users className="mr-2 h-4 w-4" />
-                      Todos
-                    </Button>
-
-                    <Button
-                      variant={
-                        filtroStatus === 'ativos' ? 'default' : 'outline'
-                      }
-                      onClick={() => handleFiltroStatus('ativos')}
-                    >
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Ativos
-                    </Button>
-
-                    <Button
-                      variant={
-                        filtroStatus === 'inativos' ? 'default' : 'outline'
-                      }
-                      onClick={() => handleFiltroStatus('inativos')}
-                    >
-                      <XCircle className="mr-2 h-4 w-4" />
-                      Inativos
-                    </Button>
-                  </div>
-                </div>
-
-                {filtrosAtivos && (
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    onClick={mostrarTodos}
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Limpar filtros
-                  </Button>
-                )}
-
-                <div className="flex items-center justify-between border-t border-white/10 pt-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-[#FFCD07]" />
-
-                    <span className="text-sm text-white/80">
-                      {agentes.length} de {totalElementos} agentes
-                    </span>
-                  </div>
-
-                  {filtrosAtivos && (
-                    <span className="text-xs rounded-full bg-[#FFCD07] px-2 py-1 text-[#071D41] font-semibold">
-                      Filtros ativos
-                    </span>
-                  )}
-                </div>
+                <span className="text-sm text-white/80">
+                  {agentes.length} de {totalItens} agentes
+                </span>
               </div>
-            </div>
-          </div>
-        </div>
+
+              {hasActiveFilters && (
+                <span
+                  className="
+                    ml-3
+                    flex-shrink-0
+                    text-xs
+                    rounded-full
+                    bg-[#FFCD07]
+                    px-2
+                    py-1
+                    text-[#071D41]
+                    font-semibold
+                  "
+                >
+                  Filtros ativos
+                </span>
+              )}
+            </>
+          }
+        />
 
         {/* Indicador de carregamento durante filtros/paginação */}
         {isLoadingAgentes && agentes.length > 0 && (

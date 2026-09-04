@@ -19,6 +19,7 @@ import { Veiculo } from '@/lib/types/veiculo';
 import VeiculoCard from '@/components/motorista/cards/veiculo-item';
 import { Button } from '@/components/ui/button';
 import CadastroVeiculoModal from '@/components/modal/cadastroVeiculo/Cadastroveiculomodal';
+import { CTA } from '@/components/ui/CTA/CTA';
 
 const TAMANHO_PAGINA = 10;
 
@@ -96,21 +97,12 @@ export default function VeiculosPage() {
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
 
         <div className="-mt-4 mb-5">
-          <button
-            onClick={() => setModalAberto(true)}
-            className="w-full flex items-center justify-between cursor-pointer bg-[#071D41] hover:bg-[#0C3D8A] transition-colors rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]"
-          >
-            <div className="text-left">
-              <p className="text-white font-semibold text-[15px] mb-0.5">
-                Adicionar novo veículo
-              </p>
-              <p className="text-white/70 text-xs">Cadastre um veículo</p>
-            </div>
-
-            <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
-              <CarIcon className="h-5 w-5 text-white" />
-            </div>
-          </button>
+                   <CTA
+                   onClick={() => setModalAberto(true)}
+            title="Reservar uma vaga"
+            description="Encontre e faça uma reserva rápida"
+            icon={<CarIcon className="h-5 w-5 text-white" />}
+          />
         </div>
 
         <div className="flex flex-col gap-1.5">

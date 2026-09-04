@@ -37,7 +37,7 @@ import {
 
 import { MotoristaCard } from '@/components/empresa/cards/MotoristaCard';
 
-import { CTASplit } from '@/components/ui/CTA/CTAsplit';
+import { CTASplit } from '@/components/ui/CTA/split/CTASplit';
 
 import GerarConviteMotoristaModal from '@/components/empresa/modal/GerarConviteMotoristaModal';
 

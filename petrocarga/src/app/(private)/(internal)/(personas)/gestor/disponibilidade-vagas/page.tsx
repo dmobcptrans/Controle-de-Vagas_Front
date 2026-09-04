@@ -1,5 +1,5 @@
 import DisponibilidadeCalendario from '@/components/gestor/disponibilidade/DisponibilidadeCalendario';
-import CalendarioInfoCTA from '@/components/ui/CTA/CalendarioInfoCTA';
+import CTAMonth from '@/components/ui/CTA/month/CTAMonth';
 import { CalendarioMesProvider } from '@/contexts/CalendarioMesContext';
 import { Info } from 'lucide-react';
 import Link from 'next/dist/client/link';
@@ -76,7 +76,7 @@ export default function DisponibilidadeVagas() {
         <CalendarioMesProvider>
           <div className="-mt-4 mb-5">
             {/* CTA dinâmico de info calendario */}
-            <CalendarioInfoCTA />
+            <CTAMonth />
           </div>
 
           {/* Container responsivo para o calendário */}

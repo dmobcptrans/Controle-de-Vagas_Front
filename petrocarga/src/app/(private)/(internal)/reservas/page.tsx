@@ -1,5 +1,5 @@
 import CalendarioReservas from '@/components/gestor/calendario/CalendarioReservasGestor';
-import CalendarioInfoCTA from '@/components/ui/CTA/CalendarioInfoCTA';
+import CTAMonth from '@/components/ui/CTA/month/CTAMonth';
 import { CalendarioMesProvider } from '@/contexts/CalendarioMesContext';
 import { Info } from 'lucide-react';
 import Link from 'next/link';
@@ -79,7 +79,7 @@ export default function Reserva() {
         <CalendarioMesProvider>
           <div className="-mt-4 mb-5">
             {/* CTA dinâmico de info calendario */}
-            <CalendarioInfoCTA />
+            <CTAMonth />
           </div>
 
           {/* Container responsivo para o calendário */}

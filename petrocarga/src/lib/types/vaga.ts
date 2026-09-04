@@ -190,6 +190,8 @@ export interface Vaga {
   endereco: Endereco;
 }
 
+export type FiltroVaga = 'todas' | 'disponiveis' | 'indisponiveis';
+
 /**
  * @interface VagaResponse
  * @description Resposta padronizada das APIs de vaga.

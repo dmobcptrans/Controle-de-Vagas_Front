@@ -49,7 +49,7 @@ import {
   ComposedChart,
   Line,
 } from 'recharts';
-import { DateRangeFilterCTA } from '@/components/ui/CTA/DateRangeFilterCTA';
+import { CTADate } from '@/components/ui/CTA/date/CTADate';
 
 
 
@@ -427,7 +427,7 @@ export default function RelatoriosPage() {
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA principal - Dashboard Gestor */}
         <div className="-mt-4 mb-5">
-          <DateRangeFilterCTA
+          <CTADate
             dateRange={dateRange}
             onDateChange={handleDateChange}
           />

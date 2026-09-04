@@ -36,7 +36,7 @@ import { useState, useEffect } from 'react';
 import { PushNotificationToggle } from '@/components/notification/PushNotificationToggle';
 import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
 import toast from 'react-hot-toast';
-import { CtaProfileIcon } from '@/components/ui/CTA/CtaProfileIcon';
+import { CTAProfile } from '@/components/ui/CTA/profile/CTAProfile';
 
 /**
  * @component Perfil
@@ -337,7 +337,7 @@ export default function Perfil() {
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA flutuante */}
         <div className="-mt-4 mb-2 flex justify-center">
-          <CtaProfileIcon />
+          <CTAProfile />
         </div>
 
         {loading ? (
