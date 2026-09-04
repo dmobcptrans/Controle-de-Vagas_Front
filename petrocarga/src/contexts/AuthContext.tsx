@@ -15,11 +15,21 @@ import { AxiosError } from 'axios';
 interface UserData {
   id: string;
   nome: string;
-  login: string;
-  permissao: 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE' | 'EMPRESA';
+  telefone?: string;
+  email?: string;
   cpf?: string;
   cnpj?: string;
-  possuiVeiculoAtivo: boolean;
+  permissao: 'ADMIN' | 'GESTOR' | 'MOTORISTA' | 'AGENTE' | 'EMPRESA';
+  criadoEm: string;
+  ativo: boolean;
+  desativadoEm?: string;
+  dadosExtras?: {
+    matricula?: string;
+    empresaId?: string;
+    empresaCnpj?: string;
+    empresaRazaoSocial?: string;
+    possuiVeiculoAtivo?: boolean;
+  };
 }
 
 /**
@@ -29,14 +39,50 @@ interface UserData {
  * @returns UserData normalizado
  */
 function normalizeUserData(data: Record<string, unknown>): UserData {
+  const dadosExtras =
+    data.dadosExtras as Record<string, unknown> | undefined;
+
   return {
     id: String(data.id ?? ''),
     nome: String(data.nome ?? ''),
-    login: String(data.login ?? data.email ?? ''),
-    permissao: (data.permissao as UserData['permissao']) ?? 'MOTORISTA',
+    telefone: data.telefone ? String(data.telefone) : undefined,
+    email: data.email ? String(data.email) : undefined,
     cpf: data.cpf ? String(data.cpf) : undefined,
     cnpj: data.cnpj ? String(data.cnpj) : undefined,
-    possuiVeiculoAtivo: data.possuiVeiculoAtivo ? Boolean(data.possuiVeiculoAtivo) : false,
+
+    permissao:
+      (data.permissao as UserData['permissao']) ?? 'MOTORISTA',
+
+    criadoEm: String(data.criadoEm ?? ''),
+    ativo: Boolean(data.ativo ?? false),
+
+    desativadoEm: data.desativadoEm
+      ? String(data.desativadoEm)
+      : undefined,
+
+    dadosExtras: dadosExtras
+      ? {
+          matricula: dadosExtras.matricula
+            ? String(dadosExtras.matricula)
+            : undefined,
+
+          empresaId: dadosExtras.empresaId
+            ? String(dadosExtras.empresaId)
+            : undefined,
+
+          empresaCnpj: dadosExtras.empresaCnpj
+            ? String(dadosExtras.empresaCnpj)
+            : undefined,
+
+          empresaRazaoSocial: dadosExtras.empresaRazaoSocial
+            ? String(dadosExtras.empresaRazaoSocial)
+            : undefined,
+
+          possuiVeiculoAtivo: Boolean(
+            dadosExtras.possuiVeiculoAtivo ?? false,
+          ),
+        }
+      : undefined,
   };
 }
 

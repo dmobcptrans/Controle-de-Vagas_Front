@@ -126,7 +126,7 @@ export function OnboardingProvider({
     if (!user) return;
 
     const precisaCpf = !user.cnpj && !user.cpf;
-    const precisaVeiculo = user.possuiVeiculoAtivo === false;
+    const precisaVeiculo = user.dadosExtras?.possuiVeiculoAtivo === false;
 
     if (!precisaCpf && !precisaVeiculo) {
       setChecked(true);
@@ -182,7 +182,7 @@ export function OnboardingProvider({
       setData(initialData);
 
       // Se o usuário ainda não tem veículo, abre o modal de veículo em seguida
-      if (user?.possuiVeiculoAtivo === false) {
+      if (user?.dadosExtras?.possuiVeiculoAtivo === false) {
         setIsVeiculoOpen(true);
       }
     } catch (error: unknown) {
