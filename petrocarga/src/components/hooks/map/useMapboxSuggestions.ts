@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 interface SuggestionWithCoords {
+  id: string;
   label: string;
   lat: number;
   lng: number;
@@ -23,21 +24,19 @@ interface MapboxResponse {
   features?: MapboxFeature[];
 }
 
-// ✅ OVERLOADS (ESSENCIAL)
 export function useMapboxSuggestions(
   query: string,
-  withCoords: true
+  withCoords: true,
 ): SuggestionWithCoords[];
 
 export function useMapboxSuggestions(
   query: string,
-  withCoords?: false
+  withCoords?: false,
 ): string[];
 
-// ✅ IMPLEMENTAÇÃO
 export function useMapboxSuggestions(
   query: string,
-  withCoords: boolean = false
+  withCoords: boolean = false,
 ) {
   const [suggestions, setSuggestions] = useState<
     SuggestionWithCoords[] | string[]
@@ -55,8 +54,8 @@ export function useMapboxSuggestions(
       try {
         const response = await fetch(
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-            query
-          )}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&country=BR&types=address,place&limit=5&proximity=-43.178,-22.505`
+            query,
+          )}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&country=BR&types=address,place&limit=5&proximity=-43.178,-22.505`,
         );
 
         if (!response.ok) throw new Error('Erro na requisição ao Mapbox');
@@ -68,12 +67,8 @@ export function useMapboxSuggestions(
             data.features?.map((f) => {
               const context = f.context ?? [];
 
-              const city = context.find((c) =>
-                c.id.includes('place')
-              )?.text;
-              const state = context.find((c) =>
-                c.id.includes('region')
-              )?.text;
+              const city = context.find((c) => c.id.includes('place'))?.text;
+              const state = context.find((c) => c.id.includes('region'))?.text;
               const street = f.text;
 
               let label = f.place_name;
@@ -86,7 +81,7 @@ export function useMapboxSuggestions(
 
               const [lng, lat] = f.center;
 
-              return { label, lat, lng };
+              return { id: f.id, label, lat, lng }; // 👈 adicionado id
             }) ?? [];
 
           setSuggestions(places);
@@ -95,18 +90,13 @@ export function useMapboxSuggestions(
             data.features?.map((f) => {
               const context = f.context ?? [];
 
-              const city = context.find((c) =>
-                c.id.includes('place')
-              )?.text;
-              const state = context.find((c) =>
-                c.id.includes('region')
-              )?.text;
+              const city = context.find((c) => c.id.includes('place'))?.text;
+              const state = context.find((c) => c.id.includes('region'))?.text;
               const street = f.text;
 
               if (street && city && state)
                 return `${street}, ${city} - ${state}`;
-              if (city && state)
-                return `${city} - ${state}`;
+              if (city && state) return `${city} - ${state}`;
 
               return f.place_name;
             }) ?? [];

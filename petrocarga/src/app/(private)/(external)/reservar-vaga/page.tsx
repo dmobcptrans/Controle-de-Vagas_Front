@@ -6,7 +6,10 @@ import ReservaComponent from '@/components/reserva/ReservaComponent';
 
 import { Vaga, VagaMapa } from '@/lib/types/vaga';
 import PageHeader from '@/components/ui/pageHeader';
-import { CTASearch } from '@/components/ui/CTA/search/CTASearch';
+import {
+  CTASearch,
+  SuggestionWithCoords,
+} from '@/components/ui/CTA/search/CTASearch';
 import { CTAInfoReserva } from '@/components/ui/CTA/reserva/CTAInfoReserva';
 import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
 import TutorialCard from '@/components/ui/TutorialCard/TutorialCard';
@@ -84,6 +87,11 @@ export default function ReservaPage() {
     lng: number;
   } | null>(null);
 
+  const handleSuggestionSelect = (suggestion: SuggestionWithCoords) => {
+    setSearchValue(suggestion.label);
+    setSelectedLocation({ lat: suggestion.lat, lng: suggestion.lng });
+  };
+
   const suggestions = useMapboxSuggestions(searchValue, true);
 
   const { user } = useAuth();
@@ -137,6 +145,8 @@ export default function ReservaPage() {
             value={searchValue}
             onChange={setSearchValue}
             placeholder="Pesquisar localização..."
+            suggestions={suggestions}
+            onSuggestionSelect={handleSuggestionSelect}
           />
         )}
 

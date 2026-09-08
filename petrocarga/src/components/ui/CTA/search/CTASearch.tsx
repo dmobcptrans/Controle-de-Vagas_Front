@@ -26,9 +26,7 @@ interface CTASearchProps {
   /**
    * Callback executado ao selecionar uma sugestão.
    */
-  onSuggestionSelect?: (
-    suggestion: SuggestionWithCoords
-  ) => void;
+  onSuggestionSelect?: (suggestion: SuggestionWithCoords) => void;
 
   /**
    * Conteúdo exibido dentro do drawer de filtros.
@@ -63,16 +61,12 @@ export function CTASearch({
   filterSummary,
 }: CTASearchProps) {
   const [focused, setFocused] = useState(false);
-  const [filtrosAbertos, setFiltrosAbertos] =
-    useState(false);
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
 
-  const hasFilters =
-    hasActiveFilters || Boolean(value.trim());
+  const hasFilters = hasActiveFilters || Boolean(value.trim());
 
   const hasSuggestions =
-    focused &&
-    suggestions.length > 0 &&
-    Boolean(onSuggestionSelect);
+    focused && suggestions.length > 0 && Boolean(onSuggestionSelect);
 
   const handleClear = () => {
     onChange('');
@@ -82,17 +76,12 @@ export function CTASearch({
     onClearFilters?.();
   };
 
-  const handleSuggestionSelect = (
-    suggestion: SuggestionWithCoords
-  ) => {
+  const handleSuggestionSelect = (suggestion: SuggestionWithCoords) => {
     onSuggestionSelect?.(suggestion);
   };
 
   return (
-    <CTA
-      className="block overflow-hidden p-0"
-      unstyled
-    >
+    <CTA className="block overflow-visible p-0" unstyled>
       {/* =========================================================
           BARRA PRINCIPAL
       ========================================================= */}
@@ -126,11 +115,7 @@ export function CTASearch({
                   w-4
                   flex-shrink-0
                   transition-colors
-                  ${
-                    focused
-                      ? 'text-[#FFCD07]'
-                      : 'text-white/45'
-                  }
+                  ${focused ? 'text-[#FFCD07]' : 'text-white/45'}
                 `}
               />
 
@@ -254,14 +239,8 @@ export function CTASearch({
           {filters && (
             <button
               type="button"
-              onClick={() =>
-                setFiltrosAbertos((prev) => !prev)
-              }
-              aria-label={
-                filtrosAbertos
-                  ? 'Fechar filtros'
-                  : 'Abrir filtros'
-              }
+              onClick={() => setFiltrosAbertos((prev) => !prev)}
+              aria-label={filtrosAbertos ? 'Fechar filtros' : 'Abrir filtros'}
               className={`
                 relative
                 h-11
@@ -286,11 +265,7 @@ export function CTASearch({
                   text-white
                   transition-transform
                   duration-300
-                  ${
-                    filtrosAbertos
-                      ? 'rotate-90'
-                      : ''
-                  }
+                  ${filtrosAbertos ? 'rotate-90' : ''}
                 `}
               />
 
@@ -324,9 +299,7 @@ export function CTASearch({
             duration-300
             ease-in-out
             ${
-              filtrosAbertos
-                ? 'max-h-[500px] opacity-100'
-                : 'max-h-0 opacity-0'
+              filtrosAbertos ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
             }
           `}
         >
