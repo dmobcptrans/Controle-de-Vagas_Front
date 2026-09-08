@@ -37,6 +37,7 @@ import { PushNotificationToggle } from '@/components/notification/PushNotificati
 import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
 import toast from 'react-hot-toast';
 import { CTAProfile } from '@/components/ui/CTA/profile/CTAProfile';
+import { Header } from '@/components/ui/Header/Header';
 
 /**
  * @component Perfil
@@ -322,21 +323,14 @@ export default function Perfil() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ── Header ── */}
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            {loading ? 'Seu Perfil!' : `Seu Perfil, ${primeiroNome}!`}
-          </h1>
-
-          <p className="text-xs text-white/50 capitalize">
-            Aqui você pode ver suas informações e atualizar seus dados.
-          </p>
-        </div>
-      </header>
-
-      <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
+      <Header
+        title={`Seu Perfil, ${primeiroNome}!`}
+        subtitle="Aqui você pode ver suas informações e atualizar seus dados."
+      />
+     
+      <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
         {/* CTA flutuante */}
-        <div className="-mt-4 mb-2 flex justify-center">
+        <div className="flex justify-center">
           <CTAProfile />
         </div>
 
