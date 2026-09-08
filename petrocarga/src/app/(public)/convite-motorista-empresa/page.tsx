@@ -19,37 +19,21 @@ import ModalAtivacaoConta from '@/components/modal/autorizacao/login/ModalAtivac
 import type {
   ConviteMotoristaEmpresaPorToken,
   ResponderConviteMotoristaEmpresaSemCadastroPayload,
+  ResponderConviteMotoristaEmpresaComCadastroPayload,
 } from '@/lib/types/conviteMotoristaEmpresa';
 
 type TelaState =
   | { tipo: 'carregando' }
   | { tipo: 'erro'; mensagem: string }
   | { tipo: 'invalido' }
-  | {
-      tipo: 'ja-respondido';
-      convite: ConviteMotoristaEmpresaPorToken;
-    }
-  | {
-      tipo: 'ja-cadastrado';
-      convite: ConviteMotoristaEmpresaPorToken;
-    }
-  | {
-      tipo: 'novo-cadastro';
-      convite: ConviteMotoristaEmpresaPorToken;
-    }
+  | { tipo: 'ja-respondido'; convite: ConviteMotoristaEmpresaPorToken }
+  | { tipo: 'ja-cadastrado'; convite: ConviteMotoristaEmpresaPorToken }
+  | { tipo: 'decisao'; convite: ConviteMotoristaEmpresaPorToken }
+  | { tipo: 'novo-cadastro'; convite: ConviteMotoristaEmpresaPorToken }
+  | { tipo: 'recusado' }
   | { tipo: 'sucesso' };
 
-const TIPOS_CNH = [
-  'A',
-  'B',
-  'C',
-  'D',
-  'E',
-  'AB',
-  'AC',
-  'AD',
-  'AE',
-] as const;
+const TIPOS_CNH = ['A', 'B', 'C', 'D', 'E', 'AB', 'AC', 'AD', 'AE'] as const;
 
 type TipoCnh = (typeof TIPOS_CNH)[number];
 
@@ -176,12 +160,7 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
 };
 
-function Input({
-  label,
-  type = 'text',
-  className,
-  ...props
-}: InputProps) {
+function Input({ label, type = 'text', className, ...props }: InputProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   const isPassword = type === 'password';
@@ -191,9 +170,7 @@ function Input({
       <label className="mb-1.5 block text-sm font-semibold text-slate-700">
         {label}
 
-        {props.required && (
-          <span className="text-red-500">*</span>
-        )}
+        {props.required && <span className="text-red-500">*</span>}
       </label>
 
       <div className="relative">
@@ -218,6 +195,54 @@ function Input({
         )}
       </div>
     </div>
+  );
+}
+
+/* ---------- Etapa de decisão (aceitar / recusar) ---------- */
+
+function DecisaoConvite({
+  convite,
+  recusando,
+  onAceitar,
+  onRecusar,
+}: {
+  convite: ConviteMotoristaEmpresaPorToken;
+  recusando: boolean;
+  onAceitar: () => void;
+  onRecusar: () => void;
+}) {
+  return (
+    <CartaoPadrao>
+      <div className="text-center">
+        <p className="text-sm text-slate-600">
+          Você foi convidado para dirigir por{' '}
+          <span className="font-semibold text-slate-900">
+            {convite.razaoSocial}
+          </span>
+          . O que você deseja fazer?
+        </p>
+      </div>
+
+      <div className="mt-6 flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={onAceitar}
+          disabled={recusando}
+          className="h-12 w-full rounded-xl bg-blue-600 text-sm font-bold text-white shadow-lg shadow-blue-100 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+        >
+          Aceitar e continuar cadastro
+        </button>
+
+        <button
+          type="button"
+          onClick={onRecusar}
+          disabled={recusando}
+          className="h-12 w-full rounded-xl border border-slate-300 bg-white text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+        >
+          {recusando ? 'Recusando...' : 'Recusar convite'}
+        </button>
+      </div>
+    </CartaoPadrao>
   );
 }
 
@@ -250,9 +275,7 @@ function FormularioAceiteConvite({
   });
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
 
@@ -271,9 +294,9 @@ function FormularioAceiteConvite({
 
     if (!containerAtual) return;
 
-    const inputs = containerAtual.querySelectorAll<
-      HTMLInputElement | HTMLSelectElement
-    >('input, select');
+const inputs = containerAtual.querySelectorAll<
+  HTMLInputElement | HTMLSelectElement
+>('input, select');
 
     for (const input of Array.from(inputs)) {
       if (!input.reportValidity()) {
@@ -327,8 +350,7 @@ function FormularioAceiteConvite({
       },
     };
 
-    const resultado =
-      await responderConviteMotoristaEmpresa(payload);
+    const resultado = await responderConviteMotoristaEmpresa(payload);
 
     setEnviando(false);
 
@@ -337,9 +359,7 @@ function FormularioAceiteConvite({
       return;
     }
 
-    toast.success(
-      resultado.message ?? 'Cadastro concluído com sucesso!',
-    );
+    toast.success(resultado.message ?? 'Cadastro concluído com sucesso!');
 
     onSuccess();
   }
@@ -376,10 +396,7 @@ function FormularioAceiteConvite({
       <div className="flex-1 space-y-6 p-6">
         {/* Etapa 0: Dados pessoais */}
 
-        <div
-          data-step={0}
-          className={step === 0 ? 'space-y-5' : 'hidden'}
-        >
+        <div data-step={0} className={step === 0 ? 'space-y-5' : 'hidden'}>
           <Input
             name="nome"
             label="Nome completo"
@@ -420,10 +437,7 @@ function FormularioAceiteConvite({
 
         {/* Etapa 1: CNH */}
 
-        <div
-          data-step={1}
-          className={step === 1 ? 'space-y-5' : 'hidden'}
-        >
+        <div data-step={1} className={step === 1 ? 'space-y-5' : 'hidden'}>
           <Input
             name="numeroCnh"
             label="Número da CNH"
@@ -440,8 +454,7 @@ function FormularioAceiteConvite({
 
           <div>
             <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-              Categoria da CNH{' '}
-              <span className="text-red-500">*</span>
+              Categoria da CNH <span className="text-red-500">*</span>
             </label>
 
             <select
@@ -451,9 +464,7 @@ function FormularioAceiteConvite({
               onChange={handleChange}
               className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-900 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-50 sm:text-sm"
             >
-              <option value="">
-                Selecione uma categoria
-              </option>
+              <option value="">Selecione uma categoria</option>
 
               {TIPOS_CNH.map((tipo) => (
                 <option key={tipo} value={tipo}>
@@ -475,10 +486,7 @@ function FormularioAceiteConvite({
 
         {/* Etapa 2: Senha */}
 
-        <div
-          data-step={2}
-          className={step === 2 ? 'space-y-5' : 'hidden'}
-        >
+        <div data-step={2} className={step === 2 ? 'space-y-5' : 'hidden'}>
           <Input
             name="senha"
             type="password"
@@ -500,9 +508,7 @@ function FormularioAceiteConvite({
               handleChange(e);
 
               if (e.target.value !== formData.senha) {
-                e.target.setCustomValidity(
-                  'As senhas não coincidem',
-                );
+                e.target.setCustomValidity('As senhas não coincidem');
               } else {
                 e.target.setCustomValidity('');
               }
@@ -537,9 +543,7 @@ function FormularioAceiteConvite({
               disabled={enviando}
               className="h-12 flex-1 rounded-xl bg-blue-600 text-sm font-bold text-white shadow-lg shadow-blue-100 transition-all hover:bg-blue-700 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
             >
-              {enviando
-                ? 'Enviando...'
-                : 'Criar conta e aceitar convite'}
+              {enviando ? 'Enviando...' : 'Criar conta e aceitar convite'}
             </button>
           )}
         </div>
@@ -563,6 +567,8 @@ function ConviteMotoristaEmpresaConteudo() {
 
   const [mostrarModal, setMostrarModal] = useState(false);
 
+  const [recusando, setRecusando] = useState(false);
+
   useEffect(() => {
     if (!token) {
       setEstado({ tipo: 'invalido' });
@@ -585,15 +591,9 @@ function ConviteMotoristaEmpresaConteudo() {
         }
 
         if (convite.motoristaJaCadastrado) {
-          setEstado({
-            tipo: 'ja-cadastrado',
-            convite,
-          });
+          setEstado({ tipo: 'ja-cadastrado', convite });
         } else {
-          setEstado({
-            tipo: 'novo-cadastro',
-            convite,
-          });
+          setEstado({ tipo: 'decisao', convite });
         }
       })
       .catch((err: unknown) => {
@@ -602,9 +602,7 @@ function ConviteMotoristaEmpresaConteudo() {
         setEstado({
           tipo: 'erro',
           mensagem:
-            err instanceof Error
-              ? err.message
-              : 'Erro ao buscar convite',
+            err instanceof Error ? err.message : 'Erro ao buscar convite',
         });
       });
 
@@ -613,10 +611,35 @@ function ConviteMotoristaEmpresaConteudo() {
     };
   }, [token]);
 
+  async function recusarConvite() {
+    if (!token) return;
+
+    setRecusando(true);
+
+    const payload: ResponderConviteMotoristaEmpresaComCadastroPayload = {
+      conviteId: token,
+      status: 'RECUSADO',
+    };
+
+    const resultado = await responderConviteMotoristaEmpresa(payload);
+
+    setRecusando(false);
+
+    if (resultado.error) {
+      toast.error(resultado.message);
+      return;
+    }
+
+    toast.success(resultado.message ?? 'Convite recusado.');
+
+    setEstado({ tipo: 'recusado' });
+  }
+
   const { titulo, subtitulo } = useMemo(() => {
     if (
       estado.tipo === 'ja-respondido' ||
       estado.tipo === 'ja-cadastrado' ||
+      estado.tipo === 'decisao' ||
       estado.tipo === 'novo-cadastro'
     ) {
       return {
@@ -628,24 +651,26 @@ function ConviteMotoristaEmpresaConteudo() {
     if (estado.tipo === 'sucesso') {
       return {
         titulo: 'Cadastro concluído!',
-        subtitulo:
-          'Seu cadastro foi criado e o convite foi aceito.',
+        subtitulo: 'Seu cadastro foi criado e o convite foi aceito.',
+      };
+    }
+
+    if (estado.tipo === 'recusado') {
+      return {
+        titulo: 'Convite recusado',
+        subtitulo: 'Nenhuma ação adicional é necessária.',
       };
     }
 
     return {
       titulo: 'Convite de empresa',
-      subtitulo:
-        'Estamos carregando as informações do seu convite.',
+      subtitulo: 'Estamos carregando as informações do seu convite.',
     };
   }, [estado]);
 
   return (
     <DomoLayout>
-      <CabecalhoPagina
-        titulo={titulo}
-        subtitulo={subtitulo}
-      />
+      <CabecalhoPagina titulo={titulo} subtitulo={subtitulo} />
 
       <div className="mb-8 flex w-full animate-in justify-center fade-in slide-in-from-bottom-6 duration-500">
         {estado.tipo === 'carregando' && (
@@ -653,9 +678,7 @@ function ConviteMotoristaEmpresaConteudo() {
             <div className="flex flex-col items-center gap-3 py-6">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-700 border-t-transparent" />
 
-              <p className="text-sm text-gray-500">
-                Carregando convite...
-              </p>
+              <p className="text-sm text-gray-500">Carregando convite...</p>
             </div>
           </CartaoPadrao>
         )}
@@ -668,9 +691,8 @@ function ConviteMotoristaEmpresaConteudo() {
               </h2>
 
               <p className="mt-2 text-sm text-gray-500">
-                O link que você acessou está incompleto. Verifique
-                se copiou o link completo recebido por e-mail ou
-                WhatsApp.
+                O link que você acessou está incompleto. Verifique se copiou o
+                link completo recebido por e-mail ou WhatsApp.
               </p>
             </div>
           </CartaoPadrao>
@@ -683,9 +705,7 @@ function ConviteMotoristaEmpresaConteudo() {
                 Não foi possível abrir o convite
               </h2>
 
-              <p className="mt-2 text-sm text-gray-500">
-                {estado.mensagem}
-              </p>
+              <p className="mt-2 text-sm text-gray-500">{estado.mensagem}</p>
             </div>
           </CartaoPadrao>
         )}
@@ -693,8 +713,7 @@ function ConviteMotoristaEmpresaConteudo() {
         {estado.tipo === 'ja-respondido' &&
           (() => {
             const mensagens: Record<string, string> = {
-              ACEITO:
-                'Este convite já foi aceito anteriormente.',
+              ACEITO: 'Este convite já foi aceito anteriormente.',
               RECUSADO: 'Este convite já foi recusado.',
               EXPIRADO:
                 'Este convite expirou. Peça para a empresa enviar um novo.',
@@ -716,20 +735,16 @@ function ConviteMotoristaEmpresaConteudo() {
           <CartaoPadrao>
             <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
               <p className="text-sm text-gray-700">
-                Você já possui uma conta cadastrada. Para aceitar
-                este convite, faça login e acesse a aba{' '}
-                <span className="font-semibold">
-                  Solicitações
-                </span>{' '}
-                para confirmar.
+                Você já possui uma conta cadastrada. Para aceitar este convite,
+                faça login e acesse a aba{' '}
+                <span className="font-semibold">Solicitações</span> para
+                confirmar.
               </p>
             </div>
 
             <button
               type="button"
-              onClick={() =>
-                router.push('/autorizacao/login')
-              }
+              onClick={() => router.push('/autorizacao/login')}
               className="mt-6 w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-800"
             >
               Fazer login
@@ -737,14 +752,38 @@ function ConviteMotoristaEmpresaConteudo() {
           </CartaoPadrao>
         )}
 
+        {estado.tipo === 'decisao' && (
+          <DecisaoConvite
+            convite={estado.convite}
+            recusando={recusando}
+            onAceitar={() =>
+              setEstado({ tipo: 'novo-cadastro', convite: estado.convite })
+            }
+            onRecusar={recusarConvite}
+          />
+        )}
+
         {estado.tipo === 'novo-cadastro' && token && (
           <FormularioAceiteConvite
             token={token}
             convite={estado.convite}
-            onSuccess={() =>
-              setEstado({ tipo: 'sucesso' })
-            }
+            onSuccess={() => setEstado({ tipo: 'sucesso' })}
           />
+        )}
+
+        {estado.tipo === 'recusado' && (
+          <CartaoPadrao>
+            <div className="py-4 text-center">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Convite recusado
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Você recusou este convite. Se mudar de ideia, peça para a
+                empresa enviar um novo.
+              </p>
+            </div>
+          </CartaoPadrao>
         )}
 
         {estado.tipo === 'sucesso' && (
@@ -774,9 +813,7 @@ export default function ConviteMotoristaEmpresa() {
             <div className="flex flex-col items-center gap-3 py-6">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-700 border-t-transparent" />
 
-              <p className="text-sm text-gray-500">
-                Carregando convite...
-              </p>
+              <p className="text-sm text-gray-500">Carregando convite...</p>
             </div>
           </CartaoPadrao>
         </DomoLayout>
@@ -786,4 +823,3 @@ export default function ConviteMotoristaEmpresa() {
     </Suspense>
   );
 }
-
