@@ -18,6 +18,7 @@ import MotoristaCard from '@/components/gestor/cards/motoristas-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
 import { Button } from '@/components/ui/button';
 import { CTASearch } from '@/components/ui/CTA/search/CTASearch';
+import { Header } from '@/components/ui/Header/Header';
 
 const ITENS_POR_PAGINA = 9;
 
@@ -186,17 +187,10 @@ export default function MotoristasPage() {
       {/* HEADER */}
       {/* -------------------------------------------------------------------- */}
 
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Motoristas Cadastrados
-          </h1>
-
-          <p className="text-xs text-white/50">
-            Gerencie e visualize todos os motoristas do sistema
-          </p>
-        </div>
-      </header>
+      <Header
+        title="Motoristas Cadastrados"
+        subtitle="Gerencie e visualize todos os motoristas do sistema"
+      />
 
       {/* -------------------------------------------------------------------- */}
       {/* CONTEÚDO */}

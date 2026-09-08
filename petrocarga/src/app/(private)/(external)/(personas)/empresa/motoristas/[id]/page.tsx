@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import VincularVeiculoMotoristaModal from '@/components/empresa/modal/VincularVeiculoMotoristaModal';
 import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
+import { Header } from '@/components/ui/Header/Header';
 
 const TAMANHO_PAGINA = 10;
 
@@ -120,14 +121,10 @@ export default function MotoristaDetalhes() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Veículos do motorista
-          </h1>
-          <p className="text-xs text-white/50 capitalize">{hoje}</p>
-        </div>
-      </header>
+      <Header
+        title="Veículos do motorista"
+        showDate
+      />
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         <div className="-mt-4 mb-5">

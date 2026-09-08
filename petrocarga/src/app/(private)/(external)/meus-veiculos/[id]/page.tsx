@@ -16,6 +16,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { CTA } from '@/components/ui/CTA/CTA';
+import { Header } from '@/components/ui/Header/Header';
 
 /**
  * @component EditarVeiculoPage
@@ -205,16 +206,10 @@ const fetchVeiculo = useCallback(async () => {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ==================== HEADER ==================== */}
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Veículo Detalhes
-          </h1>
-          <p className="text-xs text-white/50">
-            Aqui Estão Os Detalhes Do Seu Veículo
-          </p>
-        </div>
-      </header>
+      <Header
+        title="Veículo Detalhes"
+        subtitle="Aqui Estão Os Detalhes Do Seu Veículo"
+      />
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         <div className="-mt-4 mb-5">

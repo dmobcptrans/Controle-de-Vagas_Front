@@ -1,5 +1,6 @@
 import DisponibilidadeCalendario from '@/components/gestor/disponibilidade/DisponibilidadeCalendario';
 import CTAMonth from '@/components/ui/CTA/month/CTAMonth';
+import { Header } from '@/components/ui/Header/Header';
 import { CalendarioMesProvider } from '@/contexts/CalendarioMesContext';
 import { Info } from 'lucide-react';
 import Link from 'next/dist/client/link';
@@ -60,18 +61,10 @@ import Link from 'next/dist/client/link';
 export default function DisponibilidadeVagas() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* ── Header ── */}
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Gerenciar Disponibilidade!
-          </h1>
-          <p className="text-xs text-white/50 capitalize">
-            agendamento de vagas
-          </p>
-        </div>
-      </header>
-
+      <Header
+        title="Gerenciar Disponibilidade"
+        subtitle="Visualize e gerencie a disponibilidade de vagas"
+      />
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         <CalendarioMesProvider>
           <div className="-mt-4 mb-5">

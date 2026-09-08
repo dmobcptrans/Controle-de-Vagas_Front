@@ -50,6 +50,7 @@ import {
   Line,
 } from 'recharts';
 import { CTADate } from '@/components/ui/CTA/date/CTADate';
+import { Header } from '@/components/ui/Header/Header';
 
 
 
@@ -416,14 +417,10 @@ export default function RelatoriosPage() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ==================== HEADER ==================== */}
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Bem vindo, {primeiroNome}!
-          </h1>
-          <p className="text-xs text-white/50 capitalize">{hoje}</p>
-        </div>
-      </header>
+      <Header
+        title={`Bem vindo, ${primeiroNome}!`}
+        showDate
+      />
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA principal - Dashboard Gestor */}
         <div className="-mt-4 mb-5">

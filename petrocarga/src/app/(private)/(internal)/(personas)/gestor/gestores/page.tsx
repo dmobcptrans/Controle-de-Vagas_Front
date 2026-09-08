@@ -10,6 +10,7 @@ import { Paginacao } from '@/components/paginacao/paginacao';
 import { Button } from '@/components/ui/button';
 import FloatingButton from '@/components/ui/floatingButton';
 import { useRouter } from 'next/navigation';
+import { Header } from '@/components/ui/Header/Header';
 
 const ITENS_POR_PAGINA = 9;
 
@@ -183,16 +184,10 @@ export default function GestoresPage() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* Header */}
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Gestores Cadastrados
-          </h1>
-          <p className="text-xs text-white/50">
-            Gerencie e visualize todos os gestores do sistema
-          </p>
-        </div>
-      </header>
+      <Header
+        title="Gestores Cadastrados"
+        subtitle="Gerencie e visualize todos os gestores do sistema"
+      />
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA: busca + filtros */}
