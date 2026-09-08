@@ -16,6 +16,7 @@ import {
   ChevronRight,
   PlusIcon,
   ListFilterPlus,
+  CopyPlus,
 } from 'lucide-react';
 import ReservaLista from '@/components/reserva/minhasReservas/ReservaLista';
 import {
@@ -26,6 +27,8 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import EmptyState from '@/components/reserva/minhasReservas/EmptyState';
+import { Header } from '@/components/ui/Header/Header';
+import { CTA } from '@/components/ui/CTA/CTA';
 
 /**
  * @component PaginationControls
@@ -340,87 +343,31 @@ export default function MinhasReservas() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ==================== HEADER ==================== */}
-      <header className="bg-blue-800 px-4 pt-3 pb-6 sm:px-6 md:px-8 sm:pt-4 sm:pb-7">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1">
-            Suas Reservas, {user?.nome?.split(' ')[0] || 'motorista'}
-          </h1>
-          <div className="text-xs sm:text-sm text-white/70 space-y-0.5">
-            {totalElementos > 0 ? (
-              <>
-                <p className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                  <span>
-                    Página {currentPage + 1} de {totalPaginas}
-                  </span>
-                  <span className="hidden sm:inline">•</span>
-                  <span>
-                    Total: {totalElementos} reserva
-                    {totalElementos !== 1 ? 's' : ''}
-                  </span>
-                </p>
-              </>
-            ) : (
-              <p>Nenhuma reserva encontrada</p>
-            )}
-          </div>
-        </div>
-      </header>
-
+      <Header
+        title={`Suas Reservas, ${user?.nome?.split(' ')[0] || 'motorista'}`}
+        pagination={{
+          totalElementos,
+          totalPaginas,
+          tamanhoPagina,
+          pagina: currentPage,
+        }}
+      />
       <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
         {/* ==================== BANNER OFFLINE ==================== */}
         {isOffline && (
           <div className="w-full mb-4 p-3 sm:p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-lg flex items-center gap-2 text-xs sm:text-sm">
             <WifiOff size={16} className="sm:w-[18px] sm:h-[18px] shrink-0" />
+
             <span>
-              Você está offline. Conecte-se para atualizar ou modificar
-              reservas.
+              Você está offline. Conecte-se para atualizar suas denúncias.
             </span>
           </div>
-        )}
-
-        {/* ==================== ESTADO DE LOADING ==================== */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
-            <Loader2 className="animate-spin w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
-            <span className="text-sm sm:text-base text-gray-600">
-              Carregando reservas...
-            </span>
-          </div>
-        ) : reservas.length === 0 ? (
-          /* ==================== ESTADO SEM RESERVAS ==================== */
-          <div>
-            <div className="-mt-4 mb-5">
-              <EmptyState  tipo='motorista'/>
-            </div>
-            <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 border-2 border-dashed border-gray-250 bg-white rounded-2xl">
-              <ListFilterPlus className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
-
-              <p className="text-sm sm:text-base text-gray-500 mb-6">
-                Nenhuma reserva encontrada.
-              </p>
-
-              <Link
-                href="/reservar-vaga"
-                className="
-      inline-flex items-center gap-2
-      rounded-xl bg-[#071D41]
-      px-5 py-3
-      text-sm font-semibold text-white
-      shadow-md transition-all duration-200
-      hover:bg-[#0C3D8A]  hover:shadow-lg hover:-translate-y-0.5
-      active:translate-y-0
-    "
-              >
-                <PlusIcon className="w-5 h-5" />
-                <span>Fazer Reserva</span>
-              </Link>
-            </div>
-          </div>
-        ) : (
+        )}  
           <>
             {/* ==================== LISTA DE RESERVAS ==================== */}
             <ReservaLista
               reservas={reservas}
+              permissao={user!.permissao}
               onGerarDocumento={handleGerarDocumento}
               onExcluir={handleExcluirReserva}
               onCheckout={handleCheckoutReserva}
@@ -438,7 +385,7 @@ export default function MinhasReservas() {
               />
             )}
           </>
-        )}
+
 
         {/* ==================== TUTORIAL LINK ==================== */}
         <Link

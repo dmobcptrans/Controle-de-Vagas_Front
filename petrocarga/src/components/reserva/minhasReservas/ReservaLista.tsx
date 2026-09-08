@@ -1,15 +1,21 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Archive } from 'lucide-react';
-import ReservaCard from './ReservaCard';
-import { ReservaGet } from '@/lib/types/reservas/reserva';
-import EmptyState from './EmptyState';
 
-// ==================== CONSTANTES (Fora do componente) ====================
+import { ChevronDown, ChevronUp, Archive, CopyPlus } from 'lucide-react';
+
+import ReservaCard from './ReservaCard';
+
+import { ReservaGet } from '@/lib/types/reservas/reserva';
+
+import { CTA } from '@/components/ui/CTA/CTA';
+
+// ==================== CONSTANTES ====================
+
 /**
  * Prioridade para ordenação das reservas
- * Quanto menor o número, maior a prioridade
+ *
+ * Quanto menor o número, maior a prioridade.
  */
 const PRIORIDADE: Record<string, number> = {
   ATIVA: 1,
@@ -20,123 +26,108 @@ const PRIORIDADE: Record<string, number> = {
 };
 
 /**
- * Reservas visíveis (não arquivadas)
- * Exibidas na seção principal
+ * Reservas visíveis
+ *
+ * Exibidas na seção principal.
  */
 const VISIBLE_STATUSES = new Set(['ATIVA', 'RESERVADA']);
 
 /**
- * Reservas ocultas (arquivadas/histórico)
- * Exibidas em seção colapsável
+ * Reservas ocultas
+ *
+ * Exibidas na seção de histórico.
  */
 const HIDDEN_STATUSES = new Set(['CONCLUIDA', 'CANCELADA', 'REMOVIDA']);
 
 /**
- * @function sortReservas
- * @description Ordena reservas por prioridade (ATIVA > RESERVADA > CONCLUIDA > CANCELADA > REMOVIDA)
+ * Ordena as reservas pela prioridade do status.
  */
 const sortReservas = (a: ReservaGet, b: ReservaGet) => {
   const statusA = (a.status || '').toUpperCase();
   const statusB = (b.status || '').toUpperCase();
+
   const pa = PRIORIDADE[statusA] ?? 999;
   const pb = PRIORIDADE[statusB] ?? 999;
+
   return pa - pb;
 };
 
+// ==================== PROPS ====================
+
 interface ReservaListaProps {
   reservas: ReservaGet[];
+
+  permissao: string;
+
   onGerarDocumento: (reservaId: string) => void;
+
   onExcluir: (id: string) => void;
+
   onCheckout: (reserva: ReservaGet) => void;
 }
 
-/**
- * @component ReservaLista
- * @version 1.0.0
- *
- * @description Lista de reservas com separação entre ativas e histórico.
- * Reservas ativas (ATIVA/RESERVADA) são exibidas sempre.
- * Reservas encerradas (CONCLUIDA/CANCELADA/REMOVIDA) ficam em seção colapsável.
- *
- * ----------------------------------------------------------------------------
- * 📋 ESTRUTURA:
- * ----------------------------------------------------------------------------
- *
- * 1. SEÇÃO PRINCIPAL (RESERVAS ATIVAS):
- *    - Exibe reservas com status ATIVA ou RESERVADA
- *    - Ordenadas por prioridade (ATIVA primeiro)
- *    - Estado vazio: botão "Fazer Reserva"
- *
- * 2. SEÇÃO DE HISTÓRICO (COLAPSÁVEL):
- *    - Exibe reservas com status CONCLUIDA, CANCELADA ou REMOVIDA
- *    - Mostra contador de itens no botão
- *    - Pode ser expandido/recolhido
- *    - Transição suave com grid-rows
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - SEPARAÇÃO POR STATUS: VISIBLE_STATUSES e HIDDEN_STATUSES definem onde cada status aparece
- * - ORDENAÇÃO: PRIORIDADE mapeia ordem de exibição (ATIVA > RESERVADA > CONCLUIDA > CANCELADA > REMOVIDA)
- * - COLLAPSE: grid-rows-[1fr]/[0fr] + transition-all para animação suave
- * - MEMO: useMemo para processamento da lista (evita recálculos desnecessários)
- * - EMPTY STATE: Exibido quando não há reservas ativas, com botão para fazer nova reserva
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - ReservaCard: Card individual de reserva
- * - ReservaGet: Tipo de reserva
- *
- * @example
- * ```tsx
- * <ReservaLista
- *   reservas={reservas}
- *   onGerarDocumento={gerarComprovante}
- *   onExcluir={excluirReserva}
- *   onCheckout={checkoutReserva}
- * />
- * ```
- */
+// ==================== COMPONENTE ====================
 
 export default function ReservaLista({
   reservas,
+  permissao,
   onGerarDocumento,
   onExcluir,
   onCheckout,
 }: ReservaListaProps) {
   const [mostrarOcultas, setMostrarOcultas] = useState(true);
 
-  /**
-   * Separa reservas em visíveis (ativas) e ocultas (histórico)
-   * Ordena ambas por prioridade
-   */
+  // ==================== CTA ====================
+
+  const href =
+    permissao === 'AGENTE' ? '/agente/reserva-rapida' : '/reservar-vaga';
+
+  const descricao =
+    permissao === 'AGENTE' ? 'Criar Reserva Rápida' : 'Fazer Reserva';
+
+  // ==================== SEPARAÇÃO ====================
+
   const { visiveis, ocultas } = useMemo(() => {
     const buckets = reservas.reduce(
-      (acc, r) => {
-        const status = (r.status || '').toUpperCase();
+      (acc, reserva) => {
+        const status = (reserva.status || '').toUpperCase();
+
         if (VISIBLE_STATUSES.has(status)) {
-          acc.visiveis.push(r);
+          acc.visiveis.push(reserva);
         } else if (HIDDEN_STATUSES.has(status)) {
-          acc.ocultas.push(r);
+          acc.ocultas.push(reserva);
         }
+
         return acc;
       },
-      { visiveis: [] as ReservaGet[], ocultas: [] as ReservaGet[] },
+      {
+        visiveis: [] as ReservaGet[],
+        ocultas: [] as ReservaGet[],
+      },
     );
 
     return {
       visiveis: buckets.visiveis.sort(sortReservas),
+
       ocultas: buckets.ocultas.sort(sortReservas),
     };
   }, [reservas]);
 
+  // ==================== RENDER ====================
+
   return (
-    <div className="-mt-4 mb-5">
-      {/* ==================== SEÇÃO PRINCIPAL (RESERVAS ATIVAS) ==================== */}
-      <section className="flex flex-col gap-4 animate-in fade-in duration-200">
+    <div>
+      {/* =====================================================
+          SEÇÃO PRINCIPAL
+      ===================================================== */}
+
+      <section
+        className="
+          flex
+          flex-col
+          gap-4
+        "
+      >
         {visiveis.length > 0 ? (
           visiveis.map((reserva) => (
             <ReservaCard
@@ -148,50 +139,116 @@ export default function ReservaLista({
             />
           ))
         ) : (
-          <EmptyState tipo='motorista' />
+          <CTA
+            href={href}
+            title="Nenhuma Reserva Ativa"
+            description={descricao}
+            icon={<CopyPlus className="h-5 w-5 text-white" />}
+          />
         )}
       </section>
 
-      {/* ==================== SEÇÃO DE HISTÓRICO (COLAPSÁVEL) ==================== */}
+      {/* =====================================================
+          SEÇÃO DE HISTÓRICO
+      ===================================================== */}
+
       {ocultas.length > 0 && (
-        <div className="border-t border-gray-100 pt-6">
-          {/* Botão de toggle */}
+        <div className="border-t border-gray-100">
+          {/* ==================== TOGGLE ==================== */}
+
           <button
-            onClick={() => setMostrarOcultas((s) => !s)}
-            className="group w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-all active:scale-[0.99]"
+            type="button"
+            onClick={() => setMostrarOcultas((estado) => !estado)}
+            className="
+              group
+              flex
+              w-full
+              items-center
+              justify-between
+              rounded-lg
+              border
+              border-gray-200
+              bg-gray-50
+              px-4
+              py-3
+              transition-all
+              hover:bg-gray-100
+              active:scale-[0.99]
+            "
             aria-expanded={mostrarOcultas}
             aria-controls="lista-ocultas"
           >
             <div className="flex items-center gap-3 text-gray-600">
-              <Archive className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+              <Archive
+                className="
+                  h-4
+                  w-4
+                  text-gray-400
+                  transition-colors
+                  group-hover:text-blue-500
+                "
+              />
+
               <span className="text-sm font-medium">
                 {mostrarOcultas ? 'Ocultar histórico' : 'Ver histórico'}
               </span>
-              <span className="bg-gray-200 text-gray-600 text-xs py-0.5 px-2 rounded-full">
+
+              <span
+                className="
+                  rounded-full
+                  bg-gray-200
+                  px-2
+                  py-0.5
+                  text-xs
+                  text-gray-600
+                "
+              >
                 {ocultas.length}
               </span>
             </div>
 
             {mostrarOcultas ? (
-              <ChevronUp className="w-4 h-4 text-gray-400" />
+              <ChevronUp className="h-4 w-4 text-gray-400" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className="h-4 w-4 text-gray-400" />
             )}
           </button>
 
-          {/* Conteúdo colapsável (transição suave) */}
+          {/* ==================== CONTEÚDO ==================== */}
+
           <div
             id="lista-ocultas"
-            className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-              mostrarOcultas ? 'grid-rows-[1fr] mt-4' : 'grid-rows-[0fr]'
-            }`}
+            className={`
+              grid
+              transition-[grid-template-rows]
+              duration-300
+              ease-out
+              ${mostrarOcultas ? 'mt-4 grid-rows-[1fr]' : 'grid-rows-[0fr]'}
+            `}
           >
-            <div className="overflow-hidden min-h-0">
-              <div className="flex flex-col gap-3 pb-2">
+            <div
+              className="
+                min-h-0
+                overflow-hidden
+              "
+            >
+              <div
+                className="
+                  flex
+                  flex-col
+                  gap-3
+                  pb-2
+                "
+              >
                 {ocultas.map((reserva) => (
                   <div
                     key={reserva.id}
-                    className="opacity-75 hover:opacity-100 transition-opacity"
+                    className="
+                      opacity-75
+                      transition-opacity
+                      hover:opacity-100
+                      mt-2
+                    "
                   >
                     <ReservaCard
                       reserva={reserva}
@@ -208,5 +265,3 @@ export default function ReservaLista({
     </div>
   );
 }
-
-

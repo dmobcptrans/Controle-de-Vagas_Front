@@ -31,6 +31,7 @@ import ConvitePendenteCTA from '@/components/motorista/solicitacoes-convite/Conv
 import SemVinculoCard from '@/components/motorista/solicitacoes-convite/SemVinculoCard';
 import PaginationControls from '@/components/motorista/solicitacoes-convite/PaginationControls';
 import ConviteCard from '@/components/motorista/solicitacoes-convite/ConviteCard';
+import { Header } from '@/components/ui/Header/Header';
 
 export default function SolicitacoesConvite() {
   const { user, refreshUser } = useAuth();
@@ -277,34 +278,20 @@ export default function SolicitacoesConvite() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* HEADER */}
-
-      <header className="bg-blue-800 px-4 pt-3 pb-6 sm:px-6 md:px-8 sm:pt-4 sm:pb-7">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1">
-            Solicitações de conexão
-          </h1>
-
-          <div className="text-xs sm:text-sm text-white/70 space-y-0.5">
-            {totalElementos > 0 ? (
-              <p className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                <span>
-                  Página {currentPage + 1} de {totalPaginas}
-                </span>
-
-                <span className="hidden sm:inline">•</span>
-
-                <span>
-                  {totalElementos} solicitação
-                  {totalElementos !== 1 ? 's' : ''}
-                </span>
-              </p>
-            ) : (
-              <p>Nenhuma solicitação encontrada</p>
-            )}
-          </div>
-        </div>
-      </header>
-
+      <Header
+        title="Solicitações de conexão"
+        pagination={
+          totalElementos > 0
+            ? {
+                totalElementos,
+                totalPaginas,
+                tamanhoPagina,
+                pagina: currentPage,
+              }
+            : undefined
+        }
+      />
+  
       <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
         {/* OFFLINE */}
 

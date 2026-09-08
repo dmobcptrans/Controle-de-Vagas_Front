@@ -4,14 +4,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getDenunciasByUsuario } from '@/services/api/denunciaApi';
 import DenunciaLista from '@/components/motorista/cards/denuncia/DenunciaLista';
 import { DenunciaResponse } from '@/lib/types/denuncia';
-import { AlertCircle, AlertTriangle, Info, Loader2, TriangleAlert } from 'lucide-react';
+import {
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  Loader2,
+  TriangleAlert,
+} from 'lucide-react';
 import { ChevronLeft, ChevronRight, WifiOff } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { CTA } from '@/components/ui/CTA/CTA';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
+import { Header } from '@/components/ui/Header/Header';
 
 function PaginationControls({
   currentPage,
@@ -119,7 +125,6 @@ function PaginationControls({
     </div>
   );
 }
-
 
 /**
  * @component MinhasDenuncias
@@ -293,136 +298,122 @@ export default function MinhasDenuncias() {
   // RENDERIZAÇÃO CONDICIONAL
   // --------------------------------------------------------------------------
 
-return (
-  <div className="min-h-screen bg-[#f5f5f0]">
-    {/* ==================== HEADER ==================== */}
-    <header className="bg-blue-800 px-4 pt-3 pb-6 sm:px-6 md:px-8 sm:pt-4 sm:pb-7">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1">
-          Suas Denúncias, {user?.nome?.split(' ')[0] || 'motorista'}
-        </h1>
+  return (
+    <div className="min-h-screen bg-[#f5f5f0]">
+      {/* ==================== HEADER ==================== */}
 
-        <div className="text-xs sm:text-sm text-white/70 space-y-0.5">
-          {totalElementos > 0 ? (
-            <p className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-              <span>
-                Página {currentPage + 1} de {totalPaginas}
-              </span>
+      <Header
+        title={`Suas Denúncias, ${user?.nome?.split(' ')[0] || 'motorista'}`}
+        subtitle="Aqui Estão Suas Denúncias Cadastradas"
+        pagination={
+          totalElementos > 0
+            ? {
+                totalElementos,
+                totalPaginas,
+                tamanhoPagina,
+                pagina: currentPage,
+              }
+            : undefined
+        }
+      />
 
-              <span className="hidden sm:inline">•</span>
+      <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
+        {/* ==================== BANNER OFFLINE ==================== */}
+        {isOffline && (
+          <div className="w-full mb-4 p-3 sm:p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-lg flex items-center gap-2 text-xs sm:text-sm">
+            <WifiOff size={16} className="sm:w-[18px] sm:h-[18px] shrink-0" />
 
-              <span>
-                Total: {totalElementos} denúncia
-                {totalElementos !== 1 ? 's' : ''}
-              </span>
-            </p>
-          ) : (
-            <p>Nenhuma denúncia encontrada</p>
-          )}
-        </div>
-      </div>
-    </header>
+            <span>
+              Você está offline. Conecte-se para atualizar suas denúncias.
+            </span>
+          </div>
+        )}
 
-    <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
-      {/* ==================== BANNER OFFLINE ==================== */}
-      {isOffline && (
-        <div className="w-full mb-4 p-3 sm:p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-lg flex items-center gap-2 text-xs sm:text-sm">
-          <WifiOff
-            size={16}
-            className="sm:w-[18px] sm:h-[18px] shrink-0"
+        {/* ==================== CTA ==================== */}
+        <div className="-mt-4 mb-5">
+          <CTA
+            title="Nenhuma Denúncia Em Processo"
+            description="Veja seu histórico e atualizações sobre elas"
+            icon={<TriangleAlert className="h-5 w-5 text-white" />}
           />
-
-          <span>
-            Você está offline. Conecte-se para atualizar suas denúncias.
-          </span>
         </div>
-      )}
 
-      {/* ==================== CTA ==================== */}
-      <div className="-mt-4 mb-5">
-        <CTA
-          title="Nenhuma Denúncia Em Processo"
-          description="Veja seu histórico e atualizações sobre elas"
-          icon={<TriangleAlert className="h-5 w-5 text-white" />}
-        />
-      </div>
+        {/* ==================== LOADING ==================== */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
+            <Loader2 className="animate-spin w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
 
-      {/* ==================== LOADING ==================== */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
-          <Loader2 className="animate-spin w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+            <span className="text-sm sm:text-base text-gray-600">
+              Carregando denúncias...
+            </span>
+          </div>
+        ) : error ? (
+          /* ==================== ERRO ==================== */
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
 
-          <span className="text-sm sm:text-base text-gray-600">
-            Carregando denúncias...
-          </span>
-        </div>
-      ) : error ? (
-        /* ==================== ERRO ==================== */
-        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-            <AlertCircle className="w-8 h-8 text-red-600" />
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">
+              Erro ao carregar denúncias
+            </h3>
+
+            <p className="text-gray-500 text-sm mb-6">{error}</p>
+
+            <Button
+              onClick={() => fetchDenuncias(currentPage)}
+              variant="outline"
+            >
+              Tentar novamente
+            </Button>
+          </div>
+        ) : denuncias.length === 0 ? (
+          /* ==================== SEM DENÚNCIAS ==================== */
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 border-gray-200 border-dashed border-2 bg-white rounded-2xl">
+            <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
+            <p className="text-sm sm:text-base text-gray-500">
+              Nenhuma denúncia encontrada.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* ==================== LISTA ==================== */}
+            <DenunciaLista denuncias={denuncias} />
+
+            {/* ==================== PAGINAÇÃO ==================== */}
+            {totalPaginas > 1 && (
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPaginas}
+                totalElements={totalElementos}
+                currentPageSize={tamanhoPagina}
+                onPageChange={handlePageChange}
+                isLoading={loading}
+              />
+            )}
+          </>
+        )}
+
+        {/* ==================== TUTORIAL ==================== */}
+        <Link
+          href="/tutorial#denuncias"
+          className="flex items-center gap-3 sm:gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-3 sm:p-4 hover:bg-blue-50/30 transition-colors mt-6 sm:mt-8"
+        >
+          <div className="bg-blue-50 rounded-xl w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center flex-shrink-0">
+            <Info className="h-4 w-4 sm:h-5 sm:w-5 text-[#1351B4]" />
           </div>
 
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
-            Erro ao carregar denúncias
-          </h3>
+          <div>
+            <p className="text-sm sm:text-base font-semibold text-[#071D41]">
+              Como registrar denúncias?
+            </p>
 
-          <p className="text-gray-500 text-sm mb-6">{error}</p>
-
-          <Button
-            onClick={() => fetchDenuncias(currentPage)}
-            variant="outline"
-          >
-            Tentar novamente
-          </Button>
-        </div>
-      ) : denuncias.length === 0 ? (
-        /* ==================== SEM DENÚNCIAS ==================== */
-          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 border-gray-200 border-dashed border-2 bg-white rounded-2xl">
-              <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 mb-3" />
-              <p className="text-sm sm:text-base text-gray-500">
-                Nenhuma denúncia encontrada.
-              </p>
-            </div>
-      ) : (
-        <>
-          {/* ==================== LISTA ==================== */}
-          <DenunciaLista denuncias={denuncias} />
-
-          {/* ==================== PAGINAÇÃO ==================== */}
-          {totalPaginas > 1 && (
-            <PaginationControls
-              currentPage={currentPage}
-              totalPages={totalPaginas}
-              totalElements={totalElementos}
-              currentPageSize={tamanhoPagina}
-              onPageChange={handlePageChange}
-              isLoading={loading}
-            />
-          )}
-        </>
-      )}
-
-      {/* ==================== TUTORIAL ==================== */}
-      <Link
-        href="/tutorial#denuncias"
-        className="flex items-center gap-3 sm:gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-3 sm:p-4 hover:bg-blue-50/30 transition-colors mt-6 sm:mt-8"
-      >
-        <div className="bg-blue-50 rounded-xl w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center flex-shrink-0">
-          <Info className="h-4 w-4 sm:h-5 sm:w-5 text-[#1351B4]" />
-        </div>
-
-        <div>
-          <p className="text-sm sm:text-base font-semibold text-[#071D41]">
-            Como registrar denúncias?
-          </p>
-
-          <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
-            Aprenda a registrar e acompanhar suas denúncias
-          </p>
-        </div>
-      </Link>
-    </main>
-  </div>
-);
+            <p className="text-xs sm:text-sm text-gray-400 mt-0.5">
+              Aprenda a registrar e acompanhar suas denúncias
+            </p>
+          </div>
+        </Link>
+      </main>
+    </div>
+  );
 }

@@ -46,6 +46,7 @@ import {
   cancelarConviteMotoristaEmpresa,
 } from '@/services/api/conviteMotoristaApi';
 import { ConviteMotoristaEmpresaListaItem } from '@/lib/types/conviteMotoristaEmpresa';
+import { Header } from '@/components/ui/Header/Header';
 
 // ==================== CARD DE CONVITE PENDENTE ====================
 
@@ -398,37 +399,32 @@ export default function MotoristasEmpresa() {
   // ==================== CANCELAR CONVITE ====================
 
   const handleCancelarConvite = async (
-  convite: ConviteMotoristaEmpresaListaItem,
-) => {
-  if (!navigator.onLine) {
-    toast.error(
-      'Você está offline. O cancelamento de convite só é permitido com conexão à internet.',
-    );
-    return;
-  }
+    convite: ConviteMotoristaEmpresaListaItem,
+  ) => {
+    if (!navigator.onLine) {
+      toast.error(
+        'Você está offline. O cancelamento de convite só é permitido com conexão à internet.',
+      );
+      return;
+    }
 
-  if (!user) {
-    toast.error('Não foi possível identificar a empresa.');
-    return;
-  }
+    if (!user) {
+      toast.error('Não foi possível identificar a empresa.');
+      return;
+    }
 
-  try {
-    await cancelarConviteMotoristaEmpresa(
-      user.id,
-      convite.id,
-    );
+    try {
+      await cancelarConviteMotoristaEmpresa(user.id, convite.id);
 
-    toast.success('Convite cancelado com sucesso!');
+      toast.success('Convite cancelado com sucesso!');
 
-    await fetchPendencias();
-  } catch (error) {
-    toast.error(
-      error instanceof Error
-        ? error.message
-        : 'Erro ao cancelar convite.',
-    );
-  }
-};
+      await fetchPendencias();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Erro ao cancelar convite.',
+      );
+    }
+  };
   // ==================== DADOS ====================
 
   const motoristas = paginatedData?.content ?? [];
@@ -467,35 +463,20 @@ export default function MotoristasEmpresa() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ==================== HEADER ==================== */}
-
-      <header className="bg-blue-800 px-4 pb-6 pt-3 sm:px-6 sm:pb-7 sm:pt-4 md:px-8">
-        <div className="mx-auto max-w-4xl">
-          <h1 className="mb-1 text-xl font-bold tracking-tight text-white sm:text-2xl">
-            {headerContent.titulo}
-          </h1>
-
-          <div className="space-y-0.5 text-xs text-white/70 sm:text-sm">
-            {aba === 'pendencias' ? (
-              <p>{headerContent.subtitulo}</p>
-            ) : totalElementos > 0 ? (
-              <p className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                <span>
-                  Página {currentPage + 1} de {totalPaginas}
-                </span>
-
-                <span className="hidden sm:inline">•</span>
-
-                <span>
-                  Total: {totalElementos} motorista
-                  {totalElementos !== 1 ? 's' : ''}
-                </span>
-              </p>
-            ) : (
-              <p>Nenhum motorista encontrado</p>
-            )}
-          </div>
-        </div>
-      </header>
+      <Header
+        title={headerContent.titulo}
+        subtitle={headerContent.subtitulo}
+        pagination={
+          aba !== 'pendencias'
+            ? {
+                totalElementos,
+                totalPaginas,
+                tamanhoPagina,
+                pagina: currentPage,
+              }
+            : undefined
+        }
+      />
 
       <main className="mx-auto max-w-4xl px-3 pb-12 sm:px-6 sm:pb-16 md:px-8">
         {/* ==================== CTA ==================== */}

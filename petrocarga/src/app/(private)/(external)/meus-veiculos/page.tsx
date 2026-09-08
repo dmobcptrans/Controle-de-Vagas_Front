@@ -20,6 +20,7 @@ import VeiculoCard from '@/components/motorista/cards/veiculo-item';
 import { Button } from '@/components/ui/button';
 import CadastroVeiculoModal from '@/components/modal/cadastroVeiculo/Cadastroveiculomodal';
 import { CTA } from '@/components/ui/CTA/CTA';
+import { Header } from '@/components/ui/Header/Header';
 
 const TAMANHO_PAGINA = 10;
 
@@ -83,22 +84,15 @@ export default function VeiculosPage() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ==================== HEADER ==================== */}
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Seus Veículos, {user?.nome?.split(' ')[0] || 'motorista'}
-          </h1>
-          <p className="text-xs text-white/50">
-            Aqui Estão Seus Veículos Cadastrados
-          </p>
-        </div>
-      </header>
+      <Header
+        title={`Seus Veículos, ${user?.nome?.split(' ')[0] || 'motorista'}`}
+        subtitle="Aqui Estão Seus Veículos Cadastrados"
+      />
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-
         <div className="-mt-4 mb-5">
-                   <CTA
-                   onClick={() => setModalAberto(true)}
+          <CTA
+            onClick={() => setModalAberto(true)}
             title="Reservar uma vaga"
             description="Encontre e faça uma reserva rápida"
             icon={<CarIcon className="h-5 w-5 text-white" />}

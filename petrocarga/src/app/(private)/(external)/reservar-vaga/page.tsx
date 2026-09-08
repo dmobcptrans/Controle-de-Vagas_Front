@@ -16,6 +16,7 @@ import TutorialCard from '@/components/ui/TutorialCard/TutorialCard';
 import { getVagaById } from '@/services/api/vagaApi';
 import { useAuth } from '@/contexts/AuthContext';
 import OnboardingVeiculoModal from '@/components/modal/autorizacao/completar-cadastro/Onboardingveiculomodal';
+import { Header } from '@/components/ui/Header/Header';
 
 /**
  * @component ReservaPage
@@ -128,9 +129,9 @@ export default function ReservaPage() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ==================== HEADER ==================== */}
-      <PageHeader
+      <Header
         title="Reservar Vaga"
-        description={
+        subtitle={
           step === 'mapa'
             ? 'Selecione uma vaga no mapa'
             : 'Preencha os dados da reserva'
@@ -138,7 +139,7 @@ export default function ReservaPage() {
       />
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-        {/* ==================== CTA DINÂMICO ==================== */}
+        {/* ==================== CTA ==================== */}
 
         {step === 'mapa' && (
           <CTASearch
