@@ -1,5 +1,6 @@
 import CalendarioReservas from '@/components/gestor/calendario/CalendarioReservasGestor';
 import CTAMonth from '@/components/ui/CTA/month/CTAMonth';
+import { Header } from '@/components/ui/Header/Header';
 import { CalendarioMesProvider } from '@/contexts/CalendarioMesContext';
 import { Info } from 'lucide-react';
 import Link from 'next/link';
@@ -64,16 +65,10 @@ export default function Reserva() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ── Header ── */}
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Gerenciar Reservas!
-          </h1>
-          <p className="text-xs text-white/50 capitalize">
-            informações em tempo real
-          </p>
-        </div>
-      </header>
+      <Header
+        title="Gerenciar Reservas!"
+        subtitle="informações em tempo real"
+        />
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         <CalendarioMesProvider>

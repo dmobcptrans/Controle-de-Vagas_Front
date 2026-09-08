@@ -164,7 +164,7 @@ export default function ReservaRapidaCard({
   return (
     <article
       className={cn(
-        'flex flex-col bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow border-l-4 gap-4 w-full',
+        'flex flex-col bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow border-l-4 gap-4 w-full -mt-4 mb-5',
         'sm:flex-row sm:justify-between',
         'max-sm:gap-3 max-sm:p-3',
         statusStyle.border,

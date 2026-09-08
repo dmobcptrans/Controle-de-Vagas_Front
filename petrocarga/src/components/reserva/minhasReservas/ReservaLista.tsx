@@ -6,14 +6,19 @@ import { ChevronDown, ChevronUp, Archive, CopyPlus } from 'lucide-react';
 
 import ReservaCard from './ReservaCard';
 
+import ReservaRapidaCard from '@/components/agente/cards/reservaRapida-card';
+
 import { ReservaGet } from '@/lib/types/reservas/reserva';
+import { ReservaRapida } from '@/lib/types/reservas/reservaRapida';
 
 import { CTA } from '@/components/ui/CTA/CTA';
 
-// ==================== CONSTANTES ====================
+// ============================================================
+// CONSTANTES
+// ============================================================
 
 /**
- * Prioridade para ordenação das reservas
+ * Prioridade para ordenação das reservas.
  *
  * Quanto menor o número, maior a prioridade.
  */
@@ -26,22 +31,19 @@ const PRIORIDADE: Record<string, number> = {
 };
 
 /**
- * Reservas visíveis
- *
- * Exibidas na seção principal.
+ * Reservas exibidas na seção principal.
  */
 const VISIBLE_STATUSES = new Set(['ATIVA', 'RESERVADA']);
 
 /**
- * Reservas ocultas
- *
- * Exibidas na seção de histórico.
+ * Reservas exibidas no histórico.
  */
 const HIDDEN_STATUSES = new Set(['CONCLUIDA', 'CANCELADA', 'REMOVIDA']);
 
-/**
- * Ordena as reservas pela prioridade do status.
- */
+// ============================================================
+// ORDENAÇÃO
+// ============================================================
+
 const sortReservas = (a: ReservaGet, b: ReservaGet) => {
   const statusA = (a.status || '').toUpperCase();
   const statusB = (b.status || '').toUpperCase();
@@ -52,49 +54,97 @@ const sortReservas = (a: ReservaGet, b: ReservaGet) => {
   return pa - pb;
 };
 
-// ==================== PROPS ====================
+const sortReservasRapidas = (a: ReservaRapida, b: ReservaRapida) => {
+  const statusA = (a.status || '').toUpperCase();
+  const statusB = (b.status || '').toUpperCase();
+
+  const pa = PRIORIDADE[statusA] ?? 999;
+  const pb = PRIORIDADE[statusB] ?? 999;
+
+  return pa - pb;
+};
+
+// ============================================================
+// PROPS
+// ============================================================
 
 interface ReservaListaProps {
-  reservas: ReservaGet[];
+  /**
+   * Reservas normais.
+   *
+   * Utilizadas pelos usuários comuns.
+   */
+  reservas?: ReservaGet[];
 
+  /**
+   * Reservas rápidas.
+   *
+   * Utilizadas pelos agentes.
+   */
+  reservasRapidas?: ReservaRapida[];
+
+  /**
+   * Permissão do usuário.
+   *
+   * AGENTE -> ReservaRapida
+   * demais -> Reserva normal
+   */
   permissao: string;
 
-  onGerarDocumento: (reservaId: string) => void;
+  /**
+   * Ações das reservas normais.
+   */
+  onGerarDocumento?: (reservaId: string) => void;
 
-  onExcluir: (id: string) => void;
+  onExcluir?: (id: string) => void;
 
-  onCheckout: (reserva: ReservaGet) => void;
+  onCheckout?: (reserva: ReservaGet) => void;
+
+  /**
+   * Ação específica das reservas rápidas.
+   */
+  onCheckoutRapido?: (reservaId: string) => void;
 }
 
-// ==================== COMPONENTE ====================
+// ============================================================
+// COMPONENTE
+// ============================================================
 
 export default function ReservaLista({
-  reservas,
+  reservas = [],
+  reservasRapidas = [],
   permissao,
   onGerarDocumento,
   onExcluir,
   onCheckout,
+  onCheckoutRapido,
 }: ReservaListaProps) {
   const [mostrarOcultas, setMostrarOcultas] = useState(true);
 
-  // ==================== CTA ====================
+  const isAgente = permissao === 'AGENTE';
 
-  const href =
-    permissao === 'AGENTE' ? '/agente/reserva-rapida' : '/reservar-vaga';
+  // ============================================================
+  // CTA
+  // ============================================================
 
-  const descricao =
-    permissao === 'AGENTE' ? 'Criar Reserva Rápida' : 'Fazer Reserva';
+  const href = isAgente ? '/agente/reserva-rapida' : '/reservar-vaga';
 
-  // ==================== SEPARAÇÃO ====================
+  const descricao = isAgente ? 'Criar Reserva Rápida' : 'Fazer Reserva';
 
-  const { visiveis, ocultas } = useMemo(() => {
+  // ============================================================
+  // RESERVAS NORMAIS
+  // ============================================================
+
+  const reservasNormais = useMemo(() => {
     const buckets = reservas.reduce(
       (acc, reserva) => {
         const status = (reserva.status || '').toUpperCase();
 
         if (VISIBLE_STATUSES.has(status)) {
           acc.visiveis.push(reserva);
-        } else if (HIDDEN_STATUSES.has(status)) {
+        }
+
+        if (HIDDEN_STATUSES.has(status)) {
           acc.ocultas.push(reserva);
         }
 
@@ -108,36 +158,99 @@ export default function ReservaLista({
 
     return {
       visiveis: buckets.visiveis.sort(sortReservas),
-
       ocultas: buckets.ocultas.sort(sortReservas),
     };
   }, [reservas]);
 
-  // ==================== RENDER ====================
+  // ============================================================
+  // RESERVAS RÁPIDAS
+  // ============================================================
+
+  const reservasRapidasProcessadas = useMemo(() => {
+    const buckets = reservasRapidas.reduce(
+      (acc, reserva) => {
+        const status = (reserva.status || '').toUpperCase();
+
+        if (VISIBLE_STATUSES.has(status)) {
+          acc.visiveis.push(reserva);
+        }
+
+        if (HIDDEN_STATUSES.has(status)) {
+          acc.ocultas.push(reserva);
+        }
+
+        return acc;
+      },
+      {
+        visiveis: [] as ReservaRapida[],
+        ocultas: [] as ReservaRapida[],
+      },
+    );
+
+    return {
+      visiveis: buckets.visiveis.sort(sortReservasRapidas),
+
+      ocultas: buckets.ocultas.sort(sortReservasRapidas),
+    };
+  }, [reservasRapidas]);
+
+  // ============================================================
+  // LISTA QUE SERÁ EXIBIDA
+  // ============================================================
+
+  const visiveis = isAgente
+    ? reservasRapidasProcessadas.visiveis
+    : reservasNormais.visiveis;
+
+  const ocultas = isAgente
+    ? reservasRapidasProcessadas.ocultas
+    : reservasNormais.ocultas;
+
+  // ============================================================
+  // RENDER
+  // ============================================================
 
   return (
     <div>
-      {/* =====================================================
-          SEÇÃO PRINCIPAL
-      ===================================================== */}
+      {/* ======================================================
+          RESERVAS ATIVAS
+      ====================================================== */}
 
-      <section
-        className="
-          flex
-          flex-col
-          gap-4
-        "
-      >
+      <section className="flex flex-col gap-4">
         {visiveis.length > 0 ? (
-          visiveis.map((reserva) => (
-            <ReservaCard
-              key={reserva.id}
-              reserva={reserva}
-              onGerarDocumento={onGerarDocumento}
-              onExcluir={onExcluir}
-              onCheckout={onCheckout}
-            />
-          ))
+          visiveis.map((reserva) => {
+            // ==================================================
+            // AGENTE
+            // ==================================================
+
+            if (isAgente) {
+              const reservaRapida = reserva as ReservaRapida;
+
+              return (
+                <ReservaRapidaCard
+                  key={reservaRapida.id}
+                  reserva={reservaRapida}
+                  onCheckout={onCheckoutRapido}
+                />
+              );
+            }
+
+            // ==================================================
+            // USUÁRIO NORMAL
+            // ==================================================
+
+            const reservaNormal = reserva as ReservaGet;
+
+            return (
+              <ReservaCard
+                key={reservaNormal.id}
+                reserva={reservaNormal}
+                onGerarDocumento={onGerarDocumento}
+                onExcluir={onExcluir}
+                onCheckout={onCheckout}
+              />
+            );
+          })
         ) : (
           <CTA
             href={href}
@@ -148,13 +261,15 @@ export default function ReservaLista({
         )}
       </section>
 
-      {/* =====================================================
-          SEÇÃO DE HISTÓRICO
-      ===================================================== */}
+      {/* ======================================================
+          HISTÓRICO
+      ====================================================== */}
 
       {ocultas.length > 0 && (
         <div className="border-t border-gray-100">
-          {/* ==================== TOGGLE ==================== */}
+          {/* ==================================================
+              TOGGLE
+          ================================================== */}
 
           <button
             type="button"
@@ -214,7 +329,9 @@ export default function ReservaLista({
             )}
           </button>
 
-          {/* ==================== CONTEÚDO ==================== */}
+          {/* ==================================================
+              CONTEÚDO DO HISTÓRICO
+          ================================================== */}
 
           <div
             id="lista-ocultas"
@@ -223,6 +340,7 @@ export default function ReservaLista({
               transition-[grid-template-rows]
               duration-300
               ease-out
+
               ${mostrarOcultas ? 'mt-4 grid-rows-[1fr]' : 'grid-rows-[0fr]'}
             `}
           >
@@ -240,23 +358,53 @@ export default function ReservaLista({
                   pb-2
                 "
               >
-                {ocultas.map((reserva) => (
-                  <div
-                    key={reserva.id}
-                    className="
-                      opacity-75
-                      transition-opacity
-                      hover:opacity-100
-                      mt-2
-                    "
-                  >
-                    <ReservaCard
-                      reserva={reserva}
-                      onGerarDocumento={onGerarDocumento}
-                      onExcluir={onExcluir}
-                    />
-                  </div>
-                ))}
+                {ocultas.map((reserva) => {
+                  // ==========================================
+                  // AGENTE
+                  // ==========================================
+
+                  if (isAgente) {
+                    const reservaRapida = reserva as ReservaRapida;
+
+                    return (
+                      <div
+                        key={reservaRapida.id}
+                        className="
+                          mt-2
+                          opacity-75
+                          transition-opacity
+                          hover:opacity-100
+                        "
+                      >
+                        <ReservaRapidaCard reserva={reservaRapida} />
+                      </div>
+                    );
+                  }
+
+                  // ==========================================
+                  // USUÁRIO NORMAL
+                  // ==========================================
+
+                  const reservaNormal = reserva as ReservaGet;
+
+                  return (
+                    <div
+                      key={reservaNormal.id}
+                      className="
+                        mt-2
+                        opacity-75
+                        transition-opacity
+                        hover:opacity-100
+                      "
+                    >
+                      <ReservaCard
+                        reserva={reservaNormal}
+                        onGerarDocumento={onGerarDocumento}
+                        onExcluir={onExcluir}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

@@ -5,7 +5,6 @@ import { MapReserva } from '@/components/map/MapReserva';
 import ReservaComponent from '@/components/reserva/ReservaComponent';
 
 import { Vaga, VagaMapa } from '@/lib/types/vaga';
-import PageHeader from '@/components/ui/pageHeader';
 import {
   CTASearch,
   SuggestionWithCoords,

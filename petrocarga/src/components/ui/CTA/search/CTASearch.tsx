@@ -19,6 +19,16 @@ interface CTASearchProps {
   placeholder?: string;
 
   /**
+   * Executa a pesquisa.
+   */
+  onSearch?: () => void | Promise<void>;
+
+  /**
+   * Indica que a pesquisa está sendo executada.
+   */
+  loading?: boolean;
+
+  /**
    * Sugestões exibidas abaixo da barra de pesquisa.
    */
   suggestions?: SuggestionWithCoords[];
@@ -28,24 +38,12 @@ interface CTASearchProps {
    */
   onSuggestionSelect?: (suggestion: SuggestionWithCoords) => void;
 
-  /**
-   * Conteúdo exibido dentro do drawer de filtros.
-   */
   filters?: ReactNode;
 
-  /**
-   * Permite limpar os filtros externos.
-   */
   onClearFilters?: () => void;
 
-  /**
-   * Indica se existe algum filtro ativo.
-   */
   hasActiveFilters?: boolean;
 
-  /**
-   * Conteúdo exibido no rodapé do drawer.
-   */
   filterSummary?: ReactNode;
 }
 
@@ -53,6 +51,8 @@ export function CTASearch({
   value,
   onChange,
   placeholder = 'Pesquisar...',
+  onSearch,
+  loading = false,
   suggestions = [],
   onSuggestionSelect,
   filters,
@@ -124,19 +124,26 @@ export function CTASearch({
                 onChange={(e) => onChange(e.target.value)}
                 onFocus={() => setFocused(true)}
                 onBlur={() => {
-                  // Pequeno delay para permitir clicar na sugestão
                   setTimeout(() => setFocused(false), 150);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !loading) {
+                    onSearch?.();
+                  }
+                }}
                 placeholder={placeholder}
+                disabled={loading}
                 className="
-                  flex-1
-                  min-w-0
-                  bg-transparent
-                  text-sm
-                  text-white
-                  placeholder:text-white/35
-                  outline-none
-                "
+    flex-1
+    min-w-0
+    bg-transparent
+    text-sm
+    text-white
+    placeholder:text-white/35
+    outline-none
+    disabled:cursor-not-allowed
+    disabled:opacity-60
+  "
               />
 
               {value && (
