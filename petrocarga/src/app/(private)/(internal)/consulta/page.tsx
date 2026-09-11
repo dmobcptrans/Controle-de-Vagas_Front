@@ -12,7 +12,7 @@ import {
 
 import Link from 'next/link';
 
-import { getReservasPorPlaca } from '@/features/reserva/reservar-vaga/services/reservaApi';
+import { getReservasPorPlaca } from '@/features/reserva/reservas/services/reservaApi';
 
 import { ReservaPlaca } from '@/features/reserva/reservar-vaga/types/reservaPlaca';
 

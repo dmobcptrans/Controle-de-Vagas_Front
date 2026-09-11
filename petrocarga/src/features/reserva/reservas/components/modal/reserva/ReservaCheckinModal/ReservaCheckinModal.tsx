@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ReservaGet } from '@/features/reserva/reservar-vaga/types/reserva';
-import { checkinReserva } from '@/features/reserva/reservar-vaga/services/reservaApi';
+import { checkinReserva } from '@/features/reserva/reservas/services/reservaApi';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { MapPin, Clock, AlertTriangle } from 'lucide-react';

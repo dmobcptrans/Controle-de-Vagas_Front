@@ -26,3 +26,13 @@ export interface Usuario {
   desativadoEm?: string;
   dadosExtras?: DadosExtras;
 }
+
+export type UsuarioSimplificado = {
+  id: string;
+  nome: string;
+  telefone: string
+  email: string;
+  cnpj: string;
+  permissao: Permissao;
+  ativo: boolean;
+}

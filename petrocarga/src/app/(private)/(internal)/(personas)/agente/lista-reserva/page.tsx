@@ -6,7 +6,7 @@ import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import {
   finalizarForcado,
   getReservasRapidas,
-} from '@/features/reserva/reservar-vaga/services/reservaApi';
+} from '@/features/reserva/reservas/services/reservaApi';
 
 import { Info, WifiOff, ChevronLeft, ChevronRight } from 'lucide-react';
 

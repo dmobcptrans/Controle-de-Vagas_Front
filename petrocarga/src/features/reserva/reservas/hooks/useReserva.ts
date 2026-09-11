@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import { getReservasPorUsuario } from '../../reservar-vaga/services/reservaApi';
+import { getReservasPorUsuario } from '../services/reservaApi';
 import { ReservaGet } from '../../reservar-vaga/types/reserva';
 
 export function useReservas(usuarioId?: string) {

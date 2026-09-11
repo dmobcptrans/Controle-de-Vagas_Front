@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AlertCircle, CheckCircle2, X, Loader2 } from 'lucide-react';
 
 import { ReservaGet } from '@/features/reserva/reservar-vaga/types/reserva';
-import { atualizarReserva } from '@/features/reserva/reservar-vaga/services/reservaApi';
+import { atualizarReserva } from '@/features/reserva/reservas/services/reservaApi';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 
 import { useReserva } from '@/features/reserva/reservar-vaga/hooks/useReserva';

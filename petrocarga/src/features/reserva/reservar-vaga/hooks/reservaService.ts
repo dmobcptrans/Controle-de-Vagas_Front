@@ -1,8 +1,8 @@
 import {
   getReservasBloqueios,
-  reservarVaga,
+  CriarReserva,
   reservarVagaAgente,
-} from '../services/reservaApi';
+} from '../../reservas/services/reservaApi';
 import {
   getDisponibilidadeVagas,
 }  from '@/features/vaga/disponibilidadeVaga/services/disponibilidadeVagasApi';
@@ -157,7 +157,7 @@ export const fetchDisponibilidadeByVagaId = async (
 export const confirmarReserva = async (
   formData: FormData,
 ): Promise<ConfirmResult> => {
-  const result = await reservarVaga(formData);
+  const result = await CriarReserva(formData);
 
   if (!result.success) {
     return {

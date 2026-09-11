@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getReservas, finalizarForcado } from '@/features/reserva/reservar-vaga/services/reservaApi';
+import { getReservas, finalizarForcado } from '@/features/reserva/reservas/services/reservaApi';
 import { Reserva } from '@/features/reserva/reservar-vaga/types/reserva';
 import { toast } from 'sonner';
 

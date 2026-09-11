@@ -7,7 +7,7 @@ import {
   getReservasPorUsuario,
   checkoutReserva,
   getGerarComprovanteReserva,
-} from '@/features/reserva/reservar-vaga/services/reservaApi';
+} from '@/features/reserva/reservas/services/reservaApi';
 
 import {
   Info,

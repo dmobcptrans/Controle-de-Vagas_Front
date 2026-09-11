@@ -13,7 +13,7 @@ import {
   Truck,
   CarIcon,
 } from 'lucide-react';
-import { getReservasRapidas } from '@/features/reserva/reservar-vaga/services/reservaApi';
+import { getReservasRapidas } from '@/features/reserva/reservas/services/reservaApi';
 import { getDenuncias } from '@/features/denuncias/services/denunciaApi';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
