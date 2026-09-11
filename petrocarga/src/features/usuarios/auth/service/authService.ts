@@ -1,26 +1,24 @@
-import { api } from '@/services/api';
-import { TOKEN_KEY } from '@/services/api';
+import { api, TOKEN_KEY } from '@/services/api';
 
 import type {
-  LoginData,
-  LoginResponse,
-} from '../types/auth';
+  LoginPayload,
+  LoginWithGooglePayload,
+  AuthMeResponse,
+} from '../types/auth2';
 
-import {
-  prepareLoginData,
-} from '../utils/loginUtils';
+import type { LoginFormData } from '../utils/loginUtils';
 
-import {
-  normalizeUserData,
-} from '../utils/normalizeUser';
+import { prepareLoginData } from '../utils/loginUtils';
+import { normalizeUserData } from '../utils/normalizeUser';
 
-import type { Usuario } from '@/lib/types/personas/user';
-import type { ApiError } from '@/lib/types/response/ApiError';
+type LoginResponse = {
+  token?: string;
+};
 
 export async function login(
-  data: LoginData,
-): Promise<Usuario> {
-  const payload = prepareLoginData(data);
+  data: LoginFormData,
+): Promise<AuthMeResponse> {
+  const payload: LoginPayload = prepareLoginData(data);
 
   const response = await api.post<LoginResponse>(
     '/petrocarga/auth/login',
@@ -37,13 +35,11 @@ export async function login(
 }
 
 export async function loginWithGoogle(
-  googleToken: string,
-): Promise<Usuario> {
+  data: LoginWithGooglePayload,
+): Promise<AuthMeResponse> {
   const response = await api.post<LoginResponse>(
     '/petrocarga/auth/loginWithGoogle',
-    {
-      token: googleToken,
-    },
+    data,
   );
 
   const { token } = response.data;
@@ -55,7 +51,7 @@ export async function loginWithGoogle(
   return getCurrentUser();
 }
 
-export async function getCurrentUser(): Promise<Usuario> {
+export async function getCurrentUser(): Promise<AuthMeResponse> {
   const response = await api.get(
     '/petrocarga/auth/me',
   );

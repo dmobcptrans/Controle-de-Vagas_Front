@@ -1,5 +1,15 @@
-import type { TipoLogin, LoginData } from '../types/auth';
+import type { LoginPayload } from '../types/auth2';
 
+export type TipoLogin =
+  | 'email'
+  | 'cpf'
+  | 'cnpj'
+  | 'invalido';
+
+export interface LoginFormData {
+  login: string;
+  senha: string;
+}
 
 export function identificarTipoLogin(
   identificador: string,
@@ -29,8 +39,9 @@ export function identificarTipoLogin(
   return 'invalido';
 }
 
-
-export function prepareLoginData(data: LoginData) {
+export function prepareLoginData(
+  data: LoginFormData,
+): LoginPayload {
   const tipo = identificarTipoLogin(data.login);
 
   if (tipo === 'invalido') {
@@ -55,3 +66,4 @@ export function prepareLoginData(data: LoginData) {
     senha: data.senha,
   };
 }
+

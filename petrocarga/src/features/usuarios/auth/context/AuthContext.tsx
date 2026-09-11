@@ -11,28 +11,26 @@ import {
 
 import { useRouter } from 'next/navigation';
 
-import type { Usuario } from '@/lib/types/personas/user';
-
 import type {
-  AuthContextData,
-  LoginData,
-} from '../types/auth';
+  LoginWithGooglePayload,
+  AuthMeResponse,
+} from '../types/auth2';
+
+import type { AuthContextData } from '../types/authContext';
 
 import {
   login as loginService,
   loginWithGoogle as loginWithGoogleService,
   getCurrentUser,
   logout as logoutService,
-} from "../service/authService";
+} from '../service/authService';
 
-import {
-  getAuthErrorMessage,
-} from '../utils/authError';
+import { getAuthErrorMessage } from '../utils/authError';
+import { LoginFormData } from '../utils/loginUtils';
 
-export const AuthContext =
-  createContext<AuthContextData | undefined>(
-    undefined,
-  );
+export const AuthContext = createContext<
+  AuthContextData | undefined
+>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -41,7 +39,7 @@ interface AuthProviderProps {
 export function AuthProvider({
   children,
 }: AuthProviderProps) {
-  const [user, setUser] = useState<Usuario | null>(
+  const [user, setUser] = useState<AuthMeResponse | null>(
     null,
   );
 
@@ -66,7 +64,7 @@ export function AuthProvider({
   }, [refreshUser]);
 
   const login = useCallback(
-    async (data: LoginData) => {
+    async (data: LoginFormData) => {
       try {
         setLoading(true);
 
@@ -88,14 +86,12 @@ export function AuthProvider({
   );
 
   const loginWithGoogle = useCallback(
-    async (googleToken: string) => {
+    async (data: LoginWithGooglePayload) => {
       try {
         setLoading(true);
 
         const authenticatedUser =
-          await loginWithGoogleService(
-            googleToken,
-          );
+          await loginWithGoogleService(data);
 
         setUser(authenticatedUser);
 

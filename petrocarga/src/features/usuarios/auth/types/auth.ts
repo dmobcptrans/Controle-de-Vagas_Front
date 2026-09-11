@@ -1,4 +1,4 @@
-import type { Usuario } from '@/lib/types/personas/user';
+import type { Usuario } from '@/lib/types/personas/user2';
 
 export interface LoginData {
   login: string;

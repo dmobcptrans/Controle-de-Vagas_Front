@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { acessoRapidoActions } from '../constants/acessoRapidoActions';
-import { Permissao } from '@/lib/types/personas/user';
+import { Permissao } from '@/lib/types/personas/user2';
 
 interface AcessoRapidoProps {
   permissao?: Permissao;
