@@ -22,7 +22,7 @@ import {
   Phone,
 } from 'lucide-react';
 import FormItem from '@/components/form/form-item';
-import { addGestor } from '@/services/api/gestorApi';
+import { addGestor } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
 import Link from 'next/link';
 
 /**

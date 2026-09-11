@@ -1,20 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { MapReserva } from '@/components/map/MapReserva';
-import ReservaComponent from '@/components/reserva/ReservaComponent';
+import { MapReserva } from '@/features/map/components/MapReserva';
+import ReservaComponent from '@/features/reserva/reservar-vaga/components/ReservaComponent';
 
-import { Vaga, VagaMapa } from '@/lib/types/vaga';
+import { Vaga, VagaMapa } from '@/features/vaga/vagas/types/vaga';
 import {
   CTASearch,
   SuggestionWithCoords,
 } from '@/components/ui/CTA/search/CTASearch';
 import { CTAInfoReserva } from '@/components/ui/CTA/reserva/CTAInfoReserva';
-import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
+import { useMapboxSuggestions } from '@/features/map/hooks/useMapboxSuggestions';
 import TutorialCard from '@/components/ui/TutorialCard/TutorialCard';
-import { getVagaById } from '@/services/api/vagaApi';
-import { useAuth } from '@/contexts/AuthContext';
-import OnboardingVeiculoModal from '@/components/modal/autorizacao/completar-cadastro/Onboardingveiculomodal';
+import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import OnboardingVeiculoModal from '@/features/usuarios/auth/components/modal/autorizacao/completar-cadastro/Onboardingveiculomodal';
 import { Header } from '@/components/ui/Header/Header';
 
 /**

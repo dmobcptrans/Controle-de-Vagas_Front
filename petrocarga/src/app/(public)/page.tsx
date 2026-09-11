@@ -6,7 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { InstallPWAButton } from '@/components/pwa/InstallPWAButton';

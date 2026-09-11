@@ -11,16 +11,16 @@ import toast from 'react-hot-toast';
 import {
   buscarConviteMotoristaEmpresaPorToken,
   responderConviteMotoristaEmpresa,
-} from '@/services/api/conviteMotoristaApi';
+} from '@/features/usuarios/conviteMotoristaEmpresa/services/conviteMotoristaApi';
 
-import CadastroConcluidoCard from '@/components/autorização/cadastro/CadastroConcluidoCard';
-import ModalAtivacaoConta from '@/components/modal/autorizacao/login/ModalAtivacaoConta';
+import CadastroConcluidoCard from '@/features/usuarios/auth/components/autorização/cadastro/CadastroConcluidoCard';
+import ModalAtivacaoConta from '@/features/usuarios/auth/components/modal/autorizacao/login/ModalAtivacaoConta';
 
 import type {
   ConviteMotoristaEmpresaPorToken,
   ResponderConviteMotoristaEmpresaSemCadastroPayload,
   ResponderConviteMotoristaEmpresaComCadastroPayload,
-} from '@/lib/types/conviteMotoristaEmpresa';
+} from '@/features/usuarios/conviteMotoristaEmpresa/types/conviteMotoristaEmpresa';
 
 type TelaState =
   | { tipo: 'carregando' }

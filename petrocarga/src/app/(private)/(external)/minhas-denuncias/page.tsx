@@ -1,9 +1,9 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
-import { getDenunciasByUsuario } from '@/services/api/denunciaApi';
-import DenunciaLista from '@/components/motorista/cards/denuncia/DenunciaLista';
-import { DenunciaResponse } from '@/lib/types/denuncia';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { getDenunciasByUsuario } from '@/features/denuncias/services/denunciaApi';
+import DenunciaLista from "@/features/denuncias/components/(motorista)/DenunciaLista"
+import { DenunciaResponse } from '@/features/denuncias/types/denuncia';
 import {
   AlertCircle,
   AlertTriangle,

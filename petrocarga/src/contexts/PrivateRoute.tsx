@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { useRouter } from 'next/navigation';
 import AuthSkeleton from '@/components/ui/AuthSkeleton';
 

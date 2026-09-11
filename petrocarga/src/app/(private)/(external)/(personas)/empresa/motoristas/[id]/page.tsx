@@ -1,21 +1,21 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Veiculo } from '@/lib/types/veiculo';
-import VeiculoCard from '@/components/motorista/cards/veiculo-item';
+import { Veiculo } from '@/features/veiculos/types/veiculo';
+import VeiculoCard from '@/features/usuarios/(personas)/motoristas/components/cards/veiculo-item';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import {
   getVeiculosVinculadosMotoristaEmpresa,
   desvincularVeiculoMotoristaEmpresa,
-} from '@/services/api/empresaApi';
+} from '@/features/usuarios/(personas)/empresas/services/empresaApi';
 import { CTA } from '@/components/ui/CTA/CTA';
 import { ChevronLeft, ChevronRight, Info, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
-import VincularVeiculoMotoristaModal from '@/components/empresa/modal/VincularVeiculoMotoristaModal';
-import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
+import VincularVeiculoMotoristaModal from '@/features/usuarios/(personas)/empresas/components/modal/VincularVeiculoMotoristaModal';
+import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
 import { Header } from '@/components/ui/Header/Header';
 
 const TAMANHO_PAGINA = 10;

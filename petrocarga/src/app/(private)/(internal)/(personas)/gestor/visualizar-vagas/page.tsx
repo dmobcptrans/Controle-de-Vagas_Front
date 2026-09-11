@@ -1,8 +1,8 @@
 'use client';
 
-import { ViewMap } from '@/components/map/viewMap';
+import { ViewMap } from '@/features/map/components/viewMap';
 import { useEffect, useState } from 'react';
-import { ListaVagas } from '@/components/lista/listaVagas';
+import { ListaVagas } from '@/features/vaga/vagas/components/(gestor)/listaVagas';
 import { CheckCircle, Info, ParkingSquare, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import FloatingButton from '@/components/ui/floatingButton';

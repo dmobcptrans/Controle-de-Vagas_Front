@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getToken } from 'firebase/messaging';
 import { getMessagingInstance } from '@/lib/firebase';
 import { clientApi } from '@/services/clientApi';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 
 type PushStatus = 'idle' | 'prompted' | 'loading' | 'granted' | 'denied' | 'error';
 

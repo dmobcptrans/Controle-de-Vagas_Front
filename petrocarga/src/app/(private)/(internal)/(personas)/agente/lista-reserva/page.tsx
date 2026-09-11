@@ -2,22 +2,22 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import {
   finalizarForcado,
   getReservasRapidas,
-} from '@/services/api/reservaApi';
+} from '@/features/reserva/reservar-vaga/services/reservaApi';
 
 import { Info, WifiOff, ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { PaginatedReservaRapidaResponse } from '@/lib/types/reservas/reservaRapida';
+import { PaginatedReservaRapidaResponse } from '@/features/reserva/reservar-vaga/types/reservaRapida';
 
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/ui/Header/Header';
-import ReservaLista from '@/components/reserva/minhasReservas/ReservaLista';
+import ReservaLista from '@/features/reserva/reservas/components/ReservaLista';
 
 function PaginationControls({
   currentPage,

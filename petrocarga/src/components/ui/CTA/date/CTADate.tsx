@@ -10,7 +10,7 @@ import {
 
 import { CTA } from '../CTA';
 import { Button } from '@/components/ui/button';
-import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
+import { DateRangePicker } from '@/features/dashboard/components/gestor/DateRangePicker';
 
 interface CTADateProps {
   dateRange: {

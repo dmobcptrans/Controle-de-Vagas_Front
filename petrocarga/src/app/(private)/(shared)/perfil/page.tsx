@@ -2,19 +2,19 @@
 
 import { buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import {
   deleteMotorista,
   getMotoristaByUserId,
-} from '@/services/api/motoristaApi';
-import { deleteAgente, getAgenteByUserId } from '@/services/api/agenteApi';
-import { deleteGestor, getGestorByUserId } from '@/services/api/gestorApi';
-import { getEmpresaByUsuarioId } from '@/services/api/empresaApi';
+} from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
+import { deleteAgente, getAgenteByUserId } from '@/features/usuarios/(personas)/agentes/services/agenteApi';
+import { deleteGestor, getGestorByUserId } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
+import { getEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
 
-import { Empresa } from '@/lib/types/personas/empresa';
-import { Motorista } from '@/lib/types/personas/motorista';
-import { Agente } from '@/lib/types/personas/agente';
-import { Gestor } from '@/lib/types/personas/gestor';
+import { Empresa } from '@/features/usuarios/(personas)/empresas/types/empresa';
+import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
+import { Agente } from '@/features/usuarios/(personas)/agentes/types/agente';
+import { Gestor } from '@/features/usuarios/(personas)/gestores/types/gestor';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle,
@@ -33,8 +33,8 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { PushNotificationToggle } from '@/components/notification/PushNotificationToggle';
-import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
+import { PushNotificationToggle } from '@/features/notificacao/components/PushNotificationToggle';
+import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
 import toast from 'react-hot-toast';
 import { CTAProfile } from '@/components/ui/CTA/profile/CTAProfile';
 import { Header } from '@/components/ui/Header/Header';

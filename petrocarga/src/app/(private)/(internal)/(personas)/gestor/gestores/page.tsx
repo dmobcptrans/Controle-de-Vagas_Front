@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
-import { getGestores } from '@/services/api/gestorApi';
-import { FiltrosGestor, GestorResult } from '@/lib/types/personas/gestor';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { getGestores } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
+import { FiltrosGestor, GestorResult } from '@/features/usuarios/(personas)/gestores/types/gestor';
 import { Search, X, Users, CheckCircle, XCircle, Menu } from 'lucide-react';
-import GestorCard from '@/components/gestor/cards/gestores-card';
+import GestorCard from '@/features/usuarios/(personas)/gestores/components/cards/gestores-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
 import { Button } from '@/components/ui/button';
 import FloatingButton from '@/components/ui/floatingButton';

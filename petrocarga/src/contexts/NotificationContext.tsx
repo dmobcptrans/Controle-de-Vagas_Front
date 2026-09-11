@@ -15,12 +15,12 @@ import {
   marcarNotificacaoComoLida,
   marcarTodasNotificacoesComoLidas,
   deletarNotificacoesSelecionadas,
-} from '@/services/api/notificacaoApi';
+} from '@/features/notificacao/services/notificacaoApi';
 import type {
   Notification as AppNotification,
   NotificationContextData,
   NotificationProviderProps,
-} from '@/lib/types/notificacao';
+} from '@/features/notificacao/types/notificacao';
 
 // Contexto
 const NotificationContext = createContext<NotificationContextData | undefined>(

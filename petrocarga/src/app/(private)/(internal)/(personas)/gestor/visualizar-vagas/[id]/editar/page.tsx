@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import EditarVaga from '@/components/gestor/editar/edicao-vaga';
-import { Vaga } from '@/lib/types/vaga';
-import { useAuth } from '@/components/hooks/useAuth';
-import { getVagaById } from '@/services/api/vagaApi';
+import EditarVaga from '@/features/usuarios/(personas)/gestores/components/editar/edicao-vaga';
+import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';

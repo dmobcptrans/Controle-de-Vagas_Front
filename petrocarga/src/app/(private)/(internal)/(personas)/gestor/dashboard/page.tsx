@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
-import { RelatorioSumario, RelatorioKpis } from '@/services/api/dashboardApi';
-import { DashboardSummary, DashboardKPIs } from '@/lib/types/dashboard';
-import { KPICard } from '@/components/dashboard/KPICard';
-import { VehicleTypesChart } from '@/components/dashboard/VehicleTypesChart';
-import { LocationStats } from '@/components/dashboard/LocationStats';
-import { DashboardMetricsSection } from '@/components/dashboard/DashboardMetricsSection';
-import { MostUsedParkingSpaces } from '@/components/dashboard/MostUsedParkingSpaces';
-import { VehicleRoutesTable } from '@/components/dashboard/VehicleRoutesTable';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { RelatorioSumario, RelatorioKpis } from '@/features/dashboard/services/dashboardApi';
+import { DashboardSummary, DashboardKPIs } from '@/features/dashboard/types/dashboard';
+import { KPICard } from '@/features/dashboard/components/gestor/KPICard';
+import { VehicleTypesChart } from '@/features/dashboard/components/gestor/VehicleTypesChart';
+import { LocationStats } from '@/features/dashboard/components/gestor/LocationStats';
+import { DashboardMetricsSection } from '@/features/dashboard/components/gestor/DashboardMetricsSection';
+import { MostUsedParkingSpaces } from '@/features/dashboard/components/gestor/MostUsedParkingSpaces';
+import { VehicleRoutesTable } from '@/features/dashboard/components/gestor/VehicleRoutesTable';
 import {
   Loader2,
   LayoutDashboard,

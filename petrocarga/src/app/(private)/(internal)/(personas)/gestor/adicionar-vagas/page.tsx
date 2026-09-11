@@ -10,15 +10,15 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { addVaga } from '@/services/api/vagaApi';
+import { addVaga } from '@/features/vaga/vagas/service/vagaApi';
 import { ArrowLeft, ParkingSquare } from 'lucide-react';
 import Form from 'next/form';
 import { useActionState, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import FormItem from '@/components/form/form-item';
-import DiaSemana from '@/components/gestor/dia-semana/dia-semana';
+import DiaSemana from '@/features/usuarios/(personas)/gestores/components/dia-semana/dia-semana';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
-import CardMapEdit from '@/components/map/cardMapEdit';
+import CardMapEdit from '@/features/map/components/cardMapEdit';
 import Link from 'next/link';
 
 /**

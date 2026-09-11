@@ -4,11 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Info } from 'lucide-react';
 
-import { MapReserva } from '@/components/map/MapReserva';
-import ReservaAgente from '@/components/agente/reserva/ReservaAgente';
+import { MapReserva } from '@/features/map/components/MapReserva';
+import ReservaAgente from '@/features/usuarios/(personas)/agentes/components/reserva/ReservaAgente';
 
-import { Vaga, VagaMapa } from '@/lib/types/vaga';
-import { getVagaById } from '@/services/api/vagaApi';
+import { Vaga, VagaMapa } from '@/features/vaga/vagas/types/vaga';
+import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
 
 import {
   CTASearch,
@@ -17,9 +17,9 @@ import {
 
 import { CTAInfoReserva } from '@/components/ui/CTA/reserva/CTAInfoReserva';
 
-import { useMapboxSuggestions } from '@/components/hooks/map/useMapboxSuggestions';
+import { useMapboxSuggestions } from '@/features/map/hooks/useMapboxSuggestions';
 
-import { useReservaAgenteState } from '@/components/agente/reserva/hooks/useReservaAgenteState';
+import { useReservaAgenteState } from '@/features/usuarios/(personas)/agentes/components/reserva/hooks/useReservaAgenteState';
 
 import { Header } from '@/components/ui/Header/Header';
 

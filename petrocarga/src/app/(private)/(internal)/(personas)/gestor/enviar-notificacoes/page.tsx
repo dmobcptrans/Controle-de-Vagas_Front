@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 // Importamos a tipagem correta da API
-import { getMotoristas } from '@/services/api/motoristaApi';
+import { getMotoristas } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 import {
   enviarNotificacaoParaUsuario,
   enviarNotificacaoPorPermissao,
-} from '@/services/api/notificacaoApi';
+} from '@/features/notificacao/services/notificacaoApi';
 import {
   Loader2,
   Send,
@@ -23,7 +23,7 @@ import {
   Plus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Motorista } from '@/lib/types/personas/motorista';
+import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 import { Header } from '@/components/ui/Header/Header';
 
 // --------------------------------------------------------------------------

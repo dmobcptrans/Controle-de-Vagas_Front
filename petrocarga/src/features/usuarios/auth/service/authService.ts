@@ -1,0 +1,72 @@
+import { api } from '@/services/api';
+import { TOKEN_KEY } from '@/services/api';
+
+import type {
+  LoginData,
+  LoginResponse,
+} from '../types/auth';
+
+import {
+  prepareLoginData,
+} from '../utils/loginUtils';
+
+import {
+  normalizeUserData,
+} from '../utils/normalizeUser';
+
+import type { Usuario } from '@/lib/types/personas/user';
+import type { ApiError } from '@/lib/types/response/ApiError';
+
+export async function login(
+  data: LoginData,
+): Promise<Usuario> {
+  const payload = prepareLoginData(data);
+
+  const response = await api.post<LoginResponse>(
+    '/petrocarga/auth/login',
+    payload,
+  );
+
+  const { token } = response.data;
+
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+
+  return getCurrentUser();
+}
+
+export async function loginWithGoogle(
+  googleToken: string,
+): Promise<Usuario> {
+  const response = await api.post<LoginResponse>(
+    '/petrocarga/auth/loginWithGoogle',
+    {
+      token: googleToken,
+    },
+  );
+
+  const { token } = response.data;
+
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+
+  return getCurrentUser();
+}
+
+export async function getCurrentUser(): Promise<Usuario> {
+  const response = await api.get(
+    '/petrocarga/auth/me',
+  );
+
+  return normalizeUserData(response.data);
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await api.post('/petrocarga/auth/logout');
+  } finally {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}

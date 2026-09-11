@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import {
   CalendarPlus,
   Archive,
@@ -13,11 +13,11 @@ import {
   Truck,
   CarIcon,
 } from 'lucide-react';
-import { getReservasRapidas } from '@/services/api/reservaApi';
-import { getDenuncias } from '@/services/api/denunciaApi';
+import { getReservasRapidas } from '@/features/reserva/reservar-vaga/services/reservaApi';
+import { getDenuncias } from '@/features/denuncias/services/denunciaApi';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ReservaRapida } from '@/lib/types/reservas/reservaRapida';
+import { ReservaRapida } from '@/features/reserva/reservar-vaga/types/reservaRapida';
 import { Header } from '@/components/ui/Header/Header';
 import { CTA } from '@/components/ui/CTA/CTA';
 

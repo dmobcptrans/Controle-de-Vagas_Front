@@ -1,4 +1,4 @@
-import DisponibilidadeCalendario from '@/components/gestor/disponibilidade/DisponibilidadeCalendario';
+import DisponibilidadeCalendario from '@/features/vaga/disponibilidadeVaga/components/DisponibilidadeCalendario';
 import CTAMonth from '@/components/ui/CTA/month/CTAMonth';
 import { Header } from '@/components/ui/Header/Header';
 import { CalendarioMesProvider } from '@/contexts/CalendarioMesContext';

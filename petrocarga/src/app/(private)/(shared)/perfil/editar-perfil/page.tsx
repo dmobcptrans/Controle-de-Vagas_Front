@@ -1,14 +1,14 @@
 'use client';
 
-import EditarMotorista from '@/components/motorista/editar/edicao-perfil';
-import EditarGestor from '@/components/gestor/editar/edicao-perfil';
-import EditarAgente from '@/components/agente/editar/edicao-perfil';
-import EditarEmpresa from '@/components/empresa/editar/edicao-perfil';
+import EditarMotorista from '@/features/usuarios/(personas)/motoristas/components/editar/edicao-perfil';
+import EditarGestor from '@/features/usuarios/(personas)/gestores/components/editar/edicao-perfil';
+import EditarAgente from '@/features/usuarios/(personas)/agentes/components/editar/edicao-perfil';
+import EditarEmpresa from '@/features/usuarios/(personas)/empresas/components/editar/edicao-perfil';
 
-import { Motorista } from '@/lib/types/personas/motorista';
-import { Agente } from '@/lib/types/personas/agente';
-import { Gestor } from '@/lib/types/personas/gestor';
-import { Empresa } from '@/lib/types/personas/empresa';
+import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
+import { Agente } from '@/features/usuarios/(personas)/agentes/types/agente';
+import { Gestor } from '@/features/usuarios/(personas)/gestores/types/gestor';
+import { Empresa } from '@/features/usuarios/(personas)/empresas/types/empresa';
 
 import {
   AlertCircle,
@@ -23,13 +23,13 @@ import {
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { useEffect, useState } from 'react';
 
-import { getMotoristaByUserId } from '@/services/api/motoristaApi';
-import { getAgenteByUserId } from '@/services/api/agenteApi';
-import { getGestorByUserId } from '@/services/api/gestorApi';
-import { getEmpresaByUsuarioId } from '@/services/api/empresaApi';
+import { getMotoristaByUserId } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
+import { getAgenteByUserId } from '@/features/usuarios/(personas)/agentes/services/agenteApi';
+import { getGestorByUserId } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
+import { getEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
 
 /**
  * Permissões que possuem edição de perfil.

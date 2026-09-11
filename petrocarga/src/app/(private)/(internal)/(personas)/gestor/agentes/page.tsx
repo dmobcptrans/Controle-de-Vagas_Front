@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
-import { getAgentes } from '@/services/api/agenteApi';
-import { FiltrosAgente } from '@/lib/types/personas/agente';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { getAgentes } from '@/features/usuarios/(personas)/agentes/services/agenteApi';
+import { FiltrosAgente } from '@/features/usuarios/(personas)/agentes/types/agente';
 import { Search, Users, CheckCircle, XCircle } from 'lucide-react';
-import { Agente } from '@/lib/types/personas/agente';
-import AgenteCard from '@/components/gestor/cards/agentes-card';
+import { Agente } from '@/features/usuarios/(personas)/agentes/types/agente';
+import AgenteCard from '@/features/usuarios/(personas)/gestores/components/cards/agentes-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
 import { Button } from '@/components/ui/button';
 import FloatingButton from '@/components/ui/floatingButton';

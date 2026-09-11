@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { MapProvider } from '@/contexts/MapContext';
 import PrivateRoute from '@/contexts/PrivateRoute';
 import { OnboardingProvider } from '@/contexts/OnboardingContext';
-import OnboardingCadastroModal from '@/components/modal/autorizacao/completar-cadastro/Onboardingcadastromodal';
+import OnboardingCadastroModal from '@/features/usuarios/auth/components/modal/autorizacao/completar-cadastro/Onboardingcadastromodal';
 
 
 export const metadata: Metadata = {

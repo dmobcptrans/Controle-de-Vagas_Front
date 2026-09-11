@@ -1,34 +1,29 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import {
   deleteReservaByID,
   getReservasPorUsuario,
   checkoutReserva,
   getGerarComprovanteReserva,
-} from '@/services/api/reservaApi';
+} from '@/features/reserva/reservar-vaga/services/reservaApi';
+
 import {
   Info,
-  Loader2,
   WifiOff,
   ChevronLeft,
-  ChevronRight,
-  PlusIcon,
-  ListFilterPlus,
-  CopyPlus,
+  ChevronRight
 } from 'lucide-react';
-import ReservaLista from '@/components/reserva/minhasReservas/ReservaLista';
+import ReservaLista from '@/features/reserva/reservas/components/ReservaLista';
 import {
   ReservaGet,
   PaginatedReservaResponse,
-} from '@/lib/types/reservas/reserva';
+} from '@/features/reserva/reservar-vaga/types/reserva';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import EmptyState from '@/components/reserva/minhasReservas/EmptyState';
 import { Header } from '@/components/ui/Header/Header';
-import { CTA } from '@/components/ui/CTA/CTA';
 
 /**
  * @component PaginationControls

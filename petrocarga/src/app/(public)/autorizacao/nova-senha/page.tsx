@@ -6,7 +6,7 @@ import { Lock, ArrowLeft, Eye, EyeOff, KeyRound, Mail } from 'lucide-react';
 import { redefinirSenhaComCodigo } from '@/services/api/recuperacaoApi';
 import useValidacaoSenha from '@/components/hooks/useValidacaoSenha';
 import FeedbackSenha from '@/components/feedback/feedback-senha';
-import ModalSucessoRedefinicao from '@/components/modal/autorizacao/nova-senha/ModalSucessoRedefinicao';
+import ModalSucessoRedefinicao from '@/features/usuarios/auth/components/modal/autorizacao/nova-senha/ModalSucessoRedefinicao';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 

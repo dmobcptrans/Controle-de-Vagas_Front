@@ -12,11 +12,11 @@ import {
 
 import Link from 'next/link';
 
-import { getReservasPorPlaca } from '@/services/api/reservaApi';
+import { getReservasPorPlaca } from '@/features/reserva/reservar-vaga/services/reservaApi';
 
-import { ReservaPlaca } from '@/lib/types/reservas/reservaPlaca';
+import { ReservaPlaca } from '@/features/reserva/reservar-vaga/types/reservaPlaca';
 
-import ReservaPlacaCard from '@/components/agente/cards/reservaPlaca-card';
+import ReservaPlacaCard from '@/features/usuarios/(personas)/gestores/components/cards/reservaPlaca-card';
 
 import { Header } from '@/components/ui/Header/Header';
 

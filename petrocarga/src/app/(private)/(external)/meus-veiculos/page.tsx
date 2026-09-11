@@ -1,11 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import {
   getVeiculosUsuario,
   FiltrosVeiculosUsuario,
-} from '@/services/api/veiculoApi';
+} from '@/features/veiculos/services/veiculoApi';
 import {
   AlertCircle,
   CarIcon,
@@ -15,10 +15,10 @@ import {
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { Veiculo } from '@/lib/types/veiculo';
-import VeiculoCard from '@/components/motorista/cards/veiculo-item';
+import { Veiculo } from '@/features/veiculos/types/veiculo';
+import VeiculoCard from '@/features/usuarios/(personas)/motoristas/components/cards/veiculo-item';
 import { Button } from '@/components/ui/button';
-import CadastroVeiculoModal from '@/components/modal/cadastroVeiculo/Cadastroveiculomodal';
+import CadastroVeiculoModal from '@/features/veiculos/components/modal/Cadastroveiculomodal';
 import { CTA } from '@/components/ui/CTA/CTA';
 import { Header } from '@/components/ui/Header/Header';
 

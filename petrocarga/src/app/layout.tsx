@@ -3,9 +3,9 @@ import { Maven_Pro } from 'next/font/google';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import { Toaster } from "react-hot-toast";
 import './globals.css';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/features/usuarios/auth/context/AuthContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { NotificationWrapper } from '@/components/notification/notificationWrapper';
+import { NotificationWrapper } from '@/features/notificacao/components/notificationWrapper';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 

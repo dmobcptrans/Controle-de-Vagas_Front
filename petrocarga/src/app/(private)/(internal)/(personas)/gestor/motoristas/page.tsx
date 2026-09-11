@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 
-import { useAuth } from '@/components/hooks/useAuth';
-import { getMotoristas } from '@/services/api/motoristaApi';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { getMotoristas } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 
 import {
   Search,
@@ -12,9 +12,9 @@ import {
   XCircle,
 } from 'lucide-react';
 
-import { Motorista } from '@/lib/types/personas/motorista';
+import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 
-import MotoristaCard from '@/components/gestor/cards/motoristas-card';
+import MotoristaCard from '@/features/usuarios/(personas)/gestores/components/cards/motoristas-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
 import { Button } from '@/components/ui/button';
 import { CTASearch } from '@/components/ui/CTA/search/CTASearch';

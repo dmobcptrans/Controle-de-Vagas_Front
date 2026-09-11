@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 
 import FloatingButton from '@/components/ui/floatingButton';
 
@@ -22,7 +22,7 @@ import {
   X,
 } from 'lucide-react';
 
-import { MotoristaEmpresaResponse } from '@/lib/types/personas/motorista';
+import { MotoristaEmpresaResponse } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 
 import toast from 'react-hot-toast';
 
@@ -33,19 +33,20 @@ import Link from 'next/link';
 import {
   desvincularMotoristaEmpresa,
   getMotoristaEmpresaByUsuarioId,
-} from '@/services/api/empresaApi';
+} from '@/features/usuarios/(personas)/empresas/services/empresaApi';
 
-import { MotoristaCard } from '@/components/empresa/cards/MotoristaCard';
+import { MotoristaCard }from '@/features/usuarios/(personas)/empresas/components/cards/MotoristaCard';
 
 import { CTASplit } from '@/components/ui/CTA/split/CTASplit';
 
-import GerarConviteMotoristaModal from '@/components/empresa/modal/GerarConviteMotoristaModal';
+import GerarConviteMotoristaModal from '@/features/usuarios/(personas)/empresas/components/modal/GerarConviteMotoristaModal';
 
 import {
   listarConvitesMotoristaEmpresaPorEmpresa,
   cancelarConviteMotoristaEmpresa,
-} from '@/services/api/conviteMotoristaApi';
-import { ConviteMotoristaEmpresaListaItem } from '@/lib/types/conviteMotoristaEmpresa';
+} from '@/features/usuarios/conviteMotoristaEmpresa/services/conviteMotoristaApi';
+
+import { ConviteMotoristaEmpresaListaItem } from '@/features/usuarios/conviteMotoristaEmpresa/types/conviteMotoristaEmpresa';
 import { Header } from '@/components/ui/Header/Header';
 
 // ==================== CARD DE CONVITE PENDENTE ====================

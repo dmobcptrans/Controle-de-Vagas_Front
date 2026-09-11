@@ -1,10 +1,10 @@
 'use client';
 
 import { use, useCallback, useEffect, useState } from 'react';
-import { getVeiculosUsuario } from '@/services/api/veiculoApi';
+import { getVeiculosUsuario } from '@/features/veiculos/services/veiculoApi';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
-import { Veiculo } from '@/lib/types/veiculo';
-import VeiculoCard from '@/components/gestor/cards/veiculo-item';
+import { Veiculo } from '@/features/veiculos/types/veiculo';
+import VeiculoCard from '@/features/usuarios/(personas)/motoristas/components/cards/veiculo-item';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 

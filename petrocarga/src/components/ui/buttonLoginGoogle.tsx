@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import toast from 'react-hot-toast';
 
 declare global {

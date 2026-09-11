@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 
-import FormularioEmpresa from '@/components/autorização/cadastro/FormularioEmpresa';
-import CadastroConcluidoCard from '@/components/autorização/cadastro/CadastroConcluidoCard';
-import ModalAtivacaoConta from '@/components/modal/autorizacao/login/ModalAtivacaoConta';
+import FormularioEmpresa from '@/features/usuarios/auth/components/autorização/cadastro/FormularioEmpresa';
+import CadastroConcluidoCard from '@/features/usuarios/auth/components/autorização/cadastro/CadastroConcluidoCard';
+import ModalAtivacaoConta from '@/features/usuarios/auth/components/modal/autorizacao/login/ModalAtivacaoConta';
 
 export default function CadastroEmpresaPage() {
   const [cadastroConcluido, setCadastroConcluido] = useState(false);

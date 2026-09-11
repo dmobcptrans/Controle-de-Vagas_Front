@@ -1,20 +1,19 @@
 'use client';
 
-import { useDenuncias } from '@/components/hooks/useDenuncias';
-import { useAuth } from '@/contexts/AuthContext';
-import {
-  AlertCircle,
-  Info,
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-  TriangleAlert,
-} from 'lucide-react';
-import DenunciaLista from '@/components/gestor/denuncia/DenunciaLista';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { useDenuncias } from '@/features/denuncias/hooks/useDenuncias';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { CTA } from '@/components/ui/CTA/CTA';
 import { Header } from '@/components/ui/Header/Header';
+import DenunciaLista from '@/features/denuncias/components/(gestor)/DenunciaLista';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  TriangleAlert
+} from 'lucide-react';
+import Link from 'next/link';
 
 export default function DenunciasAgente() {
   const {

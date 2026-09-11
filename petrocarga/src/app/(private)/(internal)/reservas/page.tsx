@@ -1,4 +1,4 @@
-import CalendarioReservas from '@/components/gestor/calendario/CalendarioReservasGestor';
+import CalendarioReservasGestor from '@/features/usuarios/(personas)/gestores/components/calendario/CalendarioReservasGestor';
 import CTAMonth from '@/components/ui/CTA/month/CTAMonth';
 import { Header } from '@/components/ui/Header/Header';
 import { CalendarioMesProvider } from '@/contexts/CalendarioMesContext';
@@ -79,7 +79,7 @@ export default function Reserva() {
 
           {/* Container responsivo para o calendário */}
           <div className="w-full max-w-5xl px-2 md:px-4 mb-5">
-            <CalendarioReservas />
+            <CalendarioReservasGestor />
           </div>
         </CalendarioMesProvider>
         {/* Tutorial */}

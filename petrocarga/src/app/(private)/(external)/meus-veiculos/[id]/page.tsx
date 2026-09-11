@@ -1,16 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
-import { getVeiculosUsuario } from '@/services/api/veiculoApi';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { getVeiculosUsuario } from '@/features/veiculos/services/veiculoApi';
 import {
   AlertCircle,
   ArrowLeft,
   Loader2,
   RefreshCw,
 } from 'lucide-react';
-import { Veiculo } from '@/lib/types/veiculo';
-import VeiculoDetalhes from '@/components/motorista/cards/veiculo-card';
+import { Veiculo } from '@/features/veiculos/types/veiculo';
+import VeiculoDetalhes from '@/features/usuarios/(personas)/motoristas/components/cards/veiculo-card';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
