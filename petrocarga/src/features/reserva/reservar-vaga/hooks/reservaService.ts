@@ -1,12 +1,12 @@
 import {
   getReservasBloqueios,
   CriarReserva,
-  reservarVagaAgente,
+  CriarReservaRapida,
 } from '../../reservas/services/reservaApi';
-import {
-  getDisponibilidadeVagas,
-}  from '@/features/vaga/disponibilidadeVaga/services/disponibilidadeVagasApi';
+import { getDisponibilidadeVagas } from '@/features/vaga/disponibilidadeVaga/services/disponibilidadeVagasApi';
+import { TipoVeiculo } from '@/features/veiculos/types/tipoVeiculo';
 import { ConfirmResult } from '@/lib/types/confirmResult';
+import { ReservaBloqueiosResponse } from '../../reservas/types/reservas';
 
 /**
  * @module services/reservaService
@@ -56,15 +56,11 @@ const disponibilidadeInFlight = new Map<
 export const fetchReservasBloqueios = async (
   vagaId: string,
   data: string,
-  tipoVeiculo:
-    | 'AUTOMOVEL'
-    | 'VUC'
-    | 'CAMINHONETA'
-    | 'CAMINHAO_MEDIO'
-    | 'CAMINHAO_LONGO',
-) => {
+  tipoVeiculo: TipoVeiculo,
+): Promise<ReservaBloqueiosResponse[]> => {
   try {
     const bloqueios = await getReservasBloqueios(vagaId, data, tipoVeiculo);
+
     return bloqueios;
   } catch (error) {
     console.error('Erro ao buscar bloqueios:', error);
@@ -195,7 +191,7 @@ export const confirmarReserva = async (
 export const confirmarReservaAgente = async (
   formData: FormData,
 ): Promise<ConfirmResult> => {
-  const result = await reservarVagaAgente(formData);
+  const result = await CriarReservaRapida(formData);
 
   if (!result.success) {
     return {

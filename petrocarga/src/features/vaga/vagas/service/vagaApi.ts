@@ -1,14 +1,16 @@
 'use client';
 
 import { clientApi } from '@/services/clientApi';
-import type {
-  Vaga,
-  VagaPayload,
-  VagaResponse,
-  FiltrosVaga,
-  ApiError,
+import {
+  AreaVaga,
   OperacoesVaga,
-} from '@/features/vaga/vagas/types/vaga';
+  StatusVaga,
+  TipoVaga,
+  VagaPayload,
+  VagasResponse,
+} from '../types/vaga2';
+import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
+import { ConfirmResult } from '@/lib/types/confirmResult';
 
 /**
  * @module vagaApi
@@ -27,60 +29,7 @@ import type {
  * 5. getVagasComFiltros - Lista vagas com múltiplos filtros
  * 6. getVagaById - Busca vaga específica por ID
  *
- * ----------------------------------------------------------------------------
- * 🔧 FUNÇÃO AUXILIAR INTERNA:
- * ----------------------------------------------------------------------------
- *
- * buildVagaPayload - Constrói payload padronizado a partir do FormData
- */
 
-/**
- * @function buildVagaPayload
- * @description Função interna que converte FormData em VagaPayload.
- * Processa campos complexos como dias da semana (JSON parse) e coordenadas.
- *
- * @param formData - Formulário com dados da vaga
- * @returns VagaPayload - Objeto formatado para envio à API
- *
- * @private
- */
-function buildVagaPayload(formData: FormData): VagaPayload {
-  const diasSemanaRaw = formData.get('diaSemana') as string;
-  const diasSemana: OperacoesVaga[] = diasSemanaRaw
-    ? JSON.parse(diasSemanaRaw)
-    : [];
-
- return {
-  endereco: {
-    codigoPmp: formData.get('codigo') ?? formData.get('codigoPmp'),
-    logradouro: formData.get('logradouro'),
-    bairro: formData.get('bairro'),
-  },
-
-  area: (formData.get('area') as string)?.toUpperCase(),
-  numeroEndereco: formData.get('numeroEndereco'),
-  referenciaEndereco: formData.get('descricao'),
-  tipoVaga: (formData.get('tipo') as string)?.toUpperCase(),
-  status: (formData.get('status') as string)?.toUpperCase() ?? 'DISPONIVEL',
-
-  latitudeInicio: Number(formData.get('latitudeInicio')),
-  longitudeInicio: Number(formData.get('longitudeInicio')),
-  latitudeFim: Number(formData.get('latitudeFim')),
-  longitudeFim: Number(formData.get('longitudeFim')),
-
-  comprimento: Number(formData.get('comprimento')),
-  quantidade: Number(formData.get('quantidade')) || 1,
-
-  operacoesVaga: diasSemana.map((dia) => ({
-    codigoDiaSemana: dia.codigoDiaSemana
-      ? Number(dia.codigoDiaSemana)
-      : undefined,
-    horaInicio: dia.horaInicio,
-    horaFim: dia.horaFim,
-    ...(dia.diaSemanaAsEnum ? { diaSemanaAsEnum: dia.diaSemanaAsEnum } : {}),
-  })),
-};
-}
 // ----------------------
 // POST VAGA
 // ----------------------
@@ -126,22 +75,40 @@ function buildVagaPayload(formData: FormData): VagaPayload {
  * }
  * ```
  */
-export async function addVaga(
-  formData: FormData,
-): Promise<VagaResponse<VagaPayload>> {
-  const payload = buildVagaPayload(formData);
+export async function CriarVaga(formData: FormData): Promise<VagasResponse> {
+  const diasSemanaRaw = formData.get('diaSemana') as string;
+
+  const diasSemana: OperacoesVaga[] = diasSemanaRaw
+    ? JSON.parse(diasSemanaRaw)
+    : [];
+
+  const body: VagaPayload = {
+    endereco: {
+      codigoPmp: formData.get('codigo') as string,
+      logradouro: formData.get('logradouro') as string,
+      bairro: formData.get('bairro') as string,
+    },
+    area: formData.get('area') as AreaVaga,
+    numeroEndereco: formData.get('numeroEndereco') as string,
+    referenciaEndereco: formData.get('descricao') as string,
+    TipoVaga: formData.get('tipo') as TipoVaga,
+    latitudeInicio: Number(formData.get('latitudeInicio')),
+    latitudeFim: Number(formData.get('latitudeFim')),
+    longitudeInicio: Number(formData.get('longitudeInicio')),
+    longitudeFim: Number(formData.get('longitudeFim')),
+    comprimento: Number(formData.get('comprimento')),
+    operacoesVaga: diasSemana[0],
+  };
 
   try {
-    await clientApi('/petrocarga/vagas', { method: 'POST', json: payload });
-    return {
-      error: false,
-      message: 'Vaga cadastrada com sucesso!',
-      valores: null,
-    };
-  } catch (err) {
-    const error = err as ApiError;
-    console.error('Erro ao cadastrar vaga:', error);
-    return { error: true, message: error.message, valores: payload };
+    const res = await clientApi('/petrocarga/vagas', {
+      method: 'POST',
+      json: body,
+    });
+
+    return (await res.json()) as VagasResponse;
+  } catch (err: unknown) {
+    throw new Error(getApiErrorMessage(err, 'Erro ao criar vaga.'));
   }
 }
 
@@ -166,14 +133,20 @@ export async function addVaga(
  * }
  * ```
  */
-export async function deleteVaga(id: string): Promise<VagaResponse> {
+export async function deleteVaga(id: string): Promise<ConfirmResult> {
   try {
-    await clientApi(`/petrocarga/vagas/${id}`, { method: 'DELETE' });
-    return { error: false, message: 'Vaga deletada com sucesso!' };
-  } catch (err) {
-    const error = err as ApiError;
-    console.error('Erro ao deletar vaga:', error);
-    return { error: true, message: error.message };
+    await clientApi(`/petrocarga/vagas/${id}`, {
+      method: 'DELETE',
+    });
+
+    return {
+      success: true,
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      message: getApiErrorMessage(err, 'Erro ao deletar vaga.'),
+    };
   }
 }
 
@@ -293,7 +266,7 @@ export type VagasPaginadas = {
 };
 
 export async function getVagasFiltradas(
-  params?: GetVagasParams
+  params?: GetVagasParams,
 ): Promise<VagasPaginadas> {
   const vazio: VagasPaginadas = {
     vagas: [],
@@ -305,8 +278,7 @@ export async function getVagasFiltradas(
   try {
     const queryParams = new URLSearchParams();
 
-    if (params?.status)
-      queryParams.append('status', params.status);
+    if (params?.status) queryParams.append('status', params.status);
 
     if (params?.numeroPagina !== undefined)
       queryParams.append('numeroPagina', String(params.numeroPagina));
@@ -314,15 +286,11 @@ export async function getVagasFiltradas(
     if (params?.tamanhoPagina !== undefined)
       queryParams.append('tamanhoPagina', String(params.tamanhoPagina));
 
-    if (params?.ordenarPor)
-      queryParams.append('ordenarPor', params.ordenarPor);
+    if (params?.ordenarPor) queryParams.append('ordenarPor', params.ordenarPor);
 
-    if (params?.logradouro)
-      queryParams.append('logradouro', params.logradouro);
+    if (params?.logradouro) queryParams.append('logradouro', params.logradouro);
 
-    const query = queryParams.toString()
-      ? `?${queryParams.toString()}`
-      : '';
+    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
 
     const res = await clientApi(`/petrocarga/vagas${query}`, {
       method: 'GET',
@@ -349,7 +317,6 @@ export async function getVagasFiltradas(
         data?.content?.length ??
         0,
     };
-
   } catch (err) {
     console.error('Erro ao buscar vagas:', err);
     return vazio;

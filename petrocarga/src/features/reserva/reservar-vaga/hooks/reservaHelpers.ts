@@ -1,5 +1,5 @@
 import { DiaSemana, OperacoesVaga } from '@/features/vaga/vagas/types/vaga';
-import { Reserva } from '../types/reserva';
+import { ReservaBloqueiosResponse, ReservaResponse } from '../../reservas/types/reservas';
 import { Vaga } from '@/features/vaga/vagas/types/vaga';
 
 
@@ -64,14 +64,14 @@ export const formatDateTime = (day: Date, hour: string): string => {
  * gerarHorariosOcupadosInicio
  */
 export const gerarHorariosOcupadosInicio = (
-  reservas: Reserva[],
+  bloqueios: ReservaBloqueiosResponse[],
   intervalo: number
 ): string[] => {
   const resultado = new Set<string>();
 
-  reservas.forEach((reserva) => {
-    const inicio = new Date(reserva.inicio);
-    const fim = new Date(reserva.fim);
+  bloqueios.forEach((bloqueios) => {
+    const inicio = new Date(bloqueios.inicio);
+    const fim = new Date(bloqueios.fim);
 
     if (fim <= inicio) {
       fim.setDate(fim.getDate() + 1);
@@ -93,14 +93,14 @@ export const gerarHorariosOcupadosInicio = (
  * gerarHorariosOcupadosFim
  */
 export const gerarHorariosOcupadosFim = (
-  reservas: Reserva[],
+  bloqueios: ReservaBloqueiosResponse[],
   intervalo: number
 ): string[] => {
   const resultado = new Set<string>();
 
-  reservas.forEach((reserva) => {
-    const inicio = new Date(reserva.inicio);
-    const fim = new Date(reserva.fim);
+  bloqueios.forEach((bloqueios) => {
+    const inicio = new Date(bloqueios.inicio);
+    const fim = new Date(bloqueios.fim);
 
     if (fim <= inicio) {
       fim.setDate(fim.getDate() + 1);
@@ -222,7 +222,7 @@ export const removerHorariosPassadosDeHoje = (
  */
 export const filtrarHorariosFim = (
   horariosDia: string[],
-  reservas: Reserva[],
+  reservas: ReservaResponse[],
   inicioSelecionado: string
 ): string[] => {
   return horariosDia.filter((horarioFim) => {
@@ -244,7 +244,7 @@ export const filtrarHorariosFim = (
  * gerarHorariosOcupadosPorArea
  */
 export const gerarHorariosOcupadosPorArea = (
-  reserva: Reserva,
+  reserva: ReservaResponse,
   intervalo: number,
   area: Vaga['area'],
 ): string[] => {

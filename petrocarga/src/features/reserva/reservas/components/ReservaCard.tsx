@@ -14,15 +14,15 @@ import {
   Loader2,
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
-import { ReservaGet } from '../../reservar-vaga/types/reserva';
+import { ReservaPorUsuarioResponse } from '../types/reservas';
 import ReservaEditarModal from '@/features/reserva/reservas/components/modal/reserva/ReservaEditarModal/ReservaEditarModal';
 import ReservaCheckinModal from '@/features/reserva/reservas/components/modal/reserva/ReservaCheckinModal/ReservaCheckinModal';
 
 interface ReservaCardProps {
-  reserva: ReservaGet;
+  reserva: ReservaPorUsuarioResponse;
   onGerarDocumento?: (reservaId: string) => Promise<void> | void;
   onExcluir?: (reservaId: string) => void;
-  onCheckout?: (reserva: ReservaGet) => void;
+  onCheckout?: (reserva: ReservaPorUsuarioResponse) => void;
 }
 
 /**
@@ -103,7 +103,7 @@ export default function ReservaCard({
 
   // ==================== ESTADOS ====================
   const [currentReserva, setCurrentReserva] =
-    useState<ReservaGet>(reservaInicial);
+    useState<ReservaPorUsuarioResponse>(reservaInicial);
   const [modalAberto, setModalAberto] = useState(false);
   const [modalAbertoCheckout, setModalAbertoCheckout] = useState(false);
   const [modalEditarAberto, setModalEditarAberto] = useState(false);
@@ -195,7 +195,7 @@ export default function ReservaCard({
     setModalAberto(false);
   };
 
-  const handleUpdateSuccess = (updated: ReservaGet) => {
+  const handleUpdateSuccess = (updated: ReservaPorUsuarioResponse) => {
     setCurrentReserva(updated);
     setModalEditarAberto(false);
   };

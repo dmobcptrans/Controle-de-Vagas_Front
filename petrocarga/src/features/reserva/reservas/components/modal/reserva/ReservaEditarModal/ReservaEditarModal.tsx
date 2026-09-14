@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, CheckCircle2, X, Loader2 } from 'lucide-react';
 
-import { ReservaGet } from '@/features/reserva/reservar-vaga/types/reserva';
+import { ReservaPorUsuarioResponse } from '@/features/reserva/reservas/types/reservas';
 import { atualizarReserva } from '@/features/reserva/reservas/services/reservaApi';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 
@@ -17,9 +17,9 @@ import { ReservaSummary } from './ReservaSummary';
 import { EditTimeForm } from './EditTimeForm';
 
 interface ReservaEditarProps {
-  reserva: ReservaGet;
+  reserva: ReservaPorUsuarioResponse;
   onClose?: () => void;
-  onSuccess?: (reservaAtualizada: ReservaGet) => void;
+  onSuccess?: (reservaAtualizada: ReservaPorUsuarioResponse) => void;
 }
 
 type EditField = null | 'horario' | 'veiculo-origem';
@@ -217,7 +217,6 @@ export default function ReservaEditarModal({
           cidadeOrigem: form.cidadeOrigem,
           inicio: form.inicio,
           fim: form.fim,
-          status: 'RESERVADA',
           // Empresa pode trocar o motorista vinculado à reserva.
           ...(isEmpresa ? { motoristaId: form.motoristaId } : {}),
         },
@@ -226,12 +225,12 @@ export default function ReservaEditarModal({
       );
 
       if (!result.success) {
-        setError(result.message);
+        setError(result.message ?? 'Não foi possível atualizar a reserva.');
         setIsSaving(false);
         return;
       }
 
-      const updatedReserva: ReservaGet = {
+      const updatedReserva: ReservaPorUsuarioResponse = {
         ...reserva,
         ...form,
         status: 'RESERVADA',

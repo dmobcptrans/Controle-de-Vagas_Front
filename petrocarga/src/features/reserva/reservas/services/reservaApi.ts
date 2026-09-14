@@ -4,17 +4,20 @@ import toast from 'react-hot-toast';
 import { clientApi } from '@/services/clientApi';
 
 import { ConfirmResult } from '@/lib/types/confirmResult';
-import { PaginatedReservaRapidaResponse } from '@/features/reserva/reservar-vaga/types/reservaRapida';
-import { ReservaPlaca } from '../../reservar-vaga/types/reservaPlaca';
 import {
   AtualizarReservaPayload,
   CriarReservaPayload,
   ReservaBloqueiosResponse,
   ReservaPaginadaDeUmUsuario,
   ReservaResponse,
+  ReservaStatus,
 } from '../types/reservas';
 import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
 import { TipoVeiculo } from '@/features/veiculos/types/tipoVeiculo';
+import {
+  CriarReservaRapidaPayload,
+  ReservaRapidaPaginadaResponse,
+} from '../types/reservaRapida';
 
 /**
  * @module reservaApi
@@ -565,17 +568,17 @@ export async function checkoutReserva(
  *
  * @returns Promise<ConfirmResult>
  */
-export async function reservarVagaAgente(
+export async function CriarReservaRapida(
   formData: FormData,
 ): Promise<ConfirmResult> {
-  const body = {
-    vagaId: formData.get('vagaId'),
-    tipoVeiculo: formData.get('tipoVeiculo'),
-    placa: formData.get('placa'),
-    inicio: formData.get('inicio'),
-    fim: formData.get('fim'),
-    cidadeOrigem: formData.get('cidadeOrigem'),
-    entradaCidade: formData.get('entradaCidade'),
+  const body: CriarReservaRapidaPayload = {
+    vagaId: formData.get('vagaId') as string,
+    tipoVeiculo: formData.get('tipoVeiculo') as TipoVeiculo,
+    placa: formData.get('placa') as string,
+    inicio: formData.get('inicio') as string,
+    fim: formData.get('fim') as string,
+    cidadeOrigem: formData.get('cidadeOrigem') as string,
+    entradaCidade: formData.get('entradaCidade') as string,
   };
 
   try {
@@ -585,11 +588,10 @@ export async function reservarVagaAgente(
     });
     return { success: true };
   } catch (err: unknown) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : 'Erro ao confirmar reserva do agente.';
-    return { success: false, message };
+    return {
+      success: false,
+      message: getApiErrorMessage(err, 'Erro ao reservar vaga.'),
+    };
   }
 }
 
@@ -617,49 +619,51 @@ export async function getReservasRapidas(
   vagaId?: string,
   placaVeiculo?: string,
   data?: string,
-  listaStatus?: Array<
-    'RESERVADA' | 'ATIVA' | 'CONCLUIDA' | 'REMOVIDA' | 'CANCELADA'
-  >,
-): Promise<PaginatedReservaRapidaResponse> {
+  listaStatus?: ReservaStatus,
+): Promise<ReservaRapidaPaginadaResponse> {
   try {
     const urlParams = new URLSearchParams();
 
     urlParams.append('numeroPagina', String(numeroPagina));
     urlParams.append('tamanhoPagina', String(tamanhoPagina));
 
-    if (vagaId) urlParams.append('vagal', vagaId);
-    if (placaVeiculo) urlParams.append('placaVeiculo', placaVeiculo);
-    if (data) urlParams.append('data', data);
-    if (listaStatus && listaStatus.length > 0) {
-      listaStatus.forEach((status) => urlParams.append('listaStatus', status));
+    if (vagaId) {
+      urlParams.append('vagaId', vagaId);
+    }
+
+    if (placaVeiculo) {
+      urlParams.append('placaVeiculo', placaVeiculo);
+    }
+
+    if (data) {
+      urlParams.append('data', data);
+    }
+
+    if (listaStatus) {
+      urlParams.append('listaStatus', listaStatus);
     }
 
     const queryString = urlParams.toString();
-    const url = `/petrocarga/reserva-rapida/${usuarioId}${queryString ? `?${queryString}` : ''}`;
+
+    const url = `/petrocarga/reserva-rapida/${usuarioId}${
+      queryString ? `?${queryString}` : ''
+    }`;
 
     const res = await clientApi(url);
 
     if (!res.ok) {
-      throw new Error(`Erro na requisição: ${res.status}`);
+      const errorBody = await res.json().catch(() => null);
+
+      throw errorBody ?? new Error(`Erro HTTP ${res.status}`);
     }
 
-    const dataResponse = await res.json();
+    const result = await res.json();
 
-    return {
-      content: dataResponse.content || [],
-      totalElements: dataResponse.totalElementos || 0,
-      totalPaginas: dataResponse.totalPaginas || 0,
-      tamanhoPagina: dataResponse.tamanhoPagina || tamanhoPagina,
-      pagina: dataResponse.pagina || numeroPagina,
-      vagaId: dataResponse.vagaId || vagaId,
-      placaVeiculo: dataResponse.placaVeiculo || placaVeiculo,
-      data: dataResponse.data || data,
-      listaStatus: dataResponse.listaStatus || listaStatus,
-    };
+    return result as ReservaRapidaPaginadaResponse;
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : 'Erro ao buscar reservas do agente.';
-    throw new Error(message);
+    throw new Error(
+      getApiErrorMessage(err, 'Erro ao buscar reservas rápidas.'),
+    );
   }
 }
 
@@ -683,7 +687,7 @@ export async function getReservasRapidas(
  */
 export async function getReservasPorPlaca(
   placa: string,
-): Promise<ReservaPlaca[]> {
+): Promise<ReservaResponse> {
   try {
     const res = await clientApi(
       `/petrocarga/reservas/placa?placa=${placa.trim().toUpperCase()}`,
@@ -695,10 +699,10 @@ export async function getReservasPorPlaca(
     }
 
     const data = await res.json();
-    return data;
+    return data as ReservaResponse;
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : 'Erro ao buscar reservas por placa.';
-    throw new Error(message);
+    throw new Error(
+      getApiErrorMessage(err, 'Erro ao buscar reserva por placa.'),
+    );
   }
 }

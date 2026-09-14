@@ -4,10 +4,13 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { getReservasPorUsuario } from '../services/reservaApi';
-import { ReservaGet } from '../../reservar-vaga/types/reserva';
+import {
+  ReservaPaginadaDeUmUsuario,
+  ReservaPorUsuarioResponse,
+} from '../types/reservas';
 
 export function useReservas(usuarioId?: string) {
-  const [reservas, setReservas] = useState<ReservaGet[]>([]);
+  const [reservas, setReservas] = useState<ReservaPorUsuarioResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   const buscarReservas = useCallback(async () => {
@@ -20,13 +23,13 @@ export function useReservas(usuarioId?: string) {
     setLoading(true);
 
     try {
-      const response = await getReservasPorUsuario(usuarioId, 0, 100);
+      const response: ReservaPaginadaDeUmUsuario = await getReservasPorUsuario(
+        usuarioId,
+        0,
+        100,
+      );
 
-      const data = Array.isArray(response)
-        ? response
-        : response?.content ?? [];
-
-      setReservas(data);
+      setReservas(response.content);
     } catch {
       toast.error('Não foi possível carregar suas reservas.');
       setReservas([]);

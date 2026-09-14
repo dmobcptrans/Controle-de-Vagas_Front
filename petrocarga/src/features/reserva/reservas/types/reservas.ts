@@ -28,7 +28,7 @@ export type CriarReservaPayload = {
 // Atualizar Reserva
 
 export type AtualizarReservaPayload = {
-  motoristaId: string;
+  motoristaId?: string;
   veiculoId: string;
   cidadeOrigem: string;
   inicio: string;

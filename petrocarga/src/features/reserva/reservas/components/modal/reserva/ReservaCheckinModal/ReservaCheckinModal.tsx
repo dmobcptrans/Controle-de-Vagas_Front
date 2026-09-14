@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ReservaGet } from '@/features/reserva/reservar-vaga/types/reserva';
+import { ReservaPorUsuarioResponse } from '@/features/reserva/reservas/types/reservas';
 import { checkinReserva } from '@/features/reserva/reservas/services/reservaApi';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
@@ -9,9 +9,9 @@ import { MapPin, Clock, AlertTriangle } from 'lucide-react';
 import ReservaDenuncia from './ReservaDenuncia';
 
 interface ModalCheckinReservaProps {
-  reserva: ReservaGet;
+  reserva: ReservaPorUsuarioResponse;
   onClose: () => void;
-  onCheckinSuccess?: (reservaAtualizada: ReservaGet) => void;
+  onCheckinSuccess?: (reservaAtualizada: ReservaPorUsuarioResponse) => void;
   onDenunciar?: (reservaId: string) => void;
 }
 
@@ -94,7 +94,7 @@ export default function ReservaCheckinModal({
 
       const reservaAtualizada = await checkinReserva(reserva.id);
 
-      onCheckinSuccess?.(reservaAtualizada);
+      onCheckinSuccess?.({ ...reserva, ...reservaAtualizada });
       onClose();
     } catch {
       setErro('Não foi possível realizar o check-in. Tente novamente.');

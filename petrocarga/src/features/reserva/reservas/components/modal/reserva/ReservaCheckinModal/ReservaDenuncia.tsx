@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { ReservaGet } from '@/features/reserva/reservar-vaga/types/reserva';
+import { ReservaPorUsuarioResponse } from '@/features/reserva/reservas/types/reservas';
 import { Denunciar } from '@/features/denuncias/services/denunciaApi';
 import { AlertTriangle } from 'lucide-react';
 
 interface ReservaDenunciaProps {
-  reserva: ReservaGet;
+  reserva: ReservaPorUsuarioResponse;
   onClose: () => void;
 }
 

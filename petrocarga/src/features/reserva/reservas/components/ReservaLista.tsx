@@ -8,8 +8,8 @@ import ReservaCard from './ReservaCard';
 
 import ReservaRapidaCard from '@/features/usuarios/(personas)/agentes/components/cards/reservaRapida-card';
 
-import { ReservaGet } from '../../reservar-vaga/types/reserva';
-import { ReservaRapida } from '../../reservar-vaga/types/reservaRapida';
+import { ReservaPorUsuarioResponse } from '../types/reservas';
+import { ReservaRapidaResponse } from '../types/reservaRapida';
 
 import { CTA } from '@/components/ui/CTA/CTA';
 
@@ -44,7 +44,7 @@ const HIDDEN_STATUSES = new Set(['CONCLUIDA', 'CANCELADA', 'REMOVIDA']);
 // ORDENAÇÃO
 // ============================================================
 
-const sortReservas = (a: ReservaGet, b: ReservaGet) => {
+const sortReservas = (a: ReservaPorUsuarioResponse, b: ReservaPorUsuarioResponse) => {
   const statusA = (a.status || '').toUpperCase();
   const statusB = (b.status || '').toUpperCase();
 
@@ -54,7 +54,7 @@ const sortReservas = (a: ReservaGet, b: ReservaGet) => {
   return pa - pb;
 };
 
-const sortReservasRapidas = (a: ReservaRapida, b: ReservaRapida) => {
+const sortReservasRapidas = (a: ReservaRapidaResponse, b: ReservaRapidaResponse) => {
   const statusA = (a.status || '').toUpperCase();
   const statusB = (b.status || '').toUpperCase();
 
@@ -74,14 +74,14 @@ interface ReservaListaProps {
    *
    * Utilizadas pelos usuários comuns.
    */
-  reservas?: ReservaGet[];
+  reservas?: ReservaPorUsuarioResponse[];
 
   /**
    * Reservas rápidas.
    *
    * Utilizadas pelos agentes.
    */
-  reservasRapidas?: ReservaRapida[];
+  reservasRapidas?: ReservaRapidaResponse[];
 
   /**
    * Permissão do usuário.
@@ -98,7 +98,7 @@ interface ReservaListaProps {
 
   onExcluir?: (id: string) => void;
 
-  onCheckout?: (reserva: ReservaGet) => void;
+  onCheckout?: (reserva: ReservaPorUsuarioResponse) => void;
 
   /**
    * Ação específica das reservas rápidas.
@@ -151,8 +151,8 @@ export default function ReservaLista({
         return acc;
       },
       {
-        visiveis: [] as ReservaGet[],
-        ocultas: [] as ReservaGet[],
+        visiveis: [] as ReservaPorUsuarioResponse[],
+        ocultas: [] as ReservaPorUsuarioResponse[],
       },
     );
 
@@ -182,8 +182,8 @@ export default function ReservaLista({
         return acc;
       },
       {
-        visiveis: [] as ReservaRapida[],
-        ocultas: [] as ReservaRapida[],
+        visiveis: [] as ReservaRapidaResponse[],
+        ocultas: [] as ReservaRapidaResponse[],
       },
     );
 
@@ -224,7 +224,7 @@ export default function ReservaLista({
             // ==================================================
 
             if (isAgente) {
-              const reservaRapida = reserva as ReservaRapida;
+              const reservaRapida = reserva as ReservaRapidaResponse;
 
               return (
                 <ReservaRapidaCard
@@ -239,7 +239,7 @@ export default function ReservaLista({
             // USUÁRIO NORMAL
             // ==================================================
 
-            const reservaNormal = reserva as ReservaGet;
+            const reservaNormal = reserva as ReservaPorUsuarioResponse;
 
             return (
               <ReservaCard
@@ -364,7 +364,7 @@ export default function ReservaLista({
                   // ==========================================
 
                   if (isAgente) {
-                    const reservaRapida = reserva as ReservaRapida;
+                    const reservaRapida = reserva as ReservaRapidaResponse;
 
                     return (
                       <div
@@ -385,7 +385,7 @@ export default function ReservaLista({
                   // USUÁRIO NORMAL
                   // ==========================================
 
-                  const reservaNormal = reserva as ReservaGet;
+                  const reservaNormal = reserva as ReservaPorUsuarioResponse;
 
                   return (
                     <div
