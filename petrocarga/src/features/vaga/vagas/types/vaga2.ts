@@ -1,4 +1,4 @@
-import { Paginacao } from "@/lib/types/paginacao";
+import { Paginacao } from '@/lib/types/paginacao';
 
 export type AreaVaga = 'VERMELHA' | 'AMARELA' | 'AZUL' | 'BRANCA';
 
@@ -18,6 +18,31 @@ export type DiaSemana =
 export type NumeroDiaSemana = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 
+// PARAMS 
+export type FiltrosVaga = {
+  status?: StatusVaga;
+  area?: AreaVaga;
+  tipoVaga?: TipoVaga;
+  bairro?: string;
+  logradouro?: string;
+};
+
+export type VagasFiltradasParams = FiltrosVaga & {
+  numeroPagina?: number;
+  tamanhoPagina?: number;
+  ordenarPor?: string;
+};
+
+export type VagasMapaParams = {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+  status?: StatusVaga;
+};
+
+// ____________________________________________________
+
 export interface Endereco {
   id?: string;
   codigoPmp: string;
@@ -33,8 +58,7 @@ export interface OperacoesVaga {
   horaFim: string;
 }
 
-
-// Criar Vaga
+// Criar Vaga | Atualizar Vaga
 
 export type VagaPayload = {
   endereco: Endereco;
@@ -50,7 +74,8 @@ export type VagaPayload = {
   operacoesVaga: OperacoesVaga;
 };
 
-export type VagasResponse = {
+// (/vagas/{id}) | (/vagas/all)
+export type VagaResponse = {
   id: string;
   endereco: Endereco;
   area: AreaVaga;
@@ -65,27 +90,40 @@ export type VagasResponse = {
   quantidade: number;
   status: StatusVaga;
   operacoesVaga: OperacoesVaga;
-}
+};
 
-export type VagaPaginadaResponse = Paginacao<VagasResponse>;
+// (/vagas/resumo) | é chamado tmb em reserva
 
-export type VagaResponse = {
+export type VagasResumo = {
   id: string;
   enderecoId: string;
-
   logradouro: string;
   bairro: string;
   numeroEndereco: string;
   referenciaEndereco: string;
-
   area: AreaVaga;
   tipoVaga: TipoVaga;
   comprimento: number;
   quantidade: number;
   status: StatusVaga;
-
   latitudeInicio: number;
-  longitudeInicio: number;
   latitudeFim: number;
+  longitudeInicio: number;
   longitudeFim: number;
 };
+
+// (/vagas/mapa)
+
+export type VagasMapa = {
+  id: string;
+  area: AreaVaga;
+  status: StatusVaga;
+  latitudeInicio: number;
+  latitudeFim: number;
+  longitudeInicio: number;
+  longitudeFim: number;
+  disponivelAgora: boolean;
+};
+
+// Listar Vagas (/vagas)
+export type VagasPaginadasResponse = Paginacao<VagaResponse>;

@@ -17,7 +17,7 @@ import { useDisponibilidadeActions } from '../hooks/useDisponibilidadeActions';
 import { useVagas } from '../hooks/useVagas';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 
-import type { Disponibilidade } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
+import type { DisponibildadeVagaResponse } from '../types/disponibilidadeVaga2';
 import { useCalendarioMes } from '@/contexts/CalendarioMesContext';
 
 /* --------------------------------------------------------------------- */
@@ -27,8 +27,8 @@ import { useCalendarioMes } from '@/contexts/CalendarioMesContext';
 interface ExtendedPropsDisponibilidade {
   logradouro: string | null;
   intervalo: string | null;
-  disps?: Disponibilidade[];
-  grupos?: Record<string, Disponibilidade[]>;
+  disps?: DisponibildadeVagaResponse[];
+  grupos?: Record<string, DisponibildadeVagaResponse[]>;
   isGrouped: boolean;
 }
 
@@ -116,7 +116,7 @@ export default function DisponibilidadeCalendario() {
     dataSelecionada: string | null;
     logradouroSelecionado: string | null;
     intervaloSelecionado: string | null;
-    gruposAgrupados: Record<string, Disponibilidade[]> | null;
+    gruposAgrupados: Record<string, DisponibildadeVagaResponse[]> | null;
   }>({
     dataSelecionada: null,
     logradouroSelecionado: null,
@@ -169,7 +169,7 @@ export default function DisponibilidadeCalendario() {
       const disposDoUnicoLogradouro = props.disps || [];
 
       if (props.logradouro && disposDoUnicoLogradouro.length > 0) {
-        const gruposParaModal: Record<string, Disponibilidade[]> = {
+        const gruposParaModal: Record<string, DisponibildadeVagaResponse[]> = {
           [props.logradouro]: disposDoUnicoLogradouro,
         };
 

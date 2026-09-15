@@ -1,10 +1,16 @@
 'use client';
 
 import { clientApi } from '@/services/clientApi';
-import type {
-  DisponibilidadeVaga,
-  DisponibilidadeResponse,
-} from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
+import { ConfirmResult } from '@/lib/types/confirmResult';
+import {
+  DisponibildadeVagaResponse,
+  DisponibildadeVagasPaginadasResponse,
+  DisponibilidadesParam,
+  DisponibilidadeVagaResumoResponse,
+  DisponibilidadeVagasMultiplasPayload,
+  DisponibilidadeVagasPayload,
+} from '../types/disponibilidadeVaga2';
+import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
 
 /**
  * @module disponibilidadeApi
@@ -57,13 +63,17 @@ import type {
  * const result = await addDisponibilidadeVagas(formData);
  * ```
  */
-export async function addDisponibilidadeVagas(formData: FormData) {
-  const vagaIds = formData.getAll('vagaid') as string[];
+export async function criarMultiplasDisponibilidadesVaga(
+  formData: FormData,
+): Promise<ConfirmResult> {
+  const vagaIds = formData.getAll('vagaId') as string[];
+  const inicio = formData.get('inicio') as string;
+  const fim = formData.get('fim') as string;
 
-  const body = {
+  const body: DisponibilidadeVagasMultiplasPayload = {
     listaVagaId: vagaIds,
-    inicio: new Date(formData.get('inicio') as string).toISOString(),
-    fim: new Date(formData.get('fim') as string).toISOString(),
+    inicio: new Date(inicio).toISOString(),
+    fim: new Date(fim).toISOString(),
   };
 
   try {
@@ -71,10 +81,15 @@ export async function addDisponibilidadeVagas(formData: FormData) {
       method: 'POST',
       json: body,
     });
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+      throw errorBody ?? { message: `Erro HTTP ${res.status}` };
+    }
     return await res.json();
-  } catch (err) {
-    console.error('Erro ao adicionar disponibilidade:', err);
-    throw err;
+  } catch (err: unknown) {
+    throw new Error(
+      getApiErrorMessage(err, 'Erro ao adicionar disponibilidade das vagas.'),
+    );
   }
 }
 
@@ -100,47 +115,44 @@ export async function addDisponibilidadeVagas(formData: FormData) {
  * ```
  */
 
-type GetDisponibilidadesParam = {
-  vagaId?: string;
-  mes?: number;
-  ano?: number;
-};
-
 export async function getDisponibilidadeVagas(
-  params?: GetDisponibilidadesParam,
-) {
+  params?: DisponibilidadesParam,
+): Promise<DisponibildadeVagasPaginadasResponse> {
   try {
-    let url = '/petrocarga/disponibilidade-vagas';
-
-    if (params) {
-      const query = new URLSearchParams();
-
-      if (params.vagaId !== undefined) {
-        query.append('vagaId', String(params.vagaId));
-      }
-
-      if (params.mes !== undefined) {
-        query.append('mes', String(params.mes));
-      }
-
-      if (params.ano !== undefined) {
-        query.append('ano', String(params.ano));
-      }
-
-      const queryString = query.toString();
-      if (queryString) {
-        url += `?${queryString}`;
-      }
+    const queryParams = new URLSearchParams();
+    if (params?.vagaId !== undefined) {
+      queryParams.append('vagaId', String(params.vagaId));
     }
-
-    const res = await clientApi(url, {
-      method: 'GET',
-    });
-
-    return await res.json();
-  } catch (err) {
-    console.error('Erro ao buscar disponibilidade:', err);
-    throw err;
+    if (params?.mes !== undefined) {
+      queryParams.append('mes', String(params.mes));
+    }
+    if (params?.ano !== undefined) {
+      queryParams.append('ano', String(params.ano));
+    }
+    if (params?.pagina !== undefined) {
+      queryParams.append('pagina', String(params.pagina));
+    }
+    if (params?.tamanhoPagina !== undefined) {
+      queryParams.append('tamanhoPagina', String(params.tamanhoPagina));
+    }
+    if (params?.ordem !== undefined) {
+      queryParams.append('ordem', String(params.ordem));
+    }
+    const query = queryParams.toString();
+    const res = await clientApi(
+      `/petrocarga/disponibilidade-vagas${query ? `?${query}` : ''}`,
+      { method: 'GET' },
+    );
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+      throw errorBody ?? { message: `Erro HTTP ${res.status}` };
+    }
+    const data: DisponibildadeVagasPaginadasResponse = await res.json();
+    return data;
+  } catch (err: unknown) {
+    throw new Error(
+      getApiErrorMessage(err, 'Erro ao buscar disponibilidade das vagas.'),
+    );
   }
 }
 // ----------------------
@@ -165,18 +177,26 @@ export async function getDisponibilidadeVagas(
  * }
  * ```
  */
-export async function getDisponibilidadeVagasByVagaId(vagaId: string) {
+export async function getDisponibilidadeVagasByVagaId(
+  vagaId: string,
+): Promise<DisponibildadeVagaResponse> {
   try {
     const res = await clientApi(
       `/petrocarga/disponibilidade-vagas/vaga/${vagaId}`,
-      {
-        method: 'GET',
-      },
     );
-    return await res.json();
-  } catch (err) {
-    console.error('Erro ao buscar disponibilidade por vagaId', err);
-    throw err;
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+
+      throw errorBody ?? new Error(`Erro HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    return data as DisponibildadeVagaResponse;
+  } catch (err: unknown) {
+    throw new Error(
+      getApiErrorMessage(err, 'Erro ao buscar disponibilidade da vaga.'),
+    );
   }
 }
 // ----------------------
@@ -210,28 +230,36 @@ export async function getDisponibilidadeVagasByVagaId(vagaId: string) {
  * }
  * ```
  */
-export async function editarDisponibilidadeVagas(
-  id: string,
-  vagaId: string,
-  inicio: string,
-  fim: string,
-): Promise<DisponibilidadeResponse> {
-  const body: DisponibilidadeVaga = { vagaId, inicio, fim };
-
+export async function atualizarDisponibilidadeVagas(
+  disponibilidadeId: string,
+  body: DisponibilidadeVagasPayload,
+): Promise<DisponibilidadeVagaResumoResponse> {
   try {
-    const res = await clientApi(`/petrocarga/disponibilidade-vagas/${id}`, {
-      method: 'PATCH',
-      json: body,
-    });
-    return { success: true, valores: body };
+    const res = await clientApi(
+      `/petrocarga/disponibilidade-vagas/${disponibilidadeId}`,
+      {
+        method: 'PATCH',
+        json: body,
+      },
+    );
+
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+
+      throw (
+        errorBody ?? {
+          message: `Erro HTTP ${res.status}`,
+        }
+      );
+    }
+
+    const data: DisponibilidadeVagaResumoResponse = await res.json();
+
+    return data;
   } catch (err: unknown) {
-    console.error('Erro ao atualizar disponibilidade:', err);
-    return {
-      error: true,
-      message:
-        err instanceof Error ? err.message : 'Erro desconhecido ao atualizar',
-      valores: body,
-    };
+    throw new Error(
+      getApiErrorMessage(err, 'Erro ao atualizar disponibilidade da vaga.'),
+    );
   }
 }
 

@@ -3,17 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-import type {
-  Vaga,
-  VagaPayload,
-  FiltrosVaga,
-  VagasPaginadas,
-} from '../types/vaga';
-
 import {
-  addVaga,
-  atualizarVaga,
-  deleteVaga,
+  criarVaga as criarVagaService,
+  atualizarVaga as atualizarVagaService,
+  deleteVaga as deleteVagaService,
   getVagaById,
   getVagas,
   getVagasFiltradas,
@@ -21,32 +14,41 @@ import {
   getVagasPorMapa,
 } from '../service/vagaApi';
 
-type UseVagaApiParams = {
-  filtros?: FiltrosVaga;
-  numeroPagina?: number;
-  tamanhoPagina?: number;
-  ordenarPor?: string;
-  logradouro?: string;
+import {
+  StatusVaga,
+  VagaPayload,
+  VagaResponse,
+  VagasFiltradasParams,
+  VagasMapaParams,
+  VagasPaginadasResponse,
+} from '../types/vaga2';
+
+type UseVagaApiParams = VagasFiltradasParams & {
   autoFetch?: boolean;
 };
 
-const paginacaoInicial: Omit<VagasPaginadas, 'vagas'> = {
-  paginaAtual: 0,
+// TODO: confirmar o nome do campo de itens em `Paginacao<T>`
+// (aqui assumido como `vagas`, herdado do hook antigo).
+type PaginacaoState = Omit<VagasPaginadasResponse, 'content'>;
+
+const paginacaoInicial: PaginacaoState = {
+  pagina: 1,
   totalPaginas: 0,
   totalElementos: 0,
+  tamanhoPagina: 0,
 };
 
 export function useVagaApi(params?: UseVagaApiParams) {
-  const [vagas, setVagas] = useState<Vaga[]>([]);
-  const [vaga, setVaga] = useState<Vaga | null>(null);
+  const [vagas, setVagas] = useState<VagaResponse[]>([]);
+  const [vaga, setVaga] = useState<VagaResponse | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [loadingVaga, setLoadingVaga] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const [paginacao, setPaginacao] =
-    useState<Omit<VagasPaginadas, 'vagas'>>(paginacaoInicial);
+  const [paginacao, setPaginacao] = useState<PaginacaoState>(paginacaoInicial);
 
   // ---------------------------------------------------------------------------
   // GET VAGAS PAGINADAS
@@ -54,46 +56,53 @@ export function useVagaApi(params?: UseVagaApiParams) {
 
   const buscarVagas = useCallback(async () => {
     setLoading(true);
+    setError(null); // limpa erro anterior a cada nova busca
 
     try {
       const response = await getVagasFiltradas({
-        ...params?.filtros,
+        status: params?.status,
+        area: params?.area,
+        tipoVaga: params?.tipoVaga,
+        bairro: params?.bairro,
+        logradouro: params?.logradouro,
         numeroPagina: params?.numeroPagina,
         tamanhoPagina: params?.tamanhoPagina,
         ordenarPor: params?.ordenarPor,
-        logradouro: params?.logradouro,
       });
 
-      setVagas(response.vagas);
+      setVagas(response.content);
 
       setPaginacao({
-        paginaAtual: response.paginaAtual,
+        pagina: response.pagina,
         totalPaginas: response.totalPaginas,
         totalElementos: response.totalElementos,
+        tamanhoPagina: response.tamanhoPagina,
       });
 
       return response;
-    } catch (error) {
-      console.error('Erro ao buscar vagas:', error);
+    } catch (err) {
+      console.error('Erro ao buscar vagas:', err);
 
-      toast.error('Não foi possível carregar as vagas.');
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      setError(message);
+      toast.error(message);
 
       setVagas([]);
       setPaginacao(paginacaoInicial);
 
-      return {
-        vagas: [],
-        ...paginacaoInicial,
-      };
+      return null;
     } finally {
       setLoading(false);
     }
   }, [
-    params?.filtros,
+    params?.status,
+    params?.area,
+    params?.tipoVaga,
+    params?.bairro,
+    params?.logradouro,
     params?.numeroPagina,
     params?.tamanhoPagina,
     params?.ordenarPor,
-    params?.logradouro,
   ]);
 
   // ---------------------------------------------------------------------------
@@ -105,17 +114,13 @@ export function useVagaApi(params?: UseVagaApiParams) {
 
     try {
       const response = await getVagaById(id);
-
       setVaga(response);
-
       return response;
     } catch (error) {
       console.error(`Erro ao buscar vaga ${id}:`, error);
-
       toast.error('Não foi possível carregar a vaga.');
 
       setVaga(null);
-
       return null;
     } finally {
       setLoadingVaga(false);
@@ -126,22 +131,18 @@ export function useVagaApi(params?: UseVagaApiParams) {
   // GET TODAS AS VAGAS
   // ---------------------------------------------------------------------------
 
-  const buscarTodasVagas = useCallback(async (status?: string) => {
+  const buscarTodasVagas = useCallback(async (status?: StatusVaga) => {
     setLoading(true);
 
     try {
       const response = await getVagas(status);
-
       setVagas(response);
-
       return response;
     } catch (error) {
       console.error('Erro ao buscar todas as vagas:', error);
-
       toast.error('Não foi possível carregar as vagas.');
 
       setVagas([]);
-
       return [];
     } finally {
       setLoading(false);
@@ -149,66 +150,38 @@ export function useVagaApi(params?: UseVagaApiParams) {
   }, []);
 
   // ---------------------------------------------------------------------------
-  // GET VAGAS COM FILTROS
+  // GET VAGAS COM FILTROS (apenas status, conforme service atual)
   // ---------------------------------------------------------------------------
 
-  const buscarVagasComFiltros = useCallback(
-    async (filtros?: FiltrosVaga) => {
-      setLoading(true);
+  const buscarVagasComFiltros = useCallback(async (status?: StatusVaga) => {
+    setLoading(true);
 
-      try {
-        const response = await getVagasComFiltros(filtros);
+    try {
+      const response = await getVagasComFiltros(status);
+      setVagas(response);
+      return response;
+    } catch (error) {
+      console.error('Erro ao buscar vagas com filtros:', error);
+      toast.error('Não foi possível carregar as vagas.');
 
-        if (response.error) {
-          toast.error(
-            response.message ?? 'Não foi possível carregar as vagas.',
-          );
-
-          setVagas([]);
-
-          return response;
-        }
-
-        setVagas(response.vagas ?? []);
-
-        return response;
-      } catch (error) {
-        console.error('Erro ao buscar vagas com filtros:', error);
-
-        toast.error('Não foi possível carregar as vagas.');
-
-        setVagas([]);
-
-        return {
-          error: true,
-          message: 'Erro ao buscar vagas.',
-        };
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
+      setVagas([]);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // ---------------------------------------------------------------------------
   // GET VAGAS POR MAPA
   // ---------------------------------------------------------------------------
 
   const buscarVagasPorMapa = useCallback(
-    async (paramsMapa: {
-      north: number;
-      south: number;
-      east: number;
-      west: number;
-      status?: string;
-    }) => {
+    async (paramsMapa: VagasMapaParams) => {
       try {
         return await getVagasPorMapa(paramsMapa);
       } catch (error) {
         console.error('Erro ao buscar vagas por mapa:', error);
-
         toast.error('Não foi possível carregar as vagas do mapa.');
-
         return [];
       }
     },
@@ -223,26 +196,13 @@ export function useVagaApi(params?: UseVagaApiParams) {
     setSaving(true);
 
     try {
-      const response = await addVaga(formData);
-
-      if (response.error) {
-        toast.error(response.message ?? 'Não foi possível cadastrar a vaga.');
-
-        return response;
-      }
-
-      toast.success(response.message ?? 'Vaga cadastrada com sucesso!');
-
+      const response = await criarVagaService(formData);
+      toast.success('Vaga cadastrada com sucesso!');
       return response;
     } catch (error) {
       console.error('Erro ao criar vaga:', error);
-
       toast.error('Não foi possível cadastrar a vaga.');
-
-      return {
-        error: true,
-        message: 'Erro ao cadastrar vaga.',
-      };
+      return null;
     } finally {
       setSaving(false);
     }
@@ -252,30 +212,24 @@ export function useVagaApi(params?: UseVagaApiParams) {
   // PATCH VAGA
   // ---------------------------------------------------------------------------
 
-  const editarVaga = useCallback(async (formData: FormData) => {
+  const editarVaga = useCallback(async (vagaId: string, body: VagaPayload) => {
     setSaving(true);
 
     try {
-      const response = await atualizarVaga(formData);
+      const response = await atualizarVagaService(body, vagaId);
 
-      if (response.error) {
+      if (!response.success) {
         toast.error(response.message ?? 'Não foi possível atualizar a vaga.');
-
         return response;
       }
 
       toast.success(response.message ?? 'Vaga atualizada com sucesso!');
-
       return response;
     } catch (error) {
       console.error('Erro ao editar vaga:', error);
-
       toast.error('Não foi possível atualizar a vaga.');
 
-      return {
-        error: true,
-        message: 'Erro ao atualizar vaga.',
-      };
+      return { success: false, message: 'Erro ao atualizar vaga.' };
     } finally {
       setSaving(false);
     }
@@ -289,78 +243,60 @@ export function useVagaApi(params?: UseVagaApiParams) {
     setDeleting(true);
 
     try {
-      const response = await deleteVaga(id);
+      const response = await deleteVagaService(id);
 
-      if (response.error) {
+      if (!response.success) {
         toast.error(response.message ?? 'Não foi possível deletar a vaga.');
-
         return response;
       }
 
       toast.success(response.message ?? 'Vaga deletada com sucesso!');
 
       setVagas((prev) => prev.filter((item) => item.id !== id));
-
       setVaga((prev) => (prev?.id === id ? null : prev));
 
       return response;
     } catch (error) {
       console.error(`Erro ao remover vaga ${id}:`, error);
-
       toast.error('Não foi possível deletar a vaga.');
 
-      return {
-        error: true,
-        message: 'Erro ao deletar vaga.',
-      };
+      return { success: false, message: 'Erro ao deletar vaga.' };
     } finally {
       setDeleting(false);
     }
   }, []);
 
   // ---------------------------------------------------------------------------
-  // REFRESH
+  // REFRESH / AUTO FETCH
   // ---------------------------------------------------------------------------
 
-  const refetch = useCallback(async () => {
-    return buscarVagas();
-  }, [buscarVagas]);
-
-  // ---------------------------------------------------------------------------
-  // FETCH AUTOMÁTICO
-  // ---------------------------------------------------------------------------
+  const refetch = useCallback(async () => buscarVagas(), [buscarVagas]);
 
   useEffect(() => {
-    if (params?.autoFetch === false) {
-      return;
-    }
-
+    if (params?.autoFetch === false) return;
     buscarVagas();
   }, [buscarVagas, params?.autoFetch]);
 
   return {
-    // Estado
     vagas,
     vaga,
     loading,
     loadingVaga,
     saving,
+    error,
     deleting,
     paginacao,
 
-    // GET
     buscarVagas,
     buscarVagaPorId,
     buscarTodasVagas,
     buscarVagasComFiltros,
     buscarVagasPorMapa,
 
-    // CRUD
     criarVaga,
     editarVaga,
     removerVaga,
 
-    // Utilitários
     refetch,
     setVaga,
   };

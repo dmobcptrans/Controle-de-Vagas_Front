@@ -1,24 +1,24 @@
 import {
-  getDisponibilidadeVagas,
-  addDisponibilidadeVagas,
-  editarDisponibilidadeVagas,
+  atualizarDisponibilidadeVagas,
+  criarMultiplasDisponibilidadesVaga,
   deleteDisponibilidadeVagas,
 } from '../services/disponibilidadeVagasApi';
+import { DisponibilidadeVagasPayload } from '../types/disponibilidadeVaga2';
 
 /**
  * @module disponibilidadeService
  * @description Camada de serviço para gerenciamento de disponibilidade de vagas.
  * Encapsula as funções da API com tratamento simplificado.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FUNÇÕES DISPONÍVEIS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. fetchDisponibilidades - Lista todas as disponibilidades
  * 2. postDisponibilidade - Cria nova disponibilidade (suporta múltiplas vagas)
  * 3. updateDisponibilidade - Atualiza uma disponibilidade existente
  * 4. removeDisponibilidade - Remove uma disponibilidade
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 FUNÇÕES INTERNAS (API):
  * ----------------------------------------------------------------------------
@@ -27,7 +27,6 @@ import {
  * - deleteDisponibilidadeVagas: DELETE /petrocarga/disponibilidade-vagas/{id}
  */
 
-
 // -------------------------------------------------------
 // POST — Criar disponibilidade
 // -------------------------------------------------------
@@ -35,15 +34,15 @@ import {
 /**
  * @function postDisponibilidade
  * @description Cria um novo período de disponibilidade para uma ou mais vagas.
- * 
+ *
  * @param vagaIds - Array com IDs das vagas
  * @param inicio - Data/hora de início (ISO string)
  * @param fim - Data/hora de fim (ISO string)
- * 
+ *
  * @returns Promise<DisponibilidadeResponse>
- * 
+ *
  * @throws {Error} Dispara erro se a requisição falhar
- * 
+ *
  * @example
  * ```ts
  * // Criar disponibilidade para uma única vaga
@@ -52,7 +51,7 @@ import {
  *   '2024-01-01T08:00:00',
  *   '2024-01-01T18:00:00'
  * );
- * 
+ *
  * // Criar disponibilidade para múltiplas vagas
  * await postDisponibilidade(
  *   ['vaga123', 'vaga456', 'vaga789'],
@@ -64,7 +63,7 @@ import {
 export async function postDisponibilidade(
   vagaIds: string[],
   inicio: string,
-  fim: string
+  fim: string,
 ) {
   const form = new FormData();
 
@@ -72,7 +71,7 @@ export async function postDisponibilidade(
   form.append('inicio', inicio);
   form.append('fim', fim);
 
-  return await addDisponibilidadeVagas(form);
+  return await criarMultiplasDisponibilidadesVaga(form);
 }
 
 // -------------------------------------------------------
@@ -82,14 +81,14 @@ export async function postDisponibilidade(
 /**
  * @function updateDisponibilidade
  * @description Atualiza uma disponibilidade existente.
- * 
+ *
  * @param id - ID da disponibilidade a ser editada
  * @param vagaId - ID da vaga
  * @param inicio - Nova data/hora de início (ISO string)
  * @param fim - Nova data/hora de fim (ISO string)
- * 
+ *
  * @returns Promise<DisponibilidadeResponse>
- * 
+ *
  * @example
  * ```ts
  * await updateDisponibilidade(
@@ -100,13 +99,20 @@ export async function postDisponibilidade(
  * );
  * ```
  */
+
 export async function updateDisponibilidade(
   id: string,
   vagaId: string,
   inicio: string,
-  fim: string
+  fim: string,
 ) {
-  return await editarDisponibilidadeVagas(id, vagaId, inicio, fim);
+  const payload: DisponibilidadeVagasPayload = {
+    vagaId,
+    inicio,
+    fim,
+  };
+
+  return await atualizarDisponibilidadeVagas(id, payload);
 }
 
 // -------------------------------------------------------
@@ -116,11 +122,11 @@ export async function updateDisponibilidade(
 /**
  * @function removeDisponibilidade
  * @description Remove uma disponibilidade pelo ID.
- * 
+ *
  * @param id - ID da disponibilidade a ser deletada
  * @returns Promise<true> - Retorna true se deletado com sucesso
  * @throws {Error} Dispara erro se a requisição falhar
- * 
+ *
  * @example
  * ```ts
  * try {

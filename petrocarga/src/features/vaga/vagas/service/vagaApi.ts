@@ -7,7 +7,11 @@ import {
   StatusVaga,
   TipoVaga,
   VagaPayload,
-  VagasResponse,
+  VagaResponse,
+  VagasFiltradasParams,
+  VagasMapa,
+  VagasMapaParams,
+  VagasPaginadasResponse,
 } from '../types/vaga2';
 import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
 import { ConfirmResult } from '@/lib/types/confirmResult';
@@ -75,7 +79,7 @@ import { ConfirmResult } from '@/lib/types/confirmResult';
  * }
  * ```
  */
-export async function CriarVaga(formData: FormData): Promise<VagasResponse> {
+export async function criarVaga(formData: FormData): Promise<VagaResponse> {
   const diasSemanaRaw = formData.get('diaSemana') as string;
 
   const diasSemana: OperacoesVaga[] = diasSemanaRaw
@@ -106,7 +110,7 @@ export async function CriarVaga(formData: FormData): Promise<VagasResponse> {
       json: body,
     });
 
-    return (await res.json()) as VagasResponse;
+    return (await res.json()) as VagaResponse;
   } catch (err: unknown) {
     throw new Error(getApiErrorMessage(err, 'Erro ao criar vaga.'));
   }
@@ -174,21 +178,26 @@ export async function deleteVaga(id: string): Promise<ConfirmResult> {
  * ```
  */
 export async function atualizarVaga(
-  formData: FormData,
-): Promise<VagaResponse<VagaPayload>> {
-  const id = formData.get('id') as string;
-  const payload = buildVagaPayload(formData);
-
+  body: VagaPayload,
+  vagaId: string,
+): Promise<ConfirmResult> {
   try {
-    await clientApi(`/petrocarga/vagas/${id}`, {
+    await clientApi(`/petrocarga/vagas/${vagaId}`, {
       method: 'PATCH',
-      json: payload,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
     });
-    return { error: false, message: 'Vaga atualizada com sucesso!' };
-  } catch (err) {
-    const error = err as ApiError;
-    console.error('Erro ao atualizar vaga:', error);
-    return { error: true, message: error.message, valores: payload };
+
+    return {
+      success: true,
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      message: getApiErrorMessage(err, 'Erro ao atualizar vaga.'),
+    };
   }
 }
 
@@ -214,112 +223,117 @@ export async function atualizarVaga(
  * console.log(`Total: ${todas.length}`);
  * ```
  */
-export async function getVagas(status?: string): Promise<Vaga[]> {
+export async function getVagas(status?: string): Promise<VagaResponse[]> {
+  const queryParams = status
+    ? new URLSearchParams({
+        status,
+      }).toString()
+    : '';
+
   try {
-    const query = status ? `?status=${encodeURIComponent(status)}` : '';
+    const res = await clientApi(
+      `/petrocarga/vagas/all${queryParams ? `?${queryParams}` : ''}`,
+      {
+        method: 'GET',
+      },
+    );
 
-    const res = await clientApi(`/petrocarga/vagas/all${query}`, {
-      method: 'GET',
-    });
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
 
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data?.vagas ?? []);
-  } catch (err) {
-    const error = err as ApiError;
-    console.error('Erro ao buscar vagas:', error);
-    return [];
+      throw (
+        errorBody ?? {
+          message: `Erro HTTP ${res.status}`,
+        }
+      );
+    }
+
+    const data: VagaResponse[] = await res.json();
+
+    return Array.isArray(data) ? data : [];
+  } catch (err: unknown) {
+    throw new Error(getApiErrorMessage(err, 'Erro ao buscar vagas.'));
   }
 }
 
-export async function getVagasPorMapa(params: {
-  north: number;
-  south: number;
-  east: number;
-  west: number;
-  status?: string;
-}) {
-  const query = new URLSearchParams({
+export async function getVagasPorMapa(
+  params: VagasMapaParams,
+): Promise<VagasMapa[]> {
+  const queryParams = new URLSearchParams({
     north: params.north.toString(),
     south: params.south.toString(),
     east: params.east.toString(),
     west: params.west.toString(),
     ...(params.status && { status: params.status }),
-  });
-
-  const response = await clientApi(`/petrocarga/vagas/mapa?${query}`);
-  return response.json();
-}
-
-type GetVagasParams = {
-  status?: string;
-  numeroPagina?: number;
-  tamanhoPagina?: number;
-  ordenarPor?: string;
-  logradouro?: string;
-};
-
-export type VagasPaginadas = {
-  vagas: Vaga[];
-  paginaAtual: number;
-  totalPaginas: number;
-  totalElementos: number;
-};
-
-export async function getVagasFiltradas(
-  params?: GetVagasParams,
-): Promise<VagasPaginadas> {
-  const vazio: VagasPaginadas = {
-    vagas: [],
-    paginaAtual: params?.numeroPagina ?? 0,
-    totalPaginas: 0,
-    totalElementos: 0,
-  };
+  }).toString();
 
   try {
-    const queryParams = new URLSearchParams();
-
-    if (params?.status) queryParams.append('status', params.status);
-
-    if (params?.numeroPagina !== undefined)
-      queryParams.append('numeroPagina', String(params.numeroPagina));
-
-    if (params?.tamanhoPagina !== undefined)
-      queryParams.append('tamanhoPagina', String(params.tamanhoPagina));
-
-    if (params?.ordenarPor) queryParams.append('ordenarPor', params.ordenarPor);
-
-    if (params?.logradouro) queryParams.append('logradouro', params.logradouro);
-
-    const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
-
-    const res = await clientApi(`/petrocarga/vagas${query}`, {
+    const res = await clientApi(`/petrocarga/vagas/mapa?${queryParams}`, {
       method: 'GET',
     });
 
-    const data = await res.json();
-
-    if (Array.isArray(data)) {
-      return {
-        vagas: data,
-        paginaAtual: params?.numeroPagina ?? 0,
-        totalPaginas: 1,
-        totalElementos: data.length,
-      };
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+      throw errorBody ?? { message: `Erro HTTP ${res.status}` };
     }
 
-    return {
-      vagas: data?.content ?? [],
-      paginaAtual: data?.pagina ?? data?.number ?? 0,
-      totalPaginas: data?.totalPaginas ?? data?.totalPages ?? 1,
-      totalElementos:
-        data?.totalElementos ??
-        data?.totalElements ??
-        data?.content?.length ??
-        0,
-    };
-  } catch (err) {
-    console.error('Erro ao buscar vagas:', err);
-    return vazio;
+    const data: VagasMapa[] = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (err: unknown) {
+    throw new Error(getApiErrorMessage(err, 'Erro ao buscar vagas no mapa.'));
+  }
+}
+
+export async function getVagasFiltradas(
+  params?: VagasFiltradasParams,
+): Promise<VagasPaginadasResponse> {
+  try {
+    const queryParams = new URLSearchParams();
+
+    if (params?.status) {
+      queryParams.append('status', params.status);
+    }
+
+    if (params?.numeroPagina !== undefined) {
+      queryParams.append('numeroPagina', String(params.numeroPagina));
+    }
+
+    if (params?.tamanhoPagina !== undefined) {
+      queryParams.append('tamanhoPagina', String(params.tamanhoPagina));
+    }
+
+    if (params?.ordenarPor) {
+      queryParams.append('ordenarPor', params.ordenarPor);
+    }
+
+    if (params?.logradouro) {
+      queryParams.append('logradouro', params.logradouro);
+    }
+
+    const query = queryParams.toString();
+
+    const res = await clientApi(
+      `/petrocarga/vagas${query ? `?${query}` : ''}`,
+      {
+        method: 'GET',
+      },
+    );
+
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+
+      throw (
+        errorBody ?? {
+          message: `Erro HTTP ${res.status}`,
+        }
+      );
+    }
+
+    const data: VagasPaginadasResponse = await res.json();
+
+    return data;
+  } catch (err: unknown) {
+    throw new Error(getApiErrorMessage(err, 'Erro ao buscar vagas filtradas.'));
   }
 }
 
@@ -356,31 +370,43 @@ export async function getVagasFiltradas(
  * ```
  */
 export async function getVagasComFiltros(
-  filtros?: FiltrosVaga,
-): Promise<VagaResponse<Vaga>> {
+  status?: StatusVaga,
+): Promise<VagaResponse[]> {
+  const queryParams = status
+    ? new URLSearchParams({
+        status,
+      }).toString()
+    : '';
+
   try {
-    const params = new URLSearchParams();
+    const res = await clientApi(
+      `/petrocarga/vagas/all${queryParams ? `?${queryParams}` : ''}`,
+      {
+        method: 'GET',
+      },
+    );
 
-    if (filtros?.status) params.append('status', filtros.status);
-    if (filtros?.area) params.append('area', filtros.area);
-    if (filtros?.tipoVaga) params.append('tipoVaga', filtros.tipoVaga);
-    if (filtros?.bairro) params.append('bairro', filtros.bairro);
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
 
-    const queryString = params.toString();
-    const url = queryString
-      ? `/petrocarga/vagas/all?${queryString}`
-      : '/petrocarga/vagas/all';
+      throw (
+        errorBody ?? {
+          message: `Erro HTTP ${res.status}`,
+        }
+      );
+    }
 
-    const res = await clientApi(url, { method: 'GET' });
     const data = await res.json();
 
-    const vagas = Array.isArray(data) ? data : (data?.vagas ?? []);
+    const vagas: VagaResponse[] = Array.isArray(data)
+      ? data
+      : (data?.vagas ?? []);
 
-    return { error: false, vagas };
-  } catch (err) {
-    const error = err as ApiError;
-    console.error('Erro ao buscar vagas:', error);
-    return { error: true, message: error.message };
+    return vagas;
+  } catch (err: unknown) {
+    throw new Error(
+      getApiErrorMessage(err, 'Erro ao buscar vagas com filtros.'),
+    );
   }
 }
 
@@ -403,13 +429,13 @@ export async function getVagasComFiltros(
  * }
  * ```
  */
-export async function getVagaById(id: string): Promise<Vaga | null> {
+export async function getVagaById(id: string): Promise<VagaResponse | null> {
   try {
     const res = await clientApi(`/petrocarga/vagas/${id}`, { method: 'GET' });
     return (await res.json()) ?? null;
-  } catch (err) {
-    const error = err as ApiError;
-    console.error(`Erro ao buscar vaga ${id}:`, error);
-    return null;
+  } catch (err: unknown) {
+    throw new Error(
+      getApiErrorMessage(err, 'Erro ao buscar vagas com filtros.'),
+    );
   }
 }

@@ -2,15 +2,15 @@ import { useMemo } from 'react';
 import type { EventInput } from '@fullcalendar/core';
 
 // Importando tipos necessários
-import type { Disponibilidade } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
+import type { DisponibildadeVagaResponse } from '../types/disponibilidadeVaga2';
 
 /* ----------------------- TIPOS DO EVENTO DO CALENDÁRIO ------------------- */
 
 interface ExtendedPropsDisponibilidade {
   logradouro: string | null;
   intervalo: string | null;
-  disps?: Disponibilidade[];
-  grupos?: Record<string, Disponibilidade[]>;
+  disps?: DisponibildadeVagaResponse[];
+  grupos?: Record<string, DisponibildadeVagaResponse[]>;
   isGrouped: boolean;
 }
 
@@ -21,7 +21,7 @@ interface EventoDisponibilidade extends EventInput {
 /* ----------------------- INTERFACE DE PROPS DO HOOK ---------------------- */
 
 interface UseCalendarEventsProps {
-  disponibilidadesAgrupadas: Record<string, Record<string, Disponibilidade[]>>
+  disponibilidadesAgrupadas: Record<string, Record<string, DisponibildadeVagaResponse[]>>
 }
 
 /* --------------------------- HOOK PRINCIPAL  ------------------------------ */
@@ -107,10 +107,10 @@ export function useCalendarEvents({
 }: UseCalendarEventsProps) {
   const eventos: EventoDisponibilidade[] = useMemo(() => {
     /* ==================== 1. ESTRUTURAS DE AGRUPAMENTO ==================== */
-    const unifiedByInterval: Record<string, Disponibilidade[]> = {};
+    const unifiedByInterval: Record<string, DisponibildadeVagaResponse[]> = {};
     const logradouroGroupsByInterval: Record<
       string,
-      Record<string, Disponibilidade[]>
+      Record<string, DisponibildadeVagaResponse[]>
     > = {};
 
     /* ==================== 2. POPULAÇÃO DOS GRUPOS (UNIFICAÇÃO) ==================== */

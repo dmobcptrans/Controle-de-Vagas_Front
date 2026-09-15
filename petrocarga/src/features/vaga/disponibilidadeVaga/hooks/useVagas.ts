@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { getVagas } from '@/features/vaga/vagas/service/vagaApi';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '../../vagas/types/vaga2';
 
 /**
  * @hook useVagas
@@ -84,7 +84,7 @@ import { Vaga } from '@/features/vaga/vagas/types/vaga';
  */
 
 export function useVagas() {
-  const [vagas, setVagas] = useState<Vaga[]>([]);
+  const [vagas, setVagas] = useState<VagaResponse[]>([]);
   const [loadingVagas, setLoadingVagas] = useState(false);
   const [errorVagas, setErrorVagas] = useState<Error | null>(null);
 
@@ -129,7 +129,7 @@ export function useVagas() {
       (acc[log] ??= []).push(vaga);
       
       return acc;
-    }, {} as Record<string, Vaga[]>);
+    }, {} as Record<string, VagaResponse[]>);
   }, [vagas]);
 
   return {

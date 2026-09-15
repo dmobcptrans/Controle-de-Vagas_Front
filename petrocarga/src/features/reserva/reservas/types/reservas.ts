@@ -1,6 +1,6 @@
 import { MotoristaResponse } from '@/features/usuarios/(personas)/motoristas/types/motorista2';
 import { EnderecoVaga } from '@/features/vaga/enderecoVaga/types/enderecoVaga';
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VagasResumo } from '@/features/vaga/vagas/types/vaga2';
 import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 import { Paginacao } from '@/lib/types/paginacao';
 import { UsuarioSimplificado } from '@/lib/types/personas/user2';
@@ -66,7 +66,7 @@ export type ReservaPorIdResponse = {
 
 export type ReservaPorUsuarioResponse = {
   id: string;
-  vaga: VagaResponse;
+  vaga: VagasResumo;
   motorista: MotoristaResponse;
   veiculo: VeiculoResponse;
   criadoPor: UsuarioSimplificado;

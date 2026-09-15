@@ -3,16 +3,14 @@
 import { useEffect, useState } from 'react';
 
 import VagaItem from '@/features/usuarios/(personas)/gestores/components/cards/vagas-item';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
-
-import * as vagaActions from '@/features/vaga/vagas/service/vagaApi';
+import { useVagaApi } from '../../hooks/useVaga';
+import { StatusVaga } from '../../types/vaga2';
 
 function useDebounce(value: string, delay = 300) {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedValue(value), delay);
-
     return () => clearTimeout(handler);
   }, [value, delay]);
 
@@ -23,9 +21,7 @@ export type FiltroVaga = 'todas' | 'disponiveis' | 'indisponiveis';
 
 type ListaVagasProps = {
   searchQuery: string;
-
   filtro: FiltroVaga;
-
   onSelectFirstCoordinate?: (coord: { lat: number; lng: number }) => void;
 };
 
@@ -36,72 +32,53 @@ export function ListaVagas({
   filtro,
   onSelectFirstCoordinate,
 }: ListaVagasProps) {
-  const [vagas, setVagas] = useState<Vaga[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // ==================== PAGINAÇÃO ====================
 
   const [paginaAtual, setPaginaAtual] = useState(0);
-  const [totalPaginas, setTotalPaginas] = useState(0);
-  const [totalElementos, setTotalElementos] = useState(0);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const status: StatusVaga | undefined =
+    filtro === 'todas'
+      ? undefined
+      : filtro === 'disponiveis'
+        ? 'DISPONIVEL'
+        : 'INDISPONIVEL';
 
-  // ==================== CARREGAMENTO ====================
+  const { vagas, loading, error, paginacao } = useVagaApi({
+    logradouro: debouncedSearchQuery || undefined,
+    status,
+    numeroPagina: paginaAtual,
+    tamanhoPagina: TAMANHO_PAGINA,
+  });
 
+  const { totalPaginas, totalElementos } = paginacao;
+
+  // efeito colateral específico desta tela: focar mapa na primeira vaga da busca
   useEffect(() => {
-    const fetchVagas = async () => {
-      setLoading(true);
-      setError(null);
+    if (
+      vagas.length > 0 &&
+      onSelectFirstCoordinate &&
+      debouncedSearchQuery !== ''
+    ) {
+      const primeira = vagas[0];
 
-      try {
-        const resultado = await vagaActions.getVagasFiltradas({
-          logradouro: debouncedSearchQuery || undefined,
-          status:
-            filtro === 'todas'
-              ? undefined
-              : filtro === 'disponiveis'
-                ? 'DISPONIVEL'
-                : 'INDISPONIVEL',
-          numeroPagina: paginaAtual,
-          tamanhoPagina: TAMANHO_PAGINA,
+      if (
+        primeira?.latitudeInicio !== undefined &&
+        primeira?.longitudeInicio !== undefined
+      ) {
+        onSelectFirstCoordinate({
+          lat: primeira.latitudeInicio,
+          lng: primeira.longitudeInicio,
         });
-
-        setVagas(resultado.vagas);
-        setTotalPaginas(resultado.totalPaginas);
-        setTotalElementos(resultado.totalElementos);
-
-        if (
-          resultado.vagas.length > 0 &&
-          onSelectFirstCoordinate &&
-          debouncedSearchQuery !== ''
-        ) {
-          const primeira = resultado.vagas[0];
-
-          if (
-            primeira?.latitudeInicio !== undefined &&
-            primeira?.longitudeInicio !== undefined
-          ) {
-            onSelectFirstCoordinate({
-              lat: primeira.latitudeInicio,
-              lng: primeira.longitudeInicio,
-            });
-          }
-        }
-      } catch (err) {
-        console.error('Erro ao carregar vagas:', err);
-
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
-
-        setVagas([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    }
+  }, [vagas, debouncedSearchQuery, onSelectFirstCoordinate]);
 
-    fetchVagas();
-  }, [debouncedSearchQuery, paginaAtual, filtro]);
+  // reseta para a primeira página sempre que busca ou filtro mudarem
+  useEffect(() => {
+    setPaginaAtual(0);
+  }, [debouncedSearchQuery, filtro]);
 
   // ==================== ORDENAÇÃO ====================
 
@@ -116,15 +93,12 @@ export function ListaVagas({
   // ==================== PAGINAÇÃO ====================
 
   const podeVoltar = paginaAtual > 0;
-
   const podeAvancar = paginaAtual + 1 < totalPaginas;
 
   // ==================== RENDER ====================
 
   return (
     <div className="flex flex-col h-full">
-      {/* ==================== LISTA ==================== */}
-
       <div className="flex-1 overflow-y-auto space-y-4">
         {loading ? (
           <p className="text-center text-gray-500 mt-4">Carregando vagas...</p>
@@ -139,23 +113,13 @@ export function ListaVagas({
         )}
       </div>
 
-      {/* ==================== PAGINAÇÃO ==================== */}
-
       {!loading && totalPaginas > 1 && (
         <div className="flex items-center justify-between border-t pt-3 mt-2 px-1">
           <button
             type="button"
             onClick={() => setPaginaAtual((p) => Math.max(0, p - 1))}
             disabled={!podeVoltar}
-            className="
-              px-3 py-1
-              text-sm
-              rounded-md
-              border
-              disabled:opacity-40
-              disabled:cursor-not-allowed
-              hover:bg-gray-100
-            "
+            className="px-3 py-1 text-sm rounded-md border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
           >
             Anterior
           </button>
@@ -169,15 +133,7 @@ export function ListaVagas({
             type="button"
             onClick={() => setPaginaAtual((p) => p + 1)}
             disabled={!podeAvancar}
-            className="
-              px-3 py-1
-              text-sm
-              rounded-md
-              border
-              disabled:opacity-40
-              disabled:cursor-not-allowed
-              hover:bg-gray-100
-            "
+            className="px-3 py-1 text-sm rounded-md border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
           >
             Próxima
           </button>

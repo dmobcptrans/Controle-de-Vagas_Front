@@ -5,13 +5,14 @@ import {
 } from '@/features/vaga/disponibilidadeVaga/hooks/useDisponibilidade';
 
 import toast from 'react-hot-toast';
-import { Disponibilidade } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { DisponibildadeVagaResponse } from '../types/disponibilidadeVaga2';
+import { VagaResponse } from '../../vagas/types/vaga2';
+
 
 interface UseDisponibilidadeActionsProps {
-  vagasPorLogradouro: Record<string, Vaga[]>;
-  disponibilidadesAgrupadas: Record<string, Record<string, Disponibilidade[]>>;
-  setDisponibilidades: React.Dispatch<React.SetStateAction<Disponibilidade[]>>;
+  vagasPorLogradouro: Record<string, VagaResponse[]>;
+  disponibilidadesAgrupadas: Record<string, Record<string, DisponibildadeVagaResponse[]>>;
+  setDisponibilidades: React.Dispatch<React.SetStateAction<DisponibildadeVagaResponse[]>>;
 }
 
 export interface SalvarDisponibilidadeData {
@@ -118,7 +119,6 @@ export function useDisponibilidadeActions({
   async function salvar({
     inicio,
     fim,
-    modo,
     selecionados,
   }: SalvarDisponibilidadeData) {
     if (!inicio || !fim) {

@@ -1,6 +1,7 @@
+
 import { useMemo } from 'react';
 import { useDisponibilidade } from '../../../usuarios/(personas)/gestores/hooks/disponibilidade/useDisponibilidade';
-import { Disponibilidade } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
+import { DisponibildadeVagaResponse } from './../types/disponibilidadeVaga2';
 
 /**
  * @hook useDisponibilidadesData
@@ -110,7 +111,7 @@ export function useDisponibilidadesData({ mes, ano }: Props) {
 
         return acc;
       },
-      {} as Record<string, Record<string, Disponibilidade[]>>,
+      {} as Record<string, Record<string, DisponibildadeVagaResponse[]>>,
     );
   }, [disponibilidades]);
 
