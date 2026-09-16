@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { Archive, Clock, MapPin } from 'lucide-react';
 
-import { ReservaGet } from '@/features/reserva/reservar-vaga/types/reserva';
+
+import { ReservaPorUsuarioResponse } from '@/features/reserva/reservas/types/reservas';
 
 const statusConfig = {
   ATIVA: {
@@ -29,7 +30,7 @@ const statusConfig = {
 type StatusKey = keyof typeof statusConfig;
 
 interface UltimasReservasProps {
-  reservas: ReservaGet[];
+  reservas: ReservaPorUsuarioResponse[];
   loading: boolean;
 }
 

@@ -10,8 +10,7 @@ import {
 
 import { Info, WifiOff, ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { PaginatedReservaRapidaResponse } from '@/features/reserva/reservar-vaga/types/reservaRapida';
-
+import { ReservaRapidaPaginadaResponse } from '@/features/reserva/reservas/types/reservaRapida';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -160,7 +159,7 @@ export default function ReservaRapidaPage() {
   const { user } = useAuth();
 
   const [paginatedData, setPaginatedData] =
-    useState<PaginatedReservaRapidaResponse | null>(null);
+    useState<ReservaRapidaPaginadaResponse | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
@@ -252,7 +251,7 @@ export default function ReservaRapidaPage() {
 
   const totalPaginas = paginatedData?.totalPaginas || 0;
 
-  const totalElementos = paginatedData?.totalElements || 0;
+  const totalElementos = paginatedData?.totalElementos || 0;
 
   const tamanhoPagina = paginatedData?.tamanhoPagina || 10;
 

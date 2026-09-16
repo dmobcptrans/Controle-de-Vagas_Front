@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import VagaItem from '@/features/usuarios/(personas)/gestores/components/cards/vagas-item';
 import { useVagaApi } from '../../hooks/useVaga';
-import { StatusVaga } from '../../types/vaga2';
+import { FiltroVaga, StatusVaga } from '../../types/vaga2';
 
 function useDebounce(value: string, delay = 300) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -16,8 +16,6 @@ function useDebounce(value: string, delay = 300) {
 
   return debouncedValue;
 }
-
-export type FiltroVaga = 'todas' | 'disponiveis' | 'indisponiveis';
 
 type ListaVagasProps = {
   searchQuery: string;

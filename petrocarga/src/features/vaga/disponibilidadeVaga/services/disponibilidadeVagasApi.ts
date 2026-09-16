@@ -4,7 +4,6 @@ import { clientApi } from '@/services/clientApi';
 import { ConfirmResult } from '@/lib/types/confirmResult';
 import {
   DisponibildadeVagaResponse,
-  DisponibildadeVagasPaginadasResponse,
   DisponibilidadesParam,
   DisponibilidadeVagaResumoResponse,
   DisponibilidadeVagasMultiplasPayload,
@@ -117,7 +116,7 @@ export async function criarMultiplasDisponibilidadesVaga(
 
 export async function getDisponibilidadeVagas(
   params?: DisponibilidadesParam,
-): Promise<DisponibildadeVagasPaginadasResponse> {
+): Promise<DisponibildadeVagaResponse[]> {
   try {
     const queryParams = new URLSearchParams();
     if (params?.vagaId !== undefined) {
@@ -147,7 +146,7 @@ export async function getDisponibilidadeVagas(
       const errorBody = await res.json().catch(() => null);
       throw errorBody ?? { message: `Erro HTTP ${res.status}` };
     }
-    const data: DisponibildadeVagasPaginadasResponse = await res.json();
+    const data: DisponibildadeVagaResponse[] = await res.json();
     return data;
   } catch (err: unknown) {
     throw new Error(

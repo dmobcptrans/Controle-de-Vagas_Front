@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { OperacoesVaga } from '@/features/vaga/vagas/types/vaga';
+import { OperacoesVaga } from '@/features/vaga/vagas/types/vaga2';
 
 interface DiaSemanaProps {
   name?: string;

@@ -17,7 +17,13 @@ export type DiaSemana =
 
 export type NumeroDiaSemana = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
+export type FiltroVaga =
+  | 'todas'
+  | 'disponiveis'
+  | 'indisponiveis'
+  | 'manutencao';
 
+  
 // PARAMS 
 export type FiltrosVaga = {
   status?: StatusVaga;
@@ -52,10 +58,10 @@ export interface Endereco {
 
 export interface OperacoesVaga {
   id?: string;
-  codigoDiaSemana?: NumeroDiaSemana;
-  diaSemanaAsEnum?: DiaSemana;
-  horaInicio: string;
-  horaFim: string;
+  codigoDiaSemana?: number;
+  diaSemanaAsEnum: DiaSemana;
+  horaInicio: string; 
+  horaFim: string; 
 }
 
 // Criar Vaga | Atualizar Vaga
@@ -71,7 +77,7 @@ export type VagaPayload = {
   longitudeFim: number;
   TipoVaga: TipoVaga;
   comprimento: number;
-  operacoesVaga: OperacoesVaga;
+  operacoesVaga: OperacoesVaga[];
 };
 
 // (/vagas/{id}) | (/vagas/all)
@@ -89,7 +95,7 @@ export type VagaResponse = {
   comprimento: number;
   quantidade: number;
   status: StatusVaga;
-  operacoesVaga: OperacoesVaga;
+  operacoesVaga: OperacoesVaga[];
 };
 
 // (/vagas/resumo) | é chamado tmb em reserva

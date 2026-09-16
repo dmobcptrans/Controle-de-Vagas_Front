@@ -1,6 +1,5 @@
-import { DiaSemana, OperacoesVaga } from '@/features/vaga/vagas/types/vaga';
 import { ReservaBloqueiosResponse, ReservaResponse } from '../../reservas/types/reservas';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse, DiaSemana, OperacoesVaga } from '@/features/vaga/vagas/types/vaga2';
 
 
 /**
@@ -246,7 +245,7 @@ export const filtrarHorariosFim = (
 export const gerarHorariosOcupadosPorArea = (
   reserva: ReservaResponse,
   intervalo: number,
-  area: Vaga['area'],
+  area: VagaResponse['area'],
 ): string[] => {
   const limites: Record<string, number> = {
     VERMELHA: 1,

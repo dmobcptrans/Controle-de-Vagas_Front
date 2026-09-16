@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { MapReserva } from '@/features/map/components/MapReserva';
 import ReservaComponent from '@/features/reserva/reservar-vaga/components/ReservaComponent';
 
-import { Vaga, VagaMapa } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse, VagasMapa } from '@/features/vaga/vagas/types/vaga2';
 import {
   CTASearch,
   SuggestionWithCoords,
@@ -76,7 +76,7 @@ export default function ReservaPage() {
   // ==================== ESTADOS ====================
   const [step, setStep] = useState<'mapa' | 'reserva'>('mapa');
 
-  const [selectedVaga, setSelectedVaga] = useState<Vaga | null>(null);
+  const [selectedVaga, setSelectedVaga] = useState<VagaResponse | null>(null);
 
   const [loadingVaga, setLoadingVaga] = useState(false);
 
@@ -99,7 +99,7 @@ export default function ReservaPage() {
 
   // ==================== HANDLERS ====================
 
-  const handleSelectVaga = async (vagaResumo: VagaMapa) => {
+  const handleSelectVaga = async (vagaResumo: VagasMapa) => {
     try {
       setLoadingVaga(true);
 

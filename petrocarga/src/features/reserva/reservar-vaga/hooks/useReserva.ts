@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { DIAS_SEMANA } from './reservaHelpers';
 import { Veiculo } from '@/features/veiculos/types/veiculo';
-import { DiaSemana, Vaga } from '@/features/vaga/vagas/types/vaga';
+import { DiaSemana, VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import { ReservaState } from '../types/reservaState';
 import { ConfirmResult } from '@/lib/types/confirmResult';
 
@@ -123,7 +123,7 @@ import { getVeiculosVinculadosMotoristaEmpresa } from '@/features/usuarios/(pers
  * ```
  */
 
-export function useReserva(selectedVaga: Vaga | null) {
+export function useReserva(selectedVaga: VagaResponse | null) {
   const { user } = useAuth();
   const isAgente = user?.permissao === 'AGENTE';
   const isEmpresa = user?.permissao === 'EMPRESA';
@@ -267,7 +267,7 @@ export function useReserva(selectedVaga: Vaga | null) {
 
   // ==================== BUSCA HORÁRIOS DISPONÍVEIS ====================
   const fetchHorariosDisponiveis = useCallback(
-    async (day: Date, vaga: Vaga, vehicleId?: string): Promise<string[]> => {
+    async (day: Date, vaga: VagaResponse, vehicleId?: string): Promise<string[]> => {
       setLoadingHorarios(true);
       setHorariosCarregados(false);
 
@@ -343,7 +343,7 @@ export function useReserva(selectedVaga: Vaga | null) {
 
   // ==================== CÁLCULO DE HORÁRIOS FINAIS ====================
   const calcularReservedTimesEnd = useCallback(
-    (start: string, vaga: Vaga) => {
+    (start: string, vaga: VagaResponse) => {
       if (!start || !reservaState.selectedDay) return [];
 
       const limites: Record<string, number> = {

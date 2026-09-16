@@ -1,4 +1,3 @@
-import { Paginacao } from "@/lib/types/paginacao";
 import { Endereco } from "../../vagas/types/vaga2";
 
 
@@ -34,6 +33,7 @@ export type DisponibildadeVagaResponse = {
     enredeco: Endereco;
     referenciaEndereco: string;
     numeroEndereco: string;
+    inicio: string;
     fim: string;
     criadoEm: string;
     criadoPorId: string;
@@ -45,4 +45,3 @@ export type DisponibilidadeVagaResumoResponse = {
     fim: string
 }
 
-export type DisponibildadeVagasPaginadasResponse = Paginacao<DisponibildadeVagaResponse>;

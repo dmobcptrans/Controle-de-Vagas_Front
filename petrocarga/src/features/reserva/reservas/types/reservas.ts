@@ -1,5 +1,5 @@
 import { MotoristaResponse } from '@/features/usuarios/(personas)/motoristas/types/motorista2';
-import { EnderecoVaga } from '@/features/vaga/enderecoVaga/types/enderecoVaga';
+import { Endereco } from '@/features/vaga/vagas/types/vaga2';
 import { VagasResumo } from '@/features/vaga/vagas/types/vaga2';
 import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 import { Paginacao } from '@/lib/types/paginacao';
@@ -88,7 +88,7 @@ export type ReservaResponse = {
   motoristaCpf: string;
   numeroEndereco: string;
   referenciaEndereco: string;
-  enderecoVaga: EnderecoVaga
+  enderecoVaga: Endereco
   inicio: string;
   fim: string;
   tamanhoVeiculo: string;

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import VagaDetalhes from '@/features/usuarios/(personas)/gestores/components/cards/vaga-card';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import { useParams } from 'next/navigation';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -91,7 +91,7 @@ export default function VagaPosting() {
   // Trata o caso do ID vir como array (ex: ['123', 'detalhes'])
   const id = Array.isArray(params.id) ? params.id[0] : (params.id as string);
 
-  const [vaga, setVaga] = useState<Vaga | null>(null);
+  const [vaga, setVaga] = useState<VagaResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 

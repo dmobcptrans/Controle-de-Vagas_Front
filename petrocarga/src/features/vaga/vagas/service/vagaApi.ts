@@ -92,16 +92,26 @@ export async function criarVaga(formData: FormData): Promise<VagaResponse> {
       logradouro: formData.get('logradouro') as string,
       bairro: formData.get('bairro') as string,
     },
+
     area: formData.get('area') as AreaVaga,
+
     numeroEndereco: formData.get('numeroEndereco') as string,
+
     referenciaEndereco: formData.get('descricao') as string,
+
     TipoVaga: formData.get('tipo') as TipoVaga,
+
     latitudeInicio: Number(formData.get('latitudeInicio')),
+
     latitudeFim: Number(formData.get('latitudeFim')),
+
     longitudeInicio: Number(formData.get('longitudeInicio')),
+
     longitudeFim: Number(formData.get('longitudeFim')),
+
     comprimento: Number(formData.get('comprimento')),
-    operacoesVaga: diasSemana[0],
+
+    operacoesVaga: diasSemana,
   };
 
   try {
@@ -110,7 +120,19 @@ export async function criarVaga(formData: FormData): Promise<VagaResponse> {
       json: body,
     });
 
-    return (await res.json()) as VagaResponse;
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+
+      throw (
+        errorBody ?? {
+          message: `Erro HTTP ${res.status}`,
+        }
+      );
+    }
+
+    const data: VagaResponse = await res.json();
+
+    return data;
   } catch (err: unknown) {
     throw new Error(getApiErrorMessage(err, 'Erro ao criar vaga.'));
   }

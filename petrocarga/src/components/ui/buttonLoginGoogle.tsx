@@ -71,7 +71,7 @@ export default function ButtonLoginGoogle({
         throw new Error('Token do Google não recebido.');
       }
 
-      await loginWithGoogle(token);
+      await loginWithGoogle({token}); //o back espera um objeto com {token: <token>: String}
 
       toast.success('Login com Google realizado com sucesso!');
     } catch (err: any) {

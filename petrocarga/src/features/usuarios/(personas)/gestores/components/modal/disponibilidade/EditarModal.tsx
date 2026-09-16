@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
-import { Disponibilidade } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
+import { DisponibildadeVagaResponse } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga2';
 
 /**
  * Estados do modal para navegação hierárquica
@@ -18,10 +18,10 @@ import { Disponibilidade } from '@/features/vaga/disponibilidadeVaga/types/dispo
  * - INICIAL: Estado inicial padrão
  */
 type ModalStep =
-  | { type: 'GRUPO_LISTA'; data: Record<string, Disponibilidade[]> }
+  | { type: 'GRUPO_LISTA'; data: Record<string, DisponibildadeVagaResponse[]> }
   | {
       type: 'VAGAS_LISTA';
-      data: { logradouro: string; vagas: Disponibilidade[] };
+      data: { logradouro: string; vagas: DisponibildadeVagaResponse[] };
     }
   | {
       type: 'EDITAR_INDIVIDUAL';
@@ -29,14 +29,14 @@ type ModalStep =
     }
   | {
       type: 'EDITAR_GRUPO';
-      data: { logradouro: string; vagas: Disponibilidade[] };
+      data: { logradouro: string; vagas: DisponibildadeVagaResponse[] };
     }
   | { type: 'INICIAL'; data: null };
 
 interface EditarModalProps {
   open: boolean;
   onClose: () => void;
-  gruposAgrupados: Record<string, Disponibilidade[]> | null;
+  gruposAgrupados: Record<string, DisponibildadeVagaResponse[]> | null;
 
   // Ações passadas do useDisponibilidadeActions
   onEditarIntervalo: (
@@ -262,7 +262,7 @@ export function EditarModal({
                   className="flex justify-between p-2 border rounded"
                 >
                   <p className="font-medium">
-                    {v.endereco.logradouro}, {v.numeroEndereco}
+                    {v.enredeco.logradouro}, {v.numeroEndereco}
                   </p>
 
                   <div className="flex gap-2">

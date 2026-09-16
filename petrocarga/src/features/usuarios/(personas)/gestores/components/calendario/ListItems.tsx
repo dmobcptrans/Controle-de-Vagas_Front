@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Reserva } from '@/features/reserva/reservar-vaga/types/reserva';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import { Veiculo } from '@/features/veiculos/types/veiculo';
 import { formatTime } from '@/components/utils/gestor/calendario/utils';
 
@@ -75,7 +75,7 @@ export const LogradouroItem = ({
   onClick,
 }: {
   logradouro: string;
-  reservas: Reserva[];
+  reservas: ReservaResponse[];
   onClick: () => void;
 }) => {
   // Conta reservas ativas (ATIVA/RESERVADA) vs finalizadas
@@ -154,8 +154,8 @@ export const VagaItem = ({
   onClick,
 }: {
   vagaId: string;
-  vagasCache: Record<string, Vaga | null>;
-  reservas: Reserva[];
+  vagasCache: Record<string, VagaResponse | null>;
+  reservas: ReservaResponse[];
   onClick: () => void;
 }) => {
   const vagaInfo = vagasCache[vagaId] ?? null;
@@ -216,7 +216,7 @@ export const ReservaItem = ({
   reserva,
   onClick,
 }: {
-  reserva: Reserva;
+  reserva: ReservaResponse;
   veiculo?: Veiculo;
   onClick: () => void;
 }) => {

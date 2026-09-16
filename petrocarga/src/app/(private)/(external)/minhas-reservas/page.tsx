@@ -16,10 +16,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import ReservaLista from '@/features/reserva/reservas/components/ReservaLista';
-import {
-  ReservaGet,
-  PaginatedReservaResponse,
-} from '@/features/reserva/reservar-vaga/types/reserva';
+import { ReservaPorUsuarioResponse, ReservaPaginadaDeUmUsuario } from '@/features/reserva/reservas/types/reservas';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -223,7 +220,7 @@ const updateOnlineStatus = (setIsOffline: (v: boolean) => void) => {
 export default function MinhasReservas() {
   const { user } = useAuth();
   const [paginatedData, setPaginatedData] =
-    useState<PaginatedReservaResponse | null>(null);
+    useState<ReservaPaginadaDeUmUsuario | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -311,7 +308,7 @@ export default function MinhasReservas() {
     }
   };
 
-  const handleCheckoutReserva = async (reserva: ReservaGet) => {
+  const handleCheckoutReserva = async (reserva: ReservaPorUsuarioResponse) => {
     if (!navigator.onLine) {
       toast.error(
         'Você está offline. O checkout só é permitido com conexão à internet.',

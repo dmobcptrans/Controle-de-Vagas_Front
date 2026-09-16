@@ -7,11 +7,11 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { useVagasReserva } from '../hooks/useVagasReserva';
 import { useMapbox } from '../hooks/useMapbox';
 import { addVagaMarkersReserva } from '../utils/markerUtilsReserva';
-import { VagaMapa } from '@/features/vaga/vagas/types/vaga';
+import { VagasMapa } from '@/features/vaga/vagas/types/vaga2';
 import { Loader2 } from 'lucide-react';
 
 interface MapReservaProps {
-  onClickVaga?: (vaga: VagaMapa) => void;
+  onClickVaga?: (vaga: VagasMapa) => void;
   selectedLocation?: {
     lat: number;
     lng: number;

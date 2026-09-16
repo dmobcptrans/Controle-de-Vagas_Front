@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import EditarVaga from '@/features/usuarios/(personas)/gestores/components/editar/edicao-vaga';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
@@ -99,7 +99,7 @@ export default function EditarVagaPage() {
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const { loading: authLoading } = useAuth();
-  const [vaga, setVaga] = useState<Vaga | null>(null);
+  const [vaga, setVaga] = useState<VagaResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();

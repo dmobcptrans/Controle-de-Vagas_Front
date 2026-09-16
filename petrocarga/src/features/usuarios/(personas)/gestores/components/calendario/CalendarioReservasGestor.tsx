@@ -9,14 +9,14 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { toDateKey, dayStartISO } from '@/components/utils/gestor/calendario/utils';
 import type { EventClickArg, EventInput } from '@fullcalendar/core';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
-import type { Reserva } from '@/features/reserva/reservar-vaga/types/reserva';
-import type { Vaga } from '@/features/vaga/vagas/types/vaga';
+import type { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
+import type { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import { useCalendarioMes } from '@/contexts/CalendarioMesContext';
 
 // ==================== TIPOS ====================
 
 interface ReservasPorLogradouro {
-  [logradouro: string]: Reserva[];
+  [logradouro: string]: ReservaResponse[];
 }
 
 interface ReservasPorDia {
@@ -30,13 +30,13 @@ type ModalState =
     }
   | {
       type: 'vagasLogradouro';
-      data: { logradouro: string; reservasDoLogradouro: Reserva[] };
+      data: { logradouro: string; reservasDoLogradouro: ReservaResponse[] };
     }
   | {
       type: 'vaga';
-      data: { vagaId: string; vagaInfo: Vaga | null; reservas: Reserva[] };
+      data: { vagaId: string; vagaInfo: VagaResponse | null; reservas: ReservaResponse[] };
     }
-  | { type: 'reserva'; data: { reserva: Reserva; vagaInfo: Vaga | null } }
+  | { type: 'reserva'; data: { reserva: ReservaResponse; vagaInfo: VagaResponse | null } }
   | { type: null; data: null };
 
 // ============================================================================
@@ -75,7 +75,7 @@ export default function CalendarioReservasGestor() {
     return () => clearInterval(interval);
   }, [mes, carregarReservas, carregarReservasDoDia]);
 
-  const vagaCacheRef = useRef<Record<string, Vaga | null>>({});
+  const vagaCacheRef = useRef<Record<string, VagaResponse | null>>({});
   const [, forceUpdate] = useState(0);
   const [modalState, setModalState] = useState<ModalState>({
     type: null,
@@ -153,7 +153,7 @@ export default function CalendarioReservasGestor() {
     const missing = vagaIds.filter((id) => !(id in vagaCacheRef.current));
     if (!missing.length) return;
 
-    const newEntries: Record<string, Vaga | null> = {};
+    const newEntries: Record<string, VagaResponse | null> = {};
 
     await Promise.all(
       missing.map(async (id) => {
@@ -200,7 +200,7 @@ export default function CalendarioReservasGestor() {
 
   const handleCheckoutForcado = async (
     reservaId: string,
-    reservaData: Reserva,
+    reservaData: ReservaResponse,
   ) => {
     if (actionLoading) return;
     try {

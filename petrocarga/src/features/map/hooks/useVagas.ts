@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import * as vagaApi from '@/features/vaga/vagas/service/vagaApi';
 
 /**
@@ -71,7 +71,7 @@ import * as vagaApi from '@/features/vaga/vagas/service/vagaApi';
  */
 
 export function useVagas() {
-  const [vagas, setVagas] = useState<Vaga[]>([]);
+  const [vagas, setVagas] = useState<VagaResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,7 +79,7 @@ export function useVagas() {
     const fetchVagas = async () => {
       setLoading(true);
       try {
-        const data: Vaga[] = await vagaApi.getVagas();
+        const data: VagaResponse[] = await vagaApi.getVagas();
         setVagas(data);
       } catch (err) {
         console.error('Erro ao carregar vagas:', err);

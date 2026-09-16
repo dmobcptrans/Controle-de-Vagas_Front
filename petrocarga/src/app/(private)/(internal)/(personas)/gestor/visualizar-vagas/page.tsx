@@ -3,15 +3,21 @@
 import { ViewMap } from '@/features/map/components/viewMap';
 import { useEffect, useState } from 'react';
 import { ListaVagas } from '@/features/vaga/vagas/components/(gestor)/listaVagas';
-import { CheckCircle, Info, ParkingSquare, XCircle } from 'lucide-react';
+import {
+  CheckCircle,
+  Info,
+  ParkingSquare,
+  Wrench,
+  XCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 import FloatingButton from '@/components/ui/floatingButton';
 import { useRouter } from 'next/navigation';
 import { CTASearch } from '@/components/ui/CTA/search/CTASearch';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/ui/Header/Header';
+import { FiltroVaga } from '@/features/vaga/vagas/types/vaga2';
 
-type FiltroVaga = 'todas' | 'disponiveis' | 'indisponiveis';
 
 export default function Page() {
   // --------------------------------------------------------------------------
@@ -19,11 +25,11 @@ export default function Page() {
   // --------------------------------------------------------------------------
 
   const [selectedPlace, setSelectedPlace] = useState(null);
-
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [filtroVaga, setFiltroVaga] = useState<FiltroVaga>('todas');
+  const [filtroVaga, setFiltroVaga] =
+    useState<FiltroVaga>('todas');
 
   const router = useRouter();
 
@@ -60,7 +66,9 @@ export default function Page() {
     setFirstCoord(null);
   };
 
-  const hasActiveFilters = Boolean(inputValue.trim()) || filtroVaga !== 'todas';
+  const hasActiveFilters =
+    Boolean(inputValue.trim()) ||
+    filtroVaga !== 'todas';
 
   // --------------------------------------------------------------------------
   // RENDER
@@ -91,12 +99,18 @@ export default function Page() {
                 Disponibilidade
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                 {/* TODAS */}
                 <Button
                   type="button"
-                  variant={filtroVaga === 'todas' ? 'default' : 'outline'}
-                  onClick={() => handleFiltroVaga('todas')}
+                  variant={
+                    filtroVaga === 'todas'
+                      ? 'default'
+                      : 'outline'
+                  }
+                  onClick={() =>
+                    handleFiltroVaga('todas')
+                  }
                 >
                   <ParkingSquare className="mr-2 h-4 w-4" />
                   Todas
@@ -105,8 +119,14 @@ export default function Page() {
                 {/* DISPONÍVEIS */}
                 <Button
                   type="button"
-                  variant={filtroVaga === 'disponiveis' ? 'default' : 'outline'}
-                  onClick={() => handleFiltroVaga('disponiveis')}
+                  variant={
+                    filtroVaga === 'disponiveis'
+                      ? 'default'
+                      : 'outline'
+                  }
+                  onClick={() =>
+                    handleFiltroVaga('disponiveis')
+                  }
                 >
                   <CheckCircle className="mr-2 h-4 w-4" />
                   Disponíveis
@@ -116,12 +136,32 @@ export default function Page() {
                 <Button
                   type="button"
                   variant={
-                    filtroVaga === 'indisponiveis' ? 'default' : 'outline'
+                    filtroVaga === 'indisponiveis'
+                      ? 'default'
+                      : 'outline'
                   }
-                  onClick={() => handleFiltroVaga('indisponiveis')}
+                  onClick={() =>
+                    handleFiltroVaga('indisponiveis')
+                  }
                 >
                   <XCircle className="mr-2 h-4 w-4" />
                   Indisponíveis
+                </Button>
+
+                {/* MANUTENÇÃO */}
+                <Button
+                  type="button"
+                  variant={
+                    filtroVaga === 'manutencao'
+                      ? 'default'
+                      : 'outline'
+                  }
+                  onClick={() =>
+                    handleFiltroVaga('manutencao')
+                  }
+                >
+                  <Wrench className="mr-2 h-4 w-4" />
+                  Manutenção
                 </Button>
               </div>
             </div>
@@ -131,12 +171,17 @@ export default function Page() {
               <ParkingSquare className="h-4 w-4 text-[#FFCD07]" />
 
               <span className="text-sm text-white/80">
-                {filtroVaga === 'todas' && 'Mostrando todas as vagas'}
+                {filtroVaga === 'todas' &&
+                  'Mostrando todas as vagas'}
 
-                {filtroVaga === 'disponiveis' && 'Mostrando vagas disponíveis'}
+                {filtroVaga === 'disponiveis' &&
+                  'Mostrando vagas disponíveis'}
 
                 {filtroVaga === 'indisponiveis' &&
                   'Mostrando vagas indisponíveis'}
+
+                {filtroVaga === 'manutencao' &&
+                  'Mostrando vagas em manutenção'}
               </span>
             </div>
           }
@@ -159,7 +204,9 @@ export default function Page() {
             <ListaVagas
               searchQuery={searchQuery}
               filtro={filtroVaga}
-              onSelectFirstCoordinate={(coord) => setFirstCoord(coord)}
+              onSelectFirstCoordinate={(coord) =>
+                setFirstCoord(coord)
+              }
             />
           </div>
         </div>
@@ -200,7 +247,9 @@ export default function Page() {
 
       <FloatingButton
         label="Adicionar Vaga"
-        onClick={() => router.push('/gestor/adicionar-vagas')}
+        onClick={() =>
+          router.push('/gestor/adicionar-vagas')
+        }
       />
     </div>
   );

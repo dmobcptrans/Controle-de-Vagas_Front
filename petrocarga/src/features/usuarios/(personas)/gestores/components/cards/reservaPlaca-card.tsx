@@ -1,4 +1,4 @@
-import { ReservaPlaca } from '@/features/reserva/reservar-vaga/types/reservaPlaca';
+import { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, MapPin, User, Car } from 'lucide-react';
@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface ReservaPlacaCardProps {
-  reserva: ReservaPlaca;
+  reserva: ReservaResponse;
 }
 
 /**

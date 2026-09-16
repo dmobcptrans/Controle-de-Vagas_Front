@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Vaga, DiaSemana } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse, DiaSemana } from '@/features/vaga/vagas/types/vaga2';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -10,7 +10,7 @@ import { deleteVaga } from '@/features/vaga/vagas/service/vagaApi';
 import toast from 'react-hot-toast';
 
 type VagaDetalhesProps = {
-  vaga: Vaga;
+  vaga: VagaResponse;
 };
 
 const diasSemana: DiaSemana[] = [

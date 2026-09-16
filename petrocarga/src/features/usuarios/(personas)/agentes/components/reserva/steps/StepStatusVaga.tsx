@@ -1,6 +1,6 @@
 'use client';
 
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 
 interface SlotLivre {
   inicio: Date;
@@ -10,7 +10,7 @@ interface SlotLivre {
 
 interface StepStatusVagaProps {
   vagaDisponivel: boolean | null;
-  selectedVaga: Vaga;
+  selectedVaga: VagaResponse;
   slotLivre: SlotLivre | null;
   onContinuar: () => void;
   onVoltar: () => void;

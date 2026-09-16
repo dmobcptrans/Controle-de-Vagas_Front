@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getVeiculo } from '@/features/veiculos/services/veiculoApi';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
 import { Veiculo } from '@/features/veiculos/types/veiculo';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 
 /**
  * @hook useReservaData
@@ -82,7 +82,7 @@ import { Vaga } from '@/features/vaga/vagas/types/vaga';
 
 export function useReservaData(veiculoId: string, vagaId: string) {
   const [veiculo, setVeiculo] = useState<Veiculo | null>(null);
-  const [vaga, setVaga] = useState<Vaga | null>(null);
+  const [vaga, setVaga] = useState<VagaResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

@@ -14,7 +14,7 @@ import Link from 'next/link';
 
 import { getReservasPorPlaca } from '@/features/reserva/reservas/services/reservaApi';
 
-import { ReservaPlaca } from '@/features/reserva/reservar-vaga/types/reservaPlaca';
+import { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
 
 import ReservaPlacaCard from '@/features/usuarios/(personas)/gestores/components/cards/reservaPlaca-card';
 
@@ -71,7 +71,7 @@ export default function ConsultarPlacaPage() {
 
   const [placa, setPlaca] = useState('');
 
-  const [reservas, setReservas] = useState<ReservaPlaca[]>([]);
+  const [reservas, setReservas] = useState<ReservaResponse[]>([]);
 
   const [loading, setLoading] = useState(false);
 

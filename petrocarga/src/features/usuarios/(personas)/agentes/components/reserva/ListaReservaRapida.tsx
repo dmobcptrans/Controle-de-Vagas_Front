@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { ChevronDown, ChevronUp, Archive } from 'lucide-react';
 import ReservaRapidaCard from '../cards/reservaRapida-card';
-import { ReservaRapida } from '@/features/reserva/reservar-vaga/types/reservaRapida';
+import { ReservaRapidaResponse } from '@/features/reserva/reservas/types/reservaRapida';
 import EmptyState from '@/features/reserva/reservas/components/EmptyState';
 
 // ==================== CONSTANTES (Fora do componente) ====================
@@ -35,14 +35,14 @@ const HIDDEN_STATUSES = new Set(['CONCLUIDA', 'CANCELADA', 'REMOVIDA']);
  * @function sortReservas
  * @description Ordena reservas por prioridade (ATIVA > RESERVADA > CONCLUIDA > CANCELADA > REMOVIDA)
  */
-const sortReservas = (a: ReservaRapida, b: ReservaRapida) => {
+const sortReservas = (a: ReservaRapidaResponse, b: ReservaRapidaResponse) => {
   const pa = PRIORIDADE[a.status] ?? 999;
   const pb = PRIORIDADE[b.status] ?? 999;
   return pa - pb;
 };
 
 interface ReservaListaProps {
-  reservas: ReservaRapida[];
+  reservas: ReservaRapidaResponse[];
   onCheckout: (reserva: string) => void;
 }
 
@@ -118,7 +118,7 @@ export default function ListaReservaRapida({
         }
         return acc;
       },
-      { visiveis: [] as ReservaRapida[], ocultas: [] as ReservaRapida[] },
+      { visiveis: [] as ReservaRapidaResponse[], ocultas: [] as ReservaRapidaResponse[] },
     );
 
     return {

@@ -1,7 +1,7 @@
 'use client';
 
 import { buttonVariants } from '@/components/ui/button';
-import { ReservaRapida } from '@/features/reserva/reservar-vaga/types/reservaRapida';
+import { ReservaRapidaResponse } from '@/features/reserva/reservas/types/reservaRapida';
 import { cn } from '@/lib/utils';
 import {
   Calendar,
@@ -14,7 +14,7 @@ import {
 import { useState, useTransition } from 'react';
 
 interface ReservaRapidaCardProps {
-  reserva: ReservaRapida;
+  reserva: ReservaRapidaResponse;
   onCheckout?: (reservaId: string) => void;
 }
 

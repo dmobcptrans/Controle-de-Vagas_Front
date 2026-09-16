@@ -2,10 +2,10 @@
 
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 
 interface CardMapProps {
-  vaga: Vaga;
+  vaga: VagaResponse;
 }
 
 /**

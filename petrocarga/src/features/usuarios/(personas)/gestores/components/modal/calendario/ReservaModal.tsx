@@ -11,32 +11,32 @@ import {
   VagaItem,
   ReservaItem,
 } from '../../calendario/ListItems';
-import { Reserva } from '@/features/reserva/reservar-vaga/types/reserva';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 
 export type ModalState =
   | {
     type: 'group';
-    data: { dateStr: string; logradouros: Record<string, Reserva[]> };
+    data: { dateStr: string; logradouros: Record<string, ReservaResponse[]> };
   }
   | {
     type: 'vagasLogradouro';
-    data: { logradouro: string; reservasDoLogradouro: Reserva[] };
+    data: { logradouro: string; reservasDoLogradouro: ReservaResponse[] };
   }
   | {
     type: 'vaga';
-    data: { vagaId: string; vagaInfo: Vaga | null; reservas: Reserva[] };
+    data: { vagaId: string; vagaInfo: VagaResponse | null; reservas: ReservaResponse[] };
   }
-  | { type: 'reserva'; data: { reserva: Reserva; vagaInfo: Vaga | null } }
+  | { type: 'reserva'; data: { reserva: ReservaResponse; vagaInfo: VagaResponse | null } }
   | { type: null; data: null };
 
 interface ModalProps {
   modalState: ModalState;
-  vagaCache: Record<string, Vaga | null>;
+  vagaCache: Record<string, VagaResponse | null>;
   close: () => void;
-  openVagasLogradouro: (logradouro: string, reservas: Reserva[]) => void;
-  openVagaModal: (vagaId: string, reservas: Reserva[]) => void;
-  openReservaModal: (reserva: Reserva) => void;
+  openVagasLogradouro: (logradouro: string, reservas: ReservaResponse[]) => void;
+  openVagaModal: (vagaId: string, reservas: ReservaResponse[]) => void;
+  openReservaModal: (reserva: ReservaResponse) => void;
   checkoutForcado: (reservaId: string) => void;
   goBack: () => void;
 }
@@ -158,7 +158,7 @@ export const ReservaModal = ({
             acc[vagaId].push(reserva);
             return acc;
           },
-          {} as Record<string, Reserva[]>,
+          {} as Record<string, ReservaResponse[]>,
         );
 
         return (

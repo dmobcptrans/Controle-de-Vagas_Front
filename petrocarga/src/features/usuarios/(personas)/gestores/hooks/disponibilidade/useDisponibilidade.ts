@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Disponibilidade } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
+import { DisponibildadeVagaResponse } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga2';
 import { getDisponibilidadeVagas } from '@/features/vaga/disponibilidadeVaga/services/disponibilidadeVagasApi';
 
 /**
@@ -72,7 +72,7 @@ type Props = {
 };
 
 export function useDisponibilidade({ mes, ano }: Props) {
-  const [disponibilidades, setDisponibilidades] = useState<Disponibilidade[]>(
+  const [disponibilidades, setDisponibilidades] = useState<DisponibildadeVagaResponse[]>(
     [],
   );
   const [loading, setLoading] = useState(false);

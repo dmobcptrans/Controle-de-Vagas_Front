@@ -7,7 +7,7 @@ import { Info } from 'lucide-react';
 import { MapReserva } from '@/features/map/components/MapReserva';
 import ReservaAgente from '@/features/usuarios/(personas)/agentes/components/reserva/ReservaAgente';
 
-import { Vaga, VagaMapa } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse, VagasMapa } from '@/features/vaga/vagas/types/vaga2';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
 
 import {
@@ -28,7 +28,7 @@ export default function ReservaRapidaPage() {
 
   const [step, setStep] = useState<'mapa' | 'reserva'>('mapa');
 
-  const [selectedVaga, setSelectedVaga] = useState<Vaga | null>(null);
+  const [selectedVaga, setSelectedVaga] = useState<VagaResponse | null>(null);
 
   const [loadingVaga, setLoadingVaga] = useState(false);
 
@@ -58,7 +58,7 @@ export default function ReservaRapidaPage() {
 
   // ==================== HANDLERS ====================
 
-  const handleSelectVaga = async (vagaResumo: VagaMapa) => {
+  const handleSelectVaga = async (vagaResumo: VagasMapa) => {
     try {
       setLoadingVaga(true);
 

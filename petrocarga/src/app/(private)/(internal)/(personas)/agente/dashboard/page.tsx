@@ -17,7 +17,7 @@ import { getReservasRapidas } from '@/features/reserva/reservas/services/reserva
 import { getDenuncias } from '@/features/denuncias/services/denunciaApi';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ReservaRapida } from '@/features/reserva/reservar-vaga/types/reservaRapida';
+import { ReservaRapidaResponse } from '@/features/reserva/reservas/types/reservaRapida';
 import { Header } from '@/components/ui/Header/Header';
 import { CTA } from '@/components/ui/CTA/CTA';
 
@@ -168,7 +168,7 @@ function SkeletonCard() {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [reservas, setReservas] = useState<ReservaRapida[]>([]);
+  const [reservas, setReservas] = useState<ReservaRapidaResponse[]>([]);
   const [totalDenuncias, setTotalDenuncias] = useState(0);
   const [loading, setLoading] = useState(true);
 

@@ -8,7 +8,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Veiculo } from '@/features/veiculos/types/veiculo';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 
 interface ReservaSummaryProps {
   form: {
@@ -23,7 +23,7 @@ interface ReservaSummaryProps {
   };
   veiculo: Veiculo | null;
   initialVeiculoId: string | null;
-  vaga: Vaga | null;
+  vaga: VagaResponse | null;
   isSaving: boolean;
   onEditVehicle: () => void;
   onEditTime: () => void;

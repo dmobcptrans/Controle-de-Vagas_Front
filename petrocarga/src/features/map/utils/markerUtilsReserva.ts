@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { VagaMapa } from '@/features/vaga/vagas/types/vaga';
+import { VagasMapa } from '@/features/vaga/vagas/types/vaga2';
 
 /**
  * @module utils/map/markersReserva
@@ -62,9 +62,9 @@ import { VagaMapa } from '@/features/vaga/vagas/types/vaga';
  */
 export function addVagaMarkersReserva(
   map: mapboxgl.Map,
-  vagas: VagaMapa[],
+  vagas: VagasMapa[],
   markersRef: React.MutableRefObject<mapboxgl.Marker[]>,
-  onClickVaga?: (vaga: VagaMapa) => void,
+  onClickVaga?: (vaga: VagasMapa) => void,
 ) {
   vagas.forEach((vaga) => {
     // Ignora vagas sem coordenadas de início

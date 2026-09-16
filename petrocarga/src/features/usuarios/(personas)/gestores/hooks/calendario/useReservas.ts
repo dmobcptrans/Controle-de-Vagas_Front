@@ -1,8 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getReservas, finalizarForcado } from '@/features/reserva/reservas/services/reservaApi';
-import { Reserva } from '@/features/reserva/reservar-vaga/types/reserva';
+import {
+  getReservas,
+  finalizarForcado,
+} from '@/features/reserva/reservas/services/reservaApi';
+import { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
 import { toast } from 'sonner';
 
 /**
@@ -72,8 +75,8 @@ import { toast } from 'sonner';
  */
 
 export default function useReservas() {
-  const [reservasDoMes, setReservasDoMes] = useState<Reserva[]>([]);
-  const [reservasDoDia, setReservasDoDia] = useState<Reserva[]>([]);
+  const [reservasDoMes, setReservasDoMes] = useState<ReservaResponse[]>([]);
+  const [reservasDoDia, setReservasDoDia] = useState<ReservaResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -121,11 +124,12 @@ export default function useReservas() {
 
   // ==================== CHECKOUT FORÇADO ====================
   const finalizarReservaForcada = useCallback(
-    async (reservaID: string, reservaData?: Reserva) => {
+    async (reservaID: string, reservaData?: ReservaResponse) => {
       setActionLoading(true);
 
       try {
         let reserva = reservaData;
+
         if (!reserva) {
           reserva =
             reservasDoMes.find((r) => r.id === reservaID) ||
@@ -133,7 +137,11 @@ export default function useReservas() {
 
           if (!reserva) {
             toast.error('Reserva não encontrada');
-            return { error: true, message: 'Reserva não encontrada' };
+
+            return {
+              error: true,
+              message: 'Reserva não encontrada',
+            };
           }
         }
 
@@ -147,40 +155,40 @@ export default function useReservas() {
         );
 
         if (!confirmar) {
-          return { error: true, message: 'Ação cancelada pelo usuário' };
+          return {
+            error: true,
+            message: 'Ação cancelada pelo usuário',
+          };
         }
 
         const resultado = await finalizarForcado(reservaID);
 
-        if (resultado.error) {
-          toast.error(`Erro: ${resultado.message}`);
-          return resultado;
-        }
-
         setReservasDoMes((prev) =>
-          prev.map((r) =>
-            r.id === reservaID ? { ...r, status: 'CONCLUIDA' } : r,
-          ),
+          prev.map((r) => (r.id === reservaID ? resultado : r)),
         );
 
         setReservasDoDia((prev) =>
-          prev.map((r) =>
-            r.id === reservaID ? { ...r, status: 'CONCLUIDA' } : r,
-          ),
+          prev.map((r) => (r.id === reservaID ? resultado : r)),
         );
 
         toast.success('Checkout forçado realizado com sucesso!');
 
         return {
           error: false,
-          message: 'Checkout forçado realizado com sucesso',
+          data: resultado,
         };
-      } catch (err) {
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Erro ao processar checkout forçado';
+
         console.error('Erro ao finalizar reserva:', err);
-        toast.error('Erro ao processar checkout forçado');
+        toast.error(message);
+
         return {
           error: true,
-          message: 'Erro ao processar checkout forçado',
+          message,
         };
       } finally {
         setActionLoading(false);

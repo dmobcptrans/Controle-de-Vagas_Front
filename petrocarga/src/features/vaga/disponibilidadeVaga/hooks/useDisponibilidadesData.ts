@@ -97,7 +97,7 @@ export function useDisponibilidadesData({ mes, ano }: Props) {
     return disponibilidades.reduce(
       (acc, disp) => {
         // Obtém logradouro (fallback para não identificado)
-        const log = disp.endereco?.logradouro ?? 'Logradouro Não Identificado';
+        const log = disp.enredeco.logradouro ?? 'Logradouro Não Identificado';
         
         // Cria chave de intervalo com as datas
         const intervalo = `${disp.inicio} → ${disp.fim}`;

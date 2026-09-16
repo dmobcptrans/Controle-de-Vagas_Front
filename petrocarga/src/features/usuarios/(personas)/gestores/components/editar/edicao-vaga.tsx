@@ -11,8 +11,15 @@ import toast from 'react-hot-toast';
 import FormItem from '@/components/form/form-item';
 import DiaSemana from '../dia-semana/dia-semana';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import {
+  AreaVaga,
+  OperacoesVaga,
+  TipoVaga,
+  VagaPayload,
+  VagaResponse,
+} from '@/features/vaga/vagas/types/vaga2';
 import CardMapEdit from '@/features/map/components/cardMapEdit';
+import { ConfirmResult } from '@/lib/types/confirmResult';
 
 /**
  * @component EditarVaga
@@ -74,10 +81,36 @@ import CardMapEdit from '@/features/map/components/cardMapEdit';
  * @see /lib/api/vagaApi.ts - Função atualizarVaga
  */
 
-export default function EditarVaga({ vaga }: { vaga: Vaga }) {
+export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
   // ==================== SERVER ACTION ====================
-  const atualizar = async (prevState: unknown, formData: FormData) => {
-    return atualizarVaga(formData);
+  // ==================== SERVER ACTION ====================
+  const atualizar = async (
+    _prevState: ConfirmResult | null,
+    formData: FormData,
+  ): Promise<ConfirmResult> => {
+    const id = formData.get('id') as string;
+
+    const payload: VagaPayload = {
+      endereco: {
+        codigoPmp: formData.get('codigoPmp') as string,
+        logradouro: formData.get('logradouro') as string,
+        bairro: formData.get('bairro') as string,
+      },
+      area: (formData.get('area') as string).toUpperCase() as AreaVaga,
+      numeroEndereco: formData.get('numeroEndereco') as string,
+      referenciaEndereco: formData.get('descricao') as string,
+      latitudeInicio: Number(formData.get('latitudeInicio')),
+      latitudeFim: Number(formData.get('latitudeFim')),
+      longitudeInicio: Number(formData.get('longitudeInicio')),
+      longitudeFim: Number(formData.get('longitudeFim')),
+      TipoVaga: (formData.get('tipo') as string).toUpperCase() as TipoVaga,
+      comprimento: Number(formData.get('comprimento')),
+      operacoesVaga: JSON.parse(
+        (formData.get('diaSemana') as string) ?? '[]',
+      ) as OperacoesVaga[],
+    };
+
+    return atualizarVaga(payload, id);
   };
 
   const [state, atualizarVagaAction, pending] = useActionState(atualizar, null);
@@ -90,13 +123,14 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
   });
 
   // ==================== FEEDBACK (TOAST) ====================
+  // ==================== FEEDBACK (TOAST) ====================
   useEffect(() => {
     if (!state) return;
 
-    if (state.error) {
-      toast.error(state.message || 'Erro ao atualizar vaga');
-    } else {
+    if (state.success) {
       toast.success(state.message || 'Vaga atualizada com sucesso!');
+    } else {
+      toast.error(state.message || 'Erro ao atualizar vaga');
     }
   }, [state]);
 
@@ -122,7 +156,7 @@ export default function EditarVaga({ vaga }: { vaga: Vaga }) {
 
           <CardContent className="p-4 md:p-6 lg:p-8">
             {/* ==================== MENSAGEM DE ERRO ==================== */}
-            {state?.error && (
+            {state && !state.success && (
               <div className="flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-4 mb-6 text-red-900">
                 <CircleAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
                 <span className="text-sm md:text-base">{state.message}</span>

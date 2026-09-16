@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { addVaga } from '@/features/vaga/vagas/service/vagaApi';
+import { criarVaga } from '@/features/vaga/vagas/service/vagaApi';
 import { ArrowLeft, ParkingSquare } from 'lucide-react';
 import Form from 'next/form';
 import { useActionState, useEffect, useState } from 'react';
@@ -209,7 +209,7 @@ export default function Cadastro() {
    */
   const [state, addVagaAction, pending] = useActionState(
     async (_prevState: unknown, formData: FormData) => {
-      return await addVaga(formData);
+      return await criarVaga(formData);
     },
     null,
   );
@@ -242,28 +242,6 @@ export default function Cadastro() {
     setGeoState(data);
   };
 
-  // --------------------------------------------------------------------------
-  // EFEITO DE FEEDBACK (TOAST)
-  // --------------------------------------------------------------------------
-
-  /**
-   * @effect Monitora o resultado da Server Action
-   *
-   * Dispara toast notifications baseado no estado:
-   * - state.error true → toast.error com mensagem
-   * - state.error false → toast.success com mensagem
-   *
-   * Executa sempre que 'state' muda (após submit)
-   */
-  useEffect(() => {
-    if (!state) return;
-
-    if (state.error) {
-      toast.error(state.message || 'Erro ao cadastrar vaga');
-    } else {
-      toast.success(state.message || 'Vaga cadastrada com sucesso!');
-    }
-  }, [state]);
 
   // --------------------------------------------------------------------------
   // RENDERIZAÇÃO

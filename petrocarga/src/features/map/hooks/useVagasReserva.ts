@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Vaga, VagaMapa } from '@/features/vaga/vagas/types/vaga';
+import { VagasMapa } from '@/features/vaga/vagas/types/vaga2';
 import * as vagaApi from '@/features/vaga/vagas/service/vagaApi';
 
 /**
@@ -81,7 +81,7 @@ import * as vagaApi from '@/features/vaga/vagas/service/vagaApi';
  */
 
 export function useVagasReserva() {
-  const [vagas, setVagas] = useState<VagaMapa[]>([]);
+  const [vagas, setVagas] = useState<VagasMapa[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,7 +94,7 @@ export function useVagasReserva() {
     setLoading(true);
 
     try {
-      const data: Vaga[] = await vagaApi.getVagasPorMapa({
+      const data: VagasMapa[] = await vagaApi.getVagasPorMapa({
         ...bounds,
         status: 'DISPONIVEL',
       });

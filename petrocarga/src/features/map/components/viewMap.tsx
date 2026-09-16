@@ -9,7 +9,7 @@ import { useVagas } from '../hooks/useVagas';
 import { useMapbox } from '../hooks/useMapbox';
 import { addVagaMarkers } from '../utils/markerUtils';
 
-import { FiltroVaga } from '@/features/vaga/vagas/types/vaga';
+import { FiltroVaga } from '@/features/vaga/vagas/types/vaga2';
 
 interface MapboxFeature {
   id: string;
@@ -54,15 +54,13 @@ export function ViewMap({
   const vagasFiltradas = useMemo(() => {
     switch (filtro) {
       case 'disponiveis':
-        return vagas.filter(
-          (vaga) => vaga.status === 'DISPONIVEL'
-        );
+        return vagas.filter((vaga) => vaga.status === 'DISPONIVEL');
 
       case 'indisponiveis':
-        return vagas.filter(
-          (vaga) => vaga.status === 'INDISPONIVEL'
-        );
+        return vagas.filter((vaga) => vaga.status === 'INDISPONIVEL');
 
+      case 'manutencao':
+        return vagas.filter((vaga) => vaga.status === 'MANUTENCAO');
       case 'todas':
       default:
         return vagas;
@@ -99,11 +97,7 @@ export function ViewMap({
 
     // Adiciona somente as vagas do filtro atual
     if (vagasFiltradas.length > 0) {
-      addVagaMarkers(
-        map,
-        vagasFiltradas,
-        markersRef
-      );
+      addVagaMarkers(map, vagasFiltradas, markersRef);
     }
 
     // Limpeza ao desmontar ou mudar o filtro

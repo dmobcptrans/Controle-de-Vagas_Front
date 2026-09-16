@@ -136,15 +136,24 @@ export async function CriarReserva(formData: FormData): Promise<ConfirmResult> {
  * }
  * ```
  */
-export async function finalizarForcado(reservaID: string) {
+export async function finalizarForcado(
+  reservaID: string,
+): Promise<ReservaResponse> {
   try {
-    return await clientApi(
+    const res = await clientApi(
       `/petrocarga/reservas/${reservaID}/finalizar-forcado`,
-      { method: 'POST' },
+      {
+        method: 'POST',
+      },
     );
+
+    return (await res.json()) as ReservaResponse;
   } catch (err: unknown) {
     throw new Error(
-      getApiErrorMessage(err, 'Erro ao finalizar reserva forçadamente'),
+      getApiErrorMessage(
+        err,
+        'Erro ao finalizar reserva forçadamente',
+      ),
     );
   }
 }
@@ -687,7 +696,7 @@ export async function getReservasRapidas(
  */
 export async function getReservasPorPlaca(
   placa: string,
-): Promise<ReservaResponse> {
+): Promise<ReservaResponse[]> {
   try {
     const res = await clientApi(
       `/petrocarga/reservas/placa?placa=${placa.trim().toUpperCase()}`,
@@ -699,7 +708,7 @@ export async function getReservasPorPlaca(
     }
 
     const data = await res.json();
-    return data as ReservaResponse;
+    return data as ReservaResponse[];
   } catch (err: unknown) {
     throw new Error(
       getApiErrorMessage(err, 'Erro ao buscar reserva por placa.'),

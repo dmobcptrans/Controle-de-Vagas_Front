@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useReserva } from '@/features/reserva/reservar-vaga/hooks/useReserva';
 import { useReservaAgenteState } from './hooks/useReservaAgenteState';
-import { Vaga, DiaSemana } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse, DiaSemana } from '@/features/vaga/vagas/types/vaga2';
 import { Veiculo } from '@/features/veiculos/types/veiculo';
 import StepIndicator from '@/features/reserva/reservar-vaga/components/StepIndicator';
 import toast from 'react-hot-toast';
@@ -16,7 +16,7 @@ import StepConfirmacao from './steps/StepConfirmacao';
 import StepFeedback from './steps/StepFeedback';
 
 interface ReservaAgenteProps {
-  selectedVaga: Vaga;
+  selectedVaga: VagaResponse;
   onNewReservation?: () => void;
   onBack?: () => void;
 }

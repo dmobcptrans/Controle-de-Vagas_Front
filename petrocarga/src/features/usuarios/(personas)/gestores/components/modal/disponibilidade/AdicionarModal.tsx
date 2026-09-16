@@ -8,12 +8,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 
 interface AdicionarModalProps {
   open: boolean;
   onClose: () => void;
-  vagasPorLogradouro: Record<string, Vaga[]>;
+  vagasPorLogradouro: Record<string, VagaResponse[]>;
   dataInicialPredefinida?: string | null;
   onSalvar: (data: {
     inicio: string;

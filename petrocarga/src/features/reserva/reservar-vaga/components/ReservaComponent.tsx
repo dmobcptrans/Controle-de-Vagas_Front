@@ -8,13 +8,13 @@ import TimeSelection from './TimeSelection';
 import OriginVehicleStep from './OriginVehicleStep';
 import Confirmation from './Confirmation';
 import { useReserva } from '../hooks/useReserva';
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import toast from 'react-hot-toast';
 import MotoristaStep from './MotoristaStep';
 import { ArrowLeft, Clock3 } from 'lucide-react';
 
 interface ReservaComponentProps {
-  selectedVaga: Vaga;
+  selectedVaga: VagaResponse;
   onBack?: () => void;
   empresaId?: string;
 }

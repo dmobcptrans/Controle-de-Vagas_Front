@@ -1,11 +1,11 @@
-import { Vaga } from '@/features/vaga/vagas/types/vaga';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { MapPin, Ruler, ScanBarcodeIcon } from 'lucide-react';
 
 type VagaItemProp = {
-  vaga: Vaga;
+  vaga: VagaResponse;
 };
 
 /**
