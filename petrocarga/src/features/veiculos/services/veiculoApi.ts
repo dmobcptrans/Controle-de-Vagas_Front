@@ -1,7 +1,15 @@
 'use client';
 
-import { Veiculo, VeiculoPaginado } from '../types/veiculo';
+import {
+  VeiculoResponse,
+  VeiculoPaginadoResponse,
+  VeiculoPayload,
+  VeiculoParams,
+} from '@/features/veiculos/types/veiculo2';
 import { clientApi } from '@/services/clientApi';
+import { TipoVeiculo } from '../types/tipoVeiculo';
+import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
+import { ConfirmResult } from '@/lib/types/confirmResult';
 
 /**
  * @module veiculoApi
@@ -19,126 +27,47 @@ import { clientApi } from '@/services/clientApi';
  * 4. getVeiculosUsuario - Lista veículos de um usuário
  * 5. getVeiculo - Busca veículo específico por ID
  *
- * ----------------------------------------------------------------------------
- * 🔧 FUNÇÕES AUXILIARES INTERNAS:
- * ----------------------------------------------------------------------------
- *
- * - getCpfCnpj - Valida e retorna CPF/CNPJ (mutuamente exclusivos)
- * - buildVeiculoPayload - Constrói payload padronizado
- */
-
-/**
- * @function getCpfCnpj
- * @description Função interna que valida e extrai CPF/CNPJ do FormData.
- * Garante que apenas um dos dois seja informado (nunca ambos).
- *
- * @param formData - Formulário com dados do veículo
- * @returns Objeto com { cpf, cnpj } ou { error: string }
- *
- * @private
- */
-function getCpfCnpj(formData: FormData) {
-  const cpf = (formData.get('cpfProprietario') as string) || null;
-  const cnpj = (formData.get('cnpjProprietario') as string) || null;
-
-  if (!cpf && !cnpj) return { error: 'Preencha o CPF ou CNPJ do proprietário' };
-  if (cpf && cnpj) return { error: 'Preencha apenas CPF ou CNPJ, não ambos' };
-
-  return { cpf, cnpj };
-}
-
-/**
- * @function buildVeiculoPayload
- * @description Função interna que constrói o payload padronizado do veículo.
- *
- * @param formData - Formulário com dados do veículo
- * @param cpf - CPF do proprietário (ou null)
- * @param cnpj - CNPJ do proprietário (ou null)
- * @returns Objeto formatado para envio à API
- *
- * @private
- */
-function buildVeiculoPayload(
-  formData: FormData,
-  cpf: string | null,
-  cnpj: string | null,
-) {
-  return {
-    placa: formData.get('placa') as string,
-    marca: formData.get('marca') as string,
-    modelo: formData.get('modelo') as string,
-    tipo: (formData.get('tipo') as string)?.toUpperCase(),
-    comprimento: Number(formData.get('comprimento')),
-    cpfProprietario: cpf,
-    cnpjProprietario: cnpj,
-    usuarioId: formData.get('usuarioId'),
-  };
-}
 
 // ----------------------
 // POST VEICULO
 // ----------------------
 
-/**
- * @function addVeiculo
- * @description Cadastra um novo veículo para um usuário.
- *
- * @param formData - Formulário com dados do veículo
- *
- * Campos do FormData:
- * - placa: Placa do veículo
- * - marca: Marca do veículo
- * - modelo: Modelo do veículo
- * - tipo: Tipo (convertido para maiúsculas)
- * - comprimento: Comprimento em metros
- * - cpfProprietario: CPF do proprietário (opcional, mutuamente exclusivo com CNPJ)
- * - cnpjProprietario: CNPJ do proprietário (opcional, mutuamente exclusivo com CPF)
- * - usuarioId: ID do usuário proprietário
- *
- * @returns Promise<{ error: boolean; message: string; valores?: any }>
- *
- * @example
- * ```ts
- * const formData = new FormData();
- * formData.append('placa', 'ABC1234');
- * formData.append('marca', 'Fiat');
- * formData.append('modelo', 'Uno');
- * formData.append('tipo', 'AUTOMOVEL');
- * formData.append('comprimento', '4.5');
- * formData.append('cpfProprietario', '12345678900');
- * formData.append('usuarioId', 'user123');
- *
- * const result = await addVeiculo(formData);
- * if (result.error) {
- *   toast.error(result.message);
- * } else {
- *   toast.success(result.message);
- * }
- * ```
  */
-export async function addVeiculo(formData: FormData) {
-  const doc = getCpfCnpj(formData);
-  const usuarioId = formData.get('usuarioId') as string;
-  if ('error' in doc) return { error: true, message: doc.error, valores: null };
 
-  const payload = buildVeiculoPayload(formData, doc.cpf, doc.cnpj);
+export async function criarVeiculo(
+  formData: FormData,
+  usuarioId: string,
+): Promise<VeiculoResponse> {
+  const body: VeiculoPayload = {
+    placa: formData.get('placa') as string,
+    marca: formData.get('marca') as string,
+    modelo: formData.get('modelo') as string,
+    tipo: (formData.get('tipo') as TipoVeiculo).toUpperCase() as TipoVeiculo,
+    cpfProprietario: formData.get('cpfProprieatario') as string,
+    cnpjProprietario: formData.get('cnpjProprietario') as string,
+  };
 
   try {
-    await clientApi(`/petrocarga/veiculos/${usuarioId}`, {
+    const res = await clientApi(`/petrocarga/veiculos/${usuarioId}`, {
       method: 'POST',
-      json: payload,
+      json: body,
     });
 
-    return {
-      error: false,
-      message: 'Veículo cadastrado com sucesso!',
-      valores: null,
-    };
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+
+      throw (
+        errorBody ?? {
+          message: `Erro HTTP ${res.status}`,
+        }
+      );
+    }
+
+    const data: VeiculoResponse = await res.json();
+
+    return data;
   } catch (err: unknown) {
-    console.error('Erro ao cadastrar veículo:', err);
-    const message =
-      err instanceof Error ? err.message : 'Erro ao cadastrar veículo';
-    return { error: true, message, valores: payload };
+    throw new Error(getApiErrorMessage(err, 'Erro ao cadastrar veículo.'));
   }
 }
 
@@ -166,12 +95,14 @@ export async function addVeiculo(formData: FormData) {
 export async function deleteVeiculo(veiculoId: string) {
   try {
     await clientApi(`/petrocarga/veiculos/${veiculoId}`, { method: 'DELETE' });
-    return { error: false, message: 'Veículo deletado com sucesso!' };
+    return {
+      success: true,
+    };
   } catch (err: unknown) {
-    console.error('Erro ao deletar veículo:', err);
-    const message =
-      err instanceof Error ? err.message : 'Erro ao deletar veículo';
-    return { error: true, message };
+    return {
+      success: false,
+      message: getApiErrorMessage(err, 'Erro ao deletar veículo.'),
+    };
   }
 }
 
@@ -201,33 +132,27 @@ export async function deleteVeiculo(veiculoId: string) {
  * const result = await atualizarVeiculo(formData);
  * ```
  */
-export async function atualizarVeiculo(formData: FormData) {
-  const id = formData.get('id') as string;
-  const doc = getCpfCnpj(formData);
-  if ('error' in doc) return { error: true, message: doc.error, valores: null };
-
-  const payload = buildVeiculoPayload(formData, doc.cpf, doc.cnpj);
-  const usuarioId = formData.get('usuarioId') as string;
-
+export async function atualizarVeiculo(
+  body: VeiculoPayload,
+  veiculoId: string,
+  usuarioId: string,
+): Promise<ConfirmResult> {
   try {
-    await clientApi(`/petrocarga/veiculos/${id}/${usuarioId}`, {
+    await clientApi(`/petrocarga/veiculos/${veiculoId}/${usuarioId}`, {
       method: 'PATCH',
-      json: payload,
+      json: JSON.stringify(body),
     });
 
     return {
-      error: false,
-      message: 'Veículo atualizado com sucesso!',
-      valores: null,
+      success: true,
     };
   } catch (err: unknown) {
-    console.error('Erro ao atualizar veículo:', err);
-    const message =
-      err instanceof Error ? err.message : 'Erro ao atualizar veículo';
-    return { error: true, message, valores: payload };
+    return {
+      success: false,
+      message: getApiErrorMessage(err, 'Erro ao atualizar veículo.'),
+    };
   }
 }
-
 // ----------------------
 // GET VEICULO POR USUARIO
 // ----------------------
@@ -247,24 +172,11 @@ export async function atualizarVeiculo(formData: FormData) {
  * }
  * ```
  */
-export interface FiltrosVeiculosUsuario {
-  placa?: string;
-  marca?: string;
-  modelo?: string;
-  tipo?: 'AUTOMOVEL' | 'CAMINHONETA' | 'VUC' | 'CAMINHAO_MEDIO' | 'CAMINHAO_LONGO';
-  telefoneUsuario?: string;
-  cpfProprietario?: string;
-  cnpjProprietario?: string;
-  ativo?: boolean;
-  pagina?: number;
-  tamanhoPagina?: number;
-  ordem?: 'ASC' | 'DESC';
-}
 
-export async function getVeiculosUsuario(
+export async function getVeiculosPorUsuario(
   usuarioId: string,
-  filtros: FiltrosVeiculosUsuario = {},
-): Promise<VeiculoPaginado> {
+  filtros: VeiculoParams = {},
+): Promise<VeiculoPaginadoResponse> {
   try {
     const params = new URLSearchParams();
 
@@ -309,28 +221,22 @@ export async function getVeiculosUsuario(
     );
 
     if (!res.ok) {
-      throw new Error(`Erro na requisição: ${res.status}`);
+      const errorBody = await res.json().catch(() => null);
+
+      throw (
+        errorBody ?? {
+          message: `Erro HTTP ${res.status}`,
+        }
+      );
     }
 
-    const data = await res.json();
+    const data: VeiculoPaginadoResponse = await res.json();
 
-    return {
-      content: data.content ?? [],
-      totalElementos: data.totalElementos ?? 0,
-      totalPaginas: data.totalPaginas ?? 0,
-      tamanhoPagina: data.tamanhoPagina ?? filtros.tamanhoPagina ?? 10,
-      pagina: data.pagina ?? filtros.pagina ?? 0,
-    };
+    return data;
   } catch (err: unknown) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : 'Erro ao buscar veículos do usuário.';
-
-    throw new Error(message);
+    throw new Error(getApiErrorMessage(err, 'Erro ao buscar veículos.'));
   }
 }
-
 
 // ----------------------
 // GET VEICULO POR ID
@@ -351,26 +257,13 @@ export async function getVeiculosUsuario(
  * }
  * ```
  */
-export async function getVeiculo(veiculoId: string) {
+export async function getVeiculoPorId(veiculoId: string): Promise<VeiculoResponse> {
   try {
     const res = await clientApi(`/petrocarga/veiculos/${veiculoId}`);
-    const data: Veiculo = await res.json();
-    return {
-      error: false,
-      message: 'Veículo carregado com sucesso',
-      veiculo: data,
-    };
-  } catch (err: unknown) {
-    console.error(`Erro ao buscar veículo ${veiculoId}:`, err);
-    const message =
-      err instanceof Error ? err.message : 'Erro ao buscar veículo';
-    return { error: true, message, veiculo: null };
+    return (await res.json()) ?? null;
+ } catch (err: unknown) {
+    throw new Error(
+      getApiErrorMessage(err, 'Erro ao buscar veículo.'),
+    );
   }
-}
-
-export interface GetVeiculosResult {
-  error: boolean;
-  message: string;
-  veiculos: Veiculo[];
-  veiculo?: Veiculo | null;
 }

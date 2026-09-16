@@ -427,7 +427,7 @@ export async function getVagasComFiltros(
     return vagas;
   } catch (err: unknown) {
     throw new Error(
-      getApiErrorMessage(err, 'Erro ao buscar vagas com filtros.'),
+      getApiErrorMessage(err, 'Erro ao buscar vagas.'),
     );
   }
 }
@@ -457,7 +457,7 @@ export async function getVagaById(id: string): Promise<VagaResponse | null> {
     return (await res.json()) ?? null;
   } catch (err: unknown) {
     throw new Error(
-      getApiErrorMessage(err, 'Erro ao buscar vagas com filtros.'),
+      getApiErrorMessage(err, 'Erro ao buscar vaga.'),
     );
   }
 }

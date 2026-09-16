@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
-import { getVeiculosUsuario } from '@/features/veiculos/services/veiculoApi';
+import { getVeiculosPorUsuario } from '@/features/veiculos/services/veiculoApi';
 import {
   AlertCircle,
   ArrowLeft,
   Loader2,
   RefreshCw,
 } from 'lucide-react';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
-import VeiculoDetalhes from '@/features/usuarios/(personas)/motoristas/components/cards/veiculo-card';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import VeiculoDetalhes from '@/features/veiculos/components/(motorista)/veiculo-card';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -111,7 +111,7 @@ export default function EditarVeiculoPage() {
   const { user } = useAuth();
   const params = useParams() as { id: string };
 
-  const [veiculo, setVeiculo] = useState<Veiculo | null>(null);
+  const [veiculo, setVeiculo] = useState<VeiculoResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
@@ -129,7 +129,7 @@ const fetchVeiculo = useCallback(async () => {
   setError('');
 
   try {
-    const result = await getVeiculosUsuario(user.id, {
+    const result = await getVeiculosPorUsuario(user.id, {
       pagina: 0,
       tamanhoPagina: 100,
       ativo: true,
@@ -163,7 +163,7 @@ const fetchVeiculo = useCallback(async () => {
   // CALLBACK DE ATUALIZAÇÃO
   // --------------------------------------------------------------------------
 
-  const handleVeiculoAtualizado = (veiculoAtualizado: Veiculo) => {
+  const handleVeiculoAtualizado = (veiculoAtualizado: VeiculoResponse) => {
     setVeiculo(veiculoAtualizado);
     toast.success('Veículo atualizado com sucesso!');
     fetchVeiculo(); // Recarrega para garantir consistência

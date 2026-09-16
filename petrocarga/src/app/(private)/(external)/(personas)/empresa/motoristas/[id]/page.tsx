@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Veiculo } from '@/features/veiculos/types/veiculo';
-import VeiculoCard from '@/features/usuarios/(personas)/motoristas/components/cards/veiculo-item';
+import VeiculoCard from '@/features/veiculos/components/(motorista)/veiculo-item';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';

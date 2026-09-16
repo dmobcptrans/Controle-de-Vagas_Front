@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,16 +15,9 @@ import {
 } from 'lucide-react';
 import FormItem from '@/components/form/form-item';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
-import { addVeiculo } from '@/features/veiculos/services/veiculoApi';
+import { useVeiculos } from '../../hooks/useVeiculo';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
-
-const TIPO_OPTIONS = [
-  { value: 'AUTOMOVEL', label: 'Carro — até 5 metros' },
-  { value: 'CAMINHONETA', label: 'Caminhonete — até 6 metros' },
-  { value: 'VUC', label: 'VUC — até 8 metros' },
-  { value: 'CAMINHAO_MEDIO', label: 'Caminhão médio — 9 a 12 metros' },
-  { value: 'CAMINHAO_LONGO', label: 'Caminhão longo — 13 a 19 metros' },
-];
+import { TIPO_VEICULO_OPTIONS } from '../../types/tipoVeiculo';
 
 interface CadastroVeiculoModalProps {
   open?: boolean;
@@ -38,7 +31,8 @@ export default function CadastroVeiculoModal({
   onSuccess,
 }: CadastroVeiculoModalProps) {
   const { user } = useAuth();
-  const [isPending, startTransition] = useTransition();
+
+  const { criar, salvando } = useVeiculos();
 
   // Controle do Modal
   const [internalOpen, setInternalOpen] = useState(false);
@@ -88,7 +82,7 @@ export default function CadastroVeiculoModal({
   }
 
   function fecharModal() {
-    if (isPending) return;
+    if (salvando) return;
     resetForm();
     setOpen(false);
   }
@@ -113,22 +107,20 @@ export default function CadastroVeiculoModal({
     formData.set('tipo', tipo);
     formData.set('cpfProprietario', cpf);
     formData.set('cnpjProprietario', cnpj);
-    formData.append('usuarioId', user.id);
 
-    startTransition(async () => {
-      try {
-        const result = await addVeiculo(formData);
-        if (result?.error) {
-          toast.error(result.message || 'Erro ao cadastrar veículo');
-          return;
-        }
-        toast.success(result?.message || 'Veículo cadastrado com sucesso!');
-        fecharModal();
-        onSuccess?.();
-      } catch {
-        toast.error('Erro inesperado ao cadastrar veículo.');
-      }
-    });
+    try {
+      await criar(formData, user.id);
+      toast.success('Veículo cadastrado com sucesso!');
+      fecharModal();
+      onSuccess?.();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Erro inesperado ao cadastrar veículo.';
+
+      toast.error(message);
+    }
   }
 
   return (
@@ -164,7 +156,7 @@ export default function CadastroVeiculoModal({
 
                   <button
                     type="button"
-                    onClick={fecharModal} 
+                    onClick={fecharModal}
                     className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                     aria-label="Fechar modal"
                   >
@@ -194,7 +186,6 @@ export default function CadastroVeiculoModal({
                       <Label className="text-sm font-medium text-gray-700">
                         Tipo de Proprietário
                       </Label>
-                      {/* Seletor Estilo Abas Clean */}
                       <div className="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200/50">
                         <button
                           type="button"
@@ -299,7 +290,7 @@ export default function CadastroVeiculoModal({
                         placeholder="Selecione o tipo"
                         value={tipo}
                         onChange={setTipo}
-                        options={TIPO_OPTIONS}
+                        options={TIPO_VEICULO_OPTIONS}
                       />
                     </FormItem>
                   </div>
@@ -343,7 +334,7 @@ export default function CadastroVeiculoModal({
                     type="button"
                     variant="ghost"
                     className="w-full sm:w-auto rounded-xl font-medium text-gray-500 hover:text-gray-700 transition-all"
-                    disabled={isPending}
+                    disabled={salvando}
                     onClick={fecharModal}
                   >
                     Cancelar
@@ -353,7 +344,7 @@ export default function CadastroVeiculoModal({
                     type="button"
                     variant="outline"
                     className="w-full sm:w-auto rounded-xl font-medium border-gray-200 text-gray-600 transition-all"
-                    disabled={isPending}
+                    disabled={salvando}
                     onClick={() => setStep((prev) => prev - 1)}
                   >
                     <ChevronLeft className="w-4 h-4 mr-1.5" />
@@ -375,10 +366,10 @@ export default function CadastroVeiculoModal({
                 ) : (
                   <Button
                     type="submit"
-                    disabled={isPending || !podeEnviar}
+                    disabled={salvando || !podeEnviar}
                     className="w-full sm:w-auto rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium min-w-[160px] shadow-sm transition-all disabled:opacity-40"
                   >
-                    {isPending ? (
+                    {salvando ? (
                       <span className="flex items-center gap-2 justify-center">
                         <Loader2 className="w-4 h-4 animate-spin opacity-80" />
                         Salvando...

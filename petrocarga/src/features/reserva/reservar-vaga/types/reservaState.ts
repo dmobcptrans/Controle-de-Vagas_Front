@@ -1,4 +1,4 @@
-import { Veiculo } from "@/features/veiculos/types/veiculo";
+import { VeiculoResponse } from "@/features/veiculos/types/veiculo2";
 
 /**
  * @module types/reservaState
@@ -109,6 +109,6 @@ export interface ReservaState {
   selectedVehicleId?: string;
 
   // Dados do agente (reserva rápida)
-  tipoVeiculoAgente?: Veiculo['tipo'];
+  tipoVeiculoAgente?: VeiculoResponse['tipo'];
   placaAgente: string;
 }

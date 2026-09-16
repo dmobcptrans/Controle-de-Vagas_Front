@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
-import {
-  getVeiculosUsuario,
-  FiltrosVeiculosUsuario,
-} from '@/features/veiculos/services/veiculoApi';
+import { getVeiculosPorUsuario  } from '@/features/veiculos/services/veiculoApi';
 import {
   AlertCircle,
   CarIcon,
@@ -15,8 +12,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
-import VeiculoCard from '@/features/usuarios/(personas)/motoristas/components/cards/veiculo-item';
+import { VeiculoParams, VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import VeiculoCard from '@/features/veiculos/components/(motorista)/veiculo-item';
 import { Button } from '@/components/ui/button';
 import CadastroVeiculoModal from '@/features/veiculos/components/modal/Cadastroveiculomodal';
 import { CTA } from '@/components/ui/CTA/CTA';
@@ -26,7 +23,7 @@ const TAMANHO_PAGINA = 10;
 
 export default function VeiculosPage() {
   const { user } = useAuth();
-  const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
+  const [veiculos, setVeiculos] = useState<VeiculoResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,14 +47,14 @@ export default function VeiculosPage() {
       setError(null);
 
       try {
-        const filtros: FiltrosVeiculosUsuario = {
+        const filtros: VeiculoParams = {
           pagina: paginaAlvo,
           tamanhoPagina: TAMANHO_PAGINA,
           ativo: true,
           ordem: 'ASC',
         };
 
-        const result = await getVeiculosUsuario(user.id, filtros);
+        const result = await getVeiculosPorUsuario(user.id, filtros);
 
         setVeiculos(result.content);
         setTotalPaginas(result.totalPaginas);

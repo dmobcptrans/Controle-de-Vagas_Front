@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { VeiculoAPI } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 import { useMapboxSuggestions } from '@/features/map/hooks/useMapboxSuggestions';
 import {
   Search,
@@ -15,10 +15,10 @@ import {
 import { Button } from '@/components/ui/button';
 
 interface OriginVehicleStepProps {
-  vehicles: VeiculoAPI[];
+  vehicles: VeiculoResponse[];
   vehiclePage: number;
   vehicleTotalPages: number;
-  vehiclesLoading: boolean; // <-- adicionar
+  vehiclesLoading: boolean; 
   onVehiclePageChange: (page: number) => void;
 
   origin: string;
@@ -129,7 +129,7 @@ export default function OriginVehicleStep({
     }
 
     return vehicles.filter((v) =>
-      `${v.name} ${v.plate}`.toLowerCase().includes(termo),
+      `${v.modelo} ${v.placa}`.toLowerCase().includes(termo),
     );
   }, [vehicles, vehicleSearch]);
 
@@ -422,8 +422,8 @@ export default function OriginVehicleStep({
                     }`}
                   />
                 }
-                title={v.plate}
-                subtitle={v.name}
+                title={v.placa}
+                subtitle={v.modelo}
                 onClick={() => handleSelectVehicle(v.id)}
               />
             ))
@@ -482,7 +482,7 @@ export default function OriginVehicleStep({
           <p className="text-xs text-gray-500 mt-2 px-0.5">
             Veículo selecionado:{' '}
             <span className="font-semibold text-gray-800">
-              {veiculoSelecionado.plate}
+              {veiculoSelecionado.placa}
             </span>
           </p>
         )}

@@ -7,7 +7,7 @@ import {
   Save,
   Loader2,
 } from 'lucide-react';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 
 interface ReservaSummaryProps {
@@ -21,7 +21,7 @@ interface ReservaSummaryProps {
     fim: string;
     cidadeOrigem: string;
   };
-  veiculo: Veiculo | null;
+  veiculo: VeiculoResponse | null;
   initialVeiculoId: string | null;
   vaga: VagaResponse | null;
   isSaving: boolean;

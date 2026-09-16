@@ -141,6 +141,7 @@ export default function ReservaEditarModal({
   // ============================================================
 
   const vehiclesForStep = vehicles.map((v) => ({
+    ... v,
     id: v.id,
     name: `${v.marca} ${v.modelo}`,
     plate: v.placa,

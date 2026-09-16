@@ -1,12 +1,13 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { DIAS_SEMANA } from './reservaHelpers';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 import { DiaSemana, VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import { ReservaState } from '../types/reservaState';
 import { ConfirmResult } from '@/lib/types/confirmResult';
 
-import { getVeiculosUsuario } from '@/features/veiculos/services/veiculoApi';
+import { getVeiculosPorUsuario } from '@/features/veiculos/services/veiculoApi';
 
 import {
   gerarHorariosDia,
@@ -147,7 +148,7 @@ export function useReserva(selectedVaga: VagaResponse | null) {
   const motoristaId = user?.id;
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
   const [loadingDias, setLoadingDias] = useState(false);
-  const [vehicles, setVehicles] = useState<Veiculo[]>([]);
+  const [vehicles, setVehicles] = useState<VeiculoResponse[]>([]);
   const [vehiclePage, setVehiclePage] = useState(0);
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [vehiclePageSize] = useState(5);
@@ -280,7 +281,7 @@ export function useReserva(selectedVaga: VagaResponse | null) {
 
         if (!operacao) return [];
 
-        let tipoVeiculo: Veiculo['tipo'] | undefined;
+        let tipoVeiculo: VeiculoResponse['tipo'] | undefined;
 
         if (!isAgente) {
           const v = vehicles.find((x) => x.id === vehicleId);
@@ -413,7 +414,7 @@ export function useReserva(selectedVaga: VagaResponse | null) {
       setVehiclesLoading(true);
 
       try {
-        const r = await getVeiculosUsuario(user.id, {
+        const r = await getVeiculosPorUsuario(user.id, {
           ativo: true,
           pagina: vehiclePage,
           tamanhoPagina: vehiclePageSize,
@@ -452,14 +453,16 @@ export function useReserva(selectedVaga: VagaResponse | null) {
           },
         );
 
-        const veiculosFormatados: Veiculo[] = r.content.map((v) => ({
-          id: v.id,
-          marca: v.marca,
-          modelo: v.modelo,
-          placa: v.placa,
-          tipo: v.tipo,
-          comprimento: v.comprimento,
-        }));
+        const veiculosFormatados: VeiculoResponse[] = r.content.map(
+          (v: VeiculoResponse) => ({
+            id: v.id,
+            marca: v.marca,
+            modelo: v.modelo,
+            placa: v.placa,
+            tipo: v.tipo,
+            comprimento: v.comprimento,
+          }),
+        );
 
         setVehicles(veiculosFormatados);
         setVehicleTotalPages(r.totalPaginas);
@@ -519,7 +522,7 @@ export function useReserva(selectedVaga: VagaResponse | null) {
     setReservaState((prev) => ({ ...prev, entryCity }));
   const setSelectedVehicleId = (selectedVehicleId?: string) =>
     setReservaState((prev) => ({ ...prev, selectedVehicleId }));
-  const setTipoVeiculoAgente = (tipo: Veiculo['tipo']) =>
+  const setTipoVeiculoAgente = (tipo: VeiculoResponse['tipo']) =>
     setReservaState((prev) => ({ ...prev, tipoVeiculoAgente: tipo }));
   const setPlacaAgente = (placa: string) =>
     setReservaState((prev) => ({ ...prev, placaAgente: placa }));

@@ -2,10 +2,10 @@
 
 import { cn } from '@/lib/utils';
 import { Award, Truck } from 'lucide-react';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '../../types/veiculo2';
 
 interface VeiculoCardProps {
-  veiculo: Veiculo;
+  veiculo: VeiculoResponse;
 }
 
 /**

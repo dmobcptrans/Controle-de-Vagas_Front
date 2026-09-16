@@ -4,12 +4,12 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { Trash, Truck } from 'lucide-react';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '../../types/veiculo2';
 
 interface VeiculoCardProps {
-  veiculo: Veiculo;
+  veiculo: VeiculoResponse;
   type?: 'motorista' | 'empresa';
-  onDesvincular?: (veiculo: Veiculo) => void;
+  onDesvincular?: (veiculo: VeiculoResponse) => void;
 }
 
 /**
