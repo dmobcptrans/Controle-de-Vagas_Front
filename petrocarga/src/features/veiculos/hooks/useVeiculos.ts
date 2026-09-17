@@ -9,7 +9,7 @@ import { VeiculoParams, VeiculoResponse } from '../types/veiculo2';
 import { useApi } from '@/services/hooks/useApi';
 
 interface UseVeiculoOptions {
-  usuarioId: string;
+  usuarioId?: string;
   params?: VeiculoParams;
   buscarAutomaticamente?: boolean;
 }
@@ -39,6 +39,8 @@ export function useVeiculos({
 
   const buscar = useCallback(
     async (novosParams: VeiculoParams = params) => {
+      if (!usuarioId) return;
+
       const response = await execute(() =>
         getVeiculosPorUsuario(usuarioId, novosParams),
       );
