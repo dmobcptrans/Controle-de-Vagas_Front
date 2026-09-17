@@ -5,7 +5,6 @@ import {
   AreaVaga,
   OperacoesVaga,
   StatusVaga,
-  TipoResultadoMapa,
   TipoVaga,
   VagaPayload,
   VagaResponse,

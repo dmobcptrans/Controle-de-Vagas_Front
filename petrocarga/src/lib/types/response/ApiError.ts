@@ -1,5 +1,4 @@
-export type ApiError = {
-  erro?: string;
-  message?: string;
-  cause?: string;
-};
+export interface ApiError {
+  message: string;
+  code: number;
+}

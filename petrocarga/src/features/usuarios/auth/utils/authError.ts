@@ -12,8 +12,8 @@ export function getAuthErrorMessage(
     const data =
       error.response?.data as ApiError | undefined;
 
-    if (data?.erro || data?.message) {
-      return data.erro || data.message!;
+    if (data?.message) {
+      return data.message!;
     }
 
     switch (error.response?.status) {

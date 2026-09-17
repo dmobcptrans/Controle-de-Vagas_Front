@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { VeiculoResponse, VeiculoPayload } from '../../types/veiculo2';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useVeiculos } from '../../hooks/useVeiculo';
 import { CheckCircle2, AlertCircle, Edit, Trash2, Save, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+import { VeiculoResponse, VeiculoPayload } from '../../types/veiculo2';
+import { useVeiculoMutation } from '../../hooks/useVeiculoMutation';
+
 import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
 
 type VeiculoDetalhesProps = {
@@ -26,15 +28,11 @@ export default function VeiculoDetalhes({
   onVeiculoAtualizado,
 }: VeiculoDetalhesProps) {
   const router = useRouter();
-
-  const { atualizar, remover, salvando, removendo } = useVeiculos();
+  const { atualizar, deletar, loading, error, limparError } =
+    useVeiculoMutation();
 
   const [modalAberto, setModalAberto] = useState(false);
   const [editando, setEditando] = useState(false);
-  const [mensagem, setMensagem] = useState<{
-    tipo: 'sucesso' | 'erro' | null;
-    texto: string;
-  }>({ tipo: null, texto: '' });
 
   const [formData, setFormData] = useState({
     id: veiculo.id,
@@ -66,6 +64,8 @@ export default function VeiculoDetalhes({
   };
 
   const handleSalvar = async () => {
+    limparError();
+
     const payload: VeiculoPayload = {
       placa: formData.placa,
       marca: formData.marca,
@@ -75,13 +75,9 @@ export default function VeiculoDetalhes({
       cnpjProprietario: formData.cnpjProprietario || undefined,
     };
 
-    const resultado = await atualizar(payload, formData.id, formData.usuarioId);
+    const sucesso = await atualizar(formData.id, formData.usuarioId, payload);
 
-    if (!resultado?.success) {
-      setMensagem({
-        tipo: 'erro',
-        texto: resultado?.message ?? 'Erro ao atualizar veículo.',
-      });
+    if (!sucesso) {
       return;
     }
 
@@ -90,19 +86,23 @@ export default function VeiculoDetalhes({
       ...formData,
     });
 
-    setMensagem({ tipo: 'sucesso', texto: 'Veículo atualizado com sucesso!' });
+    toast.success('Veículo atualizado com sucesso!');
     setEditando(false);
   };
 
   const handleExcluir = async () => {
-    const resultado = await remover(veiculo.id);
+    limparError();
 
-    if (!resultado?.success) {
-      toast.error(resultado?.message ?? 'Erro ao excluir veículo.');
+    const sucesso = await deletar(veiculo.id);
+
+    if (!sucesso) {
       return;
     }
 
     setModalAberto(false);
+
+    toast.success('Veículo excluído com sucesso!');
+
     router.back();
   };
 
@@ -118,7 +118,6 @@ export default function VeiculoDetalhes({
       usuarioId: veiculo.usuarioId || '',
     });
     setEditando(false);
-    setMensagem({ tipo: null, texto: '' });
   };
 
   // ==================== COMPONENTES INTERNOS ====================
@@ -155,9 +154,9 @@ export default function VeiculoDetalhes({
   return (
     <>
       <article className="relative bg-white p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl border-l-4 sm:border-l-8 border-blue-500 transition-all duration-300 w-full">
-        {mensagem.tipo && (
+        {error && (
           <div className="mb-4 sm:mb-6">
-            <AlertBox tipo={mensagem.tipo} texto={mensagem.texto} />
+            <AlertBox tipo="erro" texto={error} />
           </div>
         )}
 
@@ -326,7 +325,7 @@ export default function VeiculoDetalhes({
           <div className="flex flex-col xs:flex-row justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
             <button
               onClick={handleCancelarEdicao}
-              disabled={salvando}
+              disabled={loading}
               className="px-4 sm:px-5 py-2.5 sm:py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium order-2 xs:order-1 disabled:opacity-50"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -335,11 +334,11 @@ export default function VeiculoDetalhes({
 
             <button
               onClick={handleSalvar}
-              disabled={salvando}
+              disabled={loading}
               className="px-4 sm:px-5 py-2.5 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium order-1 xs:order-2 disabled:opacity-50"
             >
               <Save className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>{salvando ? 'Salvando...' : 'Salvar Alterações'}</span>
+              <span>{loading ? 'Salvando...' : 'Salvar Alterações'}</span>
             </button>
           </div>
         )}
@@ -350,7 +349,7 @@ export default function VeiculoDetalhes({
         onClose={() => setModalAberto(false)}
         onConfirm={handleExcluir}
         mensagem={
-          removendo
+          loading
             ? 'Excluindo...'
             : 'Deseja mesmo excluir este veículo? Essa ação não poderá ser desfeita.'
         }

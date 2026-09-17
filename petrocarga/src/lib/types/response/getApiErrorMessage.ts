@@ -1,22 +1,19 @@
-import { ApiError } from "./ApiError";
+import { ApiError } from './ApiError';
 
 export function getApiErrorMessage(
   error: unknown,
-  fallback: string
+  fallback: string,
 ): string {
-  if (typeof error === 'object' && error !== null) {
-    const apiError = error as ApiError;
-
-    return (
-      apiError.erro ??
-      apiError.message ??
-      apiError.cause ??
-      fallback
-    );
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
 
-  if (error instanceof Error) {
-    return error.message;
+  if (typeof error === 'object' && error !== null) {
+    const apiError = error as Partial<ApiError>;
+
+    if (typeof apiError.message === 'string' && apiError.message) {
+      return apiError.message;
+    }
   }
 
   return fallback;

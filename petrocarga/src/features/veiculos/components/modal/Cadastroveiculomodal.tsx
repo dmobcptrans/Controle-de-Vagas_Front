@@ -15,9 +15,10 @@ import {
 } from 'lucide-react';
 import FormItem from '@/components/form/form-item';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
-import { useVeiculos } from '../../hooks/useVeiculo';
+import { useVeiculoMutation } from '../../hooks/useVeiculoMutation';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
-import { TIPO_VEICULO_OPTIONS } from '../../types/tipoVeiculo';
+import { TIPO_VEICULO_OPTIONS, TipoVeiculo } from '../../types/tipoVeiculo';
+import { VeiculoPayload } from '../../types/veiculo2';
 
 interface CadastroVeiculoModalProps {
   open?: boolean;
@@ -31,8 +32,7 @@ export default function CadastroVeiculoModal({
   onSuccess,
 }: CadastroVeiculoModalProps) {
   const { user } = useAuth();
-
-  const { criar, salvando } = useVeiculos();
+  const { criar, loading } = useVeiculoMutation();
 
   // Controle do Modal
   const [internalOpen, setInternalOpen] = useState(false);
@@ -49,7 +49,7 @@ export default function CadastroVeiculoModal({
   const [placa, setPlaca] = useState('');
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
-  const [tipo, setTipo] = useState('');
+  const [tipo, setTipo] = useState<TipoVeiculo | ''>('');
   const [cpf, setCpf] = useState('');
   const [cnpj, setCnpj] = useState('');
 
@@ -58,7 +58,7 @@ export default function CadastroVeiculoModal({
     tipoPessoa === 'PF' ? cpf.length === 11 : cnpj.length === 14;
 
   const isStep1Valid = documentoValido;
-  const isStep2Valid = placa.trim().length === 7 && tipo;
+  const isStep2Valid = placa.trim().length === 7 && tipo !== '';
   const isStep3Valid = marca.trim() && modelo.trim();
   const podeEnviar = isStep1Valid && isStep2Valid && isStep3Valid;
 
@@ -82,7 +82,7 @@ export default function CadastroVeiculoModal({
   }
 
   function fecharModal() {
-    if (salvando) return;
+    if (loading) return;
     resetForm();
     setOpen(false);
   }
@@ -93,34 +93,36 @@ export default function CadastroVeiculoModal({
     if (tipoSelected === 'PJ') setCpf('');
   };
 
-  async function handleAction(formData: FormData) {
+  async function handleAction() {
     if (!user) {
       toast.error('Usuário não autenticado. Faça login novamente.');
       return;
     }
+
     if (!documentoValido) {
       toast.error('Informe um documento válido para prosseguir.');
       return;
     }
 
-    formData.set('placa', placa.toUpperCase());
-    formData.set('tipo', tipo);
-    formData.set('cpfProprietario', cpf);
-    formData.set('cnpjProprietario', cnpj);
+    const payload: VeiculoPayload = {
+      placa,
+      marca,
+      modelo,
+      tipo: tipo as TipoVeiculo,
+      cpfProprietario: tipoPessoa === 'PF' ? cpf || undefined : undefined,
+      cnpjProprietario: tipoPessoa === 'PJ' ? cnpj || undefined : undefined,
+    };
 
-    try {
-      await criar(formData, user.id);
-      toast.success('Veículo cadastrado com sucesso!');
-      fecharModal();
-      onSuccess?.();
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Erro inesperado ao cadastrar veículo.';
+    const veiculo = await criar(user.id, payload);
 
-      toast.error(message);
+    if (!veiculo) {
+      return;
     }
+
+    toast.success('Veículo cadastrado com sucesso!');
+
+    fecharModal();
+    onSuccess?.();
   }
 
   return (
@@ -289,7 +291,9 @@ export default function CadastroVeiculoModal({
                         name="tipo"
                         placeholder="Selecione o tipo"
                         value={tipo}
-                        onChange={setTipo}
+                        onChange={(value) => {
+                          setTipo(value as TipoVeiculo);
+                        }}
                         options={TIPO_VEICULO_OPTIONS}
                       />
                     </FormItem>
@@ -334,7 +338,7 @@ export default function CadastroVeiculoModal({
                     type="button"
                     variant="ghost"
                     className="w-full sm:w-auto rounded-xl font-medium text-gray-500 hover:text-gray-700 transition-all"
-                    disabled={salvando}
+                    disabled={loading}
                     onClick={fecharModal}
                   >
                     Cancelar
@@ -344,7 +348,7 @@ export default function CadastroVeiculoModal({
                     type="button"
                     variant="outline"
                     className="w-full sm:w-auto rounded-xl font-medium border-gray-200 text-gray-600 transition-all"
-                    disabled={salvando}
+                    disabled={loading}
                     onClick={() => setStep((prev) => prev - 1)}
                   >
                     <ChevronLeft className="w-4 h-4 mr-1.5" />
@@ -366,10 +370,10 @@ export default function CadastroVeiculoModal({
                 ) : (
                   <Button
                     type="submit"
-                    disabled={salvando || !podeEnviar}
+                    disabled={loading || !podeEnviar}
                     className="w-full sm:w-auto rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium min-w-[160px] shadow-sm transition-all disabled:opacity-40"
                   >
-                    {salvando ? (
+                    {loading ? (
                       <span className="flex items-center gap-2 justify-center">
                         <Loader2 className="w-4 h-4 animate-spin opacity-80" />
                         Salvando...
