@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { getReservasRapidas } from '@/features/reserva/reservas/services/reservaApi';
 import { getDenuncias } from '@/features/denuncias/services/denunciaApi';
+import { DenunciaParams } from '@/features/denuncias/types/denuncia2';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ReservaRapidaResponse } from '@/features/reserva/reservas/types/reservaRapida';
@@ -173,24 +174,34 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   // ==================== BUSCA DE DADOS ====================
+
   const fetchDados = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
       return;
     }
+
     setLoading(true);
+
     try {
       const [resReservas, resDenuncias] = await Promise.allSettled([
         getReservasRapidas(user.id, 0, 100),
-        getDenuncias('ABERTA'),
+
+        getDenuncias({
+          pagina: 0,
+          tamanhoPagina: 1,
+          ordem: 'DESC',
+        }),
       ]);
 
-      // Tratamento de reservas rápidas (suporta paginação)
+      // Tratamento de reservas rápidas
       if (resReservas.status === 'fulfilled') {
         const reservasData = resReservas.value;
+
         const reservasArray = Array.isArray(reservasData)
           ? reservasData
           : reservasData?.content || [];
+
         setReservas(reservasArray);
       } else {
         toast.error('Não foi possível carregar suas reservas.');
@@ -208,10 +219,6 @@ export default function Dashboard() {
       setLoading(false);
     }
   }, [user?.id]);
-
-  useEffect(() => {
-    fetchDados();
-  }, [fetchDados]);
 
   // ==================== DADOS DERIVADOS ====================
   const primeiroNome = user?.nome?.split(' ')[0] ?? 'Motorista';
@@ -260,10 +267,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ==================== HEADER ==================== */}
-      <Header
-        title={`Bem vindo, ${primeiroNome}!`}
-        showDate
-      />
+      <Header title={`Bem vindo, ${primeiroNome}!`} showDate />
       {/* ==================== CORPO PRINCIPAL ==================== */}
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         {/* CTA principal - Reservar vaga rápida */}

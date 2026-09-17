@@ -16,14 +16,14 @@ import {
   Check,
 } from 'lucide-react';
 
-import { getVeiculosUsuario } from '@/features/veiculos/services/veiculoApi';
+import { getVeiculosPorUsuario } from '@/features/veiculos/services/veiculoApi';
 
 import {
   getVeiculosVinculadosMotoristaEmpresa,
   vincularVeiculoMotoristaEmpresa,
 } from '../../services/empresaApi';
 
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 
 interface VincularVeiculoMotoristaModalProps {
   empresaId: string;
@@ -66,7 +66,7 @@ export default function VincularVeiculoMotoristaModal({
   // VEÍCULOS
   // ============================================================
 
-  const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
+  const [veiculos, setVeiculos] = useState<VeiculoResponse[]>([]);
 
   const [loadingVeiculos, setLoadingVeiculos] = useState(false);
 
@@ -179,7 +179,7 @@ export default function VincularVeiculoMotoristaModal({
       setLoadingVeiculos(true);
 
       try {
-        const result = await getVeiculosUsuario(empresaId, {
+        const result = await getVeiculosPorUsuario(empresaId, {
           ativo: true,
           placa: filtroPlaca || undefined,
           pagina: paginaVeiculos,

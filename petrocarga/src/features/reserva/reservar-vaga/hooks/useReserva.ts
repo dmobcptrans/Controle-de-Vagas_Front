@@ -455,6 +455,7 @@ export function useReserva(selectedVaga: VagaResponse | null) {
 
         const veiculosFormatados: VeiculoResponse[] = r.content.map(
           (v: VeiculoResponse) => ({
+            ...v,
             id: v.id,
             marca: v.marca,
             modelo: v.modelo,

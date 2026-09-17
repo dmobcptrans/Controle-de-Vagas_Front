@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
 import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 import { formatTime } from '@/components/utils/gestor/calendario/utils';
 
 /**
@@ -217,7 +217,7 @@ export const ReservaItem = ({
   onClick,
 }: {
   reserva: ReservaResponse;
-  veiculo?: Veiculo;
+  veiculo?: VeiculoResponse;
   onClick: () => void;
 }) => {
   const status = (reserva.status as StatusType) || 'CONCLUIDA';

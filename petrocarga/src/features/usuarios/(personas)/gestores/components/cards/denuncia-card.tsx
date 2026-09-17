@@ -1,6 +1,6 @@
 'use client';
 
-import { Denuncia } from '@/features/denuncias/types/denuncia';
+import { DenunciaResponse } from '@/features/denuncias/types/denuncia2';
 import { useState, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { MapPin, FileText, Tag, Clock, ChevronRight } from 'lucide-react';
@@ -54,7 +54,7 @@ const statusStyles: Record<
 };
 
 interface DenunciaCardProps {
-  denuncia: Denuncia;
+  denuncia: DenunciaResponse;
   /** Chamado quando a análise é finalizada, para o parent refazer o fetch */
   onRefresh?: () => void;
 }

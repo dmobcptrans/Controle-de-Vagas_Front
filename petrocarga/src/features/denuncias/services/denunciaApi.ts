@@ -2,11 +2,16 @@
 
 import toast from 'react-hot-toast';
 import { clientApi } from '@/services/clientApi';
-import { ConfirmResult } from '../../../lib/types/confirmResult';
-import { DenunciaResponse } from '@/features/denuncias/types/denuncia';
-import { DenunciaPayload, StatusDenuncia, TipoDenuncia } from '../types/denuncia2';
-import { TipoVeiculo } from '@/features/veiculos/types/tipoVeiculo';
+
+import {
+  DenunciaResponse,
+  DenunciaPaginadaResponse,
+  DenunciaParams,
+  DenunciaPayload,
+  TipoDenuncia,
+} from '../types/denuncia2';
 import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
+import { buildSearchParams } from '@/services/utils/buildSearchParams';
 
 /**
  * @module denunciaApi
@@ -123,21 +128,28 @@ export async function CriarDenuncia(
  * ```
  */
 export async function getDenuncias(
-  status?: StatusDenuncia,
-  numeroPagina: number = 0,
-  tamanhoPagina: number = 10,
-): Promise<DenunciaResponse> {
+  params?: DenunciaParams,
+): Promise<DenunciaPaginadaResponse> {
   try {
-    const params = new URLSearchParams({
-      numeroPagina: numeroPagina.toString(),
-      tamanhoPagina: tamanhoPagina.toString(),
+    const searchParams = buildSearchParams({
+      denunciaId: params?.denunciaId,
+      vagaId: params?.vagaId,
+      reservaId: params?.reservaId,
+      criadoPorId: params?.criadoPorId,
+      criadoPorNome: params?.criadoPorNome,
+      criadoPorTelefone: params?.criadoPorTelefone,
+
+      listaStatus: params?.listaStatus,
+      listaTipos: params?.listaTipos,
+
+      pagina: params?.pagina ?? 0,
+      tamanhoPagina: params?.tamanhoPagina ?? 10,
+      ordem: params?.ordem ?? 'DESC',
     });
 
-    if (status) {
-      params.append('listaStatus', status);
-    }
-
-    const res = await clientApi(`/petrocarga/denuncias/all?${params}`);
+    const res = await clientApi(
+      `/petrocarga/denuncias/all?${searchParams.toString()}`,
+    );
 
     if (!res.ok) {
       throw new Error(`Erro na requisição: ${res.status}`);
@@ -149,15 +161,14 @@ export async function getDenuncias(
       content: data.content ?? [],
       totalElementos: data.totalElementos ?? 0,
       totalPaginas: data.totalPaginas ?? 0,
-      tamanhoPagina: data.tamanhoPagina ?? tamanhoPagina,
-      pagina: data.pagina ?? numeroPagina,
+      tamanhoPagina: data.tamanhoPagina ?? params?.tamanhoPagina ?? 10,
+      pagina: data.pagina ?? params?.pagina ?? 0,
     };
   } catch (err) {
-    throw new Error(
-      err instanceof Error ? err.message : 'Erro ao buscar denúncias.',
-    );
+    throw new Error(getApiErrorMessage(err, 'Erro ao buscar denúncias.'));
   }
 }
+
 // ----------------------
 // GET DENUNCIAS POR USUARIO
 // ----------------------
@@ -183,17 +194,17 @@ export async function getDenuncias(
  */
 export async function getDenunciasByUsuario(
   usuarioId: string,
-  numeroPagina: number = 0,
-  tamanhoPagina: number = 10,
-): Promise<DenunciaResponse> {
+  params?: DenunciaParams,
+): Promise<DenunciaPaginadaResponse> {
   try {
-    const params = new URLSearchParams({
-      numeroPagina: numeroPagina.toString(),
-      tamanhoPagina: tamanhoPagina.toString(),
+    const searchParams = buildSearchParams({
+      listaStatus: params?.listaStatus,
+      pagina: params?.pagina ?? 0,
+      tamanhoPagina: params?.tamanhoPagina ?? 10,
+      ordem: params?.ordem ?? 'DESC',
     });
-
     const res = await clientApi(
-      `/petrocarga/denuncias/byUsuario/${usuarioId}?${params}`,
+      `/petrocarga/denuncias/byUsuario/${usuarioId}?${searchParams}`,
     );
 
     if (!res.ok) {
@@ -206,15 +217,11 @@ export async function getDenunciasByUsuario(
       content: data.content ?? [],
       totalElementos: data.totalElementos ?? 0,
       totalPaginas: data.totalPaginas ?? 0,
-      tamanhoPagina: data.tamanhoPagina ?? tamanhoPagina,
-      pagina: data.pagina ?? numeroPagina,
+      tamanhoPagina: data.tamanhoPagina ?? params?.tamanhoPagina ?? 10,
+      pagina: data.pagina ?? params?.pagina ?? 0,
     };
   } catch (err: unknown) {
-    throw new Error(
-      err instanceof Error
-        ? err.message
-        : 'Erro ao buscar as denúncias do usuário.',
-    );
+    throw new Error(getApiErrorMessage(err, 'Erro ao buscar denúncias.'));
   }
 }
 // ----------------------

@@ -1,6 +1,6 @@
 'use client';
 
-import { Denuncia } from '@/features/denuncias/types/denuncia';
+import { DenunciaResponse } from '@/features/denuncias/types/denuncia2';
 import { useState, useEffect, useCallback, memo } from 'react';
 import {
   X,
@@ -23,7 +23,7 @@ const RESPOSTA_LIMITE = 300;
 interface DenunciaAnaliseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  denuncia: Denuncia;
+  denuncia: DenunciaResponse;
   onFinalizado: (status: 'PROCEDENTE' | 'IMPROCEDENTE') => void;
 }
 

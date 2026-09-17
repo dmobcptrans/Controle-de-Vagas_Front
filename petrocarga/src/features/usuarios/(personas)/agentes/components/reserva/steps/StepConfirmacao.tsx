@@ -2,14 +2,14 @@
 
 import Confirmation from '@/features/reserva/reservar-vaga/components/Confirmation';
 import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 
 interface StepConfirmacaoProps {
   selectedDay: Date;
   startHour: string;
   endHour: string;
   selectedVaga: VagaResponse;
-  tipoVeiculo: Veiculo['tipo'] | null;
+  tipoVeiculo: VeiculoResponse['tipo'] | null;
   placa: string;
   onConfirm: () => void;
   onBack: () => void;

@@ -1,6 +1,6 @@
 'use client';
 
-import { Denuncia } from '@/features/denuncias/types/denuncia';
+import { DenunciaResponse } from '../types/denuncia2';
 import { cn } from '@/lib/utils';
 import { X, MapPin, Calendar, FileText, MessageSquare } from 'lucide-react';
 import { ComponentType } from 'react';
@@ -8,7 +8,7 @@ import { ComponentType } from 'react';
 interface DenunciaDetalhesProps {
   isOpen: boolean;
   onClose: () => void;
-  denuncia: Denuncia;
+  denuncia: DenunciaResponse;
 }
 
 /**

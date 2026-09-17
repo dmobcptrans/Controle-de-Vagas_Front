@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, Archive, AlertTriangle } from 'lucide-react';
 import DenunciaCard from '../denuncia-card';
-import { Denuncia } from '../../types/denuncia';
+import { DenunciaResponse } from '../../types/denuncia2';
 
 /* ---------------- Constantes ---------------- */
 
@@ -36,7 +36,7 @@ const HIDDEN_STATUSES = new Set(['PROCEDENTE', 'IMPROCEDENTE']);
  * @function sortDenuncias
  * @description Ordena denúncias por prioridade (ABERTA > EM_ANALISE > PROCEDENTE > IMPROCEDENTE)
  */
-const sortDenuncias = (a: Denuncia, b: Denuncia) => {
+const sortDenuncias = (a: DenunciaResponse, b: DenunciaResponse) => {
   const sa = (a.status || '').toUpperCase();
   const sb = (b.status || '').toUpperCase();
   return (PRIORIDADE[sa] ?? 999) - (PRIORIDADE[sb] ?? 999);
@@ -45,7 +45,7 @@ const sortDenuncias = (a: Denuncia, b: Denuncia) => {
 /* ---------------- Props ---------------- */
 
 interface DenunciaListaProps {
-  denuncias: Denuncia[];
+  denuncias: DenunciaResponse[];
 }
 
 /* ---------------- Componente Principal ---------------- */
@@ -111,7 +111,7 @@ export default function DenunciaLista({ denuncias }: DenunciaListaProps) {
         else if (HIDDEN_STATUSES.has(status)) acc.ocultas.push(d);
         return acc;
       },
-      { visiveis: [] as Denuncia[], ocultas: [] as Denuncia[] },
+      { visiveis: [] as DenunciaResponse[], ocultas: [] as DenunciaResponse[] },
     );
 
     return {

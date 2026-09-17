@@ -1,9 +1,9 @@
 'use client';
 
 import { use, useCallback, useEffect, useState } from 'react';
-import { getVeiculosUsuario } from '@/features/veiculos/services/veiculoApi';
+import { getVeiculosPorUsuario } from '@/features/veiculos/services/veiculoApi';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 import VeiculoCard from '@/features/veiculos/components/(motorista)/veiculo-item';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -85,7 +85,7 @@ export default function GestorVeiculosPage({ params }: PageProps) {
    */
   const { motoristaId } = use(params);
 
-  const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
+  const [veiculos, setVeiculos] = useState<VeiculoResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,7 +104,7 @@ const fetchVeiculos = useCallback(async () => {
   setError(null);
 
   try {
-    const result = await getVeiculosUsuario(motoristaId, {
+    const result = await getVeiculosPorUsuario(motoristaId, {
       pagina: 0,
       tamanhoPagina: 100,
       ativo: true,

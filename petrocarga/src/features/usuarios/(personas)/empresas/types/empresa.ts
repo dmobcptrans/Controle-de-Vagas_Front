@@ -5,7 +5,7 @@
 
 import { Paginacao } from '@/lib/types/paginacao';
 import { UsuarioResponse } from '@/lib/types/personas/usuario';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 /**
  * @interface UsuarioEmpresa
  * @description Dados do usuário vinculado à empresa.
@@ -13,7 +13,7 @@ import { Veiculo } from '@/features/veiculos/types/veiculo';
 export interface UsuarioEmpresa extends UsuarioResponse {
   criadoEm: string;
   ativo: boolean;
-  veiculos: Veiculo[];
+  veiculos: VeiculoResponse[];
 }
 
 /**

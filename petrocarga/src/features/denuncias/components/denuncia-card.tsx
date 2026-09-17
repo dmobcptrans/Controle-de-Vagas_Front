@@ -1,13 +1,13 @@
 'use client';
 
-import { Denuncia } from '@/features/denuncias/types/denuncia';
+import { DenunciaResponse } from '../types/denuncia2';
 import { DenunciaDetalhes } from './denuncia-detalhes';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { MapPin, FileText, Tag, ChevronRight } from 'lucide-react';
 
 interface DenunciaCardProps {
-  denuncia: Denuncia;
+  denuncia: DenunciaResponse;
 }
 
 /**

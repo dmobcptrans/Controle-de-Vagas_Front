@@ -2,8 +2,11 @@
 
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { getDenunciasByUsuario } from '@/features/denuncias/services/denunciaApi';
-import DenunciaLista from "@/features/denuncias/components/(motorista)/DenunciaLista"
-import { DenunciaResponse } from '@/features/denuncias/types/denuncia';
+import DenunciaLista from '@/features/denuncias/components/(motorista)/DenunciaLista';
+import {
+  DenunciaPaginadaResponse,
+  DenunciaParams,
+} from '@/features/denuncias/types/denuncia2';
 import {
   AlertCircle,
   AlertTriangle,
@@ -207,9 +210,8 @@ export default function MinhasDenuncias() {
   // --------------------------------------------------------------------------
 
   const { user } = useAuth();
-  const [paginatedData, setPaginatedData] = useState<DenunciaResponse | null>(
-    null,
-  );
+  const [paginatedData, setPaginatedData] =
+    useState<DenunciaPaginadaResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOffline, setIsOffline] = useState(false);
@@ -224,7 +226,7 @@ export default function MinhasDenuncias() {
   // --------------------------------------------------------------------------
 
   const fetchDenuncias = useCallback(
-    async (page: number = 0) => {
+    async (page = 0) => {
       if (!user?.id) {
         setLoading(false);
         return;
@@ -234,17 +236,25 @@ export default function MinhasDenuncias() {
       setError(null);
 
       try {
-        const response = await getDenunciasByUsuario(user.id, page);
+        const params: DenunciaParams = {
+          criadoPorId: user.id,
+          pagina: page,
+          tamanhoPagina: 10,
+          ordem: 'DESC',
+        };
+
+        const response = await getDenunciasByUsuario(user.id, params);
 
         setPaginatedData(response);
         setCurrentPage(response.pagina);
-      } catch {
-        setError(
-          'Erro ao carregar suas denúncias. Por favor, tente novamente mais tarde.',
-        );
-        toast.error(
-          'Erro ao carregar suas denúncias. Por favor, tente novamente mais tarde.',
-        );
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Erro ao carregar suas denúncias.';
+
+        setError(message);
+        toast.error(message);
         setPaginatedData(null);
       } finally {
         setLoading(false);

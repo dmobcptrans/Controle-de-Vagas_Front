@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 
 const STORAGE_KEY = 'reserva_agente_defaults';
 
 interface ReservaAgenteDefaults {
-  tipoVeiculo: Veiculo['tipo'] | null;
+  tipoVeiculo: VeiculoResponse['tipo'] | null;
   placa: string;
   cidadeOrigem: string;
   entradaCidade: string;

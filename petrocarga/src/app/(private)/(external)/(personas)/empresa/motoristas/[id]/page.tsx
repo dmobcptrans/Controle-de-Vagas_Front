@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 import VeiculoCard from '@/features/veiculos/components/(motorista)/veiculo-item';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -24,7 +24,7 @@ export default function MotoristaDetalhes() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
 
-  const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
+  const [veiculos, setVeiculos] = useState<VeiculoResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalAberto, setModalAberto] = useState(false);
   const [pagina, setPagina] = useState(0);
@@ -33,7 +33,7 @@ export default function MotoristaDetalhes() {
 
   // Controle da desvinculação
   const [veiculoParaDesvincular, setVeiculoParaDesvincular] =
-    useState<Veiculo | null>(null);
+    useState<VeiculoResponse | null>(null);
   const [desvinculando, setDesvinculando] = useState(false);
 
   const hoje = new Date().toLocaleDateString('pt-BR', {
@@ -81,7 +81,7 @@ export default function MotoristaDetalhes() {
     carregarVeiculos(novaPagina);
   };
 
-  function abrirConfirmacaoDesvincular(veiculo: Veiculo) {
+  function abrirConfirmacaoDesvincular(veiculo: VeiculoResponse) {
     setVeiculoParaDesvincular(veiculo);
   }
 

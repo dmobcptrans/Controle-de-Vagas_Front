@@ -1,5 +1,5 @@
 import { MotoristaEmpresaResponse } from '@/features/usuarios/(personas)/motoristas/types/motorista';
-import { VeiculoPaginado } from '@/features/veiculos/types/veiculo';
+import { VeiculoPaginadoResponse } from '@/features/veiculos/types/veiculo2';
 import { clientApi } from '@/services/clientApi';
 import {
   EmpresaInput,
@@ -243,7 +243,7 @@ export async function getVeiculosVinculadosMotoristaEmpresa(
   usuarioId: string,
   motoristaId: string,
   filtros: FiltrosVeiculosVinculadosMotorista = {},
-): Promise<VeiculoPaginado> {
+): Promise<VeiculoPaginadoResponse> {
   try {
     const params = new URLSearchParams();
 

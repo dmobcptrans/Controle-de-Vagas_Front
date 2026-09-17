@@ -1,6 +1,6 @@
 'use client';
 
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useMapboxSuggestions } from '@/features/map/hooks/useMapboxSuggestions';
@@ -41,14 +41,14 @@ const tiposVeiculo = [
 ];
 
 interface StepVeiculoProps {
-  tipoVeiculo: Veiculo['tipo'] | null;
+  tipoVeiculo: VeiculoResponse['tipo'] | null;
   placa: string;
   cidadeOrigem: string;
   entradaCidade: string;
   mostrarDadosRota: boolean;
   vagaIncompativel: boolean;
   validandoVeiculo: boolean;
-  onTipoVeiculoChange: (tipo: Veiculo['tipo']) => void;
+  onTipoVeiculoChange: (tipo: VeiculoResponse['tipo']) => void;
   onPlacaChange: (placa: string) => void;
   onCidadeOrigemChange: (value: string) => void;
   onEntradaCidadeChange: (value: string) => void;
@@ -242,7 +242,7 @@ export default function StepVeiculo({
                   key={item.value}
                   type="button"
                   onClick={() => {
-                    onTipoVeiculoChange(item.value as Veiculo['tipo']);
+                    onTipoVeiculoChange(item.value as VeiculoResponse['tipo']);
                     setOpenTipoVeiculo(false);
                   }}
                   className={`rounded-2xl border p-4 flex flex-col items-center text-center transition-all hover:border-blue-500 hover:bg-blue-50 ${

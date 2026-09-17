@@ -10,6 +10,7 @@ import { clientApi } from '@/services/clientApi';
 import { TipoVeiculo } from '../types/tipoVeiculo';
 import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
 import { ConfirmResult } from '@/lib/types/confirmResult';
+import { buildSearchParams } from '@/services/utils/buildSearchParams';
 
 /**
  * @module veiculoApi
@@ -175,49 +176,25 @@ export async function atualizarVeiculo(
 
 export async function getVeiculosPorUsuario(
   usuarioId: string,
-  filtros: VeiculoParams = {},
+  params: VeiculoParams = {},
 ): Promise<VeiculoPaginadoResponse> {
   try {
-    const params = new URLSearchParams();
-
-    if (filtros.placa) {
-      params.append('placa', filtros.placa);
-    }
-
-    if (filtros.marca) {
-      params.append('marca', filtros.marca);
-    }
-
-    if (filtros.modelo) {
-      params.append('modelo', filtros.modelo);
-    }
-
-    if (filtros.tipo) {
-      params.append('tipo', filtros.tipo);
-    }
-
-    if (filtros.telefoneUsuario) {
-      params.append('telefoneUsuario', filtros.telefoneUsuario);
-    }
-
-    if (filtros.cpfProprietario) {
-      params.append('cpfProprietario', filtros.cpfProprietario);
-    }
-
-    if (filtros.cnpjProprietario) {
-      params.append('cnpjProprietario', filtros.cnpjProprietario);
-    }
-
-    if (filtros.ativo !== undefined) {
-      params.append('ativo', String(filtros.ativo));
-    }
-
-    params.append('pagina', String(filtros.pagina ?? 0));
-    params.append('tamanhoPagina', String(filtros.tamanhoPagina ?? 10));
-    params.append('ordem', filtros.ordem ?? 'ASC');
+    const searchParams = buildSearchParams({
+      placa: params?.placa,
+      marca: params?.marca,
+      modelo: params?.modelo,
+      tipo: params?.tipo,
+      telefoneUsuario: params?.telefoneUsuario,
+      cpfProprietario: params?.cpfProprietario,
+      cnpjProprietario: params?.cnpjProprietario,
+      ativo: params.ativo,
+      pagina: params?.pagina ?? 0,
+      tamanhoPagina: params?.tamanhoPagina ?? 10,
+      ordem: params?.ordem ?? 'DESC',
+    });
 
     const res = await clientApi(
-      `/petrocarga/veiculos/usuario/${usuarioId}?${params.toString()}`,
+      `/petrocarga/veiculos/usuario/${usuarioId}?${searchParams.toString()}`,
     );
 
     if (!res.ok) {
@@ -257,13 +234,13 @@ export async function getVeiculosPorUsuario(
  * }
  * ```
  */
-export async function getVeiculoPorId(veiculoId: string): Promise<VeiculoResponse> {
+export async function getVeiculoPorId(
+  veiculoId: string,
+): Promise<VeiculoResponse> {
   try {
     const res = await clientApi(`/petrocarga/veiculos/${veiculoId}`);
     return (await res.json()) ?? null;
- } catch (err: unknown) {
-    throw new Error(
-      getApiErrorMessage(err, 'Erro ao buscar veículo.'),
-    );
+  } catch (err: unknown) {
+    throw new Error(getApiErrorMessage(err, 'Erro ao buscar veículo.'));
   }
 }

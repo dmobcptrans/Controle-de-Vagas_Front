@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useReserva } from '@/features/reserva/reservar-vaga/hooks/useReserva';
 import { useReservaAgenteState } from './hooks/useReservaAgenteState';
 import { VagaResponse, DiaSemana } from '@/features/vaga/vagas/types/vaga2';
-import { Veiculo } from '@/features/veiculos/types/veiculo';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
 import StepIndicator from '@/features/reserva/reservar-vaga/components/StepIndicator';
 import toast from 'react-hot-toast';
 import { fetchReservasBloqueios } from '@/features/reserva/reservar-vaga/hooks/reservaService';
@@ -141,7 +141,7 @@ export default function ReservaAgente({
   // --------------------------------------------------------------------------
   // HANDLERS
   // --------------------------------------------------------------------------
-  const handleTipoVeiculoChange = async (tipo: Veiculo['tipo']) => {
+  const handleTipoVeiculoChange = async (tipo: VeiculoResponse['tipo']) => {
     setTipoVeiculoAgente(tipo);
     updateField('tipoVeiculo', tipo);
     setVagaIncompativel(false);

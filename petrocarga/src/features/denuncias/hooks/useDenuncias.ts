@@ -1,71 +1,112 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { DenunciaResponse } from '@/features/denuncias/types/denuncia';
-import { getDenuncias } from '@/features/denuncias/services/denunciaApi';
 import toast from 'react-hot-toast';
+
+import {
+  DenunciaPaginadaResponse,
+  DenunciaParams,
+} from '../types/denuncia2';
+
+import { getDenuncias } from '@/features/denuncias/services/denunciaApi';
 
 export function useDenuncias() {
   const [paginatedData, setPaginatedData] =
-    useState<DenunciaResponse | null>(null);
+    useState<DenunciaPaginadaResponse | null>(null);
 
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
 
-  const fetchDenuncias = useCallback(async (page: number = 0) => {
-    setLoading(true);
-    setError(null);
+  const [params, setParams] = useState<DenunciaParams>({
+    pagina: 0,
+    tamanhoPagina: 10,
+    ordem: 'DESC',
+  });
 
-    try {
-      const result = await getDenuncias(undefined, page);
+  const fetchDenuncias = useCallback(
+    async (newParams?: DenunciaParams) => {
+      setLoading(true);
+      setError(null);
 
-      setPaginatedData(result);
-      setCurrentPage(result.pagina);
-    } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : 'Erro ao carregar denúncias. Por favor, tente novamente.';
+      try {
+        const currentParams = newParams ?? params;
 
-      setError(msg);
-      toast.error(msg);
-      setPaginatedData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        const result = await getDenuncias(currentParams);
 
-  const handlePageChange = (newPage: number) => {
-    if (
-      newPage !== currentPage &&
-      newPage >= 0 &&
-      newPage < (paginatedData?.totalPaginas ?? 0)
-    ) {
-      fetchDenuncias(newPage);
+        setPaginatedData(result);
 
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth',
+        setParams(currentParams);
+      } catch (err) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Erro ao carregar denúncias. Por favor, tente novamente.';
+
+        setError(msg);
+        toast.error(msg);
+        setPaginatedData(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [params],
+  );
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      if (
+        newPage !== params.pagina &&
+        newPage >= 0 &&
+        newPage < (paginatedData?.totalPaginas ?? 0)
+      ) {
+        fetchDenuncias({
+          ...params,
+          pagina: newPage,
+        });
+
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+      }
+    },
+    [params, paginatedData?.totalPaginas, fetchDenuncias],
+  );
+
+  const handleFilterChange = useCallback(
+    (newParams: DenunciaParams) => {
+      fetchDenuncias({
+        ...params,
+        ...newParams,
+        pagina: 0,
       });
-    }
-  };
+    },
+    [params, fetchDenuncias],
+  );
 
   useEffect(() => {
-    fetchDenuncias(0);
-  }, [fetchDenuncias]);
+    fetchDenuncias();
+  }, []);
 
   return {
     denuncias: paginatedData?.content ?? [],
+
     loading,
     error,
 
-    currentPage,
+    currentPage: paginatedData?.pagina ?? 0,
+
     totalPaginas: paginatedData?.totalPaginas ?? 0,
     totalElementos: paginatedData?.totalElementos ?? 0,
     tamanhoPagina: paginatedData?.tamanhoPagina ?? 10,
 
-    refetch: () => fetchDenuncias(currentPage),
+    params,
+
+    refetch: () => fetchDenuncias(),
+
     handlePageChange,
+    handleFilterChange,
   };
 }
+
