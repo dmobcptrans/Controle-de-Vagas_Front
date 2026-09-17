@@ -4,6 +4,9 @@ import toast from 'react-hot-toast';
 import { clientApi } from '@/services/clientApi';
 import { ConfirmResult } from '../../../lib/types/confirmResult';
 import { DenunciaResponse } from '@/features/denuncias/types/denuncia';
+import { DenunciaPayload, StatusDenuncia, TipoDenuncia } from '../types/denuncia2';
+import { TipoVeiculo } from '@/features/veiculos/types/tipoVeiculo';
+import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
 
 /**
  * @module denunciaApi
@@ -65,27 +68,35 @@ import { DenunciaResponse } from '@/features/denuncias/types/denuncia';
  * ```
  */
 
-type StatusDenuncia = 'ABERTA' | 'EM_ANALISE' | 'PROCEDENTE' | 'IMPROCEDENTE';
-
-export async function Denunciar(formData: FormData): Promise<ConfirmResult> {
-  const body = {
-    descricao: formData.get('descricao'),
-    reservaId: formData.get('reservaId'),
-    tipo: formData.get('tipo'),
+export async function CriarDenuncia(
+  formData: FormData,
+): Promise<DenunciaResponse> {
+  const body: DenunciaPayload = {
+    descricao: formData.get('descricao') as string,
+    reservaId: formData.get('reservaId') as string,
+    tipo: (formData.get('tipo') as TipoDenuncia).toUpperCase() as TipoDenuncia,
   };
 
   try {
-    await clientApi('/petrocarga/denuncias', {
+    const res = await clientApi('/petrocarga/denuncias', {
       method: 'POST',
       json: body,
     });
-    toast.success('Denuncia Enviada Com Sucesso!');
-    return { success: true };
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => null);
+
+      throw (
+        errorBody ?? {
+          message: `Erro HTTP ${res.status}`,
+        }
+      );
+    }
+
+    const data: DenunciaResponse = await res.json();
+
+    return data;
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : 'Erro ao Denunciar Reserva.';
-    toast.error(message);
-    return { success: false, message };
+    throw new Error(getApiErrorMessage(err, 'Erro ao cadastrar denuncia.'));
   }
 }
 
