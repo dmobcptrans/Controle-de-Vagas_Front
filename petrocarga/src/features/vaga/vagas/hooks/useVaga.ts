@@ -182,7 +182,12 @@ export function useVagaApi(params?: UseVagaApiParams) {
       } catch (error) {
         console.error('Erro ao buscar vagas por mapa:', error);
         toast.error('Não foi possível carregar as vagas do mapa.');
-        return [];
+        return {
+          modo: 'VAGAS' as const,
+          vagas: [],
+          clusters: [],
+          limiteAtingido: false,
+        };
       }
     },
     [],

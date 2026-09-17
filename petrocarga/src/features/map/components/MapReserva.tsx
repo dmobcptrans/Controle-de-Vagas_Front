@@ -6,7 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 import { useVagasReserva } from '../hooks/useVagasReserva';
 import { useMapbox } from '../hooks/useMapbox';
-import { addVagaMarkersReserva } from '../utils/markerUtilsReserva';
+import { addClusterMarkerReserva, addVagaMarkersReserva } from '../utils/markerUtilsReserva';
 import { VagasMapa } from '@/features/vaga/vagas/types/vaga2';
 import { Loader2 } from 'lucide-react';
 
@@ -21,10 +21,18 @@ interface MapReservaProps {
 export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const clusterMarkersRef = useRef<mapboxgl.Marker[]>([]);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastBoundsRef = useRef<string | null>(null);
 
-  const { vagas, loading, error, buscarVagas } = useVagasReserva();
+  const {
+    vagas,
+    clusters,
+    tipo,
+    loading,
+    error,
+    buscarVagas,
+  } = useVagasReserva();
 
   const { map } = useMapbox({
     containerRef: mapContainer,
@@ -40,6 +48,8 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
     if (!map) return;
 
     const bounds = map.getBounds();
+    const zoom = map.getZoom();
+
     if (!bounds) return;
 
     const currentBounds = JSON.stringify({
@@ -47,6 +57,7 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
       s: bounds.getSouth(),
       e: bounds.getEast(),
       w: bounds.getWest(),
+      z: zoom,
     });
 
     // evita refetch do mesmo lugar
@@ -59,18 +70,47 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
       south: bounds.getSouth(),
       east: bounds.getEast(),
       west: bounds.getWest(),
+      zoom,
     });
   }, [map, buscarVagas]);
 
   // ==================== MARCADORES ====================
   const renderMarkers = useCallback(() => {
-    if (!map || !vagas) return;
+    if (!map) return;
 
+    // Remove marcadores individuais
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
-    addVagaMarkersReserva(map, vagas, markersRef, onClickVaga);
-  }, [map, vagas, onClickVaga]);
+    // Remove clusters
+    clusterMarkersRef.current.forEach((marker) => marker.remove());
+    clusterMarkersRef.current = [];
+
+    if (tipo === 'VAGAS') {
+      addVagaMarkersReserva(
+        map,
+        vagas,
+        markersRef,
+        onClickVaga,
+      );
+
+      return;
+    }
+
+    if (tipo === 'CLUSTERS') {
+      addClusterMarkerReserva(
+        map,
+        clusters,
+        clusterMarkersRef
+      )
+    }
+  }, [
+    map,
+    tipo,
+    vagas,
+    clusters,
+    onClickVaga,
+  ]);
 
   // ==================== INIT + MOVE MAP ====================
   useEffect(() => {
@@ -111,7 +151,7 @@ export function MapReserva({ onClickVaga, selectedLocation }: MapReservaProps) {
   // ==================== UPDATE MARKERS ====================
   useEffect(() => {
     renderMarkers();
-  }, [vagas, renderMarkers]);
+  }, [renderMarkers]);
 
   // ==================== ZOOM SEARCH ====================
   useEffect(() => {

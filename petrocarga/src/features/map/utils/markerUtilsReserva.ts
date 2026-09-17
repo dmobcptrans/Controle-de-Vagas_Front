@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { VagasMapa } from '@/features/vaga/vagas/types/vaga2';
+import { ClusterMapa, VagasMapa } from '@/features/vaga/vagas/types/vaga2';
 
 /**
  * @module utils/map/markersReserva
@@ -98,5 +98,30 @@ export function addVagaMarkersReserva(
 
     // Armazena marcador para referência
     markersRef.current.push(marker);
+  });
+}
+export function addClusterMarkerReserva(
+  map: mapboxgl.Map,
+  clusters: ClusterMapa[],
+  clusterMarkersRef: React.MutableRefObject<mapboxgl.Marker[]>,
+) { 
+  clusters.forEach((cluster) => {
+    const el = document.createElement('div');
+
+    el.className =
+      'flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-bold text-sm border-2 border-white shadow-md cursor-pointer';
+
+    el.textContent = cluster.quantidade.toString();
+
+    const marker = new mapboxgl.Marker({
+      element: el,
+    })
+      .setLngLat([
+        cluster.longitude,
+        cluster.latitude,
+      ])
+      .addTo(map);
+
+    clusterMarkersRef.current.push(marker);
   });
 }

@@ -5,12 +5,13 @@ import {
   AreaVaga,
   OperacoesVaga,
   StatusVaga,
+  TipoResultadoMapa,
   TipoVaga,
   VagaPayload,
   VagaResponse,
   VagasFiltradasParams,
-  VagasMapa,
   VagasMapaParams,
+  VagasMapaResponse,
   VagasPaginadasResponse,
 } from '../types/vaga2';
 import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
@@ -280,29 +281,47 @@ export async function getVagas(status?: string): Promise<VagaResponse[]> {
 
 export async function getVagasPorMapa(
   params: VagasMapaParams,
-): Promise<VagasMapa[]> {
+): Promise<VagasMapaResponse> {
   const queryParams = new URLSearchParams({
     north: params.north.toString(),
     south: params.south.toString(),
     east: params.east.toString(),
     west: params.west.toString(),
+    zoom: params.zoom.toString(),
     ...(params.status && { status: params.status }),
   }).toString();
 
   try {
-    const res = await clientApi(`/petrocarga/vagas/mapa?${queryParams}`, {
-      method: 'GET',
-    });
+    const res = await clientApi(
+      `/petrocarga/vagas/mapa?${queryParams}`,
+      {
+        method: 'GET',
+      },
+    );
 
     if (!res.ok) {
       const errorBody = await res.json().catch(() => null);
-      throw errorBody ?? { message: `Erro HTTP ${res.status}` };
+
+      throw errorBody ?? {
+        message: `Erro HTTP ${res.status}`,
+      };
     }
 
-    const data: VagasMapa[] = await res.json();
-    return Array.isArray(data) ? data : [];
+    const data: VagasMapaResponse = await res.json();
+
+    return {
+      tipo: data?.tipo === 'CLUSTERS' ? 'CLUSTERS' : 'VAGAS',
+      vagas: Array.isArray(data?.vagas) ? data.vagas : [],
+      clusters: Array.isArray(data?.clusters) ? data.clusters : [],
+      limiteAtingido: Boolean(data?.limiteAtingido),
+    };
   } catch (err: unknown) {
-    throw new Error(getApiErrorMessage(err, 'Erro ao buscar vagas no mapa.'));
+    throw new Error(
+      getApiErrorMessage(
+        err,
+        'Erro ao buscar vagas no mapa.',
+      ),
+    );
   }
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { VagasMapa } from '@/features/vaga/vagas/types/vaga2';
+import { ClusterMapa, TipoResultadoMapa, VagasMapa } from '@/features/vaga/vagas/types/vaga2';
 import * as vagaApi from '@/features/vaga/vagas/service/vagaApi';
 
 /**
@@ -81,7 +81,10 @@ import * as vagaApi from '@/features/vaga/vagas/service/vagaApi';
  */
 
 export function useVagasReserva() {
+  const [tipo, setTipo] = useState<TipoResultadoMapa>('VAGAS');
   const [vagas, setVagas] = useState<VagasMapa[]>([]);
+  const [clusters, setClusters] = useState<ClusterMapa[]>([]);
+  const [limiteAtingido, setLimiteAtingido] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,24 +93,44 @@ export function useVagasReserva() {
     south: number;
     east: number;
     west: number;
+    zoom: number;
   }) => {
     setLoading(true);
+    setError(null);
 
     try {
-      const data: VagasMapa[] = await vagaApi.getVagasPorMapa({
+      const data = await vagaApi.getVagasPorMapa({
         ...bounds,
         status: 'DISPONIVEL',
       });
 
-      setVagas(data);
+      setTipo(data.tipo);
+      setVagas(data.vagas);
+      setClusters(data.clusters);
+      setLimiteAtingido(data.limiteAtingido);
+
     } catch (err) {
       console.error('Erro ao carregar vagas:', err);
+
       setError('Erro ao buscar vagas');
+
+      setTipo('VAGAS');
       setVagas([]);
+      setClusters([]);
+      setLimiteAtingido(false);
+
     } finally {
       setLoading(false);
     }
   };
 
-  return { vagas, loading, error, buscarVagas };
+  return {
+    tipo,
+    vagas,
+    clusters,
+    limiteAtingido,
+    loading,
+    error,
+    buscarVagas,
+  };
 }

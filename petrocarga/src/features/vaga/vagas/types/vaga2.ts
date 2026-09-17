@@ -44,8 +44,24 @@ export type VagasMapaParams = {
   south: number;
   east: number;
   west: number;
+  zoom: number;
   status?: StatusVaga;
 };
+
+export interface ClusterMapa {
+  latitude: number;
+  longitude: number;
+  quantidade: number;
+}
+
+export type TipoResultadoMapa = 'VAGAS' | 'CLUSTERS';
+
+export interface VagasMapaResponse {
+  tipo: TipoResultadoMapa;
+  vagas: VagasMapa[];
+  clusters: ClusterMapa[];
+  limiteAtingido: boolean;
+}
 
 // ____________________________________________________
 
