@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-import { useVagas } from '../hooks/useVagas';
+import { useVagasMap } from '@/features/vaga/vagas/hooks/useVagasMap';
+
+import { FiltroVaga, StatusVaga } from '@/features/vaga/vagas/types/vaga2';
+
 import { useMapbox } from '../hooks/useMapbox';
 import { addVagaMarkers } from '../utils/markerUtils';
-
-import { FiltroVaga } from '@/features/vaga/vagas/types/vaga2';
 
 interface MapboxFeature {
   id: string;
@@ -31,18 +32,11 @@ interface MapProps {
   filtro: FiltroVaga;
 }
 
-export function ViewMap({
-  onSelectPlace,
-  firstCoord,
-  filtro,
-  searchQuery,
-}: MapProps) {
+export function ViewMap({ onSelectPlace, firstCoord, filtro }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
-  // ==================== HOOKS ====================
-
-  const { vagas, loading, error } = useVagas();
+  // ==================== MAPBOX ====================
 
   const { map, mapLoaded } = useMapbox({
     containerRef: mapContainer,
@@ -51,21 +45,67 @@ export function ViewMap({
 
   // ==================== FILTRO ====================
 
-  const vagasFiltradas = useMemo(() => {
+  const status: StatusVaga | undefined = useMemo(() => {
     switch (filtro) {
       case 'disponiveis':
-        return vagas.filter((vaga) => vaga.status === 'DISPONIVEL');
+        return 'DISPONIVEL';
 
       case 'indisponiveis':
-        return vagas.filter((vaga) => vaga.status === 'INDISPONIVEL');
+        return 'INDISPONIVEL';
 
       case 'manutencao':
-        return vagas.filter((vaga) => vaga.status === 'MANUTENCAO');
+        return 'MANUTENCAO';
+
       case 'todas':
       default:
-        return vagas;
+        return undefined;
     }
-  }, [vagas, filtro]);
+  }, [filtro]);
+
+  // ==================== BUSCA DAS VAGAS ====================
+
+  const { vagasMap, loading, error, buscar } = useVagasMap({
+    buscarAutomaticamente: false,
+  });
+
+  // ==================== BUSCAR PELO VIEWPORT ====================
+
+  const buscarVagasDoMapa = useCallback(() => {
+    if (!map) return;
+
+    const bounds = map.getBounds();
+
+    if (!bounds) return;
+
+    buscar({
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest(),
+      zoom: map.getZoom(),
+      status,
+    });
+  }, [map, status, buscar]);
+
+  // ==================== PRIMEIRA BUSCA ====================
+
+  useEffect(() => {
+    if (!map || !mapLoaded) return;
+
+    buscarVagasDoMapa();
+  }, [map, mapLoaded, buscarVagasDoMapa]);
+
+  // ==================== ATUALIZAR AO MOVER MAPA ====================
+
+  useEffect(() => {
+    if (!map || !mapLoaded) return;
+
+    map.on('moveend', buscarVagasDoMapa);
+
+    return () => {
+      map.off('moveend', buscarVagasDoMapa);
+    };
+  }, [map, mapLoaded, buscarVagasDoMapa]);
 
   // ==================== SELEÇÃO DE LOCAL ====================
 
@@ -88,19 +128,22 @@ export function ViewMap({
   useEffect(() => {
     if (!map || !mapLoaded) return;
 
-    // Remove os marcadores antigos
+    // Remove marcadores anteriores
     markersRef.current.forEach((marker) => {
       marker.remove();
     });
 
     markersRef.current = [];
 
-    // Adiciona somente as vagas do filtro atual
-    if (vagasFiltradas.length > 0) {
-      addVagaMarkers(map, vagasFiltradas, markersRef);
+    // API retornou clusters
+    if (vagasMap?.tipo === 'CLUSTERS') {
+      return;
     }
 
-    // Limpeza ao desmontar ou mudar o filtro
+    if (vagasMap?.tipo === 'VAGAS' && vagasMap.vagas.length > 0) {
+      addVagaMarkers(map, vagasMap, markersRef);
+    }
+
     return () => {
       markersRef.current.forEach((marker) => {
         marker.remove();
@@ -108,7 +151,9 @@ export function ViewMap({
 
       markersRef.current = [];
     };
-  }, [vagasFiltradas, map, mapLoaded]);
+  }, [vagasMap, map, mapLoaded]);
+
+  // ==================== RENDER ====================
 
   return (
     <div className="w-full h-full rounded-2xl overflow-visible relative">
@@ -119,7 +164,7 @@ export function ViewMap({
       />
 
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
           Carregando vagas...
         </div>
       )}
@@ -127,6 +172,12 @@ export function ViewMap({
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-red-100 text-red-600 z-10">
           Erro: {error}
+        </div>
+      )}
+
+      {vagasMap?.limiteAtingido && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white px-3 py-2 rounded-lg shadow z-10 text-sm text-gray-600">
+          Aproxime o mapa para visualizar mais vagas.
         </div>
       )}
     </div>

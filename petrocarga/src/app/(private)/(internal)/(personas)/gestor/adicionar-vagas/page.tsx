@@ -10,185 +10,58 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { criarVaga } from '@/features/vaga/vagas/service/vagaApi';
+import { useVagaMutation } from '@/features/vaga/vagas/hooks/useVagaMutation';
 import { ArrowLeft, ParkingSquare } from 'lucide-react';
-import Form from 'next/form';
-import { useActionState, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import FormItem from '@/components/form/form-item';
 import DiaSemana from '@/features/usuarios/(personas)/gestores/components/dia-semana/dia-semana';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import CardMapEdit from '@/features/map/components/cardMapEdit';
 import Link from 'next/link';
+import {
+  AreaVaga,
+  OperacoesVaga,
+  TipoVaga,
+  VagaPayload,
+} from '@/features/vaga/vagas/types/vaga2';
 
 /**
  * @component Cadastro
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @description Página de cadastro de novas vagas de estacionamento para gestores.
  * Formulário completo com validações, seleção de área, tipo e dias da semana.
  *
  * ----------------------------------------------------------------------------
- * 📋 FLUXO COMPLETO:
+ * 🧠 DECISÕES TÉCNICAS (v2):
  * ----------------------------------------------------------------------------
  *
- * 1. ACESSO:
- *    - Acesso restrito a gestores (rota protegida)
- *    - Link de retorno para lista de vagas (/gestor/visualizar-vagas)
- *
- * 2. PREENCHIMENTO DO FORMULÁRIO (12 CAMPOS):
- *    a) Código PMP (ex: Md-1234)
- *    b) Logradouro (nome da rua)
- *    c) Número referência (ex: 90 ao 130)
- *    d) Área (seleção: vermelha, amarela, azul, branca)
- *    e) Tipo (seleção: paralela, perpendicular)
- *    f) Bairro
- *    g) Comprimento (metros, número decimal)
- *    h) Descrição (textarea com pontos de referência)
- *    i) Localização inicial (latitude, longitude)
- *    j) Localização final (latitude, longitude)
- *    k) Dias da semana (componente DiaSemana com horários)
- *
- * 3. VALIDAÇÕES:
- *    - Código: máximo 30 caracteres
- *    - Comprimento: número positivo (step="0.1", min="0")
- *    - Campos obrigatórios via HTML required (quando aplicável)
- *    - Seleções obrigatórias (área, tipo, dias)
- *
- * 4. ENVIO:
- *    - Server Action addVaga via useActionState
- *    - Feedback com toast (sucesso/erro)
- *    - Loading state durante envio
- *    - Botão desabilitado durante processamento
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - COMPONENTE CLIENT: Necessário para:
- *   - useState (controle de selects área/tipo)
- *   - useActionState (Server Actions)
- *   - useEffect (feedback com toast)
- *   - Interatividade (seleções, textarea)
- *
- * - SEPARAÇÃO DE COMPONENTES:
- *   - FormItem: Wrapper reutilizável com label e tooltip
- *   - SelecaoCustomizada: Select estilizado
- *   - DiaSemana: Componente complexo de seleção de dias/horários
- *
- * - FEEDBACK COM TOAST:
- *   - useEffect monitora state da Server Action
- *   - Toast de sucesso com mensagem da API
- *   - Toast de erro com mensagem específica
- *
- * - LAYOUT ORGANIZADO:
- *   - Grid implícito (empilhamento vertical)
- *   - Espaçamento consistente (space-y-4)
- *   - Padding responsivo
- *
- * - TIPOS DE INPUT:
- *   - text: campos comuns
- *   - number: comprimento (com step e min)
- *   - textarea: descrição longa
- *   - select: área e tipo (via componente)
- *   - custom: dias da semana (DiaSemana)
+ * - useVagaMutation: Substitui useActionState + Server Action addVaga.
+ *   O submit vira um handler client-side comum (onSubmit) que monta o
+ *   VagaPayload a partir do FormData e chama "criar(payload)".
+ * - loading / error: Vêm do hook useApi (via useVagaMutation) e substituem
+ *   o "pending" e o "state" do useActionState.
+ * - useEffect: Observa "error" para exibir toast de falha, já que o valor
+ *   de erro é atualizado de forma assíncrona pelo hook.
+ * - Sucesso: Tratado direto no handleSubmit, pois "criar" retorna a vaga
+ *   criada (ou null em caso de erro). Em caso de sucesso, exibimos toast
+ *   e redirecionamos para a listagem de vagas.
  *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
  *
- * - addVaga: Server Action de cadastro (lib/api/vagaApi)
+ * - useVagaMutation: Hook de mutação (criar/atualizar/deletar)
  * - FormItem: Componente de campo com label e tooltip
  * - DiaSemana: Componente de seleção de dias/horários
  * - SelecaoCustomizada: Select estilizado
  * - /gestor/visualizar-vagas: Página de listagem (retorno)
  *
- * ----------------------------------------------------------------------------
- * ⚙️ CAMPOS DO FORMULÁRIO:
- * ----------------------------------------------------------------------------
- *
- * 1. CÓDIGO (codigo)
- *    - Identificador PMP da rua
- *    - Exemplo: "Md-1234"
- *    - Máx: 30 caracteres
- *
- * 2. LOGRADOURO (logradouro)
- *    - Nome da rua/avenida
- *    - Exemplo: "Rua do Imperador"
- *
- * 3. NÚMERO REFERÊNCIA (numeroEndereco)
- *    - Faixa de números da vaga
- *    - Exemplo: "90 ao 130"
- *
- * 4. ÁREA (area)
- *    - Cor da área (vermelha, amarela, azul, branca)
- *    - Seleção obrigatória
- *
- * 5. TIPO (tipo)
- *    - Orientação da vaga (paralela, perpendicular)
- *    - Seleção obrigatória
- *
- * 6. BAIRRO (bairro)
- *    - Exemplo: "Centro"
- *
- * 7. COMPRIMENTO (comprimento)
- *    - Em metros, decimal
- *    - Exemplo: "10" (para 10 metros)
- *
- * 8. DESCRIÇÃO (descricao)
- *    - Pontos de referência, informações adicionais
- *    - Textarea com altura mínima
- *
- * 9. LOCALIZAÇÃO INICIAL (localizacao-inicio)
- *    - Latitude e longitude do início
- *    - Formato: "-23.55052, -46.633308"
- *
- * 10. LOCALIZAÇÃO FINAL (localizacao-fim)
- *     - Latitude e longitude do fim
- *     - Formato: "-23.55052, -46.633308"
- *
- * 11. DIAS DA SEMANA (diaSemana)
- *     - Seleção de dias e horários
- *     - Componente complexo com múltiplos campos
- *
- * ----------------------------------------------------------------------------
- * 🎨 UX/UI:
- * ----------------------------------------------------------------------------
- *
- * - HEADER:
- *   - Ícone ParkingSquare gradiente
- *   - Título com gradiente "Cadastro de Vaga"
- *   - Descrição clara
- *   - Link "Voltar" com ArrowLeft
- *
- * - CARD PRINCIPAL:
- *   - Sombra suave (shadow-lg)
- *   - Bordas arredondadas
- *   - Fundo branco
- *
- * - CAMPOS:
- *   - Todos com FormItem (label + descrição)
- *   - Ícone de informação no hover
- *   - Border-radius consistente (rounded-sm)
- *   - Padding responsivo
- *
- * - FORMULÁRIO:
- *   - Espaçamento vertical consistente
- *   - Scroll suave em mobile
- *   - Botão de submit alinhado à direita (md:ml-auto)
- *
- * - RESPONSIVIDADE:
- *   - Mobile: padding 4, botão full width
- *   - Tablet/Desktop: padding maior, botão automático
- *   - Textarea com altura adaptativa
- *
  * @example
  * // Uso em rota de gestor
  * <Cadastro />
- *
- * @see /lib/api/vagaApi.ts - Server Action addVaga
- * @see /components/gestor/dia-semana/dia-semana.tsx - Seleção de dias
- * @see /components/selecaoItem/selecao-customizada.tsx - Select customizado
  */
 
 export default function Cadastro() {
@@ -196,23 +69,8 @@ export default function Cadastro() {
   // HOOKS E ESTADOS
   // --------------------------------------------------------------------------
 
-  /**
-   * useActionState gerencia:
-   * - state: Resultado da Server Action { error?: boolean, message?: string }
-   * - addVagaAction: Função de submit (wrapper assíncrono que chama addVaga)
-   * - pending: Estado de carregamento durante envio
-   *
-   * O wrapper assíncrono permite:
-   * - Acesso ao estado anterior (_prevState) para lógicas futuras
-   * - Pré-processamento dos dados antes do envio
-   * - Tipagem explícita dos parâmetros
-   */
-  const [state, addVagaAction, pending] = useActionState(
-    async (_prevState: unknown, formData: FormData) => {
-      return await criarVaga(formData);
-    },
-    null,
-  );
+  const router = useRouter();
+  const { loading, error, criar, limparError } = useVagaMutation();
 
   /**
    * Estados locais para selects controlados
@@ -242,6 +100,50 @@ export default function Cadastro() {
     setGeoState(data);
   };
 
+  // ==================== FEEDBACK (TOAST) DE ERRO ====================
+  useEffect(() => {
+    if (error) {
+      toast.error(error || 'Erro ao cadastrar vaga');
+    }
+  }, [error]);
+
+  // --------------------------------------------------------------------------
+  // SUBMIT
+  // --------------------------------------------------------------------------
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    limparError();
+
+    const formData = new FormData(e.currentTarget);
+
+    const payload: VagaPayload = {
+      endereco: {
+        codigoPmp: formData.get('codigo') as string,
+        logradouro: formData.get('logradouro') as string,
+        bairro: formData.get('bairro') as string,
+      },
+      area: (formData.get('area') as string).toUpperCase() as AreaVaga,
+      numeroEndereco: formData.get('numeroEndereco') as string,
+      referenciaEndereco: formData.get('descricao') as string,
+      latitudeInicio: Number(formData.get('latitudeInicio')),
+      latitudeFim: Number(formData.get('latitudeFim')),
+      longitudeInicio: Number(formData.get('longitudeInicio')),
+      longitudeFim: Number(formData.get('longitudeFim')),
+      TipoVaga: (formData.get('tipo') as string).toUpperCase() as TipoVaga,
+      comprimento: Number(formData.get('comprimento')),
+      operacoesVaga: JSON.parse(
+        (formData.get('diaSemana') as string) ?? '[]',
+      ) as OperacoesVaga[],
+    };
+
+    const vagaCriada = await criar(payload);
+
+    if (vagaCriada) {
+      toast.success('Vaga cadastrada com sucesso!');
+      router.push('/gestor/visualizar-vagas');
+    }
+    // erro é tratado pelo useEffect acima, via estado "error" do hook
+  };
 
   // --------------------------------------------------------------------------
   // RENDERIZAÇÃO
@@ -283,9 +185,9 @@ export default function Cadastro() {
         </CardHeader>
 
         {/* --------------------------------------------------------------------
-          FORMULÁRIO (Server Action)
+          FORMULÁRIO (client-side, via useVagaMutation)
         -------------------------------------------------------------------- */}
-        <Form action={addVagaAction}>
+        <form onSubmit={handleSubmit}>
           <CardContent className="p-4 md:p-6 lg:p-8 space-y-4">
             {/* Campo 1: Código PMP */}
             <FormItem
@@ -519,13 +421,13 @@ export default function Cadastro() {
           <CardFooter className="px-4 md:px-6 lg:px-8 pb-6 pt-2">
             <Button
               type="submit"
-              disabled={pending}
+              disabled={loading}
               className="w-full md:w-auto md:ml-auto rounded-sm px-6 md:px-10 py-2 md:py-2.5 text-sm md:text-base font-medium"
             >
-              {pending ? 'Salvando...' : 'Salvar'}
+              {loading ? 'Salvando...' : 'Salvar'}
             </Button>
           </CardFooter>
-        </Form>
+        </form>
       </Card>
     </main>
   );

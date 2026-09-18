@@ -3,13 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { atualizarVaga } from '@/features/vaga/vagas/service/vagaApi';
 import { CircleAlert } from 'lucide-react';
-import Form from 'next/form';
-import { useActionState, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import FormItem from '@/components/form/form-item';
-import DiaSemana from '../dia-semana/dia-semana';
+import DiaSemana from '../../../usuarios/(personas)/gestores/components/dia-semana/dia-semana';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import {
   AreaVaga,
@@ -19,56 +17,36 @@ import {
   VagaResponse,
 } from '@/features/vaga/vagas/types/vaga2';
 import CardMapEdit from '@/features/map/components/cardMapEdit';
-import { ConfirmResult } from '@/lib/types/confirmResult';
+import { useVagaMutation } from '@/features/vaga/vagas/hooks/useVagaMutation';
 
 /**
  * @component EditarVaga
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @description Formulário de edição de vaga para gestores.
  * Permite atualizar todos os dados de uma vaga existente.
  *
  * ----------------------------------------------------------------------------
- * 📋 CAMPOS EDITÁVEIS:
+ * 🧠 DECISÕES TÉCNICAS (v2):
  * ----------------------------------------------------------------------------
  *
- * 1. DADOS DE ENDEREÇO:
- *    - Código PMP
- *    - Logradouro (nome da rua)
- *    - Número Referência
- *    - Bairro
- *
- * 2. CARACTERÍSTICAS DA VAGA:
- *    - Status (Disponível/Indisponível)
- *    - Área (Vermelha, Amarela, Azul, Branca)
- *    - Tipo (Paralela, Perpendicular)
- *    - Comprimento (em metros)
- *
- * 3. GEORREFERENCIAMENTO:
- *    - Localização inicial (latitude, longitude)
- *    - Localização final (latitude, longitude)
- *
- * 4. DESCRIÇÃO:
- *    - Descrição/referências
- *
- * 5. OPERAÇÃO:
- *    - Dias da semana com horários (componente DiaSemana)
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - useActionState: Gerencia estado da Server Action
- * - Wrapper assíncrono: Para compatibilidade com useActionState
- * - useEffect: Monitora resultado e exibe toast de feedback
- * - Hidden input: Envia ID da vaga sem exibir na UI
- * - Valores padrão: defaultValue preenche campos com dados existentes
+ * - useVagaMutation: Substitui useActionState + Server Action.
+ *   O submit vira um handler client-side comum (onSubmit).
+ * - FormData: Continua sendo usado para ler os campos do form nativo,
+ *   mas agora é montado manualmente no handleSubmit em vez de receber
+ *   via argumento da Server Action.
+ * - loading / error: Vêm do hook useApi (via useVagaMutation) e substituem
+ *   o "pending" e o "state" do useActionState.
+ * - useEffect: Observa "error" para exibir toast de falha, já que o valor
+ *   de erro é atualizado de forma assíncrona pelo hook.
+ * - Sucesso: Tratado diretamente no handleSubmit, pois "atualizar" retorna
+ *   um boolean assim que a chamada termina.
  *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
  *
- * - atualizarVaga: Server Action de atualização
+ * - useVagaMutation: Hook de mutação (criar/atualizar/deletar)
  * - FormItem: Campo com label e descrição
  * - DiaSemana: Seleção de dias e horários
  * - SelecaoCustomizada: Select estilizado
@@ -77,18 +55,45 @@ import { ConfirmResult } from '@/lib/types/confirmResult';
  * ```tsx
  * <EditarVaga vaga={vaga} />
  * ```
- *
- * @see /lib/api/vagaApi.ts - Função atualizarVaga
  */
 
 export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
-  // ==================== SERVER ACTION ====================
-  // ==================== SERVER ACTION ====================
-  const atualizar = async (
-    _prevState: ConfirmResult | null,
-    formData: FormData,
-  ): Promise<ConfirmResult> => {
-    const id = formData.get('id') as string;
+  // ==================== MUTATION HOOK ====================
+  const { loading, error, atualizar, limparError } = useVagaMutation();
+
+  const [useMap, setUseMap] = useState(true);
+  const [geoState, setGeoState] = useState({
+    latitudeInicio: vaga.latitudeInicio,
+    longitudeInicio: vaga.longitudeInicio,
+    latitudeFim: vaga.latitudeFim,
+    longitudeFim: vaga.longitudeFim,
+  });
+
+  // ==================== FEEDBACK (TOAST) DE ERRO ====================
+  useEffect(() => {
+    if (error) {
+      toast.error(error || 'Erro ao atualizar vaga');
+    }
+  }, [error]);
+
+  const handleGeoChange = useCallback(
+    (data: {
+      latitudeInicio: number;
+      longitudeInicio: number;
+      latitudeFim: number;
+      longitudeFim: number;
+    }) => {
+      setGeoState(data);
+    },
+    [],
+  ); // sem dependências → referência estável
+
+  // ==================== SUBMIT ====================
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    limparError();
+
+    const formData = new FormData(e.currentTarget);
 
     const payload: VagaPayload = {
       endereco: {
@@ -110,56 +115,25 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
       ) as OperacoesVaga[],
     };
 
-    return atualizarVaga(payload, id);
-  };
+    const sucesso = await atualizar(vaga.id, payload);
 
-  const [state, atualizarVagaAction, pending] = useActionState(atualizar, null);
-  const [useMap, setUseMap] = useState(true);
-  const [geoState, setGeoState] = useState({
-    latitudeInicio: vaga.latitudeInicio,
-    longitudeInicio: vaga.longitudeInicio,
-    latitudeFim: vaga.latitudeFim,
-    longitudeFim: vaga.longitudeFim,
-  });
-
-  // ==================== FEEDBACK (TOAST) ====================
-  // ==================== FEEDBACK (TOAST) ====================
-  useEffect(() => {
-    if (!state) return;
-
-    if (state.success) {
-      toast.success(state.message || 'Vaga atualizada com sucesso!');
-    } else {
-      toast.error(state.message || 'Erro ao atualizar vaga');
+    if (sucesso) {
+      toast.success('Vaga atualizada com sucesso!');
     }
-  }, [state]);
-
-  const handleGeoChange = useCallback(
-    (data: {
-      latitudeInicio: number;
-      longitudeInicio: number;
-      latitudeFim: number;
-      longitudeFim: number;
-    }) => {
-      setGeoState(data);
-    },
-    [],
-  ); // sem dependências → referência estável
+    // erro é tratado pelo useEffect acima, via estado "error" do hook
+  };
 
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">
       <Card className="w-full max-w-5xl mx-auto">
         {/* ==================== FORMULÁRIO ==================== */}
-        <Form action={atualizarVagaAction}>
-          {/* Campo oculto com ID da vaga */}
-          <input type="hidden" name="id" value={vaga.id} />
-
+        <form onSubmit={handleSubmit}>
           <CardContent className="p-4 md:p-6 lg:p-8">
             {/* ==================== MENSAGEM DE ERRO ==================== */}
-            {state && !state.success && (
+            {error && (
               <div className="flex items-start gap-3 rounded-md border border-red-200 bg-red-50 p-4 mb-6 text-red-900">
                 <CircleAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm md:text-base">{state.message}</span>
+                <span className="text-sm md:text-base">{error}</span>
               </div>
             )}
 
@@ -430,13 +404,13 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
           <CardFooter className="px-4 md:px-6 lg:px-8 pb-6 pt-2">
             <Button
               type="submit"
-              disabled={pending}
+              disabled={loading}
               className="w-full md:w-auto md:ml-auto rounded-sm px-6 md:px-10 py-2 md:py-2.5 text-sm md:text-base font-medium"
             >
-              {pending ? 'Atualizando...' : 'Atualizar'}
+              {loading ? 'Atualizando...' : 'Atualizar'}
             </Button>
           </CardFooter>
-        </Form>
+        </form>
       </Card>
     </main>
   );

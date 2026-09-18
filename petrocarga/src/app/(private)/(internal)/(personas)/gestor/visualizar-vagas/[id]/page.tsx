@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import VagaDetalhes from '@/features/usuarios/(personas)/gestores/components/cards/vaga-card';
+import VagaDetalhes from '@/features/vaga/vagas/components/cards/vaga-card';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
 import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import { useParams } from 'next/navigation';

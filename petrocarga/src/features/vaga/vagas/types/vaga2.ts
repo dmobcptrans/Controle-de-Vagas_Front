@@ -25,7 +25,7 @@ export type FiltroVaga =
 
   
 // PARAMS 
-export type FiltrosVaga = {
+export interface FiltrosVaga {
   status?: StatusVaga;
   area?: AreaVaga;
   tipoVaga?: TipoVaga;
@@ -39,7 +39,7 @@ export type VagasFiltradasParams = FiltrosVaga & {
   ordenarPor?: string;
 };
 
-export type VagasMapaParams = {
+export interface VagasMapaParams {
   north: number;
   south: number;
   east: number;
@@ -56,7 +56,7 @@ export interface ClusterMapa {
 
 export type TipoResultadoMapa = 'VAGAS' | 'CLUSTERS';
 
-export interface VagasMapaResponse {
+export type VagasMapaResponse = {
   tipo: TipoResultadoMapa;
   vagas: VagasMapa[];
   clusters: ClusterMapa[];

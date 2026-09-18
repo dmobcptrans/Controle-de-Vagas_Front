@@ -4,7 +4,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ptBr from '@fullcalendar/core/locales/pt-br';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { EventClickArg } from '@fullcalendar/core';
 import type { DateClickArg } from '@fullcalendar/interaction';
@@ -14,10 +14,11 @@ import { EditarModal } from '@/features/usuarios/(personas)/gestores/components/
 
 import { useDisponibilidadesData } from '../hooks/useDisponibilidadesData';
 import { useDisponibilidadeActions } from '../hooks/useDisponibilidadeActions';
-import { useVagas } from '../hooks/useVagas';
+import { useVagas } from '../../vagas/hooks/useVagas';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 
 import type { DisponibildadeVagaResponse } from '../types/disponibilidadeVaga2';
+import type { VagaResponse } from '../../vagas/types/vaga2';
 import { useCalendarioMes } from '@/contexts/CalendarioMesContext';
 
 /* --------------------------------------------------------------------- */
@@ -34,44 +35,31 @@ interface ExtendedPropsDisponibilidade {
 
 /**
  * @component DisponibilidadeCalendario
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @description Calendário interativo para gerenciamento de disponibilidade de vagas.
  * Permite visualizar, adicionar e editar disponibilidades por dia e logradouro.
  *
  * ----------------------------------------------------------------------------
- * 📋 FUNCIONALIDADES:
+ * 🧠 DECISÕES TÉCNICAS (v1.1):
  * ----------------------------------------------------------------------------
  *
- * 1. CALENDÁRIO:
- *    - Visualização mensal (dayGridMonth)
- *    - Navegação por mês (prev/next)
- *    - Botão "Hoje" para voltar ao mês atual
- *
- * 2. INTERAÇÕES:
- *    - Clique em um dia → abre modal para adicionar disponibilidade
- *    - Clique em um evento → abre modal para editar/excluir disponibilidade
- *
- * 3. EVENTOS:
- *    - Eventos agrupados (múltiplos logradouros): cor verde (#22c55e)
- *    - Eventos individuais (único logradouro): cor azul (#3b82f6)
+ * - useVagas (novo padrão): Não retorna mais "vagasPorLogradouro" pronto.
+ *   Agora buscamos a lista completa via "buscarTodas()" e agrupamos
+ *   localmente com useMemo, igual ao que o hook antigo fazia internamente.
+ * - buscarAutomaticamente: false → evitamos a busca paginada automática
+ *   (buscaPaginada) do hook, pois aqui precisamos de TODAS as vagas para
+ *   montar o agrupamento por logradouro, não de uma página.
+ * - useEffect: Dispara "buscarTodas()" uma vez na montagem.
  *
  * ----------------------------------------------------------------------------
  * 📋 HOOKS UTILIZADOS:
  * ----------------------------------------------------------------------------
  *
  * - useDisponibilidadesData: Dados de disponibilidades agrupadas
- * - useVagas: Lista de vagas e agrupamento por logradouro
+ * - useVagas: Lista de vagas (agrupamento por logradouro feito aqui)
  * - useCalendarEvents: Converte disponibilidades em eventos do FullCalendar
  * - useDisponibilidadeActions: Ações de CRUD (salvar, editar, remover)
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - ESTADO CONSOLIDADO: modalState agrupa dados para os modais
- * - EVENTOS AGRUPADOS: Verdes quando há múltiplos logradouros no mesmo intervalo
- * - EVENTOS INDIVIDUAIS: Azuis quando apenas um logradouro
  *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
@@ -90,15 +78,28 @@ interface ExtendedPropsDisponibilidade {
 export default function DisponibilidadeCalendario() {
   const { ano, mes } = useCalendarioMes();
   const calendarRef = useRef<FullCalendar>(null);
-  // ==================== HOOKS ====================
-  const { disponibilidadesAgrupadas, setDisponibilidades } = useDisponibilidadesData({mes: mes + 1, ano: ano} );
 
-  const { vagas, vagasPorLogradouro } = useVagas();
-  console.log('disponibilidadesAgrupadas', disponibilidadesAgrupadas);
-  console.log('vagas', vagas)
+  // ==================== HOOKS ====================
+  const { disponibilidadesAgrupadas, setDisponibilidades } =
+    useDisponibilidadesData({ mes: mes + 1, ano: ano });
+
+  const { vagas, buscarTodas } = useVagas({ buscarAutomaticamente: false });
+
+  useEffect(() => {
+    buscarTodas();
+  }, [buscarTodas]);
+
+  // ==================== AGRUPAR VAGAS POR LOGRADOURO ====================
+  const vagasPorLogradouro = useMemo(() => {
+    return vagas.reduce((acc, vaga) => {
+      const log = vaga?.endereco?.logradouro ?? 'Sem Logradouro';
+      (acc[log] ??= []).push(vaga);
+      return acc;
+    }, {} as Record<string, VagaResponse[]>);
+  }, [vagas]);
 
   const { eventos } = useCalendarEvents({
-    disponibilidadesAgrupadas
+    disponibilidadesAgrupadas,
   });
 
   const actions = useDisponibilidadeActions({
@@ -131,8 +132,6 @@ export default function DisponibilidadeCalendario() {
     if (!api) return;
     api.gotoDate(new Date(ano, mes, 1));
   }, [ano, mes]);
-  
-  
 
   // ==================== HANDLERS ====================
 

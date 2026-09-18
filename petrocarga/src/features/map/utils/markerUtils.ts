@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VagasMapa, VagasMapaResponse } from '@/features/vaga/vagas/types/vaga2';
 
 /**
  * @module utils/map/markers
@@ -61,14 +61,14 @@ import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
  */
 export function addVagaMarkers(
   map: mapboxgl.Map,
-  vagas: VagaResponse[],
+  vagas: VagasMapaResponse,
   markersRef: React.MutableRefObject<mapboxgl.Marker[]>,
-  onClickVaga?: (vaga: VagaResponse) => void,
+  onClickVaga?: (vaga: VagasMapa) => void,
 ) {
-  vagas.forEach((vaga) => {
+  vagas.vagas.forEach((vaga) => {
     // Ignora vagas sem coordenadas de início
     if (
-      vaga.longitudeInicio === undefined ||
+      vaga.latitudeFim === undefined ||
       vaga.longitudeInicio === null ||
       vaga.latitudeInicio === undefined ||
       vaga.latitudeInicio === null
@@ -90,11 +90,6 @@ export function addVagaMarkers(
     // Cria marcador com popup
     const marker = new mapboxgl.Marker(el)
       .setLngLat(coordinates)
-      .setPopup(
-        new mapboxgl.Popup({ offset: 25 }).setHTML(
-          `<strong>${vaga.numeroEndereco}</strong><br/>${vaga.endereco.logradouro}, ${vaga.endereco.bairro}`,
-        ),
-      )
       .addTo(map);
 
     // Adiciona evento de clique

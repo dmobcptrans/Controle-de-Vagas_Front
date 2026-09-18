@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import EditarVaga from '@/features/usuarios/(personas)/gestores/components/editar/edicao-vaga';
+import EditarVaga from '@/features/veiculos/components/(gestor)/edicao-vaga';
 import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
