@@ -12,24 +12,6 @@ import {
 } from '../types/vaga2';
 import { buildSearchParams } from '@/services/utils/buildSearchParams';
 
-/**
- * @module vagaApi
- * @description Módulo de API para gerenciamento de vagas de estacionamento.
- * Fornece funções para criar, consultar, atualizar e deletar vagas,
- * incluindo dados complexos como endereço, operações por dia da semana e georreferenciamento.
- *
- * ----------------------------------------------------------------------------
- * 📋 FUNÇÕES DISPONÍVEIS:
- * ----------------------------------------------------------------------------
- *
- * 1. addVaga - Cadastra uma nova vaga
- * 2. deleteVaga - Remove uma vaga existente
- * 3. atualizarVaga - Atualiza dados de uma vaga
- * 4. getVagas - Lista vagas com filtro opcional por status
- * 5. getVagasComFiltros - Lista vagas com múltiplos filtros
- * 6. getVagaById - Busca vaga específica por ID
- *
- */
 
 // ----------------------
 // Criar uma vaga
@@ -109,9 +91,11 @@ export async function getVagasFiltradas(
   const searchParams = buildSearchParams({
     ...params,
   });
+
   const response = await clientApi(
-    `/petrocarga/vagas${searchParams.toString()}`,
+    `/petrocarga/vagas?${searchParams.toString()}`,
   );
+
   return response.json();
 }
 

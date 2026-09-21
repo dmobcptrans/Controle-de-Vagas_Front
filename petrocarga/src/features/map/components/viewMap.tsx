@@ -140,6 +140,7 @@ export function ViewMap({ onSelectPlace, firstCoord, filtro }: MapProps) {
       return;
     }
 
+    // API retornou vagas
     if (vagasMap?.tipo === 'VAGAS' && vagasMap.vagas.length > 0) {
       addVagaMarkers(map, vagasMap, markersRef);
     }

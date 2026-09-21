@@ -12,10 +12,7 @@ interface UseVagaMutationReturn {
 
   criar: (payload: VagaPayload) => Promise<VagaResponse | null>;
 
-  atualizar: (
-    vagaId: string,
-    payload: VagaPayload,
-  ) => Promise<boolean>;
+  atualizar: (vagaId: string, payload: VagaPayload) => Promise<boolean>;
 
   deletar: (vagaId: string) => Promise<boolean>;
 
@@ -45,6 +42,6 @@ export function useVagaMutation(): UseVagaMutationReturn {
     criar,
     atualizar,
     deletar,
-    limparError
-  }
+    limparError,
+  };
 }

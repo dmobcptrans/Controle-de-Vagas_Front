@@ -262,7 +262,7 @@ export function EditarModal({
                   className="flex justify-between p-2 border rounded"
                 >
                   <p className="font-medium">
-                    {v.enredeco.logradouro}, {v.numeroEndereco}
+                    {v.endereco.logradouro}, {v.numeroEndereco}
                   </p>
 
                   <div className="flex gap-2">

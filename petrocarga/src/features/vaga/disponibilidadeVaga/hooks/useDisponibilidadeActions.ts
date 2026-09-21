@@ -1,18 +1,21 @@
-import {
-  removeDisponibilidade,
-  postDisponibilidade,
-  updateDisponibilidade,
-} from '@/features/vaga/disponibilidadeVaga/hooks/useDisponibilidade';
-
+import { DisponibilidadeVagasPayload } from './../types/disponibilidadeVaga2';
+import { useDisponibiliadadeMutation } from './useDisponibilidadeMutation';
 import toast from 'react-hot-toast';
-import { DisponibildadeVagaResponse } from '../types/disponibilidadeVaga2';
+import {
+  DisponibildadeVagaResponse,
+  DisponibilidadeVagasMultiplasPayload,
+} from '../types/disponibilidadeVaga2';
 import { VagaResponse } from '../../vagas/types/vaga2';
-
 
 interface UseDisponibilidadeActionsProps {
   vagasPorLogradouro: Record<string, VagaResponse[]>;
-  disponibilidadesAgrupadas: Record<string, Record<string, DisponibildadeVagaResponse[]>>;
-  setDisponibilidades: React.Dispatch<React.SetStateAction<DisponibildadeVagaResponse[]>>;
+  disponibilidadesAgrupadas: Record<
+    string,
+    Record<string, DisponibildadeVagaResponse[]>
+  >;
+  setDisponibilidades: React.Dispatch<
+    React.SetStateAction<DisponibildadeVagaResponse[]>
+  >;
 }
 
 export interface SalvarDisponibilidadeData {
@@ -25,66 +28,66 @@ export interface SalvarDisponibilidadeData {
 /**
  * @hook useDisponibilidadeActions
  * @version 1.0.0
- * 
+ *
  * @description Hook customizado para ações de CRUD de disponibilidades de vagas.
  * Fornece funções para criar, editar, remover e excluir disponibilidades.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 RETORNO:
  * ----------------------------------------------------------------------------
- * 
+ *
  * @property {function} salvar - Cria nova disponibilidade
  * @property {function} excluirLogradouro - Remove todas disponibilidades de um logradouro
  * @property {function} editarIntervalo - Edita horário de uma disponibilidade
  * @property {function} removerVagaDisponibilidade - Remove disponibilidade de uma vaga específica
  * @property {function} excluirIntervalo - Remove todas disponibilidades de um intervalo
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FLUXO DAS AÇÕES:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. SALVAR:
  *    - Valida datas (início e fim não vazios, fim >= início)
  *    - Determina IDs das vagas conforme modo (logradouro ou personalizado)
  *    - Chama postDisponibilidade na API
  *    - Atualiza estado local (otimista)
- * 
+ *
  * 2. EXCLUIR LOGRADOURO:
  *    - Confirma com confirm() nativo
  *    - Busca todos IDs das disponibilidades do logradouro
  *    - Remove do estado local (otimista)
  *    - Chama removeDisponibilidade para cada ID
- * 
+ *
  * 3. EDITAR INTERVALO:
  *    - Valida datas
  *    - Atualiza estado local (otimista)
  *    - Chama updateDisponibilidade na API
- * 
+ *
  * 4. REMOVER VAGA:
  *    - Remove do estado local (otimista)
  *    - Chama removeDisponibilidade na API
- * 
+ *
  * 5. EXCLUIR INTERVALO:
  *    - Busca todos IDs do intervalo no logradouro
  *    - Remove do estado local (otimista)
  *    - Chama removeDisponibilidade para cada ID
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - ATUALIZAÇÃO OTIMISTA: UI atualizada antes da resposta da API
  * - MODOS DE CRIAÇÃO: 'logradouro' (todas vagas do logradouro) ou 'personalizado' (vagas específicas)
  * - FEEDBACK: toasts para erros e validação
  * - PROMISES PARALELAS: Promise.all para exclusões múltiplas
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - postDisponibilidade, updateDisponibilidade, removeDisponibilidade: Services de API
  * - Disponibilidade: Tipo de disponibilidade
- * 
+ *
  * @example
  * ```tsx
  * const { salvar, excluirLogradouro, editarIntervalo } = useDisponibilidadeActions({
@@ -92,7 +95,7 @@ export interface SalvarDisponibilidadeData {
  *   disponibilidadesAgrupadas,
  *   setDisponibilidades
  * });
- * 
+ *
  * // Salvar nova disponibilidade
  * await salvar({
  *   inicio: '2024-01-01T08:00:00',
@@ -100,10 +103,10 @@ export interface SalvarDisponibilidadeData {
  *   modo: 'logradouro',
  *   selecionados: ['Rua do Imperador']
  * });
- * 
+ *
  * // Excluir logradouro
  * await excluirLogradouro('Rua do Imperador');
- * 
+ *
  * // Editar intervalo
  * await editarIntervalo('disp123', 'vaga456', '2024-01-01T09:00:00', '2024-01-01T17:00:00');
  * ```
@@ -114,6 +117,8 @@ export function useDisponibilidadeActions({
   disponibilidadesAgrupadas,
   setDisponibilidades,
 }: UseDisponibilidadeActionsProps) {
+  const { criar, atualizar, deletar, error, loading, limparError } =
+    useDisponibiliadadeMutation();
 
   // ==================== SALVAR NOVA DISPONIBILIDADE ====================
   async function salvar({
@@ -146,10 +151,7 @@ export function useDisponibilidadeActions({
       });
 
       vagaIds = Array.from(new Set(idsConvertidos)).filter(
-        (id) =>
-          typeof id === 'string' &&
-          id.includes('-') &&
-          id.length > 30
+        (id) => typeof id === 'string' && id.includes('-') && id.length > 30,
       );
 
       if (vagaIds.length === 0) {
@@ -157,7 +159,12 @@ export function useDisponibilidadeActions({
         return;
       }
 
-      const novas = await postDisponibilidade(vagaIds, inicio, fim);
+      const payload: DisponibilidadeVagasMultiplasPayload = {
+        listaVagaId: vagaIds,
+        inicio,
+        fim
+      };
+      const novas = await criar(payload);
 
       setDisponibilidades((prev) => [
         ...prev,
@@ -193,7 +200,7 @@ export function useDisponibilidadeActions({
     // Atualização otimista
     setDisponibilidades((prev) => prev.filter((d) => !ids.includes(d.id)));
 
-    await Promise.all(ids.map((id) => removeDisponibilidade(id)));
+    await Promise.all(ids.map((id) => deletar(id)));
   }
 
   // ==================== EDITAR INTERVALO DE VAGA ESPECÍFICA ====================
@@ -220,15 +227,19 @@ export function useDisponibilidadeActions({
     setDisponibilidades((prev) =>
       prev.map((d) => (d.id === id ? { ...d, inicio, fim } : d)),
     );
-
-    await updateDisponibilidade(id, vagaId, inicio, fim);
+    const payload: DisponibilidadeVagasPayload = {
+      vagaId,
+      inicio,
+      fim
+    }
+    await atualizar(id, payload);
   }
 
   // ==================== REMOVER VAGA ESPECÍFICA ====================
   async function removerVagaDisponibilidade(id: string) {
     // Atualização otimista
     setDisponibilidades((prev) => prev.filter((d) => d.id !== id));
-    await removeDisponibilidade(id);
+    await deletar(id);
   }
 
   // ==================== EXCLUIR INTERVALO INTEIRO ====================
@@ -238,7 +249,7 @@ export function useDisponibilidadeActions({
 
     // Atualização otimista
     setDisponibilidades((prev) => prev.filter((d) => !ids.includes(d.id)));
-    await Promise.all(ids.map((id) => removeDisponibilidade(id)));
+    await Promise.all(ids.map((id) => deletar(id)));
   }
 
   return {

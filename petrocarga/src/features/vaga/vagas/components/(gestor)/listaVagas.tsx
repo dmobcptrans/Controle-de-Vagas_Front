@@ -29,10 +29,7 @@ function useDebounce(value: string, delay = 300) {
 type ListaVagasProps = {
   searchQuery: string;
   filtro: FiltroVaga;
-  onSelectFirstCoordinate?: (coord: {
-    lat: number;
-    lng: number;
-  }) => void;
+  onSelectFirstCoordinate?: (coord: { lat: number; lng: number }) => void;
 };
 
 export function ListaVagas({
@@ -67,17 +64,11 @@ export function ListaVagas({
 
   // ==================== VAGAS ====================
 
-  const {
-    vagas,
-    loading,
-    error,
-    totalElementos,
-    totalPaginas,
-    buscaPaginada,
-  } = useVagas({
-    params,
-    buscarAutomaticamente: true,
-  });
+  const { vagas, loading, error, totalElementos, totalPaginas, buscaPaginada } =
+    useVagas({
+      params,
+      buscarAutomaticamente: true,
+    });
 
   // ==================== FOCO NO MAPA ====================
 
@@ -99,11 +90,7 @@ export function ListaVagas({
         });
       }
     }
-  }, [
-    vagas,
-    debouncedSearchQuery,
-    onSelectFirstCoordinate,
-  ]);
+  }, [vagas, debouncedSearchQuery, onSelectFirstCoordinate]);
 
   // ==================== RESET PAGINAÇÃO ====================
 
@@ -115,17 +102,11 @@ export function ListaVagas({
 
   const vagasOrdenadas = useMemo(() => {
     return [...vagas].sort((a, b) => {
-      if (
-        a.status === 'DISPONIVEL' &&
-        b.status !== 'DISPONIVEL'
-      ) {
+      if (a.status === 'DISPONIVEL' && b.status !== 'DISPONIVEL') {
         return -1;
       }
 
-      if (
-        b.status === 'DISPONIVEL' &&
-        a.status !== 'DISPONIVEL'
-      ) {
+      if (b.status === 'DISPONIVEL' && a.status !== 'DISPONIVEL') {
         return 1;
       }
 
@@ -152,20 +133,11 @@ export function ListaVagas({
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-4">
         {loading ? (
-          <p className="text-center text-gray-500 mt-4">
-            Carregando vagas...
-          </p>
+          <p className="text-center text-gray-500 mt-4">Carregando vagas...</p>
         ) : error ? (
-          <p className="text-center text-red-500 mt-4">
-            {error}
-          </p>
+          <p className="text-center text-red-500 mt-4">{error}</p>
         ) : vagasOrdenadas.length > 0 ? (
-          vagasOrdenadas.map((vaga) => (
-            <VagaItem
-              key={vaga.id}
-              vaga={vaga}
-            />
-          ))
+          vagasOrdenadas.map((vaga) => <VagaItem key={vaga.id} vaga={vaga} />)
         ) : (
           <p className="text-gray-500 text-center mt-4">
             Nenhuma vaga encontrada.
@@ -177,9 +149,7 @@ export function ListaVagas({
         <div className="flex items-center justify-between border-t pt-3 mt-2 px-1">
           <button
             type="button"
-            onClick={() =>
-              mudarPagina(paginaAtual - 1)
-            }
+            onClick={() => mudarPagina(paginaAtual - 1)}
             disabled={!podeVoltar}
             className="px-3 py-1 text-sm rounded-md border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
           >
@@ -188,16 +158,12 @@ export function ListaVagas({
 
           <span className="text-sm text-gray-600">
             Página {paginaAtual + 1} de {totalPaginas}
-
-            {totalElementos > 0 &&
-              ` · ${totalElementos} vagas`}
+            {totalElementos > 0 && ` · ${totalElementos} vagas`}
           </span>
 
           <button
             type="button"
-            onClick={() =>
-              mudarPagina(paginaAtual + 1)
-            }
+            onClick={() => mudarPagina(paginaAtual + 1)}
             disabled={!podeAvancar}
             className="px-3 py-1 text-sm rounded-md border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
           >
@@ -208,4 +174,3 @@ export function ListaVagas({
     </div>
   );
 }
-

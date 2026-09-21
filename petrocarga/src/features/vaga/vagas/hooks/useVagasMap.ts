@@ -1,11 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  VagasMapaParams,
-  VagasMapaResponse,
-} from '../types/vaga2';
+import { VagasMapaParams, VagasMapaResponse } from '../types/vaga2';
 
 import { useApi } from '@/services/hooks/useApi';
 import { getVagasPorMapa } from '../service/vagaApi';
@@ -31,21 +28,27 @@ export function useVagasMap({
 
   const { loading, error, execute } = useApi();
 
+  const paramsRef = useRef(params);
+
+  useEffect(() => {
+    paramsRef.current = params;
+  }, [params]);
+
   const buscar = useCallback(
     async (novosParams?: VagasMapaParams) => {
       const parametrosBusca = novosParams ?? params;
 
-      if (!parametrosBusca) return;
+      if (!parametrosBusca) {
+        return;
+      }
 
-      const response = await execute(() =>
-        getVagasPorMapa(parametrosBusca)
-      );
+      const response = await execute(() => getVagasPorMapa(parametrosBusca));
 
       if (response) {
         setVagasMap(response);
       }
     },
-    [params, execute]
+    [params, execute],
   );
 
   const recarregar = useCallback(async () => {
@@ -53,9 +56,11 @@ export function useVagasMap({
   }, [buscar]);
 
   useEffect(() => {
-    if (buscarAutomaticamente && params) {
-      buscar();
+    if (!buscarAutomaticamente || !params) {
+      return;
     }
+
+    buscar(params);
   }, [buscarAutomaticamente, params, buscar]);
 
   return {

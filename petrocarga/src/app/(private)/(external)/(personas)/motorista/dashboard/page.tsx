@@ -1,12 +1,10 @@
 'use client';
 
-import {
-  CalendarPlus,
-} from 'lucide-react';
+import { CalendarPlus } from 'lucide-react';
 
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 
-import { useDenuncias } from '@/features/denuncias/hooks/useDenuncia';
+import { useDenuncias } from '@/features/denuncias/hooks/useDenuncias';
 import { useReservas } from '@/features/reserva/reservas/hooks/useReserva';
 
 import PageHeader from '@/components/ui/pageHeader';
@@ -16,63 +14,55 @@ import { DashboardStats } from '@/features/dashboard/components/DashboardStats';
 import { UltimasReservas } from '@/features/dashboard/components/UltimasReservas';
 import { AcessoRapido } from '@/features/dashboard/components/AcessoRapido';
 import { DashboardTutorial } from '@/features/dashboard/components/DashboardTutorial';
+import { useEffect } from 'react';
 
 export default function Dashboard() {
   const { user } = useAuth();
 
-  const {
-    reservas,
-    loading: loadingReservas,
-  } = useReservas(user?.id);
+  const { reservas, loading: loadingReservas } = useReservas(user?.id);
 
   const {
+    buscarPorUsuario,
     denuncias,
     loading: loadingDenuncias,
-  } = useDenuncias(user?.id);
+  } = useDenuncias({ buscarAutomaticamente: false });
 
-  const loading =
-    loadingReservas || loadingDenuncias;
+  useEffect(() => {
+    if (user?.id) {
+      buscarPorUsuario(user.id);
+    }
+  }, [user?.id, buscarPorUsuario]);
 
-  const primeiroNome =
-    user?.nome?.split(' ')[0] ?? 'Motorista';
+  const loading = loadingReservas || loadingDenuncias;
 
-  const totalReservas =
-    reservas.length;
+  const primeiroNome = user?.nome?.split(' ')[0] ?? 'Motorista';
 
-  const reservasAtivas =
-    reservas.filter(
-      (reserva) => reserva.status === 'ATIVA',
-    ).length;
+  const totalReservas = reservas.length;
 
-  const totalDenuncias =
-    denuncias.length;
+  const reservasAtivas = reservas.filter(
+    (reserva) => reserva.status === 'ATIVA',
+  ).length;
+
+  const totalDenuncias = denuncias.length;
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-
       <PageHeader
         title={
           <>
-            Bem-vindo,{' '}
-            <span className="font-bold">
-              {primeiroNome}
-            </span>
-            !
+            Bem-vindo, <span className="font-bold">{primeiroNome}</span>!
           </>
         }
         showCurrentDate
       />
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-
         <div className="-mt-4 mb-5">
           <CTA
             href="/reservar-vaga"
             title="Reservar uma vaga"
             description="Encontre e faça uma reserva rápida"
-            icon={
-              <CalendarPlus className="h-5 w-5 text-white" />
-            }
+            icon={<CalendarPlus className="h-5 w-5 text-white" />}
           />
         </div>
 
@@ -83,15 +73,11 @@ export default function Dashboard() {
           loading={loading}
         />
 
-        <UltimasReservas
-          reservas={reservas}
-          loading={loading}
-        />
+        <UltimasReservas reservas={reservas} loading={loading} />
 
-        <AcessoRapido permissao={user?.permissao}/>
+        <AcessoRapido permissao={user?.permissao} />
 
         <DashboardTutorial />
-
       </main>
     </div>
   );

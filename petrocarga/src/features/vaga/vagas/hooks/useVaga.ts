@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { VagaResponse } from "../types/vaga2";
-import { useApi } from "@/services/hooks/useApi";
-import { getVagaById } from "../service/vagaApi";
+import { useCallback, useEffect, useState } from 'react';
+import { VagaResponse } from '../types/vaga2';
+import { useApi } from '@/services/hooks/useApi';
+import { getVagaById } from '../service/vagaApi';
 
 interface useVagaOptions {
   vagaId: string;
@@ -23,15 +23,15 @@ export function useVaga({
   buscarAutomaticamente = true,
 }: useVagaOptions): useVagaReturn {
   const [vaga, setVaga] = useState<VagaResponse | null>(null);
-  const {loading, error, execute} = useApi();
+  const { loading, error, execute } = useApi();
 
   const buscar = useCallback(async () => {
     const response = await execute(() => getVagaById(vagaId));
 
     if (response) {
-      setVaga(response)
+      setVaga(response);
     }
-  }, [vagaId, execute])
+  }, [vagaId, execute]);
 
   const recarregar = useCallback(async () => {
     await buscar();
@@ -48,6 +48,6 @@ export function useVaga({
     loading,
     error,
     buscar,
-    recarregar
-  }
+    recarregar,
+  };
 }

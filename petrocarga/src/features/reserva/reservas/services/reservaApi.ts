@@ -98,7 +98,6 @@ export async function CriarReserva(formData: FormData): Promise<ConfirmResult> {
     entradaCidade: formData.get('entradaCidade') as string,
     inicio: formData.get('inicio') as string,
     fim: formData.get('fim') as string,
-    posicaoPerpendicular: Number(formData.get('posicaoPerpendicular')),
   };
   try {
     await clientApi('/petrocarga/reservas', {
