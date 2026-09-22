@@ -25,9 +25,11 @@ interface UseVeiculoReturn {
   recarregar: () => Promise<void>;
 }
 
+const DEFAULT_PARAMS: VeiculoParams = {};
+
 export function useVeiculos({
   usuarioId,
-  params = {},
+  params = DEFAULT_PARAMS,
   buscarAutomaticamente = true,
 }: UseVeiculoOptions): UseVeiculoReturn {
   const [veiculos, setVeiculos] = useState<VeiculoResponse[]>([]);

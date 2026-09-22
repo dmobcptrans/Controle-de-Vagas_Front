@@ -28,8 +28,10 @@ interface UseDenunciasReturn {
   recarregar: () => Promise<void>;
 }
 
+const DEFAULT_PARAMS: DenunciaParams = {};
+
 export function useDenuncias({
-  params = {},
+  params = DEFAULT_PARAMS,
   buscarAutomaticamente = true,
 }: UseDenunciasOptions): UseDenunciasReturn {
   const [denuncias, setDenuncias] = useState<DenunciaResponse[]>([]);
