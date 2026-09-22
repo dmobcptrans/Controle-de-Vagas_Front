@@ -1,6 +1,6 @@
 'use client';
 
-import { DenunciaResponse } from '@/features/denuncias/types/denuncia2';
+import { DenunciaResponse } from '@/features/denuncias/types/denuncia';
 import { useState, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { MapPin, FileText, Tag, Clock, ChevronRight } from 'lucide-react';

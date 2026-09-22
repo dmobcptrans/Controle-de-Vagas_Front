@@ -8,7 +8,7 @@ import {
   DenunciaParams,
   DenunciaPayload,
   RespostaDenunciaPayload,
-} from '../types/denuncia2';
+} from '../types/denuncia';
 import { buildSearchParams } from '@/services/utils/buildSearchParams';
 
 // ----------------------

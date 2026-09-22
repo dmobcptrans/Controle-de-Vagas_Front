@@ -23,7 +23,7 @@ import {
   vincularVeiculoMotoristaEmpresa,
 } from '../../services/empresaApi';
 
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 
 interface VincularVeiculoMotoristaModalProps {
   empresaId: string;

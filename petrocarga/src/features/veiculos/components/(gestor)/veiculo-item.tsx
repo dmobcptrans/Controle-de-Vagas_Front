@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { Award, Truck } from 'lucide-react';
-import { VeiculoResponse } from '../../types/veiculo2';
+import { VeiculoResponse } from '../../types/veiculo';
 
 interface VeiculoCardProps {
   veiculo: VeiculoResponse;

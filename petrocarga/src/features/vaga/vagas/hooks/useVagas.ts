@@ -6,7 +6,7 @@ import {
   FiltrosVaga,
   VagaResponse,
   VagasFiltradasParams,
-} from '../types/vaga2';
+} from '../types/vaga';
 
 import { useApi } from '@/services/hooks/useApi';
 import { getVagas, getVagasFiltradas } from '../service/vagaApi';

@@ -25,7 +25,7 @@ import {
   OperacoesVaga,
   TipoVaga,
   VagaPayload,
-} from '@/features/vaga/vagas/types/vaga2';
+} from '@/features/vaga/vagas/types/vaga';
 
 /**
  * @component Cadastro

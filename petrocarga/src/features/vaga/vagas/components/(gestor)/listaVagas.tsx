@@ -10,7 +10,7 @@ import {
   FiltroVaga,
   StatusVaga,
   VagasFiltradasParams,
-} from '../../types/vaga2';
+} from '../../types/vaga';
 
 function useDebounce(value: string, delay = 300) {
   const [debouncedValue, setDebouncedValue] = useState(value);

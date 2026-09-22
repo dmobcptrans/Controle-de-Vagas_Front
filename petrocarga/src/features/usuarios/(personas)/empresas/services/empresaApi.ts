@@ -1,5 +1,5 @@
 import { MotoristaEmpresaResponse } from '@/features/usuarios/(personas)/motoristas/types/motorista';
-import { VeiculoPaginadoResponse } from '@/features/veiculos/types/veiculo2';
+import { VeiculoPaginadoResponse } from '@/features/veiculos/types/veiculo';
 import { clientApi } from '@/services/clientApi';
 import {
   EmpresaInput,

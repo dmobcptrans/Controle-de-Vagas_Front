@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import { useMapboxSuggestions } from '@/features/map/hooks/useMapboxSuggestions';
 import {
   Search,

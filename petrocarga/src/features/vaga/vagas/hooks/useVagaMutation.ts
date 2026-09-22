@@ -4,7 +4,7 @@ import { useApi } from '@/services/hooks/useApi';
 
 import { criarVaga, atualizarVaga, deleteVaga } from '../service/vagaApi';
 
-import { VagaPayload, VagaResponse } from '../types/vaga2';
+import { VagaPayload, VagaResponse } from '../types/vaga';
 
 interface UseVagaMutationReturn {
   loading: boolean;

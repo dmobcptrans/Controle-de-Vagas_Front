@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { getReservasRapidas } from '@/features/reserva/reservas/services/reservaApi';
 import { getDenuncias } from '@/features/denuncias/services/denunciaApi';
-import { DenunciaParams } from '@/features/denuncias/types/denuncia2';
+import { DenunciaParams } from '@/features/denuncias/types/denuncia';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ReservaRapidaResponse } from '@/features/reserva/reservas/types/reservaRapida';

@@ -5,7 +5,7 @@
 
 import { Paginacao } from '@/lib/types/paginacao';
 import { UsuarioResponse } from '@/lib/types/personas/usuario';
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 /**
  * @interface UsuarioEmpresa
  * @description Dados do usuário vinculado à empresa.

@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { ChevronDown, ChevronUp, Archive, AlertTriangle } from 'lucide-react';
 import DenunciaCard from '../../../usuarios/(personas)/gestores/components/cards/denuncia-card';
-import { DenunciaResponse } from '../../types/denuncia2';
+import { DenunciaResponse } from '../../types/denuncia';
 
 /**
  * Prioridade para ordenação das denúncias

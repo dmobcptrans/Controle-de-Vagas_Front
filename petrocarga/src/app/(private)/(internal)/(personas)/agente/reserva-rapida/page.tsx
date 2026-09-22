@@ -7,7 +7,7 @@ import { Info } from 'lucide-react';
 import { MapReserva } from '@/features/map/components/MapReserva';
 import ReservaAgente from '@/features/usuarios/(personas)/agentes/components/reserva/ReservaAgente';
 
-import { VagaResponse, VagasMapa } from '@/features/vaga/vagas/types/vaga2';
+import { VagaResponse, VagasMapa } from '@/features/vaga/vagas/types/vaga';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
 
 import {

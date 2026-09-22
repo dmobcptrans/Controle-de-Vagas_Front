@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useState } from 'react';
 import { getVeiculosPorUsuario } from '@/features/veiculos/services/veiculoApi';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import VeiculoCard from '@/features/veiculos/components/(motorista)/veiculo-item';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';

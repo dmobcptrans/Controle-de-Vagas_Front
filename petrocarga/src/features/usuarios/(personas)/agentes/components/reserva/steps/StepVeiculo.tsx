@@ -1,6 +1,6 @@
 'use client';
 
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useMapboxSuggestions } from '@/features/map/hooks/useMapboxSuggestions';

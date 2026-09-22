@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { ClusterMapa, VagasMapa } from '@/features/vaga/vagas/types/vaga2';
+import { ClusterMapa, VagasMapa } from '@/features/vaga/vagas/types/vaga';
 
 /**
  * @module utils/map/markersReserva

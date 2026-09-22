@@ -17,8 +17,8 @@ import { useDisponibilidadeActions } from '../hooks/useDisponibilidadeActions';
 import { useVagas } from '../../vagas/hooks/useVagas';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
 
-import type { DisponibildadeVagaResponse } from '../types/disponibilidadeVaga2';
-import type { VagaResponse } from '../../vagas/types/vaga2';
+import type { DisponibildadeVagaResponse } from '../types/disponibilidadeVaga';
+import type { VagaResponse } from '../../vagas/types/vaga';
 import { useCalendarioMes } from '@/contexts/CalendarioMesContext';
 
 /* --------------------------------------------------------------------- */

@@ -5,7 +5,7 @@ import { getDisponibilidadeVagas } from '@/features/vaga/disponibilidadeVaga/ser
 import {
   DisponibildadeVagaResponse,
   DisponibilidadesParam,
-} from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga2';
+} from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
 import { useApi } from '@/services/hooks/useApi';
 
 interface UseDisponibilidadeOptions {

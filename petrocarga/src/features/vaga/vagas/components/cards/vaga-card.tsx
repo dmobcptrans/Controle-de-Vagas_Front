@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { VagaResponse, DiaSemana } from '@/features/vaga/vagas/types/vaga2';
+import { VagaResponse, DiaSemana } from '@/features/vaga/vagas/types/vaga';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';

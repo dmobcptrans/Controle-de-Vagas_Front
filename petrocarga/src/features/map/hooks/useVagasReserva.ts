@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ClusterMapa, TipoResultadoMapa, VagasMapa } from '@/features/vaga/vagas/types/vaga2';
+import { ClusterMapa, TipoResultadoMapa, VagasMapa } from '@/features/vaga/vagas/types/vaga';
 import * as vagaApi from '@/features/vaga/vagas/service/vagaApi';
 
 /**

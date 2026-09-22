@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, Archive, AlertTriangle } from 'lucide-react';
 import DenunciaCard from '../denuncia-card';
-import { DenunciaResponse } from '../../types/denuncia2';
+import { DenunciaResponse } from '../../types/denuncia';
 
 /* ---------------- Constantes ---------------- */
 

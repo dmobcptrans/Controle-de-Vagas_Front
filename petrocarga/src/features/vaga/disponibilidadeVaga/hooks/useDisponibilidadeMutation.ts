@@ -10,7 +10,7 @@ import {
   DisponibilidadeVagasPayload,
   DisponibildadeVagaResponse,
   DisponibilidadeVagasMultiplasPayload,
-} from '../types/disponibilidadeVaga2';
+} from '../types/disponibilidadeVaga';
 
 interface UseDisponibilidadeReturn {
   loading: boolean;

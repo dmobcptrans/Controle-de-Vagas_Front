@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import { CTASearch } from '@/components/ui/CTA/search/CTASearch';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/ui/Header/Header';
-import { FiltroVaga } from '@/features/vaga/vagas/types/vaga2';
+import { FiltroVaga } from '@/features/vaga/vagas/types/vaga';
 
 
 export default function Page() {

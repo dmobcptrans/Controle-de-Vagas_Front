@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { VagasMapa, VagasMapaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VagasMapa, VagasMapaResponse } from '@/features/vaga/vagas/types/vaga';
 
 /**
  * @module utils/map/markers

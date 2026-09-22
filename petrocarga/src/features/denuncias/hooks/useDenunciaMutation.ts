@@ -4,7 +4,7 @@ import { useApi } from "@/services/hooks/useApi";
 
 import { CriarDenuncia, finalizarAnaliseDenuncia, iniciarAnaliseDenuncia } from "../services/denunciaApi";
 
-import { DenunciaPayload, RespostaDenunciaPayload, DenunciaResponse  } from "../types/denuncia2";
+import { DenunciaPayload, RespostaDenunciaPayload, DenunciaResponse  } from "../types/denuncia";
 
 interface UseDenunciaMutationReturn {
     loading: boolean;

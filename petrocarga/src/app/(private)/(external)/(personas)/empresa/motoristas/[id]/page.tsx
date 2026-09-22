@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import VeiculoCard from '@/features/veiculos/components/(motorista)/veiculo-item';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';

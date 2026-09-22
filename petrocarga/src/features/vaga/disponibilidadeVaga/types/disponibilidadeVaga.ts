@@ -1,4 +1,4 @@
-import { Endereco } from '../../vagas/types/vaga2';
+import { Endereco } from '../../vagas/types/vaga';
 
 //PARAMS
 

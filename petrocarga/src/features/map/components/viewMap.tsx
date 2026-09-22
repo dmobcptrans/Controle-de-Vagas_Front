@@ -7,7 +7,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 import { useVagasMap } from '@/features/vaga/vagas/hooks/useVagasMap';
 
-import { FiltroVaga, StatusVaga } from '@/features/vaga/vagas/types/vaga2';
+import { FiltroVaga, StatusVaga } from '@/features/vaga/vagas/types/vaga';
 
 import { useMapbox } from '../hooks/useMapbox';
 import { addVagaMarkers } from '../utils/markerUtils';

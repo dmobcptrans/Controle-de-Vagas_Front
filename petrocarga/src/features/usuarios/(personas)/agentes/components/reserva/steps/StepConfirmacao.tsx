@@ -1,8 +1,8 @@
 'use client';
 
 import Confirmation from '@/features/reserva/reservar-vaga/components/Confirmation';
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 
 interface StepConfirmacaoProps {
   selectedDay: Date;

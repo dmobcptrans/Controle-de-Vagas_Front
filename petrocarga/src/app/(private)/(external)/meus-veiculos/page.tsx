@@ -12,7 +12,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { VeiculoParams, VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import { VeiculoParams, VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import VeiculoCard from '@/features/veiculos/components/(motorista)/veiculo-item';
 import { Button } from '@/components/ui/button';
 import CadastroVeiculoModal from '@/features/veiculos/components/modal/Cadastroveiculomodal';

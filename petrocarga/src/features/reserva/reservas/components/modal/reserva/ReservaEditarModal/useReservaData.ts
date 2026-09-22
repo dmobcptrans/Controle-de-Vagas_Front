@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { getVeiculoPorId } from '@/features/veiculos/services/veiculoApi';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
 
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 
 /**
  * @hook useReservaData

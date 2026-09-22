@@ -7,8 +7,8 @@ import {
   Save,
   Loader2,
 } from 'lucide-react';
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 
 interface ReservaSummaryProps {
   form: {

@@ -15,7 +15,7 @@ import {
   TipoVaga,
   VagaPayload,
   VagaResponse,
-} from '@/features/vaga/vagas/types/vaga2';
+} from '@/features/vaga/vagas/types/vaga';
 import CardMapEdit from '@/features/map/components/cardMapEdit';
 import { useVagaMutation } from '@/features/vaga/vagas/hooks/useVagaMutation';
 

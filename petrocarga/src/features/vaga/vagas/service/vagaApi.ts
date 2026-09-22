@@ -9,7 +9,7 @@ import {
   VagasMapaParams,
   VagasMapaResponse,
   VagasPaginadasResponse,
-} from '../types/vaga2';
+} from '../types/vaga';
 import { buildSearchParams } from '@/services/utils/buildSearchParams';
 
 

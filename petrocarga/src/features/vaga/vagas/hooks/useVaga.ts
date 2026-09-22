@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { VagaResponse } from '../types/vaga2';
+import { VagaResponse } from '../types/vaga';
 import { useApi } from '@/services/hooks/useApi';
 import { getVagaById } from '../service/vagaApi';
 

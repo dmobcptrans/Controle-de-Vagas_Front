@@ -1,6 +1,6 @@
 'use client';
 
-import { DenunciaResponse } from '../types/denuncia2';
+import { DenunciaResponse } from '../types/denuncia';
 import { DenunciaDetalhes } from './denuncia-detalhes';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';

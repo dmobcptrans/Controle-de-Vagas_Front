@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { VagasMapaParams, VagasMapaResponse } from '../types/vaga2';
+import { VagasMapaParams, VagasMapaResponse } from '../types/vaga';
 
 import { useApi } from '@/services/hooks/useApi';
 import { getVagasPorMapa } from '../service/vagaApi';

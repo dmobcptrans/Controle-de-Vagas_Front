@@ -18,7 +18,7 @@ import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import { useVeiculoMutation } from '../../hooks/useVeiculoMutation';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { TIPO_VEICULO_OPTIONS, TipoVeiculo } from '../../types/tipoVeiculo';
-import { VeiculoPayload } from '../../types/veiculo2';
+import { VeiculoPayload } from '../../types/veiculo';
 
 interface CadastroVeiculoModalProps {
   open?: boolean;

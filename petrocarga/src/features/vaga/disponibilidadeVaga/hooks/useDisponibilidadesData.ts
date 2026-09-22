@@ -7,7 +7,7 @@ import { useDisponibilidade } from './useDisponibilidade';
 import {
   DisponibildadeVagaResponse,
   DisponibilidadesParam,
-} from './../types/disponibilidadeVaga2';
+} from '../types/disponibilidadeVaga';
 
 export function useDisponibilidadesData({ mes, ano }: DisponibilidadesParam) {
   const params: DisponibilidadesParam = {

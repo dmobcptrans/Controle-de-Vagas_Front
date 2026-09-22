@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { MapReserva } from '@/features/map/components/MapReserva';
 import ReservaComponent from '@/features/reserva/reservar-vaga/components/ReservaComponent';
 
-import { VagaResponse, VagasMapa } from '@/features/vaga/vagas/types/vaga2';
+import { VagaResponse, VagasMapa } from '@/features/vaga/vagas/types/vaga';
 import {
   CTASearch,
   SuggestionWithCoords,

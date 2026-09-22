@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle2, AlertCircle, Edit, Trash2, Save, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { VeiculoResponse, VeiculoPayload } from '../../types/veiculo2';
+import { VeiculoResponse, VeiculoPayload } from '../../types/veiculo';
 import { useVeiculoMutation } from '../../hooks/useVeiculoMutation';
 
 import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';

@@ -1,5 +1,5 @@
 import { ReservaBloqueiosResponse, ReservaResponse } from '../../reservas/types/reservas';
-import { VagaResponse, DiaSemana, OperacoesVaga } from '@/features/vaga/vagas/types/vaga2';
+import { VagaResponse, DiaSemana, OperacoesVaga } from '@/features/vaga/vagas/types/vaga';
 
 
 /**

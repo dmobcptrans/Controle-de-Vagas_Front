@@ -1,4 +1,4 @@
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';

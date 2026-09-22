@@ -6,7 +6,7 @@ import DenunciaLista from '@/features/denuncias/components/(motorista)/DenunciaL
 import {
   DenunciaPaginadaResponse,
   DenunciaParams,
-} from '@/features/denuncias/types/denuncia2';
+} from '@/features/denuncias/types/denuncia';
 import {
   AlertCircle,
   AlertTriangle,

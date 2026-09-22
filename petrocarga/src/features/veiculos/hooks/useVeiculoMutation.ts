@@ -8,7 +8,7 @@ import {
   deletarVeiculo,
 } from '../services/veiculoApi';
 
-import { VeiculoPayload, VeiculoResponse } from '../types/veiculo2';
+import { VeiculoPayload, VeiculoResponse } from '../types/veiculo';
 
 interface UseVeiculoMutationReturn {
   loading: boolean;

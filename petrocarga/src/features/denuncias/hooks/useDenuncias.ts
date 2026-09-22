@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useApi } from '@/services/hooks/useApi';
 
-import { DenunciaParams, DenunciaResponse } from '../types/denuncia2';
+import { DenunciaParams, DenunciaResponse } from '../types/denuncia';
 
 import {
   getDenunciasByUsuario,

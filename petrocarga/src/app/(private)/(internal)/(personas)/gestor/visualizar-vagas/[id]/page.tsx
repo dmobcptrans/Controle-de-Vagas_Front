@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import VagaDetalhes from '@/features/vaga/vagas/components/cards/vaga-card';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 import { useParams } from 'next/navigation';
 import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';

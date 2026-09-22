@@ -7,7 +7,7 @@ import { useDenunciaMutation } from '@/features/denuncias/hooks/useDenunciaMutat
 import {
   DenunciaResponse,
   TipoDenuncia,
-} from '@/features/denuncias/types/denuncia2';
+} from '@/features/denuncias/types/denuncia';
 
 interface ReservaDenunciaProps {
   reserva: {

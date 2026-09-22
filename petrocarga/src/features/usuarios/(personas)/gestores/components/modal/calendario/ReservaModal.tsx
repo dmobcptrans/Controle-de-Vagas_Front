@@ -12,7 +12,7 @@ import {
   ReservaItem,
 } from '../../calendario/ListItems';
 import { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 
 export type ModalState =
   | {

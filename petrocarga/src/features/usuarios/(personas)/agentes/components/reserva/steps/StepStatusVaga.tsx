@@ -1,6 +1,6 @@
 'use client';
 
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 
 interface SlotLivre {
   inicio: Date;

@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { DIAS_SEMANA } from './reservaHelpers';
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
-import { DiaSemana, VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
+import { DiaSemana, VagaResponse } from '@/features/vaga/vagas/types/vaga';
 import { ReservaState } from '../types/reservaState';
 import { ConfirmResult } from '@/lib/types/confirmResult';
 

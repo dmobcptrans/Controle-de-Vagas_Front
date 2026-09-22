@@ -1,4 +1,4 @@
-import { VeiculoResponse } from "@/features/veiculos/types/veiculo2";
+import { VeiculoResponse } from "@/features/veiculos/types/veiculo";
 
 /**
  * @module types/reservaState

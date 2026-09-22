@@ -6,7 +6,7 @@ import {
   VeiculoPayload,
   VeiculoPaginadoResponse,
   VeiculoResponse,
-} from '../types/veiculo2';
+} from '../types/veiculo';
 
 /**
  * Cria um veículo para determinado usuário.

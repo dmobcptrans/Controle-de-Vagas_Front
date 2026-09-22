@@ -1,6 +1,6 @@
 'use client';
 
-import { DenunciaResponse, RespostaDenunciaPayload } from '@/features/denuncias/types/denuncia2';
+import { DenunciaResponse, RespostaDenunciaPayload } from '@/features/denuncias/types/denuncia';
 import { useState, useEffect, useCallback, memo } from 'react';
 import {
   X,

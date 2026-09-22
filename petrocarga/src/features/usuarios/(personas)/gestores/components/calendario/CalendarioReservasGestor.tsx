@@ -10,7 +10,7 @@ import { toDateKey, dayStartISO } from '@/components/utils/gestor/calendario/uti
 import type { EventClickArg, EventInput } from '@fullcalendar/core';
 import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
 import type { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
-import type { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import type { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 import { useCalendarioMes } from '@/contexts/CalendarioMesContext';
 
 // ==================== TIPOS ====================

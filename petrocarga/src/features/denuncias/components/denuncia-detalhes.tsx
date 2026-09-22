@@ -1,6 +1,6 @@
 'use client';
 
-import { DenunciaResponse } from '../types/denuncia2';
+import { DenunciaResponse } from '../types/denuncia';
 import { cn } from '@/lib/utils';
 import { X, MapPin, Calendar, FileText, MessageSquare } from 'lucide-react';
 import { ComponentType } from 'react';

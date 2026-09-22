@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { Trash, Truck } from 'lucide-react';
-import { VeiculoResponse } from '../../types/veiculo2';
+import { VeiculoResponse } from '../../types/veiculo';
 
 interface VeiculoCardProps {
   veiculo: VeiculoResponse;

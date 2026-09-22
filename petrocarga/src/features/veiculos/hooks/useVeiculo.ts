@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { getVeiculoPorId } from '../services/veiculoApi';
 
-import { VeiculoResponse } from '../types/veiculo2';
+import { VeiculoResponse } from '../types/veiculo';
 
 import { useApi } from '@/services/hooks/useApi';
 

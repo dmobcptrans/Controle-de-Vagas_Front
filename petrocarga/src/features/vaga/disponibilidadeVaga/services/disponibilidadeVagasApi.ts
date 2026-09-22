@@ -8,7 +8,7 @@ import {
   DisponibilidadeVagaResumoResponse,
   DisponibilidadeVagasMultiplasPayload,
   DisponibilidadeVagasPayload,
-} from '../types/disponibilidadeVaga2';
+} from '../types/disponibilidadeVaga';
 
 // ----------------------
 // POST DISPONIBILIDADE VAGAS (MULTIPLAS)

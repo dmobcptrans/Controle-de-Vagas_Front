@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
-import { DisponibildadeVagaResponse } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga2';
+import { DisponibildadeVagaResponse } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
 
 /**
  * Estados do modal para navegação hierárquica

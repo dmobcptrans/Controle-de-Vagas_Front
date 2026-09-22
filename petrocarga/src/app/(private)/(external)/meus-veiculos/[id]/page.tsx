@@ -9,7 +9,7 @@ import {
   Loader2,
   RefreshCw,
 } from 'lucide-react';
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo2';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import VeiculoDetalhes from '@/features/veiculos/components/(motorista)/veiculo-card';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';

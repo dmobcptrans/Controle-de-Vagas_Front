@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { getVeiculosPorUsuario } from '../services/veiculoApi';
 
-import { VeiculoParams, VeiculoResponse } from '../types/veiculo2';
+import { VeiculoParams, VeiculoResponse } from '../types/veiculo';
 
 import { useApi } from '@/services/hooks/useApi';
 

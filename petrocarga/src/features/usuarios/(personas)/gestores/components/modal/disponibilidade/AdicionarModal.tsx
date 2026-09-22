@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga2';
+import { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 
 interface AdicionarModalProps {
   open: boolean;

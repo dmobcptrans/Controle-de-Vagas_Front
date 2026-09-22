@@ -1,4 +1,4 @@
-import { Endereco } from '@/features/vaga/vagas/types/vaga2';
+import { Endereco } from '@/features/vaga/vagas/types/vaga';
 import { Paginacao } from '@/lib/types/paginacao';
 
 export type TipoDenuncia =

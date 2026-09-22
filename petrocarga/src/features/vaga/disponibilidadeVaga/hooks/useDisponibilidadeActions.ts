@@ -1,11 +1,11 @@
-import { DisponibilidadeVagasPayload } from './../types/disponibilidadeVaga2';
+import { DisponibilidadeVagasPayload } from '../types/disponibilidadeVaga';
 import { useDisponibiliadadeMutation } from './useDisponibilidadeMutation';
 import toast from 'react-hot-toast';
 import {
   DisponibildadeVagaResponse,
   DisponibilidadeVagasMultiplasPayload,
-} from '../types/disponibilidadeVaga2';
-import { VagaResponse } from '../../vagas/types/vaga2';
+} from '../types/disponibilidadeVaga';
+import { VagaResponse } from '../../vagas/types/vaga';
 
 interface UseDisponibilidadeActionsProps {
   vagasPorLogradouro: Record<string, VagaResponse[]>;
