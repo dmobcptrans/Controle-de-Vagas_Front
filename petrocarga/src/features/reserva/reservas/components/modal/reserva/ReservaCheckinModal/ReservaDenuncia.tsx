@@ -1,73 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { ReservaPorUsuarioResponse } from '@/features/reserva/reservas/types/reservas';
-import { CriarDenuncia } from '@/features/denuncias/services/denunciaApi';
 import { AlertTriangle } from 'lucide-react';
-import { DenunciaResponse } from '@/features/denuncias/types/denuncia2';
+
+import { useDenunciaMutation } from '@/features/denuncias/hooks/useDenunciaMutation';
+import {
+  DenunciaResponse,
+  TipoDenuncia,
+} from '@/features/denuncias/types/denuncia2';
 
 interface ReservaDenunciaProps {
-  reserva: ReservaPorUsuarioResponse;
+  reserva: {
+    id: string;
+  };
   onClose: () => void;
 }
-
-type TipoDenuncia =
-  | 'USO_INDEVIDO_DA_VAGA'
-  | 'ATRASO_POR_MOTIVO_DE_FORCA_MAIOR'
-  | 'OUTROS';
-
-/**
- * @component ReservaDenuncia
- * @version 1.0.0
- *
- * @description Modal para envio de denúncia sobre uma reserva.
- * Permite selecionar o tipo da denúncia e fornecer uma descrição detalhada.
- *
- * ----------------------------------------------------------------------------
- * 📋 FLUXO COMPLETO:
- * ----------------------------------------------------------------------------
- *
- * 1. SELEÇÃO DO TIPO:
- *    - USO_INDEVIDO_DA_VAGA
- *    - ATRASO_POR_MOTIVO_DE_FORCA_MAIOR
- *    - OUTROS
- *
- * 2. DESCRIÇÃO:
- *    - Campo texto obrigatório
- *    - Limite de 300 caracteres
- *    - Contador visual de caracteres
- *
- * 3. ENVIO:
- *    - Validação: descrição não vazia
- *    - Chama API Denunciar com FormData
- *    - Loading state durante envio
- *    - Em sucesso: fecha modal
- *    - Em erro: exibe mensagem
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - LIMITE DE CARACTERES: 300 caracteres (constante LIMITE_CARACTERES)
- * - CONTADOR: Exibe "X/300 caracteres" no rodapé do textarea
- * - VALIDAÇÃO: Botão desabilitado se descrição vazia
- * - FEEDBACK: Erro exibido em card vermelho
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - Denunciar: API de envio de denúncia
- * - AlertTriangle: Ícone de alerta do Lucide
- *
- * @example
- * ```tsx
- * <ReservaDenuncia
- *   reserva={reserva}
- *   onClose={() => setAbrirModal(false)}
- * />
- * ```
- */
 
 export default function ReservaDenuncia({
   reserva,
@@ -75,64 +22,60 @@ export default function ReservaDenuncia({
 }: ReservaDenunciaProps) {
   const LIMITE_CARACTERES = 300;
 
-  const [tipo, setTipo] = useState<TipoDenuncia>('USO_INDEVIDO_DA_VAGA');
-  const [descricao, setDescricao] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
+  const { criar, error, loading } = useDenunciaMutation();
 
-  // ==================== HANDLER DE ENVIO ====================
+  const [tipo, setTipo] = useState<TipoDenuncia>(
+    'USO_INDEVIDO_DA_VAGA'
+  );
+
+  const [descricao, setDescricao] = useState('');
 
   const handleSubmit = async () => {
     if (!descricao.trim()) return;
 
-    try {
-      setLoading(true);
-      setErro(null);
+    const payload = {
+      descricao: descricao.trim(),
+      reservaId: reserva.id,
+      tipo,
+    };
 
-      const formData = new FormData();
+    const result: DenunciaResponse | null = await criar(payload);
 
-      formData.append('descricao', descricao);
-      formData.append('reservaId', reserva.id);
-      formData.append('tipo', tipo);
+    if (!result) return;
 
-      const result: DenunciaResponse = await CriarDenuncia(formData);
+    console.log('Denúncia criada:', result);
 
-      console.log('Denúncia criada:', result);
-
-      onClose();
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Não foi possível enviar a denúncia.';
-
-      setErro(message);
-    } finally {
-      setLoading(false);
-    }
+    onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-3">
-      {/* Overlay (fundo escuro) */}
-      <div onClick={onClose} />
+      {/* Overlay */}
+      <div
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40"
+      />
 
-      {/* Modal principal */}
+      {/* Modal */}
       <div className="relative bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-        {/* ==================== HEADER ==================== */}
+        {/* Header */}
         <div className="p-5 border-b flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-red-500" />
+
           <div>
             <h2 className="text-lg font-semibold text-gray-800">
               Enviar denúncia
             </h2>
-            <p className="text-sm text-gray-500">Informe o problema ocorrido</p>
+
+            <p className="text-sm text-gray-500">
+              Informe o problema ocorrido
+            </p>
           </div>
         </div>
 
-        {/* ==================== CONTEÚDO ==================== */}
+        {/* Conteúdo */}
         <div className="p-5 flex flex-col gap-4 text-sm">
-          {/* Tipo da denúncia (select) */}
+          {/* Tipo da denúncia */}
           <div className="flex flex-col gap-1">
             <label className="font-medium text-gray-700">
               Tipo da denúncia
@@ -140,25 +83,37 @@ export default function ReservaDenuncia({
 
             <select
               value={tipo}
-              onChange={(e) => setTipo(e.target.value as TipoDenuncia)}
+              onChange={(e) =>
+                setTipo(e.target.value as TipoDenuncia)
+              }
               className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
             >
-              <option value="USO_INDEVIDO_DA_VAGA">Uso indevido da vaga</option>
+              <option value="USO_INDEVIDO_DA_VAGA">
+                Uso indevido da vaga
+              </option>
+
               <option value="ATRASO_POR_MOTIVO_DE_FORCA_MAIOR">
                 Atraso por motivo de força maior
               </option>
-              <option value="OUTROS">Outros</option>
+
+              <option value="OUTROS">
+                Outros
+              </option>
             </select>
           </div>
 
-          {/* Descrição (textarea com contador) */}
+          {/* Descrição */}
           <div className="flex flex-col gap-1">
-            <label className="font-medium text-gray-700">Descrição</label>
+            <label className="font-medium text-gray-700">
+              Descrição
+            </label>
 
             <textarea
               value={descricao}
               onChange={(e) =>
-                setDescricao(e.target.value.slice(0, LIMITE_CARACTERES))
+                setDescricao(
+                  e.target.value.slice(0, LIMITE_CARACTERES)
+                )
               }
               rows={4}
               placeholder="Descreva o que aconteceu..."
@@ -170,29 +125,30 @@ export default function ReservaDenuncia({
             </div>
           </div>
 
-          {/* Mensagem de erro */}
-          {erro && (
+          {/* Erro */}
+          {error && (
             <div className="text-sm text-red-600 bg-red-50 p-2 rounded-lg">
-              {erro}
+              {error}
             </div>
           )}
         </div>
 
-        {/* ==================== AÇÕES ==================== */}
+        {/* Ações */}
         <div className="p-5 border-t flex flex-col gap-2">
-          {/* Botão principal - Enviar denúncia */}
           <button
             onClick={handleSubmit}
             disabled={loading || !descricao.trim()}
             className="w-full py-2.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium transition"
           >
-            {loading ? 'Enviando denúncia...' : 'Enviar denúncia'}
+            {loading
+              ? 'Enviando denúncia...'
+              : 'Enviar denúncia'}
           </button>
 
-          {/* Botão secundário - Cancelar */}
           <button
             onClick={onClose}
-            className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition"
+            disabled={loading}
+            className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition disabled:opacity-50"
           >
             Cancelar
           </button>

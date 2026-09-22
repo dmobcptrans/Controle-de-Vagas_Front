@@ -1,6 +1,6 @@
 'use client';
 
-import { DenunciaResponse } from '@/features/denuncias/types/denuncia2';
+import { DenunciaResponse, RespostaDenunciaPayload } from '@/features/denuncias/types/denuncia2';
 import { useState, useEffect, useCallback, memo } from 'react';
 import {
   X,
@@ -15,7 +15,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { finalizarAnaliseDenuncia } from '@/features/denuncias/services/denunciaApi';
+import { useDenunciaMutation } from '@/features/denuncias/hooks/useDenunciaMutation';
 import toast from 'react-hot-toast';
 
 const RESPOSTA_LIMITE = 300;
@@ -119,6 +119,7 @@ function DenunciaAnaliseModalInner({
     'PROCEDENTE' | 'IMPROCEDENTE' | ''
   >('');
   const [resposta, setResposta] = useState('');
+  const {finalizarAnalise, loading, error} = useDenunciaMutation();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -149,31 +150,31 @@ function DenunciaAnaliseModalInner({
   const collapseOnFocus = useCallback(() => setIsExpanded(false), []);
 
   const handleSubmit = useCallback(async () => {
-    if (isFormIncompleto || !resultado) return;
+  if (isFormIncompleto || !resultado) return;
 
-    setIsSubmitting(true);
-    try {
-      const response = await finalizarAnaliseDenuncia(denuncia.id, {
-        status: resultado as 'PROCEDENTE' | 'IMPROCEDENTE',
-        resposta,
-      });
-      if (response?.success) {
-        onFinalizado(resultado as 'PROCEDENTE' | 'IMPROCEDENTE');
-        onClose();
-      }
-    } catch {
-      toast.error('Erro ao finalizar análise. Tente novamente.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
+  const payload: RespostaDenunciaPayload = {
+    status: resultado,
+    resposta: resposta.trim(),
+  };
+
+  const response = await finalizarAnalise(
     denuncia.id,
-    resultado,
-    resposta,
-    isFormIncompleto,
-    onFinalizado,
-    onClose,
-  ]);
+    payload
+  );
+
+  if (response) {
+    onFinalizado(resultado);
+    onClose();
+  }
+}, [
+  denuncia.id,
+  resultado,
+  resposta,
+  isFormIncompleto,
+  finalizarAnalise,
+  onFinalizado,
+  onClose,
+]);
 
   if (!isOpen) return null;
 
@@ -438,7 +439,7 @@ function DenunciaAnaliseModalInner({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isFormIncompleto || isSubmitting}
+            disabled={isFormIncompleto || loading}
             className={cn(
               'w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-extrabold text-sm transition-all shadow-lg',
               isFormIncompleto || isSubmitting
@@ -447,7 +448,7 @@ function DenunciaAnaliseModalInner({
             )}
           >
             <Send className="w-4 h-4" aria-hidden />
-            {isSubmitting ? 'Finalizando...' : 'Finalizar Análise'}
+            {loading  ? 'Finalizando...' : 'Finalizar Análise'}
           </button>
         </div>
       </div>
