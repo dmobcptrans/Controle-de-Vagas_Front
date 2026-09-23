@@ -7,13 +7,14 @@ import { VagaResponse, DiaSemana } from '@/features/vaga/vagas/types/vaga';
 import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import StepIndicator from '@/features/reserva/reservar-vaga/components/StepIndicator';
 import toast from 'react-hot-toast';
-import { fetchReservasBloqueios } from '@/features/reserva/reservar-vaga/hooks/reservaService';
+import { getReservasBloqueios } from '@/features/reserva/reservas/services/reservaApi';
 
 import StepVeiculo from './steps/StepVeiculo';
 import StepStatusVaga from './steps/StepStatusVaga';
 import StepHorario from './steps/StepHorario';
 import StepConfirmacao from './steps/StepConfirmacao';
 import StepFeedback from './steps/StepFeedback';
+import { ReservaParams } from '@/features/reserva/reservas/types/reservas';
 
 interface ReservaAgenteProps {
   selectedVaga: VagaResponse;
@@ -84,6 +85,26 @@ export default function ReservaAgente({
     return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   };
 
+  /**
+   * Busca pontual dos bloqueios da vaga para um dia/tipo de veículo.
+   * Chamada diretamente (fora do fluxo reativo de useReserva/useReservas)
+   * porque aqui o valor é precisado de forma imediata dentro de um handler,
+   * e não como estado derivado renderizado na tela.
+
+   */
+  const buscarBloqueiosDoDia = async (
+    vagaId: string,
+    data: string,
+    tipoVeiculo: VeiculoResponse['tipo'],
+  ): Promise<ReservaBloqueio[]> => {
+    const response = await getReservasBloqueios(vagaId, {
+      data,
+      tipoVeiculo,
+    } as ReservaParams);
+
+    return (response ?? []) as unknown as ReservaBloqueio[];
+  };
+
   const encontrarProximoSlotLivre = (
     reservas: ReservaBloqueio[],
     agora: Date,
@@ -151,7 +172,7 @@ export default function ReservaAgente({
     setValidandoVeiculo(true);
     try {
       const dataFormatada = new Date().toISOString().split('T')[0];
-      await fetchReservasBloqueios(selectedVaga.id, dataFormatada, tipo);
+      await buscarBloqueiosDoDia(selectedVaga.id, dataFormatada, tipo);
     } catch (err: unknown) {
       const msg =
         err instanceof Error
@@ -177,7 +198,7 @@ export default function ReservaAgente({
     setStartHour(getNow());
     setSelectedDay(today);
 
-    const reservas: ReservaBloqueio[] = await fetchReservasBloqueios(
+    const reservas: ReservaBloqueio[] = await buscarBloqueiosDoDia(
       selectedVaga.id,
       dataFormatada,
       tipoVeiculoAgente!,

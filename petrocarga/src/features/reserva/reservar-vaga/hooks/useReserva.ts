@@ -1,14 +1,10 @@
-
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { DIAS_SEMANA } from './reservaHelpers';
 import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import { DiaSemana, VagaResponse } from '@/features/vaga/vagas/types/vaga';
 import { ReservaState } from '../types/reservaState';
 import { ConfirmResult } from '@/lib/types/confirmResult';
-
-import { getVeiculosPorUsuario } from '@/features/veiculos/services/veiculoApi';
-
 import {
   gerarHorariosDia,
   gerarHorariosOcupadosInicio,
@@ -18,116 +14,67 @@ import {
   removerHorariosPassadosDeHoje,
 } from './reservaHelpers';
 
+import { useVeiculos } from '@/features/veiculos/hooks/useVeiculos';
+import { useReservaMutation } from '../../reservas/hooks/useReservaMutation';
+import { useReservas } from '../../reservas/hooks/useReservas';
+import { useDisponibilidade } from '@/features/vaga/disponibilidadeVaga/hooks/useDisponibilidade';
+
 import {
-  fetchReservasBloqueios,
-  fetchDisponibilidadeByVagaId,
-  confirmarReserva,
-  confirmarReservaAgente,
-} from './reservaService';
+  CriarReservaPayload,
+  ReservaParams,
+  ReservaResponse,
+} from '../../reservas/types/reservas';
 
 import { getVeiculosVinculadosMotoristaEmpresa } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
+import { DisponibilidadesParam } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
+import { CriarReservaRapidaPayload } from '../../reservas/types/reservaRapida';
 
 /**
  * @hook useReserva
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @description Hook principal para gerenciamento do fluxo de reserva de vagas.
  * Suporta tanto motoristas quanto agentes, gerenciando estados, busca de horários e confirmação.
  *
  * ----------------------------------------------------------------------------
- * 📋 RETORNO:
+ * 🔄 MUDANÇAS EM RELAÇÃO À VERSÃO ANTERIOR (v1.0.0):
  * ----------------------------------------------------------------------------
+ * - Veículos do motorista comum agora vêm de `useVeiculos` (paginado, reativo).
+ * - Dias disponíveis agora vêm de `useDisponibilidade`; o cálculo de datas
+ *   válidas passou a rodar num `useEffect` que observa `disponibilidades`.
+ * - Bloqueios/horários agora vêm de `useReservas` (bloqueios); como
+ *   `buscarBloqueios()` não aceita parâmetros por chamada, os parâmetros
+ *   (data/tipoVeiculo) são memoizados e um `useEffect` dispara a busca
+ *   quando eles mudam. `fetchHorariosDisponiveis` deixou de retornar a
+ *   lista de horários (agora é `Promise<void>`), pois o cálculo passou a
+ *   ser reativo (efeito sobre `bloqueios`).
+ * - Confirmação agora usa `criar` de `useReservaMutation` (payload tipado)
+ *   em vez de `FormData` + endpoints `confirmarReserva`/`confirmarReservaAgente`.
+ * - Veículos vinculados a um motorista de empresa continuam manuais, pois
+ *   não há um hook novo equivalente para esse endpoint.
  *
- * @property {ReservaState} ...reservaState - Todos os campos do estado da reserva
- * @property {boolean} isAgente - Indica se o usuário é agente
- * @property {Veiculo[]} vehicles - Lista de veículos do motorista
- * @property {boolean} loadingMotorista - Carregando dados do motorista
- * @property {boolean} loadingHorarios - Carregando horários disponíveis
- * @property {boolean} horariosCarregados - Horários já foram carregados
- * @property {Date[]} availableDates - Datas disponíveis para reserva
- * @property {function} fetchDiasDisponiveis - Busca dias disponíveis
- * @property {function} fetchHorariosDisponiveis - Busca horários disponíveis
- * @property {function} handleConfirm - Confirma a reserva
- * @property {function} reset - Reseta o estado da reserva
- * @property {function} setStep - Define etapa atual
- * @property {function} setSelectedDay - Define dia selecionado
- * @property {function} setStartHour - Define hora de início
- * @property {function} setEndHour - Define hora de fim
- * @property {function} setOrigin - Define origem
- * @property {function} setEntryCity - Define entrada na cidade
- * @property {function} setSelectedVehicleId - Define veículo selecionado (motorista)
- * @property {function} setTipoVeiculoAgente - Define tipo de veículo (agente)
- * @property {function} setPlacaAgente - Define placa (agente)
- *
- * ----------------------------------------------------------------------------
- * 📋 FLUXO COMPLETO:
- * ----------------------------------------------------------------------------
- *
- * 1. BUSCA DIAS DISPONÍVEIS:
- *    - fetchDiasDisponiveis consulta disponibilidades da vaga
- *    - Filtra dias que estão dentro do período de disponibilidade
- *    - Considera dias permitidos pela operação da vaga
- *
- * 2. BUSCA HORÁRIOS DISPONÍVEIS:
- *    - fetchHorariosDisponiveis consulta bloqueios para o dia selecionado
- *    - Gera todos os horários do dia baseado na operação
- *    - Remove horários bloqueados por reservas existentes
- *    - Remove horários passados (se o dia for hoje)
- *
- * 3. CÁLCULO DE HORÁRIOS FINAIS:
- *    - Quando horário inicial é selecionado, calcula horários finais possíveis
- *    - Considera limite de horas por área (vermelha:1h, amarela:2h, azul:4h, branca:6h)
- *
- * 4. CONFIRMAÇÃO:
- *    - Monta FormData com dados da reserva
- *    - Chama API apropriada (motorista ou agente)
- *    - Reseta estado após sucesso
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - MODO AGENTE vs MOTORISTA: Diferenciação por permissão do usuário
- * - ATUALIZAÇÃO OTIMISTA: UI responde rapidamente, feedback posterior
- * - LIMITE POR ÁREA: Restrição de duração máxima por cor da vaga
- * - CACHE DE HORÁRIOS: Evita recálculos desnecessários
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - reservaHelpers: Funções auxiliares de horários
- * - reservaService: Serviços de API
- * - ReservaState: Tipo do estado
- *
- * @example
- * ```tsx
- * const reserva = useReserva(selectedVaga);
- *
- * // Motorista
- * if (!reserva.isAgente) {
- *   return <OriginVehicleStep
- *     vehicles={reserva.vehicles}
- *     selectedVehicleId={reserva.selectedVehicleId}
- *     onVehicleChange={reserva.setSelectedVehicleId}
- *     // ...
- *   />;
- * }
- *
- * // Agente
- * return <ReservaAgenteForm
- *   tipoVeiculo={reserva.tipoVeiculoAgente}
- *   onTipoChange={reserva.setTipoVeiculoAgente}
- *   placa={reserva.placaAgente}
- *   onPlacaChange={reserva.setPlacaAgente}
- * />;
- * ```
+ * ⚠️ Os nomes de campos usados em `DisponibilidadesParam`, `ReservaParams`
+ * (bloqueios) e nos payloads de criação foram inferidos do código anterior.
+ * Confira-os contra as interfaces reais do seu projeto.
  */
+
+type Persona = 'Motorista' | 'Agente';
+
+const INTERVALO_AGENTE = 15;
+const INTERVALO_MOTORISTA = 30;
+const VEHICLE_PAGE_SIZE = 5;
 
 export function useReserva(selectedVaga: VagaResponse | null) {
   const { user } = useAuth();
   const isAgente = user?.permissao === 'AGENTE';
   const isEmpresa = user?.permissao === 'EMPRESA';
+  const motoristaId = user?.id;
+
+  const {
+    criar,
+    loading: confirmando,
+    error: erroConfirmar,
+  } = useReservaMutation();
 
   // ==================== ESTADO PRINCIPAL ====================
   const [reservaState, setReservaState] = useState<ReservaState>({
@@ -145,24 +92,10 @@ export function useReserva(selectedVaga: VagaResponse | null) {
     placaAgente: '',
   });
 
-  const motoristaId = user?.id;
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
-  const [loadingDias, setLoadingDias] = useState(false);
-  const [vehicles, setVehicles] = useState<VeiculoResponse[]>([]);
   const [vehiclePage, setVehiclePage] = useState(0);
-  const [vehiclesLoading, setVehiclesLoading] = useState(false);
-  const [vehiclePageSize] = useState(5);
-  const [vehicleTotalPages, setVehicleTotalPages] = useState(0);
-  const [motoristaSelecionadoId, setMotoristaSelecionadoId] = useState<
-    string | null
-  >(null);
-  const [loadingMotorista, setLoadingMotorista] = useState(true);
-  const [loadingHorarios, setLoadingHorarios] = useState(false);
   const [horariosCarregados, setHorariosCarregados] = useState(false);
   const reservedTimesEndBaseRef = useRef<string[]>([]);
-
-  const INTERVALO_AGENTE = 15;
-  const INTERVALO_MOTORISTA = 30;
 
   // ==================== RESET ====================
   const reset = useCallback(() => {
@@ -182,7 +115,90 @@ export function useReserva(selectedVaga: VagaResponse | null) {
     });
   }, []);
 
-  // ==================== BUSCA DIAS DISPONÍVEIS ====================
+  // ==================== VEÍCULOS DO MOTORISTA COMUM ====================
+  const veiculoParams = useMemo(
+    () => ({
+      ativo: true,
+      pagina: vehiclePage,
+      tamanhoPagina: VEHICLE_PAGE_SIZE,
+    }),
+    [vehiclePage],
+  );
+
+  const {
+    veiculos: veiculosMotorista,
+    loading: loadingVeiculosMotorista,
+    totalPaginas: totalPaginasVeiculosMotorista,
+  } = useVeiculos({
+    usuarioId: !isAgente && !isEmpresa ? user?.id : undefined,
+    params: veiculoParams,
+    buscarAutomaticamente: !isAgente && !isEmpresa,
+  });
+
+  // ==================== VEÍCULOS VINCULADOS A MOTORISTA (EMPRESA) ====================
+  // Sem hook novo equivalente para este endpoint; mantido manual.
+  const [veiculosEmpresa, setVeiculosEmpresa] = useState<VeiculoResponse[]>([]);
+  const [vehicleTotalPagesEmpresa, setVehicleTotalPagesEmpresa] = useState(0);
+  const [vehiclesLoadingEmpresa, setVehiclesLoadingEmpresa] = useState(false);
+  const [motoristaSelecionadoId, setMotoristaSelecionadoId] = useState<
+    string | null
+  >(null);
+
+  const fetchVeiculosMotorista = useCallback(
+    async (motoristaAlvoId: string, pagina?: number) => {
+      if (!user?.id || !motoristaAlvoId) return;
+
+      setVehiclesLoadingEmpresa(true);
+
+      try {
+        const paginaAtual = pagina ?? vehiclePage;
+
+        const r = await getVeiculosVinculadosMotoristaEmpresa(
+          user.id,
+          motoristaAlvoId,
+          {
+            ativo: true,
+            pagina: paginaAtual,
+            tamanhoPagina: VEHICLE_PAGE_SIZE,
+          },
+        );
+
+        setVeiculosEmpresa(r.content);
+        setVehicleTotalPagesEmpresa(r.totalPaginas);
+        setMotoristaSelecionadoId(motoristaAlvoId);
+      } catch (err) {
+        console.error('Erro ao carregar veículos do motorista:', err);
+        setVeiculosEmpresa([]);
+        setVehicleTotalPagesEmpresa(0);
+      } finally {
+        setVehiclesLoadingEmpresa(false);
+      }
+    },
+    [user?.id, vehiclePage],
+  );
+
+  useEffect(() => {
+    if (!isEmpresa || !motoristaSelecionadoId) return;
+    fetchVeiculosMotorista(motoristaSelecionadoId, vehiclePage);
+  }, [isEmpresa, motoristaSelecionadoId, vehiclePage, fetchVeiculosMotorista]);
+
+  // ==================== VEÍCULOS UNIFICADOS ====================
+  const vehicles = isEmpresa ? veiculosEmpresa : veiculosMotorista;
+  const vehiclesLoading = isEmpresa
+    ? vehiclesLoadingEmpresa
+    : loadingVeiculosMotorista;
+  const vehicleTotalPages = isEmpresa
+    ? vehicleTotalPagesEmpresa
+    : totalPaginasVeiculosMotorista;
+  const loadingMotorista = vehiclesLoading;
+
+  // ==================== DIAS DISPONÍVEIS ====================
+  const {
+    disponibilidades,
+    loading: loadingDias,
+    buscar: buscarDisponibilidades,
+  } = useDisponibilidade({ buscarAutomaticamente: false });
+
   const fetchDiasDisponiveis = useCallback(
     async (mesReferencia: Date) => {
       if (!selectedVaga) return;
@@ -195,154 +211,183 @@ export function useReserva(selectedVaga: VagaResponse | null) {
         return;
       }
 
-      setLoadingDias(true);
+      const mes = mesReferencia.getMonth() + 1;
+      const ano = mesReferencia.getFullYear();
 
-      try {
-        const mes = mesReferencia.getMonth() + 1;
-        const ano = mesReferencia.getFullYear();
+      await buscarDisponibilidades({
+        vagaId: selectedVaga.id,
+        mes,
+        ano,
+      } as DisponibilidadesParam);
+    },
+    [selectedVaga, buscarDisponibilidades],
+  );
 
-        const disponibilidades = await fetchDisponibilidadeByVagaId(
-          selectedVaga.id,
-          mes,
-          ano,
-        );
+  // Recalcula availableDates sempre que a disponibilidade retornada mudar
+  useEffect(() => {
+    if (!selectedVaga) return;
 
-        if (!disponibilidades || disponibilidades.length === 0) {
-          setAvailableDates([]);
-          return;
-        }
+    if (!disponibilidades || disponibilidades.length === 0) {
+      setAvailableDates([]);
+      return;
+    }
 
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
+    const diasPermitidos: DiaSemana[] =
+      selectedVaga.operacoesVaga?.map((op) => op.diaSemanaAsEnum) ?? [];
 
-        const datasValidasSet = new Set<string>();
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
 
-        for (const disp of disponibilidades) {
-          const atual = new Date(disp.inicio);
-          const fim = new Date(disp.fim);
+    const datasValidasSet = new Set<string>();
 
-          atual.setHours(0, 0, 0, 0);
-          fim.setHours(0, 0, 0, 0);
+    for (const disp of disponibilidades) {
+      const atual = new Date(disp.inicio);
+      const fim = new Date(disp.fim);
 
-          while (atual <= fim) {
-            const diaSemana: DiaSemana = DIAS_SEMANA[atual.getDay()];
+      atual.setHours(0, 0, 0, 0);
+      fim.setHours(0, 0, 0, 0);
 
-            if (diasPermitidos.includes(diaSemana) && atual >= hoje) {
-              if (atual.getTime() === hoje.getTime()) {
-                const operacaoHoje = selectedVaga.operacoesVaga.find(
-                  (op) => op.diaSemanaAsEnum === diaSemana,
-                );
+      while (atual <= fim) {
+        const diaSemana: DiaSemana = DIAS_SEMANA[atual.getDay()];
 
-                if (!operacaoHoje) {
-                  atual.setDate(atual.getDate() + 1);
-                  continue;
-                }
+        if (diasPermitidos.includes(diaSemana) && atual >= hoje) {
+          if (atual.getTime() === hoje.getTime()) {
+            const operacaoHoje = selectedVaga.operacoesVaga.find(
+              (op) => op.diaSemanaAsEnum === diaSemana,
+            );
 
-                const [hFim, mFim] = operacaoHoje.horaFim
-                  .split(':')
-                  .map(Number);
-
-                const dataHoraFim = new Date();
-                dataHoraFim.setHours(hFim, mFim, 0, 0);
-
-                if (new Date() >= dataHoraFim) {
-                  atual.setDate(atual.getDate() + 1);
-                  continue;
-                }
-              }
-
-              datasValidasSet.add(atual.toISOString());
+            if (!operacaoHoje) {
+              atual.setDate(atual.getDate() + 1);
+              continue;
             }
 
-            atual.setDate(atual.getDate() + 1);
+            const [hFim, mFim] = operacaoHoje.horaFim.split(':').map(Number);
+
+            const dataHoraFim = new Date();
+            dataHoraFim.setHours(hFim, mFim, 0, 0);
+
+            if (new Date() >= dataHoraFim) {
+              atual.setDate(atual.getDate() + 1);
+              continue;
+            }
           }
+
+          datasValidasSet.add(atual.toISOString());
         }
 
-        setAvailableDates(Array.from(datasValidasSet).map((d) => new Date(d)));
-      } finally {
-        setLoadingDias(false);
+        atual.setDate(atual.getDate() + 1);
       }
-    },
-    [selectedVaga],
-  );
+    }
 
-  // ==================== BUSCA HORÁRIOS DISPONÍVEIS ====================
+    setAvailableDates(Array.from(datasValidasSet).map((d) => new Date(d)));
+  }, [disponibilidades, selectedVaga]);
+
+  // ==================== HORÁRIOS / BLOQUEIOS ====================
+  const tipoVeiculoSelecionado = isAgente
+    ? reservaState.tipoVeiculoAgente
+    : vehicles.find((v) => v.id === reservaState.selectedVehicleId)?.tipo;
+
+  const dataSelecionadaFormatada = reservaState.selectedDay
+    ? reservaState.selectedDay.toISOString().split('T')[0]
+    : undefined;
+
+  const bloqueiosParams = useMemo(() => {
+    if (!dataSelecionadaFormatada || !tipoVeiculoSelecionado) return undefined;
+    return {
+      data: dataSelecionadaFormatada,
+      tipoVeiculo: tipoVeiculoSelecionado,
+    } as ReservaParams;
+  }, [dataSelecionadaFormatada, tipoVeiculoSelecionado]);
+
+  const {
+    bloqueios,
+    loading: loadingHorarios,
+    buscarBloqueios,
+  } = useReservas<ReservaResponse>({
+    vagaId: selectedVaga?.id,
+    params: bloqueiosParams,
+    buscarAutomaticamente: false,
+  });
+
+  // Dispara a busca de bloqueios quando dia/veículo (tipo) mudam
+  useEffect(() => {
+    if (!selectedVaga || !bloqueiosParams) return;
+    buscarBloqueios();
+  }, [selectedVaga, bloqueiosParams, buscarBloqueios]);
+
+  // Recalcula os horários disponíveis a partir dos bloqueios retornados
+  useEffect(() => {
+    if (!selectedVaga || !reservaState.selectedDay || !tipoVeiculoSelecionado) {
+      return;
+    }
+
+    const operacao = getOperacaoDia(reservaState.selectedDay, selectedVaga);
+
+    if (!operacao) {
+      setReservaState((prev) => ({
+        ...prev,
+        availableTimes: [],
+        reservedTimesStart: [],
+      }));
+      setHorariosCarregados(true);
+      return;
+    }
+
+    const intervalo = isAgente ? INTERVALO_AGENTE : INTERVALO_MOTORISTA;
+
+    const horariosOcupadosInicio = gerarHorariosOcupadosInicio(
+      bloqueios,
+      intervalo,
+    );
+    const horariosOcupadosFim = gerarHorariosOcupadosFim(bloqueios, intervalo);
+    const todosHorarios = gerarHorariosDia(operacao, intervalo);
+    const horariosFiltradosHoje = removerHorariosPassadosDeHoje(
+      reservaState.selectedDay,
+      todosHorarios,
+    );
+    const horariosDisponiveis = horariosFiltradosHoje.filter(
+      (horario) => !horariosOcupadosInicio.includes(horario),
+    );
+
+    reservedTimesEndBaseRef.current = horariosOcupadosFim;
+
+    setReservaState((prev) => ({
+      ...prev,
+      availableTimes: horariosDisponiveis,
+      reservedTimesStart: horariosOcupadosInicio,
+      reservedTimesEnd: horariosOcupadosFim,
+    }));
+
+    setHorariosCarregados(true);
+  }, [
+    bloqueios,
+    selectedVaga,
+    reservaState.selectedDay,
+    tipoVeiculoSelecionado,
+    isAgente,
+  ]);
+
+  /**
+   * Mantido por compatibilidade com chamadores antigos. Agora apenas
+   * garante que dia/veículo estejam selecionados; o cálculo dos horários
+   * acontece de forma reativa (efeitos acima), por isso o retorno é void.
+   */
   const fetchHorariosDisponiveis = useCallback(
-    async (day: Date, vaga: VagaResponse, vehicleId?: string): Promise<string[]> => {
-      setLoadingHorarios(true);
-      setHorariosCarregados(false);
-
-      try {
-        const operacao = getOperacaoDia(day, vaga);
-
-        console.log(operacao);
-
-        const intervalo = isAgente ? INTERVALO_AGENTE : INTERVALO_MOTORISTA;
-
-        if (!operacao) return [];
-
-        let tipoVeiculo: VeiculoResponse['tipo'] | undefined;
-
-        if (!isAgente) {
-          const v = vehicles.find((x) => x.id === vehicleId);
-
-          if (!v) return [];
-
-          tipoVeiculo = v.tipo;
-        } else {
-          tipoVeiculo = reservaState.tipoVeiculoAgente;
-        }
-
-        if (!tipoVeiculo) return [];
-
-        const dataFormatada = day.toISOString().split('T')[0];
-
-        const bloqueios = await fetchReservasBloqueios(
-          vaga.id,
-          dataFormatada,
-          tipoVeiculo,
-        );
-
-        const horariosOcupadosInicio = gerarHorariosOcupadosInicio(
-          bloqueios,
-          intervalo,
-        );
-
-        const horariosOcupadosFim = gerarHorariosOcupadosFim(
-          bloqueios,
-          intervalo,
-        );
-
-        const todosHorarios = gerarHorariosDia(operacao, intervalo);
-
-        const horariosFiltradosHoje = removerHorariosPassadosDeHoje(
-          day,
-          todosHorarios,
-        );
-
-        const horariosDisponiveis = horariosFiltradosHoje.filter(
-          (horario) => !horariosOcupadosInicio.includes(horario),
-        );
-
-        reservedTimesEndBaseRef.current = horariosOcupadosFim;
-
-        setReservaState((prev) => ({
-          ...prev,
-          availableTimes: horariosDisponiveis,
-          reservedTimesStart: horariosOcupadosInicio,
-          reservedTimesEnd: horariosOcupadosFim,
-        }));
-
-        return horariosDisponiveis;
-      } finally {
-        setLoadingHorarios(false);
-        setHorariosCarregados(true);
-      }
+    async (
+      day: Date,
+      _vaga: VagaResponse,
+      vehicleId?: string,
+    ): Promise<void> => {
+      setReservaState((prev) => ({
+        ...prev,
+        selectedDay: day,
+        ...(vehicleId ? { selectedVehicleId: vehicleId } : {}),
+      }));
     },
-    [vehicles, reservaState.tipoVeiculoAgente, isAgente],
+    [],
   );
 
-  // ==================== CÁLCULO DE HORÁRIOS FINAIS ====================
+  // ==================== CÁLCULO DE HORÁRIOS FINAIS (limite por área) ====================
   const calcularReservedTimesEnd = useCallback(
     (start: string, vaga: VagaResponse) => {
       if (!start || !reservaState.selectedDay) return [];
@@ -392,121 +437,6 @@ export function useReserva(selectedVaga: VagaResponse | null) {
       reservedTimesEnd: bloqueados,
     }));
   }, [reservaState.startHour, selectedVaga?.id, calcularReservedTimesEnd]);
-
-  useEffect(() => {
-    if (!reservaState.startHour || !selectedVaga) return;
-    const bloqueados = calcularReservedTimesEnd(
-      reservaState.startHour,
-      selectedVaga,
-    );
-    setReservaState((prev) => ({
-      ...prev,
-      reservedTimesEnd: bloqueados,
-    }));
-  }, [reservaState.startHour, selectedVaga?.id, calcularReservedTimesEnd]);
-
-  // ==================== CARREGA VEÍCULOS (USUÁRIO COMUM) ====================
-
-  useEffect(() => {
-    if (!user?.id || isAgente || isEmpresa) return;
-
-    const loadVehicles = async () => {
-      setVehiclesLoading(true);
-
-      try {
-        const r = await getVeiculosPorUsuario(user.id, {
-          ativo: true,
-          pagina: vehiclePage,
-          tamanhoPagina: vehiclePageSize,
-        });
-
-        setVehicles(r.content);
-        setVehicleTotalPages(r.totalPaginas);
-      } catch (err) {
-        console.error('Erro ao carregar veículos:', err);
-        setVehicles([]);
-        setVehicleTotalPages(0);
-      } finally {
-        setVehiclesLoading(false);
-      }
-    };
-
-    loadVehicles();
-  }, [user, isAgente, isEmpresa, vehiclePage, vehiclePageSize]);
-
-  const fetchVeiculosMotorista = useCallback(
-    async (motoristaId: string, pagina?: number) => {
-      if (!user?.id || !motoristaId) return;
-
-      setVehiclesLoading(true);
-
-      try {
-        const paginaAtual = pagina ?? vehiclePage;
-
-        const r = await getVeiculosVinculadosMotoristaEmpresa(
-          user.id,
-          motoristaId,
-          {
-            ativo: true,
-            pagina: paginaAtual,
-            tamanhoPagina: vehiclePageSize,
-          },
-        );
-
-        const veiculosFormatados: VeiculoResponse[] = r.content.map(
-          (v: VeiculoResponse) => ({
-            ...v,
-            id: v.id,
-            marca: v.marca,
-            modelo: v.modelo,
-            placa: v.placa,
-            tipo: v.tipo,
-            comprimento: v.comprimento,
-          }),
-        );
-
-        setVehicles(veiculosFormatados);
-        setVehicleTotalPages(r.totalPaginas);
-        setMotoristaSelecionadoId(motoristaId);
-      } catch (err) {
-        console.error('Erro ao carregar veículos do motorista:', err);
-        setVehicles([]);
-        setVehicleTotalPages(0);
-      } finally {
-        setVehiclesLoading(false);
-      }
-    },
-    [user?.id, vehiclePage, vehiclePageSize],
-  );
-
-  useEffect(() => {
-    if (!isEmpresa || !motoristaSelecionadoId) return;
-
-    fetchVeiculosMotorista(motoristaSelecionadoId, vehiclePage);
-  }, [isEmpresa, motoristaSelecionadoId, vehiclePage, fetchVeiculosMotorista]);
-  // ==================== TRIGGER AUTOMÁTICO DE HORÁRIOS ====================
-  useEffect(() => {
-    if (!selectedVaga || !reservaState.selectedDay) return;
-
-    if (isAgente && reservaState.tipoVeiculoAgente) {
-      fetchHorariosDisponiveis(reservaState.selectedDay, selectedVaga);
-    }
-
-    if (!isAgente && reservaState.selectedVehicleId) {
-      fetchHorariosDisponiveis(
-        reservaState.selectedDay,
-        selectedVaga,
-        reservaState.selectedVehicleId,
-      );
-    }
-  }, [
-    selectedVaga,
-    reservaState.selectedDay,
-    reservaState.selectedVehicleId,
-    reservaState.tipoVeiculoAgente,
-    fetchHorariosDisponiveis,
-    isAgente,
-  ]);
 
   // ==================== SETTERS ====================
   const setStep = (step: number) =>
@@ -558,27 +488,10 @@ export function useReserva(selectedVaga: VagaResponse | null) {
         return { success: false, message: 'Data ou horário inválido.' };
       }
 
-      const formData = new FormData();
-      formData.append('vagaId', selectedVaga.id);
+      const inicio = formatDateTime(selectedDay, startHour);
+      const fim = formatDateTime(selectedDay, endHour);
 
-      formData.append('inicio', formatDateTime(selectedDay, startHour));
-      formData.append('fim', formatDateTime(selectedDay, endHour));
-
-      let cidadeFinal = origin;
-      let entradaFinal = entryCity;
-
-      if (isAgente) {
-        cidadeFinal = extra?.cidadeOrigem || '';
-        entradaFinal = extra?.entradaCidade || '';
-      }
-
-      if (cidadeFinal) {
-        formData.append('cidadeOrigem', cidadeFinal);
-      }
-
-      if (entradaFinal) {
-        formData.append('entradaCidade', entradaFinal);
-      }
+      const persona: Persona = isAgente ? 'Agente' : 'Motorista';
 
       if (isAgente) {
         if (!tipoVeiculoAgente || !placaAgente) {
@@ -588,47 +501,75 @@ export function useReserva(selectedVaga: VagaResponse | null) {
           };
         }
 
-        formData.append('tipoVeiculo', tipoVeiculoAgente);
-        formData.append('placa', placaAgente);
-      } else {
-        if (!selectedVehicleId) {
+        const payload = {
+          vagaId: selectedVaga.id,
+          inicio,
+          fim,
+          cidadeOrigem: extra?.cidadeOrigem,
+          entradaCidade: extra?.entradaCidade,
+          tipoVeiculo: tipoVeiculoAgente,
+          placa: placaAgente,
+        } as CriarReservaRapidaPayload;
+
+        const resultado = await criar(persona, user.id, payload);
+
+        if (!resultado) {
           return {
             success: false,
-            message: 'Veículo não selecionado.',
+            message: erroConfirmar ?? 'Não foi possível confirmar a reserva.',
           };
         }
 
-        const motoristaReserva = extra?.isEmpresa
-          ? extra.motoristaId
-          : motoristaId;
-
-        if (!motoristaReserva) {
-          return {
-            success: false,
-            message: extra?.isEmpresa
-              ? 'Selecione um motorista da empresa.'
-              : 'Dados do motorista incompletos.',
-          };
-        }
-
-        formData.append('motoristaId', motoristaReserva);
-        formData.append('veiculoId', selectedVehicleId);
+        return { success: true, message: 'Reserva confirmada com sucesso!' };
       }
 
-      const result = isAgente
-        ? await confirmarReservaAgente(formData)
-        : await confirmarReserva(formData);
+      if (!selectedVehicleId) {
+        return { success: false, message: 'Veículo não selecionado.' };
+      }
 
-      if (!result.success) {
+      const motoristaReserva = extra?.isEmpresa
+        ? extra.motoristaId
+        : motoristaId;
+
+      if (!motoristaReserva) {
         return {
           success: false,
-          message: result.message ?? 'Não foi possível confirmar a reserva.',
+          message: extra?.isEmpresa
+            ? 'Selecione um motorista da empresa.'
+            : 'Dados do motorista incompletos.',
+        };
+      }
+
+      const payload = {
+        vagaId: selectedVaga.id,
+        inicio,
+        fim,
+        cidadeOrigem: origin || undefined,
+        entradaCidade: entryCity || undefined,
+        motoristaId: motoristaReserva,
+        veiculoId: selectedVehicleId,
+      } as CriarReservaPayload;
+
+      const resultado = await criar(persona, motoristaReserva, payload);
+
+      if (!resultado) {
+        return {
+          success: false,
+          message: erroConfirmar ?? 'Não foi possível confirmar a reserva.',
         };
       }
 
       return { success: true, message: 'Reserva confirmada com sucesso!' };
     },
-    [user, selectedVaga, motoristaId, reservaState, isAgente],
+    [
+      user,
+      selectedVaga,
+      motoristaId,
+      reservaState,
+      isAgente,
+      criar,
+      erroConfirmar,
+    ],
   );
 
   // ==================== RETORNO ====================
@@ -642,12 +583,13 @@ export function useReserva(selectedVaga: VagaResponse | null) {
     vehiclesLoading,
     vehiclePage,
     vehicleTotalPages,
-    vehiclePageSize,
+    vehiclePageSize: VEHICLE_PAGE_SIZE,
     setVehiclePage,
 
     loadingMotorista,
     loadingHorarios,
     horariosCarregados,
+    confirmando,
 
     fetchVeiculosMotorista,
     fetchDiasDisponiveis,

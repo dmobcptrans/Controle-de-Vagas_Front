@@ -7,12 +7,14 @@ import {
   getReservasPorPlaca,
   getReservasPorUsuario,
   getReservasRapidas,
+  getReservasBloqueios,
 } from '../services/reservaApi';
 
 import {
   ReservaParams,
   ReservaPorUsuarioResponse,
   ReservaResponse,
+  ReservaBloqueiosResponse,
 } from '../types/reservas';
 
 import { ReservaRapidaResponse } from '../types/reservaRapida';
@@ -22,23 +24,35 @@ import { useApi } from '@/services/hooks/useApi';
 interface UseReservaOptions {
   usuarioId?: string;
   veiculoId?: string;
+  vagaId?: string;
   placa?: string;
   params?: ReservaParams;
   buscarAutomaticamente?: boolean;
 }
 
-interface UseReservaReturn<T extends ReservaResponse | ReservaPorUsuarioResponse> {
+interface UseReservaReturn<
+  T extends ReservaResponse | ReservaPorUsuarioResponse,
+> {
   reservas: T[];
   reservasRapidas: ReservaRapidaResponse[];
+  bloqueios: ReservaBloqueiosResponse[];
+
   loading: boolean;
   error: string | null;
+
   pagina: number;
   totalPaginas: number;
   totalElementos: number;
-  buscarTodas: (novosParams?: ReservaParams) => Promise<void>;
+
+  buscarTodas: (
+    novosParams?: ReservaParams,
+  ) => Promise<void>;
+
   buscarPorUsuario: () => Promise<void>;
+  buscarBloqueios: () => Promise<void>;
   buscarPorPlaca: () => Promise<void>;
   buscarReservasRapidas: () => Promise<void>;
+
   recarregar: () => Promise<void>;
 }
 
@@ -48,6 +62,7 @@ export function useReservas<
   T extends ReservaResponse | ReservaPorUsuarioResponse,
 >({
   usuarioId,
+  vagaId,
   placa,
   params = DEFAULT_PARAMS,
   buscarAutomaticamente = true,
@@ -56,6 +71,10 @@ export function useReservas<
 
   const [reservasRapidas, setReservasRapidas] = useState<
     ReservaRapidaResponse[]
+  >([]);
+
+  const [bloqueios, setBloqueios] = useState<
+    ReservaBloqueiosResponse[]
   >([]);
 
   const [pagina, setPagina] = useState(0);
@@ -68,7 +87,9 @@ export function useReservas<
     async (
       novosParams: ReservaParams = params,
     ): Promise<void> => {
-      const response = await execute(() => getReservas(novosParams));
+      const response = await execute(() =>
+        getReservas(novosParams),
+      );
 
       if (response) {
         setReservas(response as T[]);
@@ -77,67 +98,109 @@ export function useReservas<
     [params, execute],
   );
 
-  const buscarPorUsuario = useCallback(async (): Promise<void> => {
-    if (!usuarioId) {
-      return;
-    }
+  const buscarPorUsuario = useCallback(
+    async (): Promise<void> => {
+      if (!usuarioId) {
+        return;
+      }
 
-    const response = await execute(() =>
-      getReservasPorUsuario(usuarioId, params),
-    );
+      const response = await execute(() =>
+        getReservasPorUsuario(usuarioId, params),
+      );
 
-    if (response) {
-      setReservas(response.content as T[]);
+      if (response) {
+        setReservas(response.content as T[]);
+        setPagina(response.pagina);
+        setTotalPaginas(response.totalPaginas);
+        setTotalElementos(response.totalElementos);
+      }
+    },
+    [usuarioId, params, execute],
+  );
 
-      setPagina(response.pagina);
-      setTotalPaginas(response.totalPaginas);
-      setTotalElementos(response.totalElementos);
-    }
-  }, [usuarioId, params, execute]);
+  const buscarPorPlaca = useCallback(
+    async (): Promise<void> => {
+      if (!placa) {
+        return;
+      }
 
-  const buscarPorPlaca = useCallback(async (): Promise<void> => {
-    if (!placa) {
-      return;
-    }
+      const response = await execute(() =>
+        getReservasPorPlaca(placa),
+      );
 
-    const response = await execute(() => getReservasPorPlaca(placa));
+      if (response) {
+        setReservas(response as T[]);
+      }
+    },
+    [placa, execute],
+  );
 
-    if (response) {
-      setReservas(response as T[]);
-    }
-  }, [placa, execute]);
+  const buscarReservasRapidas = useCallback(
+    async (): Promise<void> => {
+      if (!usuarioId) {
+        return;
+      }
 
-  const buscarReservasRapidas = useCallback(async (): Promise<void> => {
-    if (!usuarioId) {
-      return;
-    }
+      const response = await execute(() =>
+        getReservasRapidas(usuarioId, params),
+      );
 
-    const response = await execute(() =>
-      getReservasRapidas(usuarioId, params),
-    );
+      if (response) {
+        setReservasRapidas(response.content);
+        setPagina(response.pagina);
+        setTotalPaginas(response.totalPaginas);
+        setTotalElementos(response.totalElementos);
+      }
+    },
+    [usuarioId, params, execute],
+  );
 
-    if (response) {
-      setReservasRapidas(response.content);
+  const buscarBloqueios = useCallback(
+    async (): Promise<void> => {
+      if (!vagaId) {
+        return;
+      }
 
-      setPagina(response.pagina);
-      setTotalPaginas(response.totalPaginas);
-      setTotalElementos(response.totalElementos);
-    }
-  }, [usuarioId, params, execute]);
+      const response = await execute(() =>
+        getReservasBloqueios(vagaId, params),
+      );
 
-  const recarregar = useCallback(async (): Promise<void> => {
-    if (usuarioId) {
-      await buscarPorUsuario();
-      return;
-    }
+      if (response) {
+        setBloqueios(response);
+      }
+    },
+    [vagaId, params, execute],
+  );
 
-    if (placa) {
-      await buscarPorPlaca();
-      return;
-    }
+  const recarregar = useCallback(
+    async (): Promise<void> => {
+      if (usuarioId) {
+        await buscarPorUsuario();
+        return;
+      }
 
-    await buscarTodas();
-  }, [usuarioId, placa, buscarPorUsuario, buscarPorPlaca, buscarTodas]);
+      if (placa) {
+        await buscarPorPlaca();
+        return;
+      }
+
+      if (vagaId) {
+        await buscarBloqueios();
+        return;
+      }
+
+      await buscarTodas();
+    },
+    [
+      usuarioId,
+      placa,
+      vagaId,
+      buscarPorUsuario,
+      buscarPorPlaca,
+      buscarBloqueios,
+      buscarTodas,
+    ],
+  );
 
   useEffect(() => {
     if (!buscarAutomaticamente) {
@@ -150,15 +213,21 @@ export function useReservas<
   return {
     reservas,
     reservasRapidas,
+    bloqueios,
+
     loading,
     error,
+
     pagina,
     totalPaginas,
     totalElementos,
+
     buscarTodas,
     buscarPorUsuario,
+    buscarBloqueios,
     buscarPorPlaca,
     buscarReservasRapidas,
+
     recarregar,
   };
 }
