@@ -1,9 +1,23 @@
 import { MotoristaResponse } from '@/features/usuarios/(personas)/motoristas/types/motorista2';
-import { Endereco } from '@/features/vaga/vagas/types/vaga';
+import { AreaVaga, Endereco } from '@/features/vaga/vagas/types/vaga';
 import { VagasResumo } from '@/features/vaga/vagas/types/vaga';
+import { TipoVeiculo } from '@/features/veiculos/types/tipoVeiculo';
 import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import { Paginacao } from '@/lib/types/paginacao';
 import { UsuarioSimplificado } from '@/lib/types/personas/user2';
+
+export interface ReservaParams {
+  status?: ReservaStatus,
+  vagaId?: string,
+  placa?: string,
+  data?: string,
+  tipoVeiculo?: TipoVeiculo,
+  usuarioId?: string,
+  mes?: number,
+  ano?: number,
+  numeroPagina?: number,
+  tamanhoPagina?: number
+}
 
 export type ReservaStatus =
   | 'RESERVADA'
@@ -83,6 +97,7 @@ export type ReservaPorUsuarioResponse = {
 export type ReservaResponse = {
   id: string;
   vagaId: string;
+  areaVaga: AreaVaga;
   motoristaId: string;
   motoristaNome: string;
   motoristaCpf: string;
@@ -91,6 +106,7 @@ export type ReservaResponse = {
   enderecoVaga: Endereco
   inicio: string;
   fim: string;
+  veiculoId: string;
   tamanhoVeiculo: string;
   placaVeiculo: string;
   modeloVeiculo: string;
