@@ -71,8 +71,12 @@ export default function VeiculoDetalhes({
       marca: formData.marca,
       modelo: formData.modelo,
       tipo: formData.tipo,
-      cpfProprietario: formData.cpfProprietario || undefined,
-      cnpjProprietario: formData.cnpjProprietario || undefined,
+      cpfProprietario: formData.cpfProprietario
+        ? formData.cpfProprietario.replace(/\D/g, '')
+        : undefined,
+      cnpjProprietario: formData.cnpjProprietario
+        ? formData.cnpjProprietario.replace(/\D/g, '')
+        : undefined,
     };
 
     const sucesso = await atualizar(formData.id, formData.usuarioId, payload);
