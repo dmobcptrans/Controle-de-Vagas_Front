@@ -1,38 +1,28 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import {
-  deleteReservaByID,
-  getReservasPorUsuario,
   checkoutReserva,
   getGerarComprovanteReserva,
 } from '@/features/reserva/reservas/services/reservaApi';
+import { useReservaMutation } from '@/features/reserva/reservas/hooks/useReservaMutation';
+import { useReservas } from '@/features/reserva/reservas/hooks/useReservas';
 
-import {
-  Info,
-  WifiOff,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+import { Info, WifiOff, ChevronLeft, ChevronRight } from 'lucide-react';
 import ReservaLista from '@/features/reserva/reservas/components/ReservaLista';
-import { ReservaPorUsuarioResponse, ReservaPaginadaDeUmUsuario } from '@/features/reserva/reservas/types/reservas';
+import { ReservaPorUsuarioResponse } from '@/features/reserva/reservas/types/reservas';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Header } from '@/components/ui/Header/Header';
 
+// Assumido: ajuste os nomes dos campos se ReservaParams usar outra convenção
+const TAMANHO_PAGINA = 10;
+
 /**
  * @component PaginationControls
- * @description Componente de controles de paginação responsivo.
- * Adapta a quantidade de botões visíveis conforme o tamanho da tela.
- *
- * @param currentPage - Página atual (0-indexed)
- * @param totalPages - Total de páginas
- * @param totalElements - Total de elementos
- * @param currentPageSize - Itens por página
- * @param onPageChange - Callback ao mudar de página
- * @param isLoading - Estado de carregamento
+ * (sem alterações — mesmo componente de antes)
  */
 function PaginationControls({
   currentPage,
@@ -151,111 +141,62 @@ const updateOnlineStatus = (setIsOffline: (v: boolean) => void) => {
 
 /**
  * @component MinhasReservas
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @description Página de listagem e gerenciamento de reservas do motorista.
- * Exibe reservas paginadas com ações de checkout, cancelamento e geração de comprovante.
- *
- * ----------------------------------------------------------------------------
- * 📋 FLUXO COMPLETO:
- * ----------------------------------------------------------------------------
- *
- * 1. AUTENTICAÇÃO:
- *    - Hook useAuth obtém usuário logado
- *    - Se não houver user.id, não carrega reservas
- *
- * 2. CARREGAMENTO DE RESERVAS (PAGINADO):
- *    - useEffect dispara fetchReservas na montagem
- *    - useCallback memoiza função com base no user.id
- *    - Chama API getReservasPorUsuario com página
- *    - Resposta inclui dados paginados (content, totalPages, totalElements)
- *
- * 3. PAGINAÇÃO:
- *    - Controles responsivos (mobile/desktop)
- *    - Números de página com reticências
- *    - Scroll suave ao trocar de página
- *
- * 4. DETECÇÃO DE CONEXÃO:
- *    - Monitora eventos online/offline do navegador
- *    - Exibe banner amarelo quando offline
- *    - Bloqueia ações que exigem conexão
- *    - Recarrega dados ao reconectar
- *
- * 5. AÇÕES DISPONÍVEIS:
- *    a) CHECKOUT: Finalizar reserva ativa
- *    b) CANCELAR: Cancelar/excluir reserva
- *    c) COMPROVANTE: Gerar PDF da reserva
- *
- * 6. ESTADOS DE UI:
- *    - Loading: spinner centralizado
- *    - Erro: toast error
- *    - Sem reservas: ícone + mensagem
- *    - Lista com reservas: cards + paginação
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - PAGINAÇÃO NO BACKEND: API retorna objeto paginado (content, totalPages)
- * - PAGINAÇÃO RESPONSIVA: 3 botões no mobile, 5 no desktop
- * - DETECÇÃO DE CONEXÃO: Event listeners 'online' e 'offline'
- * - SCROLL SUAVE: window.scrollTo({ behavior: 'smooth' }) ao trocar página
- * - RECARGA AUTOMÁTICA: Ao voltar online, recarrega página atual
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - ReservaLista: Lista de reservas com ações
- * - useAuth: Hook de autenticação
- * - getReservasPorUsuario: API de listagem paginada
- *
- * @example
- * ```tsx
- * // Uso em rota de motorista
- * <MinhasReservas />
- * ```
+ * Busca e paginação delegadas ao hook useReservas; cancelamento delegado
+ * ao useReservaMutation. Checkout e geração de comprovante continuam via
+ * chamada direta de API nesta página, pois useReservaInteraction é
+ * escopado a UMA reserva por instância — o lugar ideal para ele é dentro
+ * de cada item da lista (ReservaLista/ReservaItem), não na página que
+ * lista várias reservas de uma vez.
  */
-
 export default function MinhasReservas() {
   const { user } = useAuth();
-  const [paginatedData, setPaginatedData] =
-    useState<ReservaPaginadaDeUmUsuario | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
 
-  // ==================== BUSCA DE RESERVAS (PAGINADA) ====================
-  const fetchReservas = useCallback(
-    async (page: number = 0) => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-
-      try {
-        const response = await getReservasPorUsuario(user.id, page);
-        setPaginatedData(response);
-        setCurrentPage(response.pagina);
-        setIsOffline(false);
-      } catch {
-        toast.error('Não foi possível carregar suas reservas atuais.');
-        if (!navigator.onLine) setIsOffline(true);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [user?.id],
+  // ==================== PARÂMETROS DE BUSCA (PAGINAÇÃO) ====================
+  // Identidade estável via useMemo: só muda quando currentPage muda,
+  // o que faz o useReservas refazer a busca automaticamente (buscarAutomaticamente: true)
+  const params = useMemo(
+    () => ({ numeroPagina: currentPage, tamanhoPagina: TAMANHO_PAGINA }),
+    [currentPage],
   );
 
-  // ==================== EFEITOS (CARREGAMENTO + ONLINE/OFFLINE) ====================
-  useEffect(() => {
-    fetchReservas(0);
+  // ==================== BUSCA DE RESERVAS (PAGINADA) ====================
+  const {
+    reservas,
+    loading: loadingReservas,
+    error: erroReservas,
+    pagina,
+    totalPaginas,
+    totalElementos,
+    recarregar,
+  } = useReservas<ReservaPorUsuarioResponse>({
+    usuarioId: user?.id,
+    params,
+    buscarAutomaticamente: true,
+  });
 
+  // ==================== MUTAÇÕES (CANCELAMENTO) ====================
+  const { deletar, loading: loadingMutacao } = useReservaMutation();
+
+  const loading = loadingReservas || loadingMutacao;
+
+  // ==================== FEEDBACK DE ERRO DA BUSCA ====================
+  useEffect(() => {
+    if (erroReservas) {
+      toast.error('Não foi possível carregar suas reservas atuais.');
+      if (!navigator.onLine) setIsOffline(true);
+    }
+  }, [erroReservas]);
+
+  // ==================== DETECÇÃO DE CONEXÃO ====================
+  useEffect(() => {
     const handleOnline = () => {
-      fetchReservas(currentPage);
+      setIsOffline(false);
+      recarregar();
       toast.success('Conexão restabelecida!');
     };
     const handleOffline = () => updateOnlineStatus(setIsOffline);
@@ -267,16 +208,12 @@ export default function MinhasReservas() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [fetchReservas]);
+  }, [recarregar]);
 
   // ==================== HANDLER DE PÁGINA ====================
   const handlePageChange = (newPage: number) => {
-    if (
-      newPage !== currentPage &&
-      newPage >= 0 &&
-      newPage < (paginatedData?.totalPaginas || 0)
-    ) {
-      fetchReservas(newPage);
+    if (newPage !== currentPage && newPage >= 0 && newPage < totalPaginas) {
+      setCurrentPage(newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -291,22 +228,26 @@ export default function MinhasReservas() {
     }
   };
 
-  const handleExcluirReserva = async (reservaId: string) => {
-    if (!navigator.onLine) {
-      toast.error(
-        'Você está offline. A exclusão de reservas só é permitida com conexão à internet.',
-      );
-      return;
-    }
+  const handleExcluirReserva = useCallback(
+    async (reservaId: string) => {
+      if (!navigator.onLine) {
+        toast.error(
+          'Você está offline. A exclusão de reservas só é permitida com conexão à internet.',
+        );
+        return;
+      }
+      if (!user?.id) return;
 
-    try {
-      await deleteReservaByID(reservaId, user!.id);
-      toast.success('Reserva cancelada com sucesso!');
-      fetchReservas(currentPage);
-    } catch {
-      toast.error('Erro ao cancelar. Verifique sua conexão.');
-    }
-  };
+      const sucesso = await deletar(reservaId, user.id);
+      if (sucesso) {
+        toast.success('Reserva cancelada com sucesso!');
+        recarregar();
+      } else {
+        toast.error('Erro ao cancelar. Verifique sua conexão.');
+      }
+    },
+    [deletar, recarregar, user?.id],
+  );
 
   const handleCheckoutReserva = async (reserva: ReservaPorUsuarioResponse) => {
     if (!navigator.onLine) {
@@ -318,19 +259,14 @@ export default function MinhasReservas() {
 
     try {
       const response = await checkoutReserva(reserva.id);
-      if (response.success) {
+      if (response) {
         toast.success('Checkout realizado com sucesso!');
-        fetchReservas(currentPage);
+        recarregar();
       }
     } catch {
       toast.error('Erro ao realizar checkout da reserva.');
     }
   };
-
-  const reservas = paginatedData?.content || [];
-  const totalPaginas = paginatedData?.totalPaginas || 0;
-  const totalElementos = paginatedData?.totalElementos || 0;
-  const tamanhoPagina = paginatedData?.tamanhoPagina || 10;
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
@@ -340,8 +276,8 @@ export default function MinhasReservas() {
         pagination={{
           totalElementos,
           totalPaginas,
-          tamanhoPagina,
-          pagina: currentPage,
+          tamanhoPagina: TAMANHO_PAGINA,
+          pagina,
         }}
       />
       <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
@@ -349,35 +285,32 @@ export default function MinhasReservas() {
         {isOffline && (
           <div className="w-full mb-4 p-3 sm:p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-lg flex items-center gap-2 text-xs sm:text-sm">
             <WifiOff size={16} className="sm:w-[18px] sm:h-[18px] shrink-0" />
-
             <span>
               Você está offline. Conecte-se para atualizar suas denúncias.
             </span>
           </div>
-        )}  
-          <>
-            {/* ==================== LISTA DE RESERVAS ==================== */}
-            <ReservaLista
-              reservas={reservas}
-              permissao={user!.permissao}
-              onGerarDocumento={handleGerarDocumento}
-              onExcluir={handleExcluirReserva}
-              onCheckout={handleCheckoutReserva}
-            />
+        )}
 
-            {/* ==================== CONTROLES DE PAGINAÇÃO ==================== */}
-            {totalPaginas > 1 && (
-              <PaginationControls
-                currentPage={currentPage}
-                totalPages={totalPaginas}
-                totalElements={totalElementos}
-                currentPageSize={tamanhoPagina}
-                onPageChange={handlePageChange}
-                isLoading={loading}
-              />
-            )}
-          </>
+        {/* ==================== LISTA DE RESERVAS ==================== */}
+        <ReservaLista
+          reservas={reservas}
+          permissao={user!.permissao}
+          onGerarDocumento={handleGerarDocumento}
+          onExcluir={handleExcluirReserva}
+          onCheckout={handleCheckoutReserva}
+        />
 
+        {/* ==================== CONTROLES DE PAGINAÇÃO ==================== */}
+        {totalPaginas > 1 && (
+          <PaginationControls
+            currentPage={pagina}
+            totalPages={totalPaginas}
+            totalElements={totalElementos}
+            currentPageSize={TAMANHO_PAGINA}
+            onPageChange={handlePageChange}
+            isLoading={loading}
+          />
+        )}
 
         {/* ==================== TUTORIAL LINK ==================== */}
         <Link

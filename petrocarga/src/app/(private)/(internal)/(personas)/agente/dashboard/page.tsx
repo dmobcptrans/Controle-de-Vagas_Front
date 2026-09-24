@@ -13,12 +13,11 @@ import {
   Truck,
   CarIcon,
 } from 'lucide-react';
-import { getReservasRapidas } from '@/features/reserva/reservas/services/reservaApi';
+import { useReservas } from '@/features/reserva/reservas/hooks/useReservas';
 import { getDenuncias } from '@/features/denuncias/services/denunciaApi';
-import { DenunciaParams } from '@/features/denuncias/types/denuncia';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { ReservaRapidaResponse } from '@/features/reserva/reservas/types/reservaRapida';
+import { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
 import { Header } from '@/components/ui/Header/Header';
 import { CTA } from '@/components/ui/CTA/CTA';
 
@@ -50,10 +49,6 @@ const statusConfig = {
 
 type StatusKey = keyof typeof statusConfig;
 
-/**
- * @component StatusBadge
- * @description Badge visual para exibir o status da reserva
- */
 function StatusBadge({ status }: { status: StatusKey }) {
   const { label, className } = statusConfig[status];
   return (
@@ -71,10 +66,6 @@ const formatarData = (data: string) =>
     timeStyle: 'short',
   });
 
-/**
- * @component SkeletonCard
- * @description Placeholder animado para carregamento das reservas
- */
 function SkeletonCard() {
   return (
     <div className="bg-white border border-gray-100 rounded-xl px-4 py-3 animate-pulse">
@@ -92,145 +83,71 @@ function SkeletonCard() {
 
 /**
  * @component Dashboard
- * @version 1.0.0
+ * @version 2.0.0
  *
- * @description Página principal (dashboard) do agente.
- * Exibe resumo de reservas rápidas, estatísticas, últimas reservas e acesso rápido.
- *
- * ----------------------------------------------------------------------------
- * 📋 FUNCIONALIDADES:
- * ----------------------------------------------------------------------------
- *
- * 1. HEADER:
- *    - Saudação personalizada com nome do agente
- *    - Data atual formatada
- *
- * 2. ESTATÍSTICAS (3 cards):
- *    - Total de reservas rápidas
- *    - Reservas ativas no momento
- *    - Total de denúncias abertas
- *
- * 3. CTA CONSULTA DE PLACA:
- *    - Card destacado para consulta de placa
- *
- * 4. ÚLTIMAS RESERVAS:
- *    - Mostra as 3 reservas mais recentes
- *    - Exibe logradouro, bairro, horários e placa
- *    - Link "Ver todas" para página completa
- *
- * 5. ACESSO RÁPIDO (4 cards):
- *    - Histórico de reservas
- *    - Denúncias
- *    - Consultar placa
- *    - Meu perfil
- *
- * 6. NOTIFICAÇÕES:
- *    - Contador de não lidas (para badge)
- *
- * 7. TUTORIAL:
- *    - Link para página de tutorial
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - BUSCA PARALELA: Promise.allSettled para carregar reservas e denúncias
- * - TRATAMENTO DE PAGINAÇÃO: API retorna objeto com content (array)
- * - FALLBACK: Valores padrão quando não há dados
- * - LOADING: Skeleton cards durante carregamento
- * - NOTIFICAÇÕES: Contexto para contagem de não lidas
- *
- * ----------------------------------------------------------------------------
- * 🎨 CORES DOS STATUS:
- * ----------------------------------------------------------------------------
- *
- * | Status     | Label       | Cor                           |
- * |------------|-------------|-------------------------------|
- * | ATIVA      | Ativa       | 🟢 Verde (bg-green-100)       |
- * | RESERVADA  | Reservada   | 🟢 Verde (bg-green-100)       |
- * | CONCLUIDA  | Concluída   | ⚪ Cinza (bg-gray-100)         |
- * | CANCELADA  | Cancelada   | ⚪ Cinza (bg-gray-100)         |
- * | REMOVIDA   | Removida    | 🔴 Vermelho (bg-gray-100)      |
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - useAuth: Hook de autenticação
- * - getReservasRapidas: API de reservas rápidas
- * - getDenuncias: API de denúncias
- * - useNotifications: Contexto de notificações
- *
- * @example
- * ```tsx
- * <Dashboard />
- * ```
+ * Busca de reservas rápidas agora via useReservas (buscarReservasRapidas),
+ * em vez de chamar getReservasRapidas diretamente. Denúncias continuam via
+ * chamada direta à API, pois não há hook equivalente disponível ainda.
  */
-
 export default function Dashboard() {
   const { user } = useAuth();
-  const [reservas, setReservas] = useState<ReservaRapidaResponse[]>([]);
   const [totalDenuncias, setTotalDenuncias] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loadingDenuncias, setLoadingDenuncias] = useState(true);
 
-  // ==================== BUSCA DE DADOS ====================
+  // ==================== RESERVAS RÁPIDAS (VIA HOOK) ====================
+  const {
+    reservasRapidas,
+    loading: loadingReservas,
+    error: erroReservas,
+    buscarReservasRapidas,
+  } = useReservas<ReservaResponse>({
+    usuarioId: user?.id,
+    params: { numeroPagina: 0, tamanhoPagina: 100 },
+    // recarregar() do hook não cobre reservas rápidas automaticamente,
+    // então buscamos manualmente no useEffect abaixo
+    buscarAutomaticamente: false,
+  });
 
-  const fetchDados = useCallback(async () => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
+  const loading = loadingReservas || loadingDenuncias;
 
-    setLoading(true);
-
+  // ==================== BUSCA DE DENÚNCIAS ====================
+  const fetchDenuncias = useCallback(async () => {
+    setLoadingDenuncias(true);
     try {
-      const [resReservas, resDenuncias] = await Promise.allSettled([
-        getReservasRapidas(user.id, 0, 100),
-
-        getDenuncias({
-          pagina: 0,
-          tamanhoPagina: 1,
-          ordem: 'DESC',
-        }),
-      ]);
-
-      // Tratamento de reservas rápidas
-      if (resReservas.status === 'fulfilled') {
-        const reservasData = resReservas.value;
-
-        const reservasArray = Array.isArray(reservasData)
-          ? reservasData
-          : reservasData?.content || [];
-
-        setReservas(reservasArray);
-      } else {
-        toast.error('Não foi possível carregar suas reservas.');
-        setReservas([]);
-      }
-
-      // Tratamento de denúncias
-      if (resDenuncias.status === 'fulfilled') {
-        setTotalDenuncias(resDenuncias.value.totalElementos ?? 0);
-      } else {
-        toast.error('Não foi possível carregar suas denúncias.');
-        setTotalDenuncias(0);
-      }
+      const response = await getDenuncias({
+        pagina: 0,
+        tamanhoPagina: 1,
+        ordem: 'DESC',
+      });
+      setTotalDenuncias(response.totalElementos ?? 0);
+    } catch {
+      toast.error('Não foi possível carregar suas denúncias.');
+      setTotalDenuncias(0);
     } finally {
-      setLoading(false);
+      setLoadingDenuncias(false);
     }
-  }, [user?.id]);
+  }, []);
+
+  // ==================== DISPARO DAS BUSCAS ====================
+  useEffect(() => {
+    if (!user?.id) return;
+    buscarReservasRapidas();
+    fetchDenuncias();
+  }, [user?.id, buscarReservasRapidas, fetchDenuncias]);
+
+  // ==================== FEEDBACK DE ERRO (RESERVAS) ====================
+  useEffect(() => {
+    if (erroReservas) {
+      toast.error('Não foi possível carregar suas reservas.');
+    }
+  }, [erroReservas]);
 
   // ==================== DADOS DERIVADOS ====================
   const primeiroNome = user?.nome?.split(' ')[0] ?? 'Motorista';
-  const totalReservas = reservas.length;
-  const reservasAtivas = reservas.filter((r) => r.status === 'ATIVA').length;
-
-  const hoje = new Date().toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const totalReservas = reservasRapidas.length;
+  const reservasAtivas = reservasRapidas.filter(
+    (r) => r.status === 'ATIVA',
+  ).length;
 
   // ==================== AÇÕES DE ACESSO RÁPIDO ====================
   const acoes = [
@@ -268,9 +185,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ==================== HEADER ==================== */}
       <Header title={`Bem vindo, ${primeiroNome}!`} showDate />
-      {/* ==================== CORPO PRINCIPAL ==================== */}
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-        {/* CTA principal - Reservar vaga rápida */}
         <div className="-mt-4 mb-5">
           <CTA
             href="/agente/reserva-rapida"
@@ -344,14 +259,12 @@ export default function Dashboard() {
 
           <div className="flex flex-col gap-1.5">
             {loading ? (
-              // Estado de loading
               <>
                 <SkeletonCard />
                 <SkeletonCard />
                 <SkeletonCard />
               </>
-            ) : reservas.length === 0 ? (
-              // Estado vazio
+            ) : reservasRapidas.length === 0 ? (
               <div className="bg-white border border-dashed border-gray-200 rounded-xl py-8 text-center">
                 <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-2">
                   <Archive className="h-5 w-5 text-gray-300" />
@@ -361,8 +274,7 @@ export default function Dashboard() {
                 </p>
               </div>
             ) : (
-              // Lista das 3 reservas mais recentes
-              reservas
+              [...reservasRapidas]
                 .sort(
                   (a, b) =>
                     new Date(b.inicio).getTime() - new Date(a.inicio).getTime(),

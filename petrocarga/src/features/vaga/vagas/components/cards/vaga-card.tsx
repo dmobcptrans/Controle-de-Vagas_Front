@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CardMap from '@/features/map/components/cardMap';
-import { deleteVaga } from '@/features/vaga/vagas/service/vagaApi';
+import { useVagaMutation } from '../../hooks/useVagaMutation';
 import toast from 'react-hot-toast';
 
 type VagaDetalhesProps = {
@@ -98,7 +98,6 @@ const diasSemana: DiaSemana[] = [
  * ----------------------------------------------------------------------------
  *
  * - CardMap: Mini-mapa da localização da vaga
- * - deleteVaga: API de exclusão
  * - /gestor/visualizar-vagas/:id/editar: Página de edição
  *
  * @example
@@ -111,6 +110,7 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
   const [diaSelecionado, setDiaSelecionado] = useState<DiaSemana | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const router = useRouter();
+  const {deletar} = useVagaMutation()
 
   // ==================== MAPEAMENTO DE HORÁRIOS ====================
   const horariosPorDia = new Map<DiaSemana, string>();
@@ -124,7 +124,7 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
   // ==================== HANDLER DE EXCLUSÃO ====================
   const handleExcluir = async () => {
     try {
-      await deleteVaga(vaga.id);
+      deletar(vaga.id)
       setModalAberto(false);
       router.back();
     } catch {

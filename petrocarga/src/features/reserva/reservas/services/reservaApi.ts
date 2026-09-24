@@ -74,7 +74,7 @@ export async function getReservas(
   });
 
   const response = await clientApi(
-    `/petrocarga/reservas/all?${searchParams.toString}`,
+    `/petrocarga/reservas/all?${searchParams.toString()}`,
   );
 
   return response.json();

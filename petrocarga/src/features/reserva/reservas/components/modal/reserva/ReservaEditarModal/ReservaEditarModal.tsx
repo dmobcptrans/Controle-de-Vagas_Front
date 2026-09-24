@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AlertCircle, CheckCircle2, X, Loader2 } from 'lucide-react';
 
 import { ReservaPorUsuarioResponse } from '@/features/reserva/reservas/types/reservas';
-import { atualizarReserva } from '@/features/reserva/reservas/services/reservaApi';
+import { useReservaMutation } from '@/features/reserva/reservas/hooks/useReservaMutation';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 
 import { useReserva } from '@/features/reserva/reservar-vaga/hooks/useReserva';
@@ -64,7 +64,7 @@ export default function ReservaEditarModal({
   // ESTADOS DA UI
   // ============================================================
 
-  const [isSaving, setIsSaving] = useState(false);
+  // Erros de validação local (campos obrigatórios etc.)
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -95,6 +95,17 @@ export default function ReservaEditarModal({
     loading,
     error: dataError,
   } = useReservaData(form.veiculoId, reserva.vaga.id);
+
+  // ============================================================
+  // MUTAÇÃO DE ATUALIZAÇÃO
+  // ============================================================
+
+  const {
+    atualizar,
+    loading: isSaving,
+    error: apiError,
+    limparError,
+  } = useReservaMutation();
 
   // ============================================================
   // HOOK DE RESERVA
@@ -141,7 +152,7 @@ export default function ReservaEditarModal({
   // ============================================================
 
   const vehiclesForStep = vehicles.map((v) => ({
-    ... v,
+    ...v,
     id: v.id,
     name: `${v.marca} ${v.modelo}`,
     plate: v.placa,
@@ -207,53 +218,39 @@ export default function ReservaEditarModal({
       return;
     }
 
-    setIsSaving(true);
     setError(null);
     setSuccessMsg(null);
+    limparError();
 
-    try {
-      const result = await atualizarReserva(
-        {
-          veiculoId: form.veiculoId,
-          cidadeOrigem: form.cidadeOrigem,
-          inicio: form.inicio,
-          fim: form.fim,
-          // Empresa pode trocar o motorista vinculado à reserva.
-          ...(isEmpresa ? { motoristaId: form.motoristaId } : {}),
-        },
-        reserva.id,
-        user.id,
-      );
+    const result = await atualizar(reserva.id, user.id, {
+      veiculoId: form.veiculoId,
+      cidadeOrigem: form.cidadeOrigem,
+      inicio: form.inicio,
+      fim: form.fim,
+      // Empresa pode trocar o motorista vinculado à reserva.
+      ...(isEmpresa ? { motoristaId: form.motoristaId } : {}),
+    });
 
-      if (!result.success) {
-        setError(result.message ?? 'Não foi possível atualizar a reserva.');
-        setIsSaving(false);
-        return;
-      }
-
-      const updatedReserva: ReservaPorUsuarioResponse = {
-        ...reserva,
-        ...form,
-        status: 'RESERVADA',
-      };
-
-      setSuccessMsg('Reserva atualizada com sucesso!');
-
-      router.refresh();
-
-      setTimeout(() => {
-        onSuccess?.(updatedReserva);
-        onClose?.();
-      }, 800);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Não foi possível atualizar a reserva.',
-      );
-    } finally {
-      setIsSaving(false);
+    if (!result) {
+      // A mensagem específica da falha já fica disponível em apiError
+      // (estado do useReservaMutation), exibida abaixo no JSX.
+      return;
     }
+
+    const updatedReserva: ReservaPorUsuarioResponse = {
+      ...reserva,
+      ...form,
+      status: 'RESERVADA',
+    };
+
+    setSuccessMsg('Reserva atualizada com sucesso!');
+
+    router.refresh();
+
+    setTimeout(() => {
+      onSuccess?.(updatedReserva);
+      onClose?.();
+    }, 800);
   };
 
   // ============================================================
@@ -295,6 +292,7 @@ export default function ReservaEditarModal({
 
   const handleEditVehicle = () => {
     setError(null);
+    limparError();
     setChainedFromVehicle(false);
 
     if (isEmpresa) {
@@ -325,6 +323,7 @@ export default function ReservaEditarModal({
 
   const handleEditTime = async () => {
     setError(null);
+    limparError();
     setChainedFromVehicle(false);
 
     const dia = new Date(form.inicio);
@@ -411,6 +410,7 @@ export default function ReservaEditarModal({
                   setEditField(null);
                   setChainedFromVehicle(false);
                   setError(null);
+                  limparError();
                 }
               : onClose
           }
@@ -430,11 +430,11 @@ export default function ReservaEditarModal({
         ==================================================== */}
 
         <div className="px-5 pt-4 space-y-3">
-          {(error || dataError) && (
+          {(error || apiError || dataError) && (
             <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm flex gap-2">
               <AlertCircle size={16} className="shrink-0 mt-0.5" />
 
-              <span>{error || dataError}</span>
+              <span>{error || apiError || dataError}</span>
             </div>
           )}
 
@@ -551,31 +551,24 @@ export default function ReservaEditarModal({
                           veiculoId,
                         );
 
-                        // Extrai HH:mm do form.inicio/fim atuais para comparar
                         const inicioAtual = new Date(form.inicio);
                         const fimAtual = new Date(form.fim);
+
                         const startAtual = inicioAtual
                           .toTimeString()
                           .slice(0, 5);
                         const endAtual = fimAtual.toTimeString().slice(0, 5);
 
-                        // Verifica se o intervalo atual ainda está disponível
-                        // para o novo veículo (ajuste conforme o formato real
-                        // que fetchHorariosDisponiveis/availableTimes retornam).
                         const aindaValido =
-                          horarios?.includes(startAtual) &&
-                          horarios?.includes(endAtual) &&
-                          !reservedTimesStart?.includes(startAtual) &&
-                          !reservedTimesEnd?.includes(endAtual);
+                          availableTimes.includes(startAtual) &&
+                          !reservedTimesStart.includes(startAtual) &&
+                          !reservedTimesEnd.includes(endAtual);
 
                         if (aindaValido) {
-                          // Veículo/motorista trocados, horário mantido.
                           setEditField(null);
                           return;
                         }
 
-                        // Horário não é mais válido para essa combinação:
-                        // aí sim encadeamos para a seleção de horário.
                         setStartHour(null);
                         setEndHour(null);
                         setChainedFromVehicle(true);

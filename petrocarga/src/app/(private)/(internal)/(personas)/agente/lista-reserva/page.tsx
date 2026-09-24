@@ -1,22 +1,22 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
-import {
-  finalizarForcado,
-  getReservasRapidas,
-} from '@/features/reserva/reservas/services/reservaApi';
+import { finalizarForcado } from '@/features/reserva/reservas/services/reservaApi';
+import { useReservas } from '@/features/reserva/reservas/hooks/useReservas';
 
 import { Info, WifiOff, ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { ReservaRapidaPaginadaResponse } from '@/features/reserva/reservas/types/reservaRapida';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/ui/Header/Header';
 import ReservaLista from '@/features/reserva/reservas/components/ReservaLista';
+import { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
+
+const TAMANHO_PAGINA = 10;
 
 function PaginationControls({
   currentPage,
@@ -97,9 +97,7 @@ function PaginationControls({
           className="px-2 sm:px-3 text-xs sm:text-sm"
         >
           <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-
           <span className="hidden sm:inline">Anterior</span>
-
           <span className="sm:hidden">Ant</span>
         </Button>
 
@@ -141,9 +139,7 @@ function PaginationControls({
           className="px-2 sm:px-3 text-xs sm:text-sm"
         >
           <span className="hidden sm:inline">Próxima</span>
-
           <span className="sm:hidden">Próx</span>
-
           <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
         </Button>
       </div>
@@ -155,79 +151,65 @@ const updateOnlineStatus = (setIsOffline: (value: boolean) => void) => {
   setIsOffline(!navigator.onLine);
 };
 
+/**
+ * @component ReservaRapidaPage
+ * @version 2.0.0
+ *
+ * Busca e paginação delegadas ao useReservas (buscarReservasRapidas).
+ * Checkout continua via chamada direta a finalizarForcado: useReservaInteraction
+ * fixa um reservaId na criação do hook, e essa página trata cliques em
+ * reservaId dinâmico dentro de uma lista — não dá pra instanciar o hook
+ * aqui no nível da página. Se quiser, dá pra mover essa ação pra dentro
+ * do item de ReservaLista, onde cada card teria seu próprio reservaId fixo.
+ */
 export default function ReservaRapidaPage() {
   const { user } = useAuth();
 
-  const [paginatedData, setPaginatedData] =
-    useState<ReservaRapidaPaginadaResponse | null>(null);
-
-  const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
 
-  const fetchReservas = useCallback(
-    async (page: number = 0) => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-
-      try {
-        const response = await getReservasRapidas(user.id, page);
-
-        setPaginatedData(response);
-        setCurrentPage(response.pagina);
-        setIsOffline(false);
-      } catch {
-        toast.error('Não foi possível carregar as reservas atuais.');
-
-        if (!navigator.onLine) {
-          setIsOffline(true);
-        }
-      } finally {
-        setLoading(false);
-      }
-    },
-    [user?.id],
+  // ==================== PARÂMETROS DE BUSCA (PAGINAÇÃO) ====================
+  const params = useMemo(
+    () => ({ numeroPagina: currentPage, tamanhoPagina: TAMANHO_PAGINA }),
+    [currentPage],
   );
 
-  const handlePageChange = (newPage: number) => {
-    if (
-      newPage !== currentPage &&
-      newPage >= 0 &&
-      newPage < (paginatedData?.totalPaginas || 0)
-    ) {
-      fetchReservas(newPage);
+  // ==================== BUSCA DE RESERVAS RÁPIDAS (VIA HOOK) ====================
+  const {
+    reservasRapidas,
+    loading,
+    error: erroReservas,
+    pagina,
+    totalPaginas,
+    totalElementos,
+    buscarReservasRapidas,
+  } = useReservas<ReservaResponse>({
+    usuarioId: user?.id,
+    params,
+    // recarregar() do hook não cobre reservas rápidas automaticamente,
+    // então disparamos manualmente no useEffect abaixo
+    buscarAutomaticamente: false,
+  });
 
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
-    }
-  };
-
-  const handleCheckoutReserva = useCallback(
-    async (reservaId: string) => {
-      try {
-        await finalizarForcado(reservaId);
-
-        toast.success('Checkout realizado com sucesso!');
-
-        await fetchReservas(currentPage);
-      } catch {
-        toast.error('Erro ao realizar checkout da reserva.');
-      }
-    },
-    [fetchReservas, currentPage],
-  );
-
+  // ==================== DISPARO DA BUSCA (MONTAGEM + MUDANÇA DE PÁGINA) ====================
   useEffect(() => {
-    fetchReservas(0);
+    if (!user?.id) return;
+    buscarReservasRapidas();
+  }, [user?.id, buscarReservasRapidas]);
 
+  // ==================== FEEDBACK DE ERRO DA BUSCA ====================
+  useEffect(() => {
+    if (erroReservas) {
+      toast.error('Não foi possível carregar as reservas atuais.');
+      if (!navigator.onLine) setIsOffline(true);
+    }
+  }, [erroReservas]);
+
+  // ==================== DETECÇÃO DE CONEXÃO ====================
+  useEffect(() => {
     const handleOnline = () => {
-      fetchReservas(currentPage);
+      setIsOffline(false);
+      buscarReservasRapidas();
       toast.success('Conexão restabelecida!');
     };
 
@@ -240,20 +222,33 @@ export default function ReservaRapidaPage() {
 
     return () => {
       window.removeEventListener('online', handleOnline);
-
       window.removeEventListener('offline', handleOffline);
     };
-  }, [fetchReservas]);
+  }, [buscarReservasRapidas]);
+
+  // ==================== HANDLER DE PÁGINA ====================
+  const handlePageChange = (newPage: number) => {
+    if (newPage !== currentPage && newPage >= 0 && newPage < totalPaginas) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // ==================== HANDLER DE CHECKOUT ====================
+  const handleCheckoutReserva = useCallback(
+    async (reservaId: string) => {
+      try {
+        await finalizarForcado(reservaId);
+        toast.success('Checkout realizado com sucesso!');
+        await buscarReservasRapidas();
+      } catch {
+        toast.error('Erro ao realizar checkout da reserva.');
+      }
+    },
+    [buscarReservasRapidas],
+  );
 
   const primeiroNome = user?.nome?.split(' ')[0] ?? 'Agente';
-
-  const reservas = paginatedData?.content || [];
-
-  const totalPaginas = paginatedData?.totalPaginas || 0;
-
-  const totalElementos = paginatedData?.totalElementos || 0;
-
-  const tamanhoPagina = paginatedData?.tamanhoPagina || 10;
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
@@ -262,8 +257,8 @@ export default function ReservaRapidaPage() {
         pagination={{
           totalElementos,
           totalPaginas,
-          tamanhoPagina,
-          pagina: currentPage,
+          tamanhoPagina: TAMANHO_PAGINA,
+          pagina,
         }}
       />
 
@@ -271,7 +266,6 @@ export default function ReservaRapidaPage() {
         {isOffline && (
           <div className="w-full mb-4 p-3 sm:p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-lg flex items-center gap-2 text-xs sm:text-sm">
             <WifiOff size={16} className="sm:w-[18px] sm:h-[18px] shrink-0" />
-
             <span>
               Você está offline. Conecte-se para atualizar ou modificar
               reservas.
@@ -280,28 +274,25 @@ export default function ReservaRapidaPage() {
         )}
 
         {/* ==================== LISTA ==================== */}
-
         <ReservaLista
           permissao="AGENTE"
-          reservasRapidas={reservas}
+          reservasRapidas={reservasRapidas}
           onCheckoutRapido={handleCheckoutReserva}
         />
 
         {/* ==================== PAGINAÇÃO ==================== */}
-
         {totalPaginas > 1 && (
           <PaginationControls
-            currentPage={currentPage}
+            currentPage={pagina}
             totalPages={totalPaginas}
             totalElements={totalElementos}
-            currentPageSize={tamanhoPagina}
+            currentPageSize={TAMANHO_PAGINA}
             onPageChange={handlePageChange}
             isLoading={loading}
           />
         )}
 
         {/* ==================== TUTORIAL ==================== */}
-
         <Link
           href="/tutorial#minhasreservas"
           className="flex items-center gap-3 sm:gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-3 sm:p-4 hover:bg-blue-50/30 transition-colors mt-6 sm:mt-8"

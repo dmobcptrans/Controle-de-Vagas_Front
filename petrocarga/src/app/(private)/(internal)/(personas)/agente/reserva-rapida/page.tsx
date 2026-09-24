@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+
 import Link from 'next/link';
 import { Info } from 'lucide-react';
 
 import { MapReserva } from '@/features/map/components/MapReserva';
+
 import ReservaAgente from '@/features/usuarios/(personas)/agentes/components/reserva/ReservaAgente';
 
-import { VagaResponse, VagasMapa } from '@/features/vaga/vagas/types/vaga';
-import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
+import { VagasMapa } from '@/features/vaga/vagas/types/vaga';
+import { useVaga } from '@/features/vaga/vagas/hooks/useVaga';
 
 import {
   CTASearch,
@@ -28,9 +30,7 @@ export default function ReservaRapidaPage() {
 
   const [step, setStep] = useState<'mapa' | 'reserva'>('mapa');
 
-  const [selectedVaga, setSelectedVaga] = useState<VagaResponse | null>(null);
-
-  const [loadingVaga, setLoadingVaga] = useState(false);
+  const [selectedVagaId, setSelectedVagaId] = useState<string | null>(null);
 
   const [searchValue, setSearchValue] = useState('');
 
@@ -47,7 +47,9 @@ export default function ReservaRapidaPage() {
 
   const suggestions = useMapboxSuggestions(searchValue, true);
 
-  const handleSuggestionSelect = (suggestion: SuggestionWithCoords) => {
+  const handleSuggestionSelect = (
+    suggestion: SuggestionWithCoords,
+  ) => {
     setSearchValue(suggestion.label);
 
     setSelectedLocation({
@@ -56,41 +58,35 @@ export default function ReservaRapidaPage() {
     });
   };
 
+  // ==================== VAGA ====================
+
+  const {
+    vaga: selectedVaga,
+    loading: loadingVaga,
+    error: errorVaga,
+  } = useVaga({
+    vagaId: selectedVagaId!,
+    buscarAutomaticamente: Boolean(selectedVagaId),
+  });
+
   // ==================== HANDLERS ====================
 
-  const handleSelectVaga = async (vagaResumo: VagasMapa) => {
-    try {
-      setLoadingVaga(true);
-
-      const vagaDetalhes = await getVagaById(vagaResumo.id);
-
-      setSelectedVaga(vagaDetalhes);
-      setStep('reserva');
-    } catch (error) {
-      console.error('Erro ao buscar detalhes da vaga:', error);
-    } finally {
-      setLoadingVaga(false);
-    }
+  const handleSelectVaga = (vagaResumo: VagasMapa) => {
+    setSelectedVagaId(vagaResumo.id);
+    setStep('reserva');
   };
 
   const handleBackToMap = () => {
     setStep('mapa');
-    setSelectedVaga(null);
-
+    setSelectedVagaId(null);
     clearDefaults();
   };
 
-  const handleClearSearch = () => {
-    setSearchValue('');
-    setSelectedLocation(null);
-  };
 
   // ==================== DADOS DERIVADOS ====================
 
   const vagaLabel = selectedVaga?.endereco.logradouro;
-
   const vagaEndereco = selectedVaga?.endereco.bairro;
-
   const vagaSetor = selectedVaga?.area;
 
   // ==================== RENDER ====================
@@ -156,9 +152,33 @@ export default function ReservaRapidaPage() {
 
         {/* ==================== ETAPA 2: FORMULÁRIO ==================== */}
 
-        {step === 'reserva' && selectedVaga && (
+        {step === 'reserva' && (
           <div className="mb-4">
-            <ReservaAgente selectedVaga={selectedVaga} />
+            {loadingVaga && (
+              <div className="flex items-center justify-center py-8">
+                <span>Carregando vaga...</span>
+              </div>
+            )}
+
+            {errorVaga && !loadingVaga && (
+              <div className="flex flex-col items-center justify-center py-8 gap-3">
+                <p className="text-red-500">
+                  Não foi possível carregar os dados da vaga.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleBackToMap}
+                  className="text-[#1351B4] font-medium"
+                >
+                  Voltar para o mapa
+                </button>
+              </div>
+            )}
+
+            {!loadingVaga && !errorVaga && selectedVaga && (
+              <ReservaAgente selectedVaga={selectedVaga} />
+            )}
           </div>
         )}
 
@@ -190,7 +210,6 @@ export default function ReservaRapidaPage() {
               flex
               items-center
               justify-center
-              flex-shrink-0
             "
           >
             <Info className="h-5 w-5 text-[#1351B4]" />

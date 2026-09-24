@@ -372,20 +372,22 @@ export function useReserva(selectedVaga: VagaResponse | null) {
    * garante que dia/veículo estejam selecionados; o cálculo dos horários
    * acontece de forma reativa (efeitos acima), por isso o retorno é void.
    */
-  const fetchHorariosDisponiveis = useCallback(
-    async (
-      day: Date,
-      _vaga: VagaResponse,
-      vehicleId?: string,
-    ): Promise<void> => {
-      setReservaState((prev) => ({
-        ...prev,
-        selectedDay: day,
-        ...(vehicleId ? { selectedVehicleId: vehicleId } : {}),
-      }));
-    },
-    [],
-  );
+ const fetchHorariosDisponiveis = useCallback(
+  async (
+    day: Date,
+    _vaga: VagaResponse,
+    vehicleId?: string,
+  ): Promise<void> => {
+    setReservaState((prev) => ({
+      ...prev,
+      selectedDay: day,
+      ...(vehicleId
+        ? { selectedVehicleId: vehicleId }
+        : {}),
+    }));
+  },
+  [],
+);
 
   // ==================== CÁLCULO DE HORÁRIOS FINAIS (limite por área) ====================
   const calcularReservedTimesEnd = useCallback(

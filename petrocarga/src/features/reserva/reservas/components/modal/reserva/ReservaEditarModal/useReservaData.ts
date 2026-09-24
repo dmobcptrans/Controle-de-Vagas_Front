@@ -1,83 +1,53 @@
-import { useState, useEffect } from 'react';
+'use client';
 
-import { getVeiculoPorId } from '@/features/veiculos/services/veiculoApi';
-import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
-
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
-import { VagaResponse } from '@/features/vaga/vagas/types/vaga';
+import { useVeiculo } from '@/features/veiculos/hooks/useVeiculo';
+import { useVaga } from '@/features/vaga/vagas/hooks/useVaga';
 
 /**
  * @hook useReservaData
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @description
- * Hook customizado para carregar os dados relacionados a uma reserva.
- * Busca veículo e vaga em paralelo diretamente através das APIs.
+ * Hook responsável por centralizar os dados relacionados
+ * a uma reserva, utilizando os hooks específicos de veículo e vaga.
  */
-export function useReservaData(
-  veiculoId: string,
-  vagaId: string,
-) {
-  const [veiculo, setVeiculo] = useState<VeiculoResponse | null>(null);
-  const [vaga, setVaga] = useState<VagaResponse | null>(null);
+export function useReservaData(veiculoId: string, vagaId: string) {
+  const {
+    veiculo,
+    loading: loadingVeiculo,
+    error: errorVeiculo,
+    buscar: buscarVeiculo,
+  } = useVeiculo({
+    veiculoId,
+  });
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    vaga,
+    loading: loadingVaga,
+    error: errorVaga,
+    buscar: buscarVaga,
+  } = useVaga({
+    vagaId,
+  });
 
-  useEffect(() => {
-    let mounted = true;
+  const loading = loadingVeiculo || loadingVaga;
 
-    async function fetchData() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // Busca veículo e vaga em paralelo diretamente pela API
-        const [veiculoRes, vagaRes] = await Promise.all([
-          veiculoId
-            ? getVeiculoPorId(veiculoId)
-            : Promise.resolve(null),
-
-          vagaId
-            ? getVagaById(vagaId)
-            : Promise.resolve(null),
-        ]);
-
-        if (!mounted) return;
-        
-        if (veiculoRes) {
-          setVeiculo(veiculoRes);
-        }
-
-        if (vagaRes) {
-          setVaga(vagaRes);
-        }
-      } catch (err: unknown) {
-        if (!mounted) return;
-
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Falha ao carregar detalhes da reserva.',
-        );
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    fetchData();
-
-    return () => {
-      mounted = false;
-    };
-  }, [veiculoId, vagaId]);
+  const error = errorVeiculo || errorVaga;
 
   return {
     veiculo,
     vaga,
+
     loading,
     error,
+
+    loadingVeiculo,
+    loadingVaga,
+
+    errorVeiculo,
+    errorVaga,
+
+    buscarVeiculo,
+    buscarVaga,
   };
 }

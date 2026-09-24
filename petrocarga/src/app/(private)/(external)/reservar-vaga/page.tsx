@@ -1,84 +1,34 @@
 'use client';
 
 import { useState } from 'react';
+
 import { MapReserva } from '@/features/map/components/MapReserva';
 import ReservaComponent from '@/features/reserva/reservar-vaga/components/ReservaComponent';
 
-import { VagaResponse, VagasMapa } from '@/features/vaga/vagas/types/vaga';
+import {
+  VagasMapa,
+} from '@/features/vaga/vagas/types/vaga';
+
 import {
   CTASearch,
   SuggestionWithCoords,
 } from '@/components/ui/CTA/search/CTASearch';
-import { CTAInfoReserva } from '@/components/ui/CTA/reserva/CTAInfoReserva';
-import { useMapboxSuggestions } from '@/features/map/hooks/useMapboxSuggestions';
-import TutorialCard from '@/components/ui/TutorialCard/TutorialCard';
-import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
-import { useAuth } from '@/features/usuarios/auth/service/useAuth';
-import OnboardingVeiculoModal from '@/features/usuarios/auth/components/modal/autorizacao/completar-cadastro/Onboardingveiculomodal';
-import { Header } from '@/components/ui/Header/Header';
 
-/**
- * @component ReservaPage
- * @version 1.0.0
- *
- * @description Página de reserva de vagas para motoristas em duas etapas.
- * Permite buscar localização, selecionar uma vaga no mapa e preencher os dados da reserva.
- *
- * ----------------------------------------------------------------------------
- * 📋 FLUXO COMPLETO:
- * ----------------------------------------------------------------------------
- *
- * ETAPA 1 - SELEÇÃO DE VAGA (MAPA):
- *    - Campo de busca com sugestões do Mapbox
- *    - Mapa interativo (MapReserva) com vagas disponíveis
- *    - Ao clicar em uma vaga, avança para etapa 2
- *    - Pode usar busca para centralizar o mapa
- *
- * ETAPA 2 - FORMULÁRIO DE RESERVA:
- *    - Componente ReservaComponent recebe a vaga selecionada
- *    - Exibe resumo da vaga selecionada
- *    - Botão "Voltar" retorna ao mapa (ícone MapIcon)
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - BUSCA POR LOCALIZAÇÃO: useMapboxSuggestions com geocodificação reversa
- * - DROPDOWN: Sugestões aparecem em card flutuante sobre o CTA
- * - SELEÇÃO DE LOCAL: Centraliza o mapa na localização escolhida
- * - PREVENÇÃO DE BLOQUEIO: onMouseDown + preventDefault evita conflito com onBlur
- *
- * ----------------------------------------------------------------------------
- * 🎨 ESTILOS:
- * ----------------------------------------------------------------------------
- *
- * - Header: Azul escuro (#071D41)
- * - CTA de busca: Fundo azul escuro com borda amarela (#FFCD07)
- * - Dropdown: Fundo azul médio (#0C2D5E), texto branco
- * - Ícones de destaque: Amarelo (#FFCD07)
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - MapReserva: Mapa interativo com vagas clicáveis
- * - ReservaComponent: Formulário de criação de reserva
- * - useMapboxSuggestions: Hook para busca de endereços
- *
- * @example
- * ```tsx
- * // Uso em rota de motorista
- * <ReservaPage />
- * ```
- */
+import { CTAInfoReserva } from '@/components/ui/CTA/reserva/CTAInfoReserva';
+
+import { useMapboxSuggestions } from '@/features/map/hooks/useMapboxSuggestions';
+import { useVaga } from '@/features/vaga/vagas/hooks/useVaga';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+
+import OnboardingVeiculoModal from '@/features/usuarios/auth/components/modal/autorizacao/completar-cadastro/Onboardingveiculomodal';
+
+import { Header } from '@/components/ui/Header/Header';
+import TutorialCard from '@/components/ui/TutorialCard/TutorialCard';
 
 export default function ReservaPage() {
-  // ==================== ESTADOS ====================
   const [step, setStep] = useState<'mapa' | 'reserva'>('mapa');
 
-  const [selectedVaga, setSelectedVaga] = useState<VagaResponse | null>(null);
-
-  const [loadingVaga, setLoadingVaga] = useState(false);
+  const [selectedVagaId, setSelectedVagaId] = useState<string | null>(null);
 
   const [searchValue, setSearchValue] = useState('');
 
@@ -87,39 +37,41 @@ export default function ReservaPage() {
     lng: number;
   } | null>(null);
 
-  const handleSuggestionSelect = (suggestion: SuggestionWithCoords) => {
-    setSearchValue(suggestion.label);
-    setSelectedLocation({ lat: suggestion.lat, lng: suggestion.lng });
-  };
+  const { user } = useAuth();
+
+  const empresaId = user?.id;
 
   const suggestions = useMapboxSuggestions(searchValue, true);
 
-  const { user } = useAuth();
-  const empresaId = user?.id;
+  const {
+    vaga: selectedVaga,
+    loading: loadingVaga,
+    error: errorVaga,
+  } = useVaga({
+    vagaId: selectedVagaId!,
+    buscarAutomaticamente: Boolean(selectedVagaId),
+  });
 
-  // ==================== HANDLERS ====================
+  const handleSuggestionSelect = (
+    suggestion: SuggestionWithCoords,
+  ) => {
+    setSearchValue(suggestion.label);
 
-  const handleSelectVaga = async (vagaResumo: VagasMapa) => {
-    try {
-      setLoadingVaga(true);
+    setSelectedLocation({
+      lat: suggestion.lat,
+      lng: suggestion.lng,
+    });
+  };
 
-      const vagaDetalhes = await getVagaById(vagaResumo.id);
-
-      setSelectedVaga(vagaDetalhes);
-      setStep('reserva');
-    } catch (error) {
-      console.error('Erro ao buscar detalhes da vaga:', error);
-    } finally {
-      setLoadingVaga(false);
-    }
+  const handleSelectVaga = (vagaResumo: VagasMapa) => {
+    setSelectedVagaId(vagaResumo.id);
+    setStep('reserva');
   };
 
   const handleBackToMap = () => {
     setStep('mapa');
-    setSelectedVaga(null);
+    setSelectedVagaId(null);
   };
-
-  // ==================== DADOS DERIVADOS ====================
 
   const vagaLabel = selectedVaga?.endereco.logradouro;
   const vagaEndereco = selectedVaga?.endereco.bairro;
@@ -127,7 +79,6 @@ export default function ReservaPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* ==================== HEADER ==================== */}
       <Header
         title="Reservar Vaga"
         subtitle={
@@ -138,8 +89,6 @@ export default function ReservaPage() {
       />
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-        {/* ==================== CTA ==================== */}
-
         {step === 'mapa' && (
           <CTASearch
             value={searchValue}
@@ -159,7 +108,6 @@ export default function ReservaPage() {
           />
         )}
 
-        {/* ==================== ETAPA 1: MAPA ==================== */}
         {step === 'mapa' && (
           <div className="flex flex-col items-center justify-center">
             <div className="w-full h-[calc(75vh-120px)] md:h-[70vh] lg:h-[75vh] rounded-2xl overflow-hidden shadow-md mb-4">
@@ -171,23 +119,36 @@ export default function ReservaPage() {
           </div>
         )}
 
-        {/* ==================== ETAPA 2: FORMULÁRIO ==================== */}
-        {step === 'reserva' && selectedVaga && (
+        {step === 'reserva' && (
           <div className="mb-4">
-            <ReservaComponent
-              selectedVaga={selectedVaga}
-              onBack={handleBackToMap}
-              empresaId={empresaId}
-            />
+            {loadingVaga && (
+              <div className="flex justify-center py-8">
+                Carregando vaga...
+              </div>
+            )}
+
+            {errorVaga && !loadingVaga && (
+              <div className="text-center py-8 text-red-500">
+                Não foi possível carregar os dados da vaga.
+              </div>
+            )}
+
+            {!loadingVaga && !errorVaga && selectedVaga && (
+              <ReservaComponent
+                selectedVaga={selectedVaga}
+                onBack={handleBackToMap}
+                empresaId={empresaId}
+              />
+            )}
           </div>
         )}
 
-        {/* ==================== TUTORIAL ==================== */}
         <TutorialCard
           href="/tutorial#reservarvaga"
           description="Veja como usar o sistema em 3 passos simples"
         />
       </main>
+
       <OnboardingVeiculoModal />
     </div>
   );

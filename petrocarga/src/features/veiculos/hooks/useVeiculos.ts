@@ -1,11 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getVeiculosPorUsuario } from '../services/veiculoApi';
-
 import { VeiculoParams, VeiculoResponse } from '../types/veiculo';
-
 import { useApi } from '@/services/hooks/useApi';
 
 interface UseVeiculoOptions {
@@ -39,33 +37,52 @@ export function useVeiculos({
 
   const { loading, error, execute } = useApi();
 
+  /**
+   * Mantém os parâmetros atuais sem fazer o `buscar`
+   * mudar de referência a cada render.
+   */
+  const paramsRef = useRef<VeiculoParams>(params);
+
+  useEffect(() => {
+    paramsRef.current = params;
+  }, [params]);
+
   const buscar = useCallback(
-    async (novosParams: VeiculoParams = params) => {
+    async (novosParams?: VeiculoParams) => {
       if (!usuarioId) return;
 
+      const parametros = novosParams ?? paramsRef.current;
+
       const response = await execute(() =>
-        getVeiculosPorUsuario(usuarioId, novosParams),
+        getVeiculosPorUsuario(usuarioId, parametros),
       );
 
-      if (response) {
-        setVeiculos(response.content);
-        setPagina(response.pagina);
-        setTotalPaginas(response.totalPaginas);
-        setTotalElementos(response.totalElementos);
-      }
+      if (!response) return;
+
+      setVeiculos(response.content);
+      setPagina(response.pagina);
+      setTotalPaginas(response.totalPaginas);
+      setTotalElementos(response.totalElementos);
     },
-    [usuarioId, params, execute],
+    [usuarioId, execute],
   );
 
   const recarregar = useCallback(async () => {
-    await buscar(params);
-  }, [buscar, params]);
+    await buscar(paramsRef.current);
+  }, [buscar]);
 
+  /**
+   * Busca automática somente quando:
+   * - estiver habilitada
+   * - existir usuarioId
+   *
+   * Não depende de `params` nem de `buscar`.
+   */
   useEffect(() => {
-    if (buscarAutomaticamente) {
-      buscar();
-    }
-  }, [buscarAutomaticamente, buscar]);
+    if (!buscarAutomaticamente || !usuarioId) return;
+
+    buscar();
+  }, [buscarAutomaticamente, usuarioId, buscar]);
 
   return {
     veiculos,
