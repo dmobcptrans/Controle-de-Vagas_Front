@@ -11,7 +11,7 @@ interface EditTimeFormProps {
   onSelectStart: (t: string) => void;
   onSelectEnd: (t: string) => void;
 
-  onBackToStart: () => void; // 👈 NOVO
+  onBackToStart: () => void; 
   onBack: () => void;
 }
 

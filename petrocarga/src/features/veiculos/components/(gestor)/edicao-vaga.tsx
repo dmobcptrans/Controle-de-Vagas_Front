@@ -120,7 +120,6 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
     if (sucesso) {
       toast.success('Vaga atualizada com sucesso!');
     }
-    // erro é tratado pelo useEffect acima, via estado "error" do hook
   };
 
   return (
@@ -331,7 +330,6 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
                 />
               )}
 
-              {/* ✍️ MANUAL (2 CAMPOS) */}
               {!useMap && (
                 <div className="flex flex-col gap-2">
                   <Input
@@ -368,7 +366,6 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
                 </div>
               )}
 
-              {/* 🔒 Hidden (backend continua igual) */}
               <input
                 type="hidden"
                 name="latitudeInicio"

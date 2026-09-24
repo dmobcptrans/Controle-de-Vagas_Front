@@ -9,13 +9,13 @@ import { VagaResponse } from '../../vagas/types/vaga';
 
 interface UseDisponibilidadeActionsProps {
   vagasPorLogradouro: Record<string, VagaResponse[]>;
+
   disponibilidadesAgrupadas: Record<
     string,
     Record<string, DisponibildadeVagaResponse[]>
   >;
-  setDisponibilidades: React.Dispatch<
-    React.SetStateAction<DisponibildadeVagaResponse[]>
-  >;
+
+  recarregar: () => Promise<void>;
 }
 
 export interface SalvarDisponibilidadeData {
@@ -115,19 +115,21 @@ export interface SalvarDisponibilidadeData {
 export function useDisponibilidadeActions({
   vagasPorLogradouro,
   disponibilidadesAgrupadas,
-  setDisponibilidades,
+  recarregar,
 }: UseDisponibilidadeActionsProps) {
-  const { criar, atualizar, deletar, error, loading, limparError } =
-    useDisponibiliadadeMutation();
+  const { criar, atualizar, deletar } = useDisponibiliadadeMutation();
 
   // ==================== SALVAR NOVA DISPONIBILIDADE ====================
+
   async function salvar({
     inicio,
     fim,
     selecionados,
   }: SalvarDisponibilidadeData) {
     if (!inicio || !fim) {
-      toast('Preencha início e fim.', { icon: '⚠️' });
+      toast('Preencha início e fim.', {
+        icon: '⚠️',
+      });
       return;
     }
 
@@ -140,17 +142,15 @@ export function useDisponibilidadeActions({
     }
 
     try {
-      let vagaIds: string[] = [];
-
       const idsConvertidos = selecionados.flatMap((item) => {
         if (vagasPorLogradouro[item]) {
-          return vagasPorLogradouro[item].map((v) => v.id);
+          return vagasPorLogradouro[item].map((vaga) => vaga.id);
         }
 
         return item;
       });
 
-      vagaIds = Array.from(new Set(idsConvertidos)).filter(
+      const vagaIds = Array.from(new Set(idsConvertidos)).filter(
         (id) => typeof id === 'string' && id.includes('-') && id.length > 30,
       );
 
@@ -162,14 +162,15 @@ export function useDisponibilidadeActions({
       const payload: DisponibilidadeVagasMultiplasPayload = {
         listaVagaId: vagaIds,
         inicio,
-        fim
+        fim,
       };
-      const novas = await criar(payload);
 
-      setDisponibilidades((prev) => [
-        ...prev,
-        ...(Array.isArray(novas) ? novas : [novas]),
-      ]);
+      await criar(payload);
+
+      // Busca novamente os dados atualizados
+      await recarregar();
+
+      toast.success('Disponibilidade criada com sucesso.');
     } catch (err) {
       let mensagem = 'Erro desconhecido';
 
@@ -187,23 +188,36 @@ export function useDisponibilidadeActions({
   }
 
   // ==================== EXCLUIR LOGRADOURO INTEIRO ====================
+
   async function excluirLogradouro(log: string) {
-    if (!confirm(`Excluir todas as disponibilidades de "${log}"?`)) return;
+    if (!confirm(`Excluir todas as disponibilidades de "${log}"?`)) {
+      return;
+    }
 
     const grupos = disponibilidadesAgrupadas[log];
-    if (!grupos) return;
+
+    if (!grupos) {
+      return;
+    }
 
     const ids = Object.values(grupos)
       .flat()
       .map((d) => d.id);
 
-    // Atualização otimista
-    setDisponibilidades((prev) => prev.filter((d) => !ids.includes(d.id)));
+    try {
+      await Promise.all(ids.map((id) => deletar(id)));
 
-    await Promise.all(ids.map((id) => deletar(id)));
+      // Busca novamente os dados atualizados
+      await recarregar();
+
+      toast.success('Disponibilidades removidas com sucesso.');
+    } catch (err) {
+      toast.error('Erro ao excluir as disponibilidades.');
+    }
   }
 
-  // ==================== EDITAR INTERVALO DE VAGA ESPECÍFICA ====================
+  // ==================== EDITAR INTERVALO ====================
+
   async function editarIntervalo(
     id: string,
     vagaId: string,
@@ -211,7 +225,9 @@ export function useDisponibilidadeActions({
     fim: string,
   ) {
     if (!inicio || !fim) {
-      toast('Preencha início e fim.', { icon: '⚠️' });
+      toast('Preencha início e fim.', {
+        icon: '⚠️',
+      });
       return;
     }
 
@@ -223,33 +239,60 @@ export function useDisponibilidadeActions({
       return;
     }
 
-    // Atualização otimista
-    setDisponibilidades((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, inicio, fim } : d)),
-    );
-    const payload: DisponibilidadeVagasPayload = {
-      vagaId,
-      inicio,
-      fim
+    try {
+      const payload: DisponibilidadeVagasPayload = {
+        vagaId,
+        inicio,
+        fim,
+      };
+
+      await atualizar(id, payload);
+
+      // Busca novamente os dados atualizados
+      await recarregar();
+
+      toast.success('Disponibilidade atualizada com sucesso.');
+    } catch (err) {
+      toast.error('Erro ao atualizar a disponibilidade.');
     }
-    await atualizar(id, payload);
   }
 
   // ==================== REMOVER VAGA ESPECÍFICA ====================
+
   async function removerVagaDisponibilidade(id: string) {
-    // Atualização otimista
-    setDisponibilidades((prev) => prev.filter((d) => d.id !== id));
-    await deletar(id);
+    try {
+      await deletar(id);
+
+      // Busca novamente os dados atualizados
+      await recarregar();
+
+      toast.success('Disponibilidade removida com sucesso.');
+    } catch (err) {
+      toast.error('Erro ao remover a disponibilidade.');
+    }
   }
 
   // ==================== EXCLUIR INTERVALO INTEIRO ====================
+
   async function excluirIntervalo(log: string, intervalo: string) {
     const lista = disponibilidadesAgrupadas[log]?.[intervalo] ?? [];
+
     const ids = lista.map((d) => d.id);
 
-    // Atualização otimista
-    setDisponibilidades((prev) => prev.filter((d) => !ids.includes(d.id)));
-    await Promise.all(ids.map((id) => deletar(id)));
+    if (ids.length === 0) {
+      return;
+    }
+
+    try {
+      await Promise.all(ids.map((id) => deletar(id)));
+
+      // Busca novamente os dados atualizados
+      await recarregar();
+
+      toast.success('Intervalo removido com sucesso.');
+    } catch (err) {
+      toast.error('Erro ao excluir o intervalo.');
+    }
   }
 
   return {

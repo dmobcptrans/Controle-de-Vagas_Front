@@ -160,7 +160,7 @@ export async function atualizarReserva(
     `/petrocarga/reservas/${reservaId}/${usuarioId}`,
     {
       method: 'PATCH',
-      body: JSON.stringify(payload),
+      json: payload,
     },
   );
   return response.json();

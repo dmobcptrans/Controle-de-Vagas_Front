@@ -8,11 +8,13 @@ import { ReservaPorUsuarioResponse } from '@/features/reserva/reservas/types/res
 import { useReservaMutation } from '@/features/reserva/reservas/hooks/useReservaMutation';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 
+import { useVeiculo } from '@/features/veiculos/hooks/useVeiculo';
+import { useVaga } from '@/features/vaga/vagas/hooks/useVaga';
+
 import { useReserva } from '@/features/reserva/reservar-vaga/hooks/useReserva';
 import OriginVehicleStep from '@/features/reserva/reservar-vaga/components/OriginVehicleStep';
 import MotoristaStep from '@/features/reserva/reservar-vaga/components/MotoristaStep';
 
-import { useReservaData } from './useReservaData';
 import { ReservaSummary } from './ReservaSummary';
 import { EditTimeForm } from './EditTimeForm';
 
@@ -85,16 +87,24 @@ export default function ReservaEditarModal({
     initialForm.motoristaId,
   );
 
-  // ============================================================
-  // DADOS DA RESERVA
-  // ============================================================
-
   const {
     veiculo,
+    loading: loadingVeiculo,
+    error: errorVeiculo,
+  } = useVeiculo({
+    veiculoId: form.veiculoId,
+  });
+
+  const {
     vaga,
-    loading,
-    error: dataError,
-  } = useReservaData(form.veiculoId, reserva.vaga.id);
+    loading: loadingVaga,
+    error: errorVaga,
+  } = useVaga({
+    vagaId: reserva.vaga.id,
+  });
+
+  const loading = loadingVeiculo || loadingVaga;
+  const dataError = errorVeiculo || errorVaga;
 
   // ============================================================
   // MUTAÇÃO DE ATUALIZAÇÃO

@@ -12,7 +12,7 @@ import type { DateClickArg } from '@fullcalendar/interaction';
 import { AdicionarModal } from '@/features/usuarios/(personas)/gestores/components/modal/disponibilidade/AdicionarModal';
 import { EditarModal } from '@/features/usuarios/(personas)/gestores/components/modal/disponibilidade/EditarModal';
 
-import { useDisponibilidadesData } from '../hooks/useDisponibilidadesData';
+import { useDisponibilidade } from '../hooks/useDisponibilidade';
 import { useDisponibilidadeActions } from '../hooks/useDisponibilidadeActions';
 import { useVagas } from '../../vagas/hooks/useVagas';
 import { useCalendarEvents } from '../hooks/useCalendarEvents';
@@ -77,42 +77,85 @@ interface ExtendedPropsDisponibilidade {
 
 export default function DisponibilidadeCalendario() {
   const { ano, mes } = useCalendarioMes();
-  const calendarRef = useRef<FullCalendar>(null);
 
   // ==================== HOOKS ====================
-  const { disponibilidadesAgrupadas, setDisponibilidades } =
-    useDisponibilidadesData({ mes: mes + 1, ano: ano });
 
-  const { vagas, buscarTodas } = useVagas({ buscarAutomaticamente: false });
+  const { disponibilidades,recarregar } = useDisponibilidade({
+    params: {
+      ano,
+      mes: mes + 1,
+    },
+  });
+
+  const calendarRef = useRef<FullCalendar>(null);
+
+  const { vagas, buscarTodas } = useVagas({
+    buscarAutomaticamente: false,
+  });
+
+  // ==================== BUSCAR VAGAS ====================
 
   useEffect(() => {
     buscarTodas();
   }, [buscarTodas]);
 
   // ==================== AGRUPAR VAGAS POR LOGRADOURO ====================
+
   const vagasPorLogradouro = useMemo(() => {
-    return vagas.reduce((acc, vaga) => {
-      const log = vaga?.endereco?.logradouro ?? 'Sem Logradouro';
-      (acc[log] ??= []).push(vaga);
-      return acc;
-    }, {} as Record<string, VagaResponse[]>);
+    return vagas.reduce(
+      (acc, vaga) => {
+        const log = vaga?.endereco?.logradouro ?? 'Sem Logradouro';
+
+        (acc[log] ??= []).push(vaga);
+
+        return acc;
+      },
+      {} as Record<string, VagaResponse[]>,
+    );
   }, [vagas]);
+
+  // ==================== AGRUPAR DISPONIBILIDADES ====================
+
+  const disponibilidadesAgrupadas = useMemo(() => {
+    return disponibilidades.reduce(
+      (acc, disp) => {
+        if (!disp) {
+          return acc;
+        }
+
+        const log = disp.endereco?.logradouro ?? 'Logradouro Não Identificado';
+
+        const intervalo = `${disp.inicio} → ${disp.fim}`;
+
+        acc[log] ??= {};
+        acc[log][intervalo] ??= [];
+        acc[log][intervalo].push(disp);
+
+        return acc;
+      },
+      {} as Record<string, Record<string, DisponibildadeVagaResponse[]>>,
+    );
+  }, [disponibilidades]);
+
+  // ==================== EVENTOS DO CALENDÁRIO ====================
 
   const { eventos } = useCalendarEvents({
     disponibilidadesAgrupadas,
   });
 
+  // ==================== ACTIONS ====================
+
   const actions = useDisponibilidadeActions({
     vagasPorLogradouro,
     disponibilidadesAgrupadas,
-    setDisponibilidades,
+    recarregar,
   });
 
   // ==================== ESTADOS DOS MODAIS ====================
+
   const [modalAddOpen, setModalAddOpen] = useState(false);
   const [modalEditOpen, setModalEditOpen] = useState(false);
 
-  // Estado consolidado para os modais
   const [modalState, setModalState] = useState<{
     dataSelecionada: string | null;
     logradouroSelecionado: string | null;
@@ -125,38 +168,31 @@ export default function DisponibilidadeCalendario() {
     gruposAgrupados: null,
   });
 
-  // ==================== EFFECTS ====================
+  // ==================== SINCRONIZAR CALENDÁRIO ====================
 
   useEffect(() => {
     const api = calendarRef.current?.getApi();
+
     if (!api) return;
+
     api.gotoDate(new Date(ano, mes, 1));
   }, [ano, mes]);
 
   // ==================== HANDLERS ====================
 
-  /**
-   * @function handleDateClick
-   * @description Abre modal de adição ao clicar em um dia do calendário
-   */
   const handleDateClick = (info: DateClickArg) => {
-    setModalState((prev) => ({ ...prev, dataSelecionada: info.dateStr }));
+    setModalState((prev) => ({
+      ...prev,
+      dataSelecionada: info.dateStr,
+    }));
+
     setModalAddOpen(true);
   };
 
-  /**
-   * @function handleEventClick
-   * @description Abre modal de edição ao clicar em um evento
-   *
-   * Comportamento:
-   * - Se evento agrupado (múltiplos logradouros): abre modal com grupos
-   * - Se evento individual (único logradouro): abre modal com aquele logradouro
-   */
   const handleEventClick = (info: EventClickArg) => {
     const props = info.event.extendedProps as ExtendedPropsDisponibilidade;
 
     if (props.isGrouped) {
-      // Evento agrupado: abre com todos os grupos
       setModalState({
         dataSelecionada: null,
         logradouroSelecionado: null,
@@ -164,7 +200,6 @@ export default function DisponibilidadeCalendario() {
         gruposAgrupados: props.grupos ?? null,
       });
     } else {
-      // Evento individual: cria grupo com o logradouro único
       const disposDoUnicoLogradouro = props.disps || [];
 
       if (props.logradouro && disposDoUnicoLogradouro.length > 0) {
@@ -180,18 +215,25 @@ export default function DisponibilidadeCalendario() {
         });
       } else {
         console.error('Erro: Evento individual sem dados de disponibilidade.');
-        setModalState((prev) => ({ ...prev, gruposAgrupados: null }));
+
+        setModalState((prev) => ({
+          ...prev,
+          gruposAgrupados: null,
+        }));
+
         setModalEditOpen(false);
+
         return;
       }
     }
+
     setModalEditOpen(true);
   };
 
-  // ==================== RENDERIZAÇÃO ====================
+  // ==================== RENDER ====================
+
   return (
     <div>
-      {/* ==================== CALENDÁRIO ==================== */}
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, interactionPlugin]}
@@ -214,7 +256,6 @@ export default function DisponibilidadeCalendario() {
         }}
       />
 
-      {/* ==================== MODAL DE ADIÇÃO ==================== */}
       <AdicionarModal
         open={modalAddOpen}
         onClose={() => setModalAddOpen(false)}
@@ -223,12 +264,15 @@ export default function DisponibilidadeCalendario() {
         onSalvar={actions.salvar}
       />
 
-      {/* ==================== MODAL DE EDIÇÃO ==================== */}
       <EditarModal
         open={modalEditOpen}
         onClose={() => {
           setModalEditOpen(false);
-          setModalState((prev) => ({ ...prev, gruposAgrupados: null }));
+
+          setModalState((prev) => ({
+            ...prev,
+            gruposAgrupados: null,
+          }));
         }}
         gruposAgrupados={modalState.gruposAgrupados}
         onEditarIntervalo={actions.editarIntervalo}
