@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+
 import {
   CalendarPlus,
   Archive,
@@ -13,13 +15,24 @@ import {
   Truck,
   CarIcon,
 } from 'lucide-react';
+
 import { useReservas } from '@/features/reserva/reservas/hooks/useReservas';
+
 import { getDenuncias } from '@/features/denuncias/services/denunciaApi';
-import { useCallback, useEffect, useState } from 'react';
+
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
 import toast from 'react-hot-toast';
-import { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
+
 import { Header } from '@/components/ui/Header/Header';
 import { CTA } from '@/components/ui/CTA/CTA';
+
+import { ReservaRapidaResponse } from '@/features/reserva/reservas/types/reservaRapida';
 
 /**
  * Configuração de cores e rótulos para cada status de reserva rápida
@@ -51,6 +64,7 @@ type StatusKey = keyof typeof statusConfig;
 
 function StatusBadge({ status }: { status: StatusKey }) {
   const { label, className } = statusConfig[status];
+
   return (
     <span
       className={`text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${className}`}
@@ -71,10 +85,12 @@ function SkeletonCard() {
     <div className="bg-white border border-gray-100 rounded-xl px-4 py-3 animate-pulse">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 bg-gray-100 rounded-lg flex-shrink-0" />
+
         <div className="flex-1 space-y-2">
           <div className="h-3 bg-gray-100 rounded w-3/4" />
           <div className="h-2.5 bg-gray-100 rounded w-1/2" />
         </div>
+
         <div className="h-5 w-16 bg-gray-100 rounded-full" />
       </div>
     </div>
@@ -85,40 +101,60 @@ function SkeletonCard() {
  * @component Dashboard
  * @version 2.0.0
  *
- * Busca de reservas rápidas agora via useReservas (buscarReservasRapidas),
- * em vez de chamar getReservasRapidas diretamente. Denúncias continuam via
- * chamada direta à API, pois não há hook equivalente disponível ainda.
+ * Busca de reservas rápidas via useReservas.
+ * Denúncias continuam via chamada direta à API.
  */
 export default function Dashboard() {
   const { user } = useAuth();
+
   const [totalDenuncias, setTotalDenuncias] = useState(0);
   const [loadingDenuncias, setLoadingDenuncias] = useState(true);
 
-  // ==================== RESERVAS RÁPIDAS (VIA HOOK) ====================
+  // ==================== PARAMETROS DAS RESERVAS ====================
+  //
+  // IMPORTANTE:
+  // Mantemos o objeto estável para evitar que o useReservas
+  // recrie buscarReservasRapidas a cada renderização.
+  //
+  const reservasParams = useMemo(
+    () => ({
+      numeroPagina: 0,
+      tamanhoPagina: 100,
+    }),
+    [],
+  );
+
+  // ==================== RESERVAS RÁPIDAS ====================
+
   const {
     reservasRapidas,
     loading: loadingReservas,
     error: erroReservas,
     buscarReservasRapidas,
-  } = useReservas<ReservaResponse>({
+  } = useReservas<ReservaRapidaResponse>({
     usuarioId: user?.id,
-    params: { numeroPagina: 0, tamanhoPagina: 100 },
-    // recarregar() do hook não cobre reservas rápidas automaticamente,
-    // então buscamos manualmente no useEffect abaixo
+    params: reservasParams,
+
+    /**
+     * A busca será controlada manualmente pelo effect abaixo.
+     */
     buscarAutomaticamente: false,
   });
 
   const loading = loadingReservas || loadingDenuncias;
 
   // ==================== BUSCA DE DENÚNCIAS ====================
+
   const fetchDenuncias = useCallback(async () => {
     setLoadingDenuncias(true);
+
     try {
       const response = await getDenuncias({
         pagina: 0,
         tamanhoPagina: 1,
         ordem: 'DESC',
       });
+
       setTotalDenuncias(response.totalElementos ?? 0);
     } catch {
       toast.error('Não foi possível carregar suas denúncias.');
@@ -129,13 +165,20 @@ export default function Dashboard() {
   }, []);
 
   // ==================== DISPARO DAS BUSCAS ====================
+
   useEffect(() => {
     if (!user?.id) return;
+
     buscarReservasRapidas();
     fetchDenuncias();
-  }, [user?.id, buscarReservasRapidas, fetchDenuncias]);
+  }, [
+    user?.id,
+    buscarReservasRapidas,
+    fetchDenuncias,
+  ]);
 
-  // ==================== FEEDBACK DE ERRO (RESERVAS) ====================
+  // ==================== FEEDBACK DE ERRO ====================
+
   useEffect(() => {
     if (erroReservas) {
       toast.error('Não foi possível carregar suas reservas.');
@@ -143,13 +186,18 @@ export default function Dashboard() {
   }, [erroReservas]);
 
   // ==================== DADOS DERIVADOS ====================
-  const primeiroNome = user?.nome?.split(' ')[0] ?? 'Motorista';
+
+  const primeiroNome =
+    user?.nome?.split(' ')[0] ?? 'Motorista';
+
   const totalReservas = reservasRapidas.length;
+
   const reservasAtivas = reservasRapidas.filter(
     (r) => r.status === 'ATIVA',
   ).length;
 
   // ==================== AÇÕES DE ACESSO RÁPIDO ====================
+
   const acoes = [
     {
       href: '/agente/lista-reserva',
@@ -184,39 +232,54 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ==================== HEADER ==================== */}
-      <Header title={`Bem vindo, ${primeiroNome}!`} showDate />
+
+      <Header
+        title={`Bem vindo, ${primeiroNome}!`}
+        showDate
+      />
+
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
+        {/* ==================== CTA RESERVA ==================== */}
+
         <div className="-mt-4 mb-5">
           <CTA
             href="/agente/reserva-rapida"
             title="Reservar uma vaga"
             description="Encontre e faça uma reserva rápida"
-            icon={<CalendarPlus className="h-5 w-5 text-white" />}
+            icon={
+              <CalendarPlus className="h-5 w-5 text-white" />
+            }
           />
         </div>
 
         {/* ==================== CARDS DE ESTATÍSTICAS ==================== */}
+
         <div className="grid grid-cols-3 gap-2.5 mb-5">
           <div className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center">
             <p className="text-2xl font-bold text-[#071D41]">
               {loading ? '—' : totalReservas}
             </p>
+
             <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
               Total de reservas
             </p>
           </div>
+
           <div className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center">
             <p className="text-2xl font-bold text-[#168821]">
               {loading ? '—' : reservasAtivas}
             </p>
+
             <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
               Ativa agora
             </p>
           </div>
+
           <div className="bg-white border border-gray-100 rounded-xl py-3 px-2 text-center">
             <p className="text-2xl font-bold text-[#071D41]">
               {loading ? '—' : totalDenuncias}
             </p>
+
             <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">
               Denúncias
             </p>
@@ -224,6 +287,7 @@ export default function Dashboard() {
         </div>
 
         {/* ==================== CTA CONSULTA DE PLACA ==================== */}
+
         <div className="mb-5">
           <Link
             href="/consulta"
@@ -233,10 +297,12 @@ export default function Dashboard() {
               <p className="text-black font-semibold text-[15px] mb-0.5">
                 Consultar placa
               </p>
+
               <p className="text-gray-500 text-xs">
                 Verifique veículos e possíveis infrações
               </p>
             </div>
+
             <div className="bg-green-700 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
               <Truck className="h-5 w-5 text-white" />
             </div>
@@ -244,11 +310,13 @@ export default function Dashboard() {
         </div>
 
         {/* ==================== ÚLTIMAS RESERVAS ==================== */}
+
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2.5">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
               Últimas reservas
             </p>
+
             <Link
               href="/agente/lista-reserva"
               className="text-xs text-[#1351B4] font-medium hover:underline"
@@ -269,6 +337,7 @@ export default function Dashboard() {
                 <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-2">
                   <Archive className="h-5 w-5 text-gray-300" />
                 </div>
+
                 <p className="text-sm text-gray-400">
                   Nenhuma reserva encontrada
                 </p>
@@ -277,7 +346,8 @@ export default function Dashboard() {
               [...reservasRapidas]
                 .sort(
                   (a, b) =>
-                    new Date(b.inicio).getTime() - new Date(a.inicio).getTime(),
+                    new Date(b.inicio).getTime() -
+                    new Date(a.inicio).getTime(),
                 )
                 .slice(0, 3)
                 .map((r) => (
@@ -291,7 +361,10 @@ export default function Dashboard() {
                         <p className="text-sm font-semibold text-gray-800 truncate">
                           {r.logradouro}
                         </p>
-                        <StatusBadge status={r.status as StatusKey} />
+
+                        <StatusBadge
+                          status={r.status as StatusKey}
+                        />
                       </div>
 
                       <p className="text-xs text-gray-500 flex items-center gap-1 truncate">
@@ -304,6 +377,7 @@ export default function Dashboard() {
                           <Clock className="h-3 w-3 text-gray-400" />
                           Início: {formatarData(r.inicio)}
                         </span>
+
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3 text-gray-400" />
                           Fim: {formatarData(r.fim)}
@@ -322,32 +396,49 @@ export default function Dashboard() {
         </div>
 
         {/* ==================== ACESSO RÁPIDO ==================== */}
+
         <div className="mb-5">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
             Acesso rápido
           </p>
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {acoes.map(({ href, icon, label, desc, iconClass }) => (
-              <Link
-                key={href}
-                href={href}
-                className="bg-white border border-gray-100 hover:border-[#1351B4] hover:bg-blue-50/30 rounded-xl p-4 flex flex-col items-center gap-3 transition-colors"
-              >
-                <div
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center ${iconClass}`}
+            {acoes.map(
+              ({
+                href,
+                icon,
+                label,
+                desc,
+                iconClass,
+              }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="bg-white border border-gray-100 hover:border-[#1351B4] hover:bg-blue-50/30 rounded-xl p-4 flex flex-col items-center gap-3 transition-colors"
                 >
-                  {icon}
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-gray-800">{label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
-                </div>
-              </Link>
-            ))}
+                  <div
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center ${iconClass}`}
+                  >
+                    {icon}
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-gray-800">
+                      {label}
+                    </p>
+
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {desc}
+                    </p>
+                  </div>
+                </Link>
+              ),
+            )}
           </div>
         </div>
 
         {/* ==================== TUTORIAL ==================== */}
+
         <Link
           href="/agente/tutorial#relatorio"
           className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors"
@@ -355,10 +446,12 @@ export default function Dashboard() {
           <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
             <Info className="h-5 w-5 text-[#1351B4]" />
           </div>
+
           <div>
             <p className="text-sm font-semibold text-[#071D41]">
               Novo por aqui?
             </p>
+
             <p className="text-xs text-gray-400 mt-0.5">
               Veja como usar o sistema em 3 passos simples
             </p>

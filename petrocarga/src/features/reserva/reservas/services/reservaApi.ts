@@ -256,7 +256,7 @@ export async function getReservasRapidas(
   });
 
   const response = await clientApi(
-    `/petrocarga/reserva-rapida/${usuarioId}${SearchParams}`,
+    `/petrocarga/reserva-rapida/${usuarioId}?${SearchParams}`,
   );
 
   return response.json();
