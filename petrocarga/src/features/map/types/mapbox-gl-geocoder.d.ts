@@ -7,7 +7,10 @@ declare module '@mapbox/mapbox-gl-geocoder' {
     marker?: boolean | object;
     placeholder?: string;
     bbox?: number[];
-    proximity?: { longitude: number; latitude: number };
+    proximity?: {
+      longitude: number;
+      latitude: number;
+    };
     countries?: string;
     types?: string;
     flyTo?: boolean;
@@ -18,14 +21,19 @@ declare module '@mapbox/mapbox-gl-geocoder' {
     result: {
       id: string;
       place_name: string;
-      geometry: { coordinates: [number, number] };
+      geometry: {
+        coordinates: [number, number];
+      };
     };
   }
 
   class MapboxGeocoder implements mapboxgl.IControl {
     constructor(options: MapboxGeocoderOptions);
+
     onAdd(map: mapboxgl.Map): HTMLElement;
+
     onRemove(): void;
+
     on(
       event: 'result' | 'clear',
       callback: (event: GeocoderResultEvent) => void,

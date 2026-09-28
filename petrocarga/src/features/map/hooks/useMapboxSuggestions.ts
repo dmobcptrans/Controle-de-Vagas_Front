@@ -1,28 +1,12 @@
 import { useEffect, useState } from 'react';
 
-interface SuggestionWithCoords {
-  id: string;
-  label: string;
-  lat: number;
-  lng: number;
-}
+import {
+  MapboxResponse,
+  SuggestionWithCoords,
+} from '../types/map';
 
-interface MapboxContext {
-  id: string;
-  text: string;
-}
-
-interface MapboxFeature {
-  id: string;
-  text: string;
-  place_name: string;
-  context?: MapboxContext[];
-  center: [number, number];
-}
-
-interface MapboxResponse {
-  features?: MapboxFeature[];
-}
+import { MAPBOX_TOKEN } from '../config/mapbox';
+import { formatMapboxPlace } from '../utils/formatMapboxPlace';
 
 export function useMapboxSuggestions(
   query: string,
@@ -36,13 +20,11 @@ export function useMapboxSuggestions(
 
 export function useMapboxSuggestions(
   query: string,
-  withCoords: boolean = false,
+  withCoords = false,
 ) {
   const [suggestions, setSuggestions] = useState<
     SuggestionWithCoords[] | string[]
   >([]);
-
-  const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   useEffect(() => {
     if (!query || query.length < 3) {
@@ -50,67 +32,62 @@ export function useMapboxSuggestions(
       return;
     }
 
-    const fetchSuggestions = async () => {
+    const timeout = setTimeout(async () => {
       try {
-        const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-            query,
-          )}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&country=BR&types=address,place&limit=5&proximity=-43.178,-22.505`,
-        );
+        const url =
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/` +
+          `${encodeURIComponent(query)}.json` +
+          `?access_token=${MAPBOX_TOKEN}` +
+          `&autocomplete=true` +
+          `&country=BR` +
+          `&types=address,place` +
+          `&limit=5` +
+          `&proximity=-43.178,-22.505`;
 
-        if (!response.ok) throw new Error('Erro na requisição ao Mapbox');
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error('Erro na requisição ao Mapbox');
+        }
 
         const data: MapboxResponse = await response.json();
 
         if (withCoords) {
-          const places: SuggestionWithCoords[] =
-            data.features?.map((f) => {
-              const context = f.context ?? [];
+          const formattedSuggestions: SuggestionWithCoords[] =
+            (data.features ?? []).map(feature => {
+              const label = formatMapboxPlace(feature);
+              const [lng, lat] = feature.center;
 
-              const city = context.find((c) => c.id.includes('place'))?.text;
-              const state = context.find((c) => c.id.includes('region'))?.text;
-              const street = f.text;
+              return {
+                id: feature.id,
+                label,
+                lat,
+                lng,
+              };
+            });
 
-              let label = f.place_name;
-
-              if (street && city && state) {
-                label = `${street}, ${city} - ${state}`;
-              } else if (city && state) {
-                label = `${city} - ${state}`;
-              }
-
-              const [lng, lat] = f.center;
-
-              return { id: f.id, label, lat, lng }; // 👈 adicionado id
-            }) ?? [];
-
-          setSuggestions(places);
-        } else {
-          const places: string[] =
-            data.features?.map((f) => {
-              const context = f.context ?? [];
-
-              const city = context.find((c) => c.id.includes('place'))?.text;
-              const state = context.find((c) => c.id.includes('region'))?.text;
-              const street = f.text;
-
-              if (street && city && state)
-                return `${street}, ${city} - ${state}`;
-              if (city && state) return `${city} - ${state}`;
-
-              return f.place_name;
-            }) ?? [];
-
-          setSuggestions(places);
+          setSuggestions(formattedSuggestions);
+          return;
         }
-      } catch (err) {
-        console.error('Erro ao buscar sugestões do Mapbox:', err);
-      }
-    };
 
-    const timeout = setTimeout(fetchSuggestions, 400);
+        const formattedSuggestions: string[] =
+          (data.features ?? []).map(feature =>
+            formatMapboxPlace(feature),
+          );
+
+        setSuggestions(formattedSuggestions);
+      } catch (error) {
+        console.error(
+          'Erro ao buscar sugestões do Mapbox:',
+          error,
+        );
+
+        setSuggestions([]);
+      }
+    }, 400);
+
     return () => clearTimeout(timeout);
-  }, [query, withCoords, MAPBOX_TOKEN]);
+  }, [query, withCoords]);
 
   return suggestions;
 }

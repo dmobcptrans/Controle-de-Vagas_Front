@@ -1,30 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
 import { useVagasMap } from '@/features/vaga/vagas/hooks/useVagasMap';
 
-import {
-  ClusterMapa,
-  TipoResultadoMapa,
-  VagasMapa,
-} from '@/features/vaga/vagas/types/vaga';
-
-interface BoundsMapa {
-  north: number;
-  south: number;
-  east: number;
-  west: number;
-  zoom: number;
-}
+import { BoundsMapa } from '../types/map';
 
 export function useVagasReserva() {
-  const [tipo, setTipo] = useState<TipoResultadoMapa>('VAGAS');
-  const [vagas, setVagas] = useState<VagasMapa[]>([]);
-  const [clusters, setClusters] = useState<ClusterMapa[]>([]);
-  const [limiteAtingido, setLimiteAtingido] = useState(false);
-
-  const { buscar, vagasMap, loading, error } = useVagasMap({
+  const {
+    buscar,
+    vagasMap,
+    loading,
+    error,
+  } = useVagasMap({
     buscarAutomaticamente: false,
   });
 
@@ -38,26 +26,12 @@ export function useVagasReserva() {
     [buscar],
   );
 
-  useEffect(() => {
-    if (!vagasMap) {
-      setTipo('VAGAS');
-      setVagas([]);
-      setClusters([]);
-      setLimiteAtingido(false);
-      return;
-    }
-
-    setTipo(vagasMap.tipo);
-    setVagas(vagasMap.vagas);
-    setClusters(vagasMap.clusters);
-    setLimiteAtingido(vagasMap.limiteAtingido);
-  }, [vagasMap]);
-
   return {
-    tipo,
-    vagas,
-    clusters,
-    limiteAtingido,
+    tipo: vagasMap?.tipo ?? 'VAGAS',
+    vagas: vagasMap?.vagas ?? [],
+    clusters: vagasMap?.clusters ?? [],
+    limiteAtingido:
+      vagasMap?.limiteAtingido ?? false,
     loading,
     error,
     buscarVagas,
