@@ -86,7 +86,7 @@ export async function finalizarAnaliseDenuncia(
     `/petrocarga/denuncias/finalizarAnalise/${denunciaId}`,
     {
       method: 'PATCH',
-      body: JSON.stringify(payload),
+      json: payload,
     },
   );
 
