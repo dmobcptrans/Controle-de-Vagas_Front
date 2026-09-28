@@ -1,11 +1,11 @@
 'use client';
 
-import { Notification } from '@/features/notificacao/types/notificacao';
+import { NotificacaoResponse } from '../types/notificacao';
 import { NotificationCard } from './notificationCard';
 import { BellOff } from 'lucide-react';
 
 interface NotificationListProps {
-  notifications: Notification[];
+  notifications: NotificacaoResponse[];
   selectedIds: string[];
   isLoading: boolean;
 

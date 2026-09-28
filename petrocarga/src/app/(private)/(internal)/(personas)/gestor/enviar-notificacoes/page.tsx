@@ -5,8 +5,8 @@ import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 // Importamos a tipagem correta da API
 import { getMotoristas } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 import {
-  enviarNotificacaoParaUsuario,
-  enviarNotificacaoPorPermissao,
+  EnviarNotificacaoParaUsuario,
+  EnviarNotificacaoPorPermissao,
 } from '@/features/notificacao/services/notificacaoApi';
 import {
   Loader2,
@@ -25,6 +25,7 @@ import {
 import toast from 'react-hot-toast';
 import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 import { Header } from '@/components/ui/Header/Header';
+import { NotificacaoPayload } from '@/features/notificacao/types/notificacao';
 
 // --------------------------------------------------------------------------
 // COMPONENTE DE PAGINAÇÃO
@@ -255,24 +256,30 @@ export default function EnviarNotificacoesPage() {
     setResultado(null);
 
     try {
-      const resultados = await Promise.all(
-        motoristasSelecionados.map(async (usuarioId) => {
-          const formData = new FormData();
-          formData.append('usuarioId', usuarioId);
-          formData.append('titulo', titulo);
-          formData.append('mensagem', mensagem);
-          formData.append('tipo', tipo);
-          return await enviarNotificacaoParaUsuario(formData);
-        }),
+      const payload: NotificacaoPayload = {
+        titulo,
+        mensagem,
+        tipo,
+      };
+
+      const resultados = await Promise.allSettled(
+        motoristasSelecionados.map((usuarioId) =>
+          EnviarNotificacaoParaUsuario(payload, usuarioId),
+        ),
       );
 
-      const enviadas = resultados.filter((r) => !r.error).length;
-      const erros = resultados.filter((r) => r.error).length;
+      const enviadas = resultados.filter(
+        (resultado) => resultado.status === 'fulfilled',
+      ).length;
+
+      const erros = resultados.filter(
+        (resultado) => resultado.status === 'rejected',
+      ).length;
 
       setResultado({
-        sucesso: true,
-        enviadas: enviadas,
-        erros: erros,
+        sucesso: erros === 0,
+        enviadas,
+        erros,
       });
 
       if (erros === 0) {
@@ -280,12 +287,16 @@ export default function EnviarNotificacoesPage() {
         setMensagem('');
         setMotoristasSelecionados([]);
         setBusca('');
+
         toast.success(`${enviadas} notificação(ões) enviada(s) com sucesso!`);
+      } else if (enviadas > 0) {
+        toast.success(`${enviadas} enviada(s) e ${erros} com erro.`);
       } else {
-        toast.error(`${erros} erro(s) ao enviar notificações.`);
+        toast.error('Não foi possível enviar as notificações.');
       }
     } catch {
-      toast.error('Erro ao enviar notificações');
+      toast.error('Erro inesperado ao enviar notificações');
+
       setResultado({
         sucesso: false,
         enviadas: 0,
@@ -306,27 +317,31 @@ export default function EnviarNotificacoesPage() {
     setResultado(null);
 
     try {
-      const formData = new FormData();
-      formData.append('permissao', 'MOTORISTA');
-      formData.append('titulo', titulo);
-      formData.append('mensagem', mensagem);
-      formData.append('tipo', tipo);
+      const payload: NotificacaoPayload = {
+        titulo,
+        mensagem,
+        tipo,
+      };
 
-      const result = await enviarNotificacaoPorPermissao(formData);
+      await EnviarNotificacaoPorPermissao(payload, 'MOTORISTA');
 
-      if (result.error) {
-        setResultado({ sucesso: false, enviadas: 0, erros: 1 });
-        toast.error(
-          result.message || 'Erro ao enviar notificação para o grupo',
-        );
-      } else {
-        setResultado({ sucesso: true, enviadas: totalElements, erros: 0 });
-        setTitulo('');
-        setMensagem('');
-        toast.success('Notificação enviada para todos os motoristas!');
-      }
+      setResultado({
+        sucesso: true,
+        enviadas: totalElements,
+        erros: 0,
+      });
+
+      setTitulo('');
+      setMensagem('');
+
+      toast.success('Notificação enviada para todos os motoristas!');
     } catch {
-      setResultado({ sucesso: false, enviadas: 0, erros: 1 });
+      setResultado({
+        sucesso: false,
+        enviadas: 0,
+        erros: 1,
+      });
+
       toast.error('Erro ao enviar notificação para o grupo');
     } finally {
       setEnviando(false);

@@ -1,6 +1,6 @@
 'use client';
 
-import { Notification } from '@/features/notificacao/types/notificacao';
+import { NotificacaoResponse } from '../types/notificacao';
 import {
   Bell,
   Check,
@@ -15,7 +15,7 @@ import {
 import { useState } from 'react';
 
 interface NotificationHeaderProps {
-  notifications: Notification[];
+  notifications: NotificacaoResponse[];
   isConnected: boolean;
   error: string | null;
   reconnect: () => void;

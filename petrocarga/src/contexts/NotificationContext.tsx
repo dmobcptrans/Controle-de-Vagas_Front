@@ -10,26 +10,35 @@ import {
   useMemo,
 } from 'react';
 import {
-  deletarNotificacao,
-  getNotificacoesUsuario,
-  marcarNotificacaoComoLida,
-  marcarTodasNotificacoesComoLidas,
-  deletarNotificacoesSelecionadas,
+  deleteNotificacao,
+  deleteVariasNotificacoes,
+  getNotificacaoStream,
+  getNotificacoesDoUsuario,
+  MarcarUmaNotificacaoComoLida,
+  MarcarVariasNotificacoesComoLidas,
 } from '@/features/notificacao/services/notificacaoApi';
 import type {
-  Notification as AppNotification,
+  NotificacaoResponse,
+  NotificacaoPaginadasResponse,
   NotificationContextData,
   NotificationProviderProps,
 } from '@/features/notificacao/types/notificacao';
 
-// Contexto
 const NotificationContext = createContext<NotificationContextData | undefined>(
   undefined,
 );
 
+const getErrorMessage = (err: unknown, fallback: string) =>
+  err instanceof Error ? err.message : fallback;
+
+const ordenarPorData = (lista: NotificacaoResponse[]) =>
+  [...lista].sort(
+    (a, b) => new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime(),
+  );
+
 /**
  * @component NotificationProvider
- * @version 2.0.0
+ * @version 3.1.0
  */
 export function NotificationProvider({
   children,
@@ -38,7 +47,7 @@ export function NotificationProvider({
   pageSize = 10,
   enableSSE = true,
 }: NotificationProviderProps) {
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notifications, setNotifications] = useState<NotificacaoResponse[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -48,11 +57,29 @@ export function NotificationProvider({
   const [paginaAtual, setPaginaAtual] = useState(0);
   const [podeCarregarMais, setPodeCarregarMais] = useState(false);
 
-  const eventSourceRef = useRef<EventSource | null>(null);
-  const hasLoadedInitialRef = useRef(false);
-  const apiUrlRef = useRef(process.env.NEXT_PUBLIC_API_URL || '');
-  const retryCountRef = useRef(0);
-  const reconnectTimerRef = useRef<number | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // espelho do estado, para checar duplicatas fora do updater do setState
+  const notificationsRef = useRef<NotificacaoResponse[]>([]);
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
+
+  const resetPaginacao = useCallback(() => {
+    setNotifications([]);
+    setTotalElementos(0);
+    setTotalPaginas(0);
+    setPaginaAtual(0);
+    setPodeCarregarMais(false);
+  }, []);
+
+  const aplicarPagina = useCallback((page: NotificacaoPaginadasResponse) => {
+    setTotalElementos(page.totalElementos);
+    setTotalPaginas(page.totalPaginas);
+    setPaginaAtual(page.pagina);
+    setPodeCarregarMais(page.pagina + 1 < page.totalPaginas);
+  }, []);
 
   // ==================== CARREGAR HISTÓRICO (PRIMEIRA PÁGINA) ====================
   const loadHistorico = useCallback(
@@ -63,57 +90,26 @@ export function NotificationProvider({
       setError(null);
 
       try {
-        const result = await getNotificacoesUsuario(
+        const page = await getNotificacoesDoUsuario(
+          { numeroPagina: 0, tamanhoPagina: pageSize },
           usuarioId,
-          undefined,
-          0,
-          pageSize,
         );
 
-        if (result.error) {
-          setError(result.message || 'Erro ao carregar notificações');
-          setNotifications([]);
-          setTotalElementos(0);
-          setTotalPaginas(0);
-          setPaginaAtual(0);
-          setPodeCarregarMais(false);
-          return;
-        }
-
-        if (result.data) {
-          const novasNotificacoes = result.data.content || [];
-
-          const notificacoesOrdenadas = [...novasNotificacoes].sort(
-            (a, b) =>
-              new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime(),
-          );
-
-          setNotifications(notificacoesOrdenadas.slice(0, maxNotifications));
-          setTotalElementos(result.data.totalElementos);
-          setTotalPaginas(result.data.totalPaginas);
-          setPaginaAtual(result.data.pagina);
-          setPodeCarregarMais(
-            result.data.pagina + 1 < result.data.totalPaginas,
-          );
-          setError(null);
-        }
+        setNotifications(
+          ordenarPorData(page.content ?? []).slice(0, maxNotifications),
+        );
+        aplicarPagina(page);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Erro ao carregar notificações',
-        );
-        setNotifications([]);
-        setTotalElementos(0);
-        setTotalPaginas(0);
-        setPaginaAtual(0);
-        setPodeCarregarMais(false);
+        setError(getErrorMessage(err, 'Erro ao carregar notificações'));
+        resetPaginacao();
       } finally {
         if (!silent) setIsLoading(false);
       }
     },
-    [usuarioId, maxNotifications, pageSize],
+    [usuarioId, maxNotifications, pageSize, aplicarPagina, resetPaginacao],
   );
 
-  // ==================== CARREGAR MAIS NOTIFICAÇÕES ====================
+  // ==================== CARREGAR MAIS ====================
   const carregarMais = useCallback(async () => {
     if (!usuarioId || isLoadingMore || !podeCarregarMais) return;
 
@@ -123,46 +119,24 @@ export function NotificationProvider({
     setIsLoadingMore(true);
 
     try {
-      const result = await getNotificacoesUsuario(
+      const page = await getNotificacoesDoUsuario(
+        { numeroPagina: proximaPagina, tamanhoPagina: pageSize },
         usuarioId,
-        undefined,
-        proximaPagina,
-        pageSize,
       );
 
-      if (result.error) {
-        setError(result.message || 'Erro ao carregar mais notificações');
-        return;
-      }
+      setNotifications((prev) => {
+        const novas = [...prev];
+        for (const notif of page.content ?? []) {
+          if (!novas.some((n) => n.id === notif.id)) novas.push(notif);
+        }
+        return ordenarPorData(novas).slice(0, maxNotifications);
+      });
 
-      if (result.data) {
-        const novasNotificacoes = result.data.content || [];
-
-        setNotifications((prev) => {
-          const novas = [...prev];
-          for (const notif of novasNotificacoes) {
-            if (!novas.some((n) => n.id === notif.id)) {
-              novas.push(notif);
-            }
-          }
-          return novas
-            .sort(
-              (a, b) =>
-                new Date(b.criadaEm).getTime() - new Date(a.criadaEm).getTime(),
-            )
-            .slice(0, maxNotifications);
-        });
-
-        setPaginaAtual(result.data.pagina);
-        setPodeCarregarMais(result.data.pagina + 1 < result.data.totalPaginas);
-        setError(null);
-      }
+      setPaginaAtual(page.pagina);
+      setPodeCarregarMais(page.pagina + 1 < page.totalPaginas);
+      setError(null);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao carregar mais notificações',
-      );
+      setError(getErrorMessage(err, 'Erro ao carregar mais notificações'));
     } finally {
       setIsLoadingMore(false);
     }
@@ -176,30 +150,33 @@ export function NotificationProvider({
     pageSize,
   ]);
 
-  // ==================== ADICIONAR NOTIFICAÇÃO ====================
+  // ==================== ADICIONAR (SSE) ====================
   const addNotification = useCallback(
-    (notification: AppNotification) => {
-      setNotifications((prev) => {
-        if (prev.some((n) => n.id === notification.id)) return prev;
-        const novas = [notification, ...prev];
-        setTotalElementos((prevTotal) => prevTotal + 1);
-        return novas.slice(0, maxNotifications);
-      });
+    (notification: NotificacaoResponse) => {
+      if (notificationsRef.current.some((n) => n.id === notification.id)) {
+        return;
+      }
+
+      setNotifications((prev) =>
+        prev.some((n) => n.id === notification.id)
+          ? prev
+          : [notification, ...prev].slice(0, maxNotifications),
+      );
+      setTotalElementos((t) => t + 1);
     },
     [maxNotifications],
   );
 
-  // ==================== REMOVER NOTIFICAÇÃO ====================
+  // ==================== REMOVER ====================
   const removeNotification = useCallback(
     async (id: string) => {
+      if (!usuarioId) return;
       try {
-        const result = await deletarNotificacao(usuarioId, id);
-        if (!result.error) {
-          setNotifications((prev) => prev.filter((n) => n.id !== id));
-          setTotalElementos((prev) => Math.max(0, prev - 1));
-        }
+        await deleteNotificacao(id, usuarioId);
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+        setTotalElementos((prev) => Math.max(0, prev - 1));
       } catch {
-        // Silencia erro
+        // silencia erro
       }
     },
     [usuarioId],
@@ -208,108 +185,93 @@ export function NotificationProvider({
   // ==================== DELETAR SELECIONADAS ====================
   const deleteSelectedNotifications = useCallback(
     async (ids: string[]) => {
-      if (ids.length === 0) return;
+      if (!usuarioId || ids.length === 0) return;
 
-      const result = await deletarNotificacoesSelecionadas(usuarioId, ids);
-      if (!result.error) {
-        setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
-        setTotalElementos((prev) => Math.max(0, prev - ids.length));
-      } else {
-        throw new Error(result.message);
-      }
+      await deleteVariasNotificacoes(ids, usuarioId); // lança erro se falhar
+      setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
+      setTotalElementos((prev) => Math.max(0, prev - ids.length));
     },
     [usuarioId],
   );
 
   // ==================== MARCAR COMO LIDA ====================
   const markAsRead = useCallback(async (id: string) => {
-    const result = await marcarNotificacaoComoLida(id);
-    if (!result.error) {
+    try {
+      await MarcarUmaNotificacaoComoLida(id);
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, lida: true } : n)),
       );
+    } catch {
+      // silencia erro
     }
   }, []);
 
   // ==================== MARCAR SELECIONADAS COMO LIDAS ====================
   const markSelectedAsRead = useCallback(
     async (ids: string[]) => {
-      if (ids.length === 0) return;
+      if (!usuarioId || ids.length === 0) return;
 
-      const result = await marcarTodasNotificacoesComoLidas(usuarioId, ids);
-      if (!result.error) {
-        setNotifications((prev) =>
-          prev.map((n) => (ids.includes(n.id) ? { ...n, lida: true } : n)),
-        );
-      } else {
-        throw new Error(result.message);
-      }
+      await MarcarVariasNotificacoesComoLidas(ids, usuarioId); // lança erro se falhar
+      setNotifications((prev) =>
+        prev.map((n) => (ids.includes(n.id) ? { ...n, lida: true } : n)),
+      );
     },
     [usuarioId],
   );
 
+  // ==================== DESCONECTAR SSE ====================
+  const disconnect = useCallback(() => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setIsConnected(false);
+  }, []);
+
   // ==================== CONECTAR SSE ====================
   const connect = useCallback(() => {
-    if (!usuarioId || typeof window === 'undefined') {
-      return;
-    }
+    if (!usuarioId) return;
 
-    const baseUrl = apiUrlRef.current || process.env.NEXT_PUBLIC_API_URL;
-    if (!baseUrl) {
-      setError('URL da API não configurada');
-      return;
-    }
-
-    const url = `${baseUrl}/petrocarga/notificacoes/stream`;
-
-    let isActive = true;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     const handleIncoming = (data: string) => {
-      if (!data) return;
-
       try {
         const parsed = JSON.parse(data.trim());
 
-        const notification: AppNotification = {
+        addNotification({
           id: parsed.id,
+          usuarioId: parsed.usuarioId ?? usuarioId,
           titulo: parsed.titulo,
           mensagem: parsed.mensagem,
           tipo: parsed.tipo,
           lida: parsed.lida ?? false,
           criadaEm: parsed.criadaEm,
           metadata: parsed.metadata || {},
-        };
-
-        addNotification(notification);
+        });
       } catch {
         // ignora parse inválido (heartbeat etc)
       }
     };
 
-    fetch(url, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'ngrok-skip-browser-warning': 'true',
-        Accept: 'text/event-stream',
-      },
-    })
-      .then(async (response) => {
-        if (!response.ok || !response.body) {
-          throw new Error('Erro na conexão SSE');
-        }
+    (async () => {
+      try {
+        const response = await getNotificacaoStream();
+
+        if (!response.body) throw new Error('Erro na conexão SSE');
 
         setIsConnected(true);
         setError(null);
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
-
         let buffer = '';
 
-        while (isActive) {
+        while (!controller.signal.aborted) {
           const { value, done } = await reader.read();
-
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
@@ -318,56 +280,34 @@ export function NotificationProvider({
           buffer = parts.pop() || '';
 
           for (const part of parts) {
-            const lines = part.split('\n');
-
             let data = '';
-
-            for (const line of lines) {
+            for (const line of part.split('\n')) {
               if (line.startsWith('data:')) {
                 data += line.replace('data:', '').trim();
               }
             }
-
-            if (data) {
-              handleIncoming(data);
-            }
+            if (data) handleIncoming(data);
           }
         }
-      })
-      .catch(() => {
+
+        if (!controller.signal.aborted) setIsConnected(false);
+      } catch {
+        if (controller.signal.aborted) return; // desconexão intencional
         setIsConnected(false);
         setError('Erro ao conectar com servidor de notificações');
-      });
-
-    return () => {
-      isActive = false;
-      setIsConnected(false);
-    };
+      }
+    })();
   }, [usuarioId, addNotification]);
 
-  // ==================== DESCONECTAR SSE ====================
-  const disconnect = useCallback(() => {
-    eventSourceRef.current?.close();
-    eventSourceRef.current = null;
-
-    if (reconnectTimerRef.current) {
-      clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
-    }
-
-    retryCountRef.current = 0;
-    setIsConnected(false);
-  }, []);
-
-  // ==================== EFEITO INICIAL ====================
+  // ==================== EFEITOS ====================
   useEffect(() => {
-    if (usuarioId && !hasLoadedInitialRef.current) {
-      hasLoadedInitialRef.current = true;
-      loadHistorico();
+    if (!usuarioId) {
+      resetPaginacao();
+      return;
     }
-  }, [usuarioId, loadHistorico]);
+    loadHistorico();
+  }, [usuarioId, loadHistorico, resetPaginacao]);
 
-  // ==================== EFEITO CONECTAR SSE ====================
   useEffect(() => {
     if (!usuarioId || !enableSSE) return;
 
@@ -375,18 +315,19 @@ export function NotificationProvider({
     return disconnect;
   }, [usuarioId, enableSSE, connect, disconnect]);
 
-  // ==================== REFRESH ====================
   const refreshNotifications = useCallback(async () => {
     await loadHistorico();
   }, [loadHistorico]);
 
-  // ==================== RECONECTAR ====================
   const reconnect = useCallback(() => {
     disconnect();
-    setTimeout(connect, 500);
+    reconnectTimerRef.current = setTimeout(connect, 500);
   }, [connect, disconnect]);
 
-  // ==================== MEMOIZED VALUE ====================
+  useEffect(() => {
+    console.debug('[SSE] isConnected =', isConnected);
+  }, [isConnected]);
+
   const contextValue = useMemo(
     () => ({
       notifications,
@@ -437,15 +378,12 @@ export function NotificationProvider({
   );
 }
 
-/**
- * @hook useNotifications
- */
 export function useNotifications() {
   const context = useContext(NotificationContext);
 
   if (!context) {
     return {
-      notifications: [] as AppNotification[],
+      notifications: [] as NotificacaoResponse[],
       isConnected: false,
       isLoading: false,
       isLoadingMore: false,

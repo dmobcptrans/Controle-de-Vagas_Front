@@ -6,9 +6,11 @@ import { getToken } from 'firebase/messaging';
 import { getMessagingInstance } from '@/lib/firebase';
 import { clientApi } from '@/services/clientApi';
 import {
-  atualizarStatusPushToken,
-  buscarStatusPushToken,
-} from '@/features/notificacao/services/notificacaoApi';
+  AtualizarPushToken,
+  getPushTokenPorId,
+  RegistrarPushToken,
+} from '../services/notificacaoApi';
+import { AtualizaPushTokenPayload } from '../types/notificacao';
 
 const Push_TOKEN_KEY = 'pushToken';
 
@@ -19,7 +21,7 @@ type Props = {
 /**
  * @function registerAndSendToken
  * @description Solicita permissão de notificação, registra service worker e envia token para o backend.
- * 
+ *
  * Fluxo:
  * 1. Solicita permissão do navegador
  * 2. Obtém instância do Firebase Messaging
@@ -27,7 +29,7 @@ type Props = {
  * 4. Gera token com VAPID key
  * 5. Envia token para API
  * 6. Armazena token no localStorage
- * 
+ *
  * @throws {Error} - permission_denied, messaging_unavailable, token_not_returned
  */
 async function registerAndSendToken(): Promise<void> {
@@ -52,10 +54,9 @@ async function registerAndSendToken(): Promise<void> {
 
   if (!token) throw new Error('token_not_returned');
 
-  await clientApi('/petrocarga/notificacoes/pushToken', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, plataforma: 'WEB' }),
+  await RegistrarPushToken({
+    token,
+    plataforma: 'WEB',
   });
 
   localStorage.setItem(Push_TOKEN_KEY, token);
@@ -64,49 +65,49 @@ async function registerAndSendToken(): Promise<void> {
 /**
  * @component PushNotificationToggle
  * @version 1.0.0
- * 
+ *
  * @description Componente toggle para ativar/desativar notificações push.
  * Gerencia permissões do navegador e comunicação com backend.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 FLUXO COMPLETO:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. CARREGAMENTO INICIAL:
  *    - Verifica permissão do navegador (Notification.permission)
  *    - Busca token no localStorage
  *    - Consulta status no backend via buscarStatusPushToken
  *    - Atualiza estado do toggle
- * 
+ *
  * 2. ATIVAÇÃO (quando desativado e permissão já concedida):
  *    - Chama atualizarStatusPushToken com ativo=true
  *    - Atualiza estado local
- * 
+ *
  * 3. ATIVAÇÃO COM PERMISSÃO REVOGADA (browserRevogado):
  *    - Chama registerAndSendToken (solicita permissão, registra SW, envia token)
  *    - Atualiza estado para ativo
- * 
+ *
  * 4. DESATIVAÇÃO:
  *    - Chama atualizarStatusPushToken com ativo=false
  *    - Atualiza estado local
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - localStorage: Armazena token para persistência entre sessões
  * - browserRevogado: Flag para quando o usuário negou/revogou permissão
  * - Service Worker: Registrado no caminho /firebase-messaging-sw.js
  * - VAPID Key: Necessária para autenticação do Firebase
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - getMessagingInstance: Instância do Firebase Messaging
  * - atualizarStatusPushToken: API para atualizar status
  * - buscarStatusPushToken: API para consultar status
- * 
+ *
  * @example
  * ```tsx
  * <PushNotificationToggle usuarioId={user.id} />
@@ -121,7 +122,6 @@ export function PushNotificationToggle({ usuarioId }: Props) {
   // ==================== CARREGAR STATUS INICIAL ====================
   async function carregarStatus() {
     try {
-      // Verifica permissão do navegador
       if (
         typeof window !== 'undefined' &&
         'Notification' in window &&
@@ -131,7 +131,7 @@ export function PushNotificationToggle({ usuarioId }: Props) {
         setAtivo(false);
         return;
       }
-      
+
       const token = localStorage.getItem(Push_TOKEN_KEY);
 
       if (!token) {
@@ -139,11 +139,9 @@ export function PushNotificationToggle({ usuarioId }: Props) {
         return;
       }
 
-      // Busca status no backend
-      const res = await buscarStatusPushToken(token);
-      if (!res.error) {
-        setAtivo(res.data?.ativo ?? false);
-      }
+      const res = await getPushTokenPorId(token);
+
+      setAtivo(res.ativo);
     } catch (error) {
       console.error('Erro ao buscar status de notificação', error);
     } finally {
@@ -157,11 +155,12 @@ export function PushNotificationToggle({ usuarioId }: Props) {
 
   // ==================== HANDLER DO TOGGLE ====================
   async function handleToggle() {
-    // Caso 1: Permissão revogada → registrar novamente
     if (browserRevogado) {
       try {
         setLoading(true);
+
         await registerAndSendToken();
+
         setBrowserRevogado(false);
         setAtivo(true);
       } catch (err) {
@@ -169,21 +168,30 @@ export function PushNotificationToggle({ usuarioId }: Props) {
       } finally {
         setLoading(false);
       }
+
       return;
     }
 
-    // Caso 2: Fluxo normal → atualizar status no backend
     try {
       setLoading(true);
+
       const novoStatus = !ativo;
+
       const tk = localStorage.getItem(Push_TOKEN_KEY);
+
       if (!tk) {
         console.warn('Push token não encontrado');
-        setLoading(false);
         return;
       }
-      const res = await atualizarStatusPushToken(usuarioId, tk, novoStatus);
-      if (!res.error) setAtivo(novoStatus);
+
+      const payload: AtualizaPushTokenPayload = {
+        token: tk,
+        ativo: novoStatus,
+      };
+
+      const res = await AtualizarPushToken(payload, usuarioId);
+
+      setAtivo(res.ativo);
     } catch (error) {
       console.error('Erro ao atualizar notificações', error);
     } finally {
@@ -193,7 +201,6 @@ export function PushNotificationToggle({ usuarioId }: Props) {
 
   return (
     <div className="flex items-center justify-between gap-4 py-4">
-      
       {/* ==================== ÍCONE E DESCRIÇÃO ==================== */}
       <div className="flex items-center gap-3">
         <div

@@ -1,88 +1,27 @@
 'use client';
 
 import { clientApi } from '@/services/clientApi';
-import { PaginatedNotificationResponse } from '../types/notificacao';
-
-/**
- * @module notificacaoApi
- * @description Módulo de API para gerenciamento de notificações push.
- * Fornece funções para enviar, listar, marcar como lidas e deletar notificações,
- * além de gerenciar tokens de push notification.
- *
- * ----------------------------------------------------------------------------
- * 📋 FUNÇÕES DISPONÍVEIS:
- * ----------------------------------------------------------------------------
- *
- * 1. Envio de Notificações
- *    - enviarNotificacaoParaUsuario - Envia para um usuário específico
- *    - enviarNotificacaoPorPermissao - Envia para todos de uma permissão
- *
- * 2. Consulta de Notificações
- *    - getNotificacoesUsuario - Lista notificações de um usuário
- *    - getNotificacaoById - Busca notificação específica (e marca como lida)
- *
- * 3. Gerenciamento de Estado
- *    - marcarNotificacaoComoLida - Marca uma notificação como lida
- *    - marcarTodasNotificacoesComoLidas - Marca múltiplas como lidas
- *
- * 4. Deleção
- *    - deletarNotificacao - Remove uma notificação
- *    - deletarNotificacoesSelecionadas - Remove múltiplas notificações
- *
- * 5. Push Tokens
- *    - buscarStatusPushToken - Verifica status de um token
- *    - atualizarStatusPushToken - Ativa/desativa notificações push
- *
- * ----------------------------------------------------------------------------
- * 🔗 TIPOS RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - Tipos de notificação: 'RESERVA' | 'VAGA' | 'VEICULO' | 'MOTORISTA' | 'SISTEMA'
- * - Permissões: 'ADMIN' | 'GESTOR' | 'AGENTE'
- */
+import { NotificacaoParam } from '../types/notificacao';
+import {
+  NotificacaoPayload,
+  NotificacaoPaginadasResponse,
+  NotificacaoResponse,
+  PushTokenPayload,
+  AtualizaPushTokenPayload,
+  PushTokenResponse,
+} from '../types/notificacao';
+import { buildSearchParams } from '@/services/utils/buildSearchParams';
+import { Permissao } from '@/lib/types/personas/user2';
 
 // ----------------------
-// ENVIAR NOTIFICAÇÃO PARA USUÁRIO
+// Enviar Notificação Para um Usuário
 // ----------------------
 
-/**
- * @function enviarNotificacaoParaUsuario
- * @description Envia uma notificação para um usuário específico.
- *
- * @param formData - Formulário com dados da notificação
- * @param formData.usuarioId - ID do usuário destinatário
- * @param formData.titulo - Título da notificação
- * @param formData.mensagem - Conteúdo da mensagem
- * @param formData.tipo - Tipo da notificação
- *
- * @returns Promise<{ error: boolean; message: string }>
- *
- * @example
- * ```ts
- * const formData = new FormData();
- * formData.append('usuarioId', '123');
- * formData.append('titulo', 'Reserva confirmada');
- * formData.append('mensagem', 'Sua vaga foi reservada com sucesso');
- * formData.append('tipo', 'RESERVA');
- *
- * const result = await enviarNotificacaoParaUsuario(formData);
- * ```
- */
-export async function enviarNotificacaoParaUsuario(formData: FormData) {
-  const usuarioId = formData.get('usuarioId') as string;
-
-  const payload = {
-    titulo: formData.get('titulo') as string,
-    mensagem: formData.get('mensagem') as string,
-    tipo: formData.get('tipo') as
-      | 'RESERVA'
-      | 'VAGA'
-      | 'VEICULO'
-      | 'MOTORISTA'
-      | 'SISTEMA',
-  };
-
-  const res = await clientApi(
+export async function EnviarNotificacaoParaUsuario(
+  payload: NotificacaoPayload,
+  usuarioId: string,
+): Promise<NotificacaoResponse> {
+  const response = await clientApi(
     `/petrocarga/notificacoes/sendNotification/toUsuario/${usuarioId}`,
     {
       method: 'POST',
@@ -90,472 +29,203 @@ export async function enviarNotificacaoParaUsuario(formData: FormData) {
     },
   );
 
-  if (!res.ok) {
-    let msg = 'Erro ao enviar notificação';
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg };
-  }
-  return { error: false, message: 'Notificação enviada com sucesso' };
+  return response.json();
 }
 
 // ----------------------
-// ENVIAR NOTIFICAÇÃO POR PERMISSÃO
+// Enviar Notificação Por Permissão
 // ----------------------
 
-/**
- * @function enviarNotificacaoPorPermissao
- * @description Envia notificação para todos os usuários com determinada permissão.
- *
- * @param formData - Formulário com dados da notificação
- * @param formData.permissao - Permissão alvo ('ADMIN' | 'GESTOR' | 'AGENTE')
- * @param formData.titulo - Título da notificação
- * @param formData.mensagem - Conteúdo da mensagem
- * @param formData.tipo - Tipo da notificação
- *
- * @returns Promise<{ error: boolean; message: string }>
- *
- * @example
- * ```ts
- * const formData = new FormData();
- * formData.append('permissao', 'GESTOR');
- * formData.append('titulo', 'Manutenção programada');
- * formData.append('mensagem', 'Sistema ficará indisponível das 2h às 4h');
- *
- * const result = await enviarNotificacaoPorPermissao(formData);
- * ```
- */
-export async function enviarNotificacaoPorPermissao(formData: FormData) {
-  const permissao = formData.get('permissao') as 'ADMIN' | 'GESTOR' | 'AGENTE';
-
-  const payload = {
-    titulo: formData.get('titulo') as string,
-    mensagem: formData.get('mensagem') as string,
-    tipo: formData.get('tipo') as
-      | 'RESERVA'
-      | 'VAGA'
-      | 'VEICULO'
-      | 'MOTORISTA'
-      | 'SISTEMA',
-  };
-
-  const res = await clientApi(
+export async function EnviarNotificacaoPorPermissao(
+  payload: NotificacaoPayload,
+  permissao: Permissao,
+): Promise<NotificacaoResponse> {
+  const response = await clientApi(
     `/petrocarga/notificacoes/sendNotification/byPermissao/${permissao}`,
     {
       method: 'POST',
       json: payload,
     },
   );
-
-  if (!res.ok) {
-    let msg = 'Erro ao enviar notificação';
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg };
-  }
-  return { error: false, message: 'Notificação enviada com sucesso' };
+  return response.json();
 }
 
 // ----------------------
-// OBTER NOTIFICAÇÕES DO USUÁRIO
-// ----------------------
-/**
- * @function getNotificacoesUsuario
- * @description Lista notificações de um usuário, com paginação e filtro opcional por status de leitura.
- *
- * @param usuarioId - ID do usuário
- * @param lida - (opcional) Filtrar por lidas (true) ou não lidas (false)
- * @param numeroPagina - (opcional) Número da página (padrão: 0)
- * @param tamanhoPagina - (opcional) Tamanho da página (padrão: 10)
- *
- * @returns Promise<{ error: boolean; message?: string; data?: PaginatedNotificationResponse }>
- *
- * @example
- * ```ts
- * // Buscar todas as notificações do usuário (primeira página)
- * const result = await getNotificacoesUsuario('123');
- *
- * // Buscar apenas não lidas, página 2, 20 itens por página
- * const naoLidas = await getNotificacoesUsuario('123', false, 1, 20);
- * 
- * if (!result.error && result.data) {
- *   console.log(result.data.content); // Array de notificações
- *   console.log(result.data.totalElementos); // Total de elementos
- *   console.log(result.data.totalPaginas); // Total de páginas
- * }
- * ```
- */
-export async function getNotificacoesUsuario(
-  usuarioId: string,
-  lida?: boolean,
-  numeroPagina: number = 0,
-  tamanhoPagina: number = 10,
-): Promise<{ error: boolean; message?: string; data?: PaginatedNotificationResponse }> {
-  // Construir query params conforme Swagger
-  const params = new URLSearchParams();
-  
-  // Adiciona filtro de lida se fornecido
-  if (lida !== undefined) {
-    params.append('lida', String(lida));
-  }
-  
-  // Adiciona paginação
-  params.append('numeroPagina', String(numeroPagina));
-  params.append('tamanhoPagina', String(tamanhoPagina));
-  
-  // Constrói URL com query params
-  const url = `/petrocarga/notificacoes/byUsuario/${usuarioId}${params.toString() ? `?${params.toString()}` : ''}`;
-
-  try {
-    const res = await clientApi(url, {
-      method: 'GET',
-    });
-
-    if (!res.ok) {
-      let msg = 'Erro ao buscar notificações';
-      try {
-        const err = await res.json();
-        msg = err.message ?? msg;
-      } catch {}
-
-      return { error: true, message: msg };
-    }
-
-    const data = await res.json();
-    
-    // Garante que a resposta tenha a estrutura esperada
-    const responseData: PaginatedNotificationResponse = {
-      content: data.content || [],
-      totalElementos: data.totalElementos || 0,
-      totalPaginas: data.totalPaginas || 0,
-      tamanhoPagina: data.tamanhoPagina || tamanhoPagina,
-      pagina: data.pagina || numeroPagina,
-    };
-    
-    return { error: false, data: responseData };
-  } catch (error) {
-    return { 
-      error: true, 
-      message: error instanceof Error ? error.message : 'Erro ao buscar notificações' 
-    };
-  }
-}
-
-// ----------------------
-// OBTER NOTIFICAÇÃO POR ID (e marca como lida)
+// Registrar Push Token
 // ----------------------
 
-/**
- * @function getNotificacaoById
- * @description Busca uma notificação específica e automaticamente a marca como lida.
- *
- * @param id - ID da notificação
- * @returns Promise<{ error: boolean; message?: string; notificacao?: Notificacao }>
- *
- * @example
- * ```ts
- * const result = await getNotificacaoById('notif123');
- * if (!result.error) {
- *   console.log(result.notificacao.titulo);
- * }
- * ```
- */
-export async function getNotificacaoById(id: string) {
-  const res = await clientApi(`/petrocarga/notificacoes/${id}`, {
-    method: 'GET',
+export async function RegistrarPushToken(
+  payload: PushTokenPayload,
+): Promise<PushTokenResponse> {
+  const response = await clientApi('/petrocarga/notificacao/pushToken', {
+    method: 'POST',
+    json: payload,
   });
-
-  if (!res.ok) {
-    let msg = 'Erro ao buscar notificação';
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg };
-  }
-
-  const data = await res.json();
-  return { error: false, notificacao: data };
+  return response.json();
 }
 
 // ----------------------
-// MARCAR NOTIFICAÇÃO COMO LIDA
+// Atualizar Push Token
 // ----------------------
 
-/**
- * @function marcarNotificacaoComoLida
- * @description Marca uma notificação específica como lida.
- *
- * @param notificacaoId - ID da notificação
- * @returns Promise<{ error: boolean; message: string; notificacao?: Notificacao }>
- *
- * @example
- * ```ts
- * const result = await marcarNotificacaoComoLida('notif123');
- * ```
- */
-export async function marcarNotificacaoComoLida(notificacaoId: string) {
-  const res = await clientApi(
-    `/petrocarga/notificacoes/lida/${notificacaoId}`,
+export async function AtualizarPushToken(
+  payload: AtualizaPushTokenPayload,
+  usuarioId: string,
+): Promise<PushTokenResponse> {
+  const response = await clientApi(
+    `/petrocarga/notificacoes/pushToken/${usuarioId}`,
     {
       method: 'PATCH',
+      json: payload,
     },
   );
-
-  if (!res.ok) {
-    let msg = 'Erro ao alterar notificação para lida';
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg };
-  }
-
-  const data = await res.json();
-  return {
-    error: false,
-    message: 'Notificação marcada como lida',
-    notificacao: data,
-  };
+  return response.json();
 }
 
 // ----------------------
-// MARCAR NOTIFICAÇÕES SELECIONADAS COMO LIDAS
+// Marcar Várias Notificações Como Lidas
 // ----------------------
 
-/**
- * @function marcarTodasNotificacoesComoLidas
- * @description Marca múltiplas notificações como lidas em lote.
- *
- * @param usuarioId - ID do usuário
- * @param listaNotificacaoId - Array com IDs das notificações
- * @returns Promise<{ error: boolean; message: string; notificacoes?: Notificacao[] }>
- *
- * @example
- * ```ts
- * const result = await marcarTodasNotificacoesComoLidas('123', ['notif1', 'notif2']);
- * ```
- */
-export async function marcarTodasNotificacoesComoLidas(
-  usuarioId: string,
+export async function MarcarVariasNotificacoesComoLidas(
   listaNotificacaoId: string[],
-) {
+  usuarioId: string,
+): Promise<NotificacaoResponse[]> {
   const params = new URLSearchParams();
-  listaNotificacaoId.forEach((id) => params.append('listaNotificacaoId', id));
 
-  const res = await clientApi(
+  listaNotificacaoId.forEach((id) => {
+    params.append('listaNotificacaoId', id);
+  });
+
+  const response = await clientApi(
     `/petrocarga/notificacoes/marcarSelecionadasComoLida/${usuarioId}?${params.toString()}`,
     {
       method: 'PATCH',
     },
   );
 
-  if (!res.ok) {
-    let msg = 'Erro ao marcar notificações como lidas';
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg };
-  }
-
-  const data = await res.json();
-  return {
-    error: false,
-    message: 'Notificações marcadas como lidas',
-    notificacoes: data,
-  };
+  return response.json();
 }
 
 // ----------------------
-// DELETAR NOTIFICAÇÃO
+// Marcar Uma Notificação Como Lida
 // ----------------------
 
-/**
- * @function deletarNotificacao
- * @description Remove uma notificação específica.
- *
- * @param usuarioId - ID do usuário
- * @param notificacaoId - ID da notificação
- * @returns Promise<{ error: boolean; message: string }>
- *
- * @example
- * ```ts
- * const result = await deletarNotificacao('123', 'notif1');
- * ```
- */
-export async function deletarNotificacao(
-  usuarioId: string,
+export async function MarcarUmaNotificacaoComoLida(
   notificacaoId: string,
+): Promise<NotificacaoResponse> {
+  const response = await clientApi(
+    `/petrocarga/notificacoes/lida/${notificacaoId}`,
+    {
+      method: 'PATCH',
+    },
+  );
+  return response.json();
+}
+
+// ----------------------
+// Retornar Uma Notificação
+// ----------------------
+
+export async function getNotificacaoPorId(
+  notificacaoId: string,
+): Promise<NotificacaoResponse> {
+  const response = await clientApi(`/petrocarga/notificacoes/${notificacaoId}`);
+  return response.json();
+}
+
+// ----------------------
+// Iniciar Conexão SSE
+// ----------------------
+
+export async function getNotificacaoStream(
+  signal?: AbortSignal,
+): Promise<Response> {
+  return clientApi(`/petrocarga/notificacoes/stream`, {
+    method: 'GET',
+    signal,
+    headers: { Accept: 'text/event-stream' },
+  });
+}
+
+// ----------------------
+// Visualizar Push Tokens De Um Usuário
+// ----------------------
+
+export async function getPushTokensDoUsuario(): Promise<PushTokenResponse[]> {
+  const response = await clientApi(
+    `/petrocarga/notificacoes/pushToken/byUsuarioId`,
+  );
+  return response.json();
+}
+
+// ----------------------
+// Visualizar Um Push Token
+// ----------------------
+
+export async function getPushTokenPorId(
+  pushTokenId: string,
+): Promise<PushTokenResponse> {
+  const response = await clientApi(
+    `/petrocarga/notificacoes/pushToken/byToken?token=${pushTokenId}`,
+  );
+  return response.json();
+}
+
+// ----------------------
+// Retorna Todas As Notificações De Um Usuário
+// ----------------------
+
+export async function getNotificacoesDoUsuario(
+  params: NotificacaoParam,
+  usuarioId: string,
+): Promise<NotificacaoPaginadasResponse> {
+  const searchParams = buildSearchParams({
+    ...params,
+    numeroPagina: params.numeroPagina ?? 0,
+    tamanhoPagina: params.tamanhoPagina ?? 10,
+  });
+  const response = await clientApi(
+    `/petrocarga/notificacoes/byUsuario/${usuarioId}?${searchParams.toString()}`,
+  );
+  return response.json();
+}
+
+export async function deleteNotificacao(
+  notificacaoId: string,
+  usuarioId: string,
 ) {
-  const res = await clientApi(
+  const response = await clientApi(
     `/petrocarga/notificacoes/${usuarioId}/${notificacaoId}`,
     {
       method: 'DELETE',
     },
   );
-
-  if (!res.ok) {
-    let msg = 'Erro ao deletar notificação';
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg };
-  }
-
-  return { error: false, message: 'Notificação deletada com sucesso' };
+  return response.json();
 }
 
 // ----------------------
-// DELETAR NOTIFICAÇÕES SELECIONADAS
+// Deletar Uma Notificação
 // ----------------------
 
-/**
- * @function deletarNotificacoesSelecionadas
- * @description Remove múltiplas notificações em lote.
- *
- * @param usuarioId - ID do usuário
- * @param listaNotificacaoId - Array com IDs das notificações
- * @returns Promise<{ error: boolean; message: string }>
- *
- * @example
- * ```ts
- * const result = await deletarNotificacoesSelecionadas('123', ['notif1', 'notif2']);
- * ```
- */
-export async function deletarNotificacoesSelecionadas(
-  usuarioId: string,
+export async function deleteVariasNotificacoes(
   listaNotificacaoId: string[],
+  usuarioId: string,
 ) {
   const params = new URLSearchParams();
-  listaNotificacaoId.forEach((id) => params.append('listaNotificacaoId', id));
+  listaNotificacaoId.forEach((id) => {
+    params.append('listaNotificacaoId', id);
+  });
 
-  const res = await clientApi(
+  // ----------------------
+  // Deletar Várias Notificações
+  // ----------------------
+
+  const response = await clientApi(
     `/petrocarga/notificacoes/deletarSelecionadas/${usuarioId}?${params.toString()}`,
     {
       method: 'DELETE',
     },
   );
 
-  if (!res.ok) {
-    let msg = 'Erro ao deletar notificações';
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg };
-  }
-
-  return { error: false, message: 'Notificações deletadas com sucesso' };
-}
-
-// ----------------------
-// BUSCAR STATUS DO PUSH TOKEN
-// ----------------------
-
-/**
- * @function buscarStatusPushToken
- * @description Verifica o status de um token de push notification.
- *
- * @param token - Token push (pode ser null)
- * @returns Promise<{ error: boolean; message?: string; data?: any }>
- *
- * @example
- * ```ts
- * const result = await buscarStatusPushToken('token123');
- * if (result.data) {
- *   console.log('Token ativo:', result.data.ativo);
- * }
- * ```
- */
-export async function buscarStatusPushToken(token: string | null) {
-  const res = await clientApi(
-    `/petrocarga/notificacoes/pushToken/byToken?token=${encodeURIComponent(
-      token ?? '',
-    )}`,
-    {
-      method: 'GET',
-    },
-  );
-
-  if (!res.ok) {
-    let msg = 'Erro ao buscar status do push token';
-
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg, data: null };
-  }
-
-  try {
-    const data = await res.json();
-    return { error: false, data };
-  } catch {
-    return { error: false, data: null };
-  }
-}
-// ----------------------
-// ATUALIZAR STATUS DO PUSH TOKEN
-// ----------------------
-
-/**
- * @function atualizarStatusPushToken
- * @description Ativa ou desativa notificações push para um usuário.
- *
- * @param usuarioId - ID do usuário
- * @param token - Token push (pode ser null para desativar)
- * @param ativo - Status desejado (true = ativo, false = inativo)
- * @returns Promise<{ error: boolean; message: string }>
- *
- * @example
- * ```ts
- * // Ativar notificações
- * const result = await atualizarStatusPushToken('123', 'token123', true);
- *
- * // Desativar notificações
- * const result = await atualizarStatusPushToken('123', null, false);
- * ```
- */
-export async function atualizarStatusPushToken(
-  usuarioId: string,
-  token: string | null,
-  ativo: boolean,
-) {
-  const res = await clientApi(
-    `/petrocarga/notificacoes/pushToken/${usuarioId}`,
-    {
-      method: 'PATCH',
-      body: JSON.stringify({ token, ativo }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
-  );
-
-  if (!res.ok) {
-    let msg = 'Erro ao atualizar status do push token';
-
-    try {
-      const err = await res.json();
-      msg = err.message ?? msg;
-    } catch {}
-
-    return { error: true, message: msg };
-  }
-
-  return { error: false, message: 'Status atualizado com sucesso' };
+  return response.json();
 }

@@ -3,8 +3,9 @@
 
 import { useState } from 'react';
 import { Bell, X, Send } from 'lucide-react';
-import { enviarNotificacaoParaUsuario } from '@/features/notificacao/services/notificacaoApi';
+import { EnviarNotificacaoParaUsuario } from '@/features/notificacao/services/notificacaoApi';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { NotificacaoPayload } from '@/features/notificacao/types/notificacao';
 
 interface NotificacaoModalProps {
   isOpen: boolean;
@@ -17,35 +18,35 @@ interface NotificacaoModalProps {
 /**
  * @component NotificacaoModal
  * @version 1.0.0
- * 
+ *
  * @description Modal para envio de notificações individuais para usuários.
  * Permite que gestores enviem notificações personalizadas com título, mensagem e tipo.
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 PROPRIEDADES:
  * ----------------------------------------------------------------------------
- * 
+ *
  * @property {boolean} isOpen - Controla a visibilidade do modal
  * @property {() => void} onClose - Função para fechar o modal
  * @property {string} usuarioId - ID do destinatário
  * @property {string} usuarioNome - Nome do destinatário
  * @property {'MOTORISTA' | 'AGENTE' | 'GESTOR'} tipoUsuario - Tipo/perfil do destinatário
- * 
+ *
  * ----------------------------------------------------------------------------
  * 📋 CAMPOS DO FORMULÁRIO:
  * ----------------------------------------------------------------------------
- * 
+ *
  * 1. TÍTULO:
  *    - Campo obrigatório
  *    - Máximo 100 caracteres
  *    - Placeholder: "Digite o título da notificação"
- * 
+ *
  * 2. MENSAGEM:
  *    - Campo obrigatório
  *    - Máximo 500 caracteres
  *    - Textarea com 4 linhas
  *    - Placeholder: "Digite a mensagem da notificação"
- * 
+ *
  * 3. TIPO:
  *    - Select com 5 opções:
  *      - SISTEMA (padrão)
@@ -53,23 +54,23 @@ interface NotificacaoModalProps {
  *      - VAGA
  *      - VEICULO
  *      - MOTORISTA
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🧠 DECISÕES TÉCNICAS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - METADADOS: Envia informações de remetente/destinatário no campo 'metada'
  * - AUTO-FECHAR: Após sucesso, fecha modal em 2 segundos
  * - LOADING: Botão desabilitado com spinner durante envio
  * - VALIDAÇÃO: Botão desabilitado se título ou mensagem vazios
- * 
+ *
  * ----------------------------------------------------------------------------
  * 🔗 COMPONENTES RELACIONADOS:
  * ----------------------------------------------------------------------------
- * 
+ *
  * - enviarNotificacaoParaUsuario: API de envio de notificação
  * - useAuth: Hook de autenticação (para dados do remetente)
- * 
+ *
  * @example
  * ```tsx
  * <NotificacaoModal
@@ -102,49 +103,31 @@ export function NotificacaoModal({
   // ==================== HANDLER DE ENVIO ====================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setLoading(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const formData = new FormData();
-      formData.append('usuarioId', usuarioId);
-      formData.append('titulo', titulo);
-      formData.append('mensagem', mensagem);
-      formData.append('tipo', tipo);
-      formData.append(
-        'metada',
-        JSON.stringify({
-          remetente: {
-            id: user?.id,
-            nome: user?.nome,
-            permissao: user?.permissao,
-          },
-          destinatario: {
-            id: usuarioId,
-            nome: usuarioNome,
-            tipo: tipoUsuario,
-          },
-          enviadoEm: new Date().toISOString(),
-        }),
-      );
+      const payload: NotificacaoPayload = {
+        titulo,
+        mensagem,
+        tipo,
+      };
 
-      const result = await enviarNotificacaoParaUsuario(formData);
+      await EnviarNotificacaoParaUsuario(payload, usuarioId);
 
-      if (result.error) {
-        setError(result.message);
-      } else {
-        setSuccess('Notificação enviada com sucesso!');
-        setTitulo('');
-        setMensagem('');
-        setTimeout(() => {
-          onClose();
-          setSuccess(null);
-        }, 2000);
-      }
+      setSuccess('Notificação enviada com sucesso!');
+      setTitulo('');
+      setMensagem('');
+
+      setTimeout(() => {
+        onClose();
+        setSuccess(null);
+      }, 2000);
     } catch (err) {
-      setError('Erro ao enviar notificação. Tente novamente.');
       console.error(err);
+      setError('Erro ao enviar notificação. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -155,7 +138,6 @@ export function NotificacaoModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-lg p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        
         {/* ==================== HEADER ==================== */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-3">
@@ -181,7 +163,6 @@ export function NotificacaoModal({
 
         {/* ==================== FORMULÁRIO ==================== */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          
           {/* Campo Título */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

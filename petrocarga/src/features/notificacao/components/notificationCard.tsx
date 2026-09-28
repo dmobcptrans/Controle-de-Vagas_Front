@@ -1,13 +1,13 @@
 'use client';
 
-import { Notification } from '@/features/notificacao/types/notificacao';
+import { NotificacaoResponse } from '../types/notificacao';
 import { Check, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCallback } from 'react';
 
 interface NotificationCardProps {
-  notification: Notification;
+  notification: NotificacaoResponse;
   selected: boolean;
   onSelect: (id: string) => void;
   onMarkAsRead: (id: string) => void;
@@ -101,7 +101,7 @@ export function NotificationCard({
    * @function getIconeNotificacao
    * @description Retorna o ícone emoji baseado no tipo da notificação
    */
-  const getIconeNotificacao = useCallback((tipo: Notification['tipo']) => {
+  const getIconeNotificacao = useCallback((tipo: NotificacaoResponse['tipo']) => {
     switch (tipo) {
       case 'RESERVA':
         return '🚗';
@@ -122,7 +122,7 @@ export function NotificationCard({
    * @function getCorNotificacao
    * @description Retorna classes CSS baseadas no tipo da notificação
    */
-  const getCorNotificacao = useCallback((tipo: Notification['tipo']) => {
+  const getCorNotificacao = useCallback((tipo: NotificacaoResponse['tipo']) => {
     switch (tipo) {
       case 'RESERVA':
         return 'border-l-blue-500 bg-blue-50';
