@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { VagasMapaParams, VagasMapaResponse } from '../types/vaga';
-
 import { useApi } from '@/services/hooks/useApi';
+
 import { getVagasPorMapa } from '../service/vagaApi';
+import {
+  VagasMapaParams,
+  VagasMapaResponse,
+} from '../types/vaga';
 
 interface UseVagasMapOptions {
   params?: VagasMapaParams;
@@ -24,37 +27,55 @@ export function useVagasMap({
   params,
   buscarAutomaticamente = true,
 }: UseVagasMapOptions): UseVagasMapReturn {
-  const [vagasMap, setVagasMap] = useState<VagasMapaResponse | null>(null);
+  const [vagasMap, setVagasMap] =
+    useState<VagasMapaResponse | null>(null);
 
   const { loading, error, execute } = useApi();
 
-  const paramsRef = useRef(params);
+  const paramsRef = useRef<VagasMapaParams | undefined>(params);
 
+  /**
+   * Mantém os parâmetros atuais disponíveis
+   * sem precisar recriar `buscar`.
+   */
   useEffect(() => {
     paramsRef.current = params;
   }, [params]);
 
+  /**
+   * Busca as vagas.
+   *
+   * A função não depende de `params`.
+   * Isso evita que a referência de `buscar`
+   * seja alterada simplesmente porque os parâmetros
+   * mudaram.
+   */
   const buscar = useCallback(
-    async (novosParams?: VagasMapaParams) => {
-      const parametrosBusca = novosParams ?? params;
+  async (novosParams?: VagasMapaParams) => {
+    const parametrosBusca =
+      novosParams ?? paramsRef.current;
 
-      if (!parametrosBusca) {
-        return;
-      }
+    if (!parametrosBusca) {
+      return;
+    }
 
-      const response = await execute(() => getVagasPorMapa(parametrosBusca));
+    const response = await execute(() =>
+      getVagasPorMapa(parametrosBusca),
+    );
 
-      if (response) {
-        setVagasMap(response);
-      }
-    },
-    [params, execute],
-  );
-
+    if (response) {
+      setVagasMap(response);
+    }
+  },
+  [execute],
+);
   const recarregar = useCallback(async () => {
     await buscar();
   }, [buscar]);
 
+  /**
+   * Busca automática somente quando habilitada.
+   */
   useEffect(() => {
     if (!buscarAutomaticamente || !params) {
       return;

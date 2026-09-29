@@ -6,7 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 import { useVagasReserva } from '../hooks/useVagasReserva';
 import { useMapbox } from '../hooks/useMapbox';
-import { addClusterMarkerReserva, addVagaMarkersReserva } from '../utils/markerUtilsReserva';
+import { addClusterMarkerReserva, addVagaMarkersReserva } from '../utils/markerUtils';
 import { VagasMapa } from '@/features/vaga/vagas/types/vaga';
 import { Loader2 } from 'lucide-react';
 

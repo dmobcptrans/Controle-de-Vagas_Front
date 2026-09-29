@@ -1,16 +1,17 @@
 import mapboxgl from 'mapbox-gl';
-import { VagasMapa, VagasMapaResponse } from '@/features/vaga/vagas/types/vaga';
+import { ClusterMapa, VagasMapa } from '@/features/vaga/vagas/types/vaga';
 
 /**
- * @module utils/map/markers
- * @description Funções utilitárias para adicionar marcadores de vagas ao mapa Mapbox GL.
- *
+ * @module utils/map/markersReserva
+ * @description Funções utilitárias para adicionar marcadores de vagas no mapa para reserva.
+ * Os marcadores são coloridos conforme a disponibilidade da vaga.
+ * 
  * ----------------------------------------------------------------------------
  * 📋 FUNÇÕES DISPONÍVEIS:
  * ----------------------------------------------------------------------------
- *
+ * 
  * 1. parseCoordinates - Converte string de coordenadas em array [lng, lat]
- * 2. addVagaMarkers - Adiciona marcadores de vagas ao mapa
+ * 2. addVagaMarkersReserva - Adiciona marcadores de vagas ao mapa com cores por disponibilidade
  */
 
 /**
@@ -20,26 +21,25 @@ import { VagasMapa, VagasMapaResponse } from '@/features/vaga/vagas/types/vaga';
  * @param coord - String com coordenadas (ex: "-23.55052, -46.633308")
  * @returns Array com [longitude, latitude] (ordem correta para Mapbox)
  * 
- * @example
- * ```ts
- * parseCoordinates("-23.55052, -46.633308") // [-46.633308, -23.55052]
- * ```
 
 
 /**
- * @function addVagaMarkers
- * @description Adiciona marcadores para todas as vagas no mapa Mapbox GL.
- * Cada marcador exibe um popup com informações da vaga e é clicável.
+ * @function addVagaMarkersReserva
+ * @description Adiciona marcadores de vagas no mapa para o fluxo de reserva.
+ * 
+ * Características dos marcadores:
+ * - 🟢 Azul: vaga disponível para reserva (cursor pointer, clicável)
+ * - 🔴 Vermelho: vaga ocupada/indisponível (cursor not-allowed, não clicável)
  * 
  * @param map - Instância do mapa Mapbox GL
  * @param vagas - Lista de vagas a serem exibidas
  * @param markersRef - Referência mutável para armazenar os marcadores (para limpeza posterior)
- * @param onClickVaga - Callback opcional ao clicar no marcador
+ * @param onClickVaga - Callback opcional ao clicar em uma vaga disponível
  * 
  * @remarks
- * - Marcadores são círculos azuis com borda branca (classe CSS: "vaga-marker")
- * - Popup exibe número do endereço, logradouro e bairro
  * - Vagas sem coordenadas de início são ignoradas
+ * - Popup exibe logradouro e status da vaga
+ * - Apenas vagas com status "DISPONIVEL" são clicáveis
  * 
  * @example
  * ```tsx
@@ -47,8 +47,9 @@ import { VagasMapa, VagasMapaResponse } from '@/features/vaga/vagas/types/vaga';
  * 
  * useEffect(() => {
  *   if (map && vagas.length) {
- *     addVagaMarkers(map, vagas, markersRef, (vaga) => {
- *       console.log('Vaga clicada:', vaga);
+ *     addVagaMarkersReserva(map, vagas, markersRef, (vaga) => {
+ *       setVagaSelecionada(vaga);
+ *       setStep('reserva');
  *     });
  *   }
  *   
@@ -59,45 +60,68 @@ import { VagasMapa, VagasMapaResponse } from '@/features/vaga/vagas/types/vaga';
  * }, [map, vagas]);
  * ```
  */
-export function addVagaMarkers(
+export function addVagaMarkersReserva(
   map: mapboxgl.Map,
-  vagas: VagasMapaResponse,
+  vagas: VagasMapa[],
   markersRef: React.MutableRefObject<mapboxgl.Marker[]>,
   onClickVaga?: (vaga: VagasMapa) => void,
 ) {
-  vagas.vagas.forEach((vaga) => {
+  vagas.forEach((vaga) => {
     // Ignora vagas sem coordenadas de início
-    if (
-      vaga.latitudeFim === undefined ||
-      vaga.longitudeInicio === null ||
-      vaga.latitudeInicio === undefined ||
-      vaga.latitudeInicio === null
-    ) {
-      return;
-    }
+    if (!vaga.longitudeInicio || !vaga.latitudeInicio) return;
 
-    // Cria elemento HTML do marcador
+    const isDisponivel = vaga.status === 'DISPONIVEL';
+
+    // Cria elemento HTML do marcador com cores diferenciadas
     const el = document.createElement('div');
-    el.className =
-      'vaga-marker w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-pointer';
+    el.className = `
+      vaga-marker w-6 h-6 rounded-full border-2 border-white shadow-lg
+      ${
+        isDisponivel
+          ? 'bg-blue-500 cursor-pointer'
+          : 'bg-red-500 opacity-60 cursor-not-allowed'
+      }
+    `;
 
     // Converte coordenadas
-    const coordinates = [vaga.longitudeInicio, vaga.latitudeInicio] as [
-      number,
-      number,
-    ];
+    const coordinates = [vaga.longitudeInicio, vaga.latitudeInicio] as [number, number];
 
     // Cria marcador com popup
     const marker = new mapboxgl.Marker(el)
       .setLngLat(coordinates)
       .addTo(map);
 
-    // Adiciona evento de clique
-    if (onClickVaga) {
+    // Apenas vagas disponíveis são clicáveis
+    if (isDisponivel && onClickVaga) {
       el.addEventListener('click', () => onClickVaga(vaga));
     }
 
     // Armazena marcador para referência
     markersRef.current.push(marker);
+  });
+}
+export function addClusterMarkerReserva(
+  map: mapboxgl.Map,
+  clusters: ClusterMapa[],
+  clusterMarkersRef: React.MutableRefObject<mapboxgl.Marker[]>,
+) { 
+  clusters.forEach((cluster) => {
+    const el = document.createElement('div');
+
+    el.className =
+      'flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-bold text-sm border-2 border-white shadow-md cursor-pointer';
+
+    el.textContent = cluster.quantidade.toString();
+
+    const marker = new mapboxgl.Marker({
+      element: el,
+    })
+      .setLngLat([
+        cluster.longitude,
+        cluster.latitude,
+      ])
+      .addTo(map);
+
+    clusterMarkersRef.current.push(marker);
   });
 }

@@ -1,16 +1,22 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 import { useVagasMap } from '@/features/vaga/vagas/hooks/useVagasMap';
-
-import { FiltroVaga, StatusVaga } from '@/features/vaga/vagas/types/vaga';
+import {
+  FiltroVaga,
+  StatusVaga,
+} from '@/features/vaga/vagas/types/vaga';
 
 import { useMapbox } from '../hooks/useMapbox';
-import { addVagaMarkers } from '../utils/markerUtils';
+
+import {
+  addClusterMarkerReserva,
+  addVagaMarkersReserva,
+} from '../utils/markerUtils';
 
 interface MapboxFeature {
   id: string;
@@ -32,19 +38,35 @@ interface MapProps {
   filtro: FiltroVaga;
 }
 
-export function ViewMap({ onSelectPlace, firstCoord, filtro }: MapProps) {
+export function ViewMap({
+  onSelectPlace,
+  firstCoord,
+  filtro,
+}: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
+
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
-  // ==================== MAPBOX ====================
+  /**
+   * Guarda a última coordenada utilizada no flyTo.
+   *
+   * Isso impede que o mesmo flyTo seja iniciado
+   * novamente caso o componente renderize novamente
+   * com um novo objeto firstCoord contendo os mesmos valores.
+   */
+  const ultimaCoordenadaRef = useRef<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
   const { map, mapLoaded } = useMapbox({
     containerRef: mapContainer,
     onSelectPlace,
   });
 
-  // ==================== FILTRO ====================
-
+  /**
+   * Converte o filtro da tela para o status esperado pela API.
+   */
   const status: StatusVaga | undefined = useMemo(() => {
     switch (filtro) {
       case 'disponiveis':
@@ -62,57 +84,144 @@ export function ViewMap({ onSelectPlace, firstCoord, filtro }: MapProps) {
     }
   }, [filtro]);
 
-  // ==================== BUSCA DAS VAGAS ====================
-
-  const { vagasMap, loading, error, buscar } = useVagasMap({
+  const {
+    vagasMap,
+    loading,
+    error,
+    buscar,
+  } = useVagasMap({
     buscarAutomaticamente: false,
   });
 
-  // ==================== BUSCAR PELO VIEWPORT ====================
-
-  const buscarVagasDoMapa = useCallback(() => {
-    if (!map) return;
-
-    const bounds = map.getBounds();
-
-    if (!bounds) return;
-
-    buscar({
-      north: bounds.getNorth(),
-      south: bounds.getSouth(),
-      east: bounds.getEast(),
-      west: bounds.getWest(),
-      zoom: map.getZoom(),
-      status,
-    });
-  }, [map, status, buscar]);
-
-  // ==================== PRIMEIRA BUSCA ====================
+  /**
+   * Mantém a referência mais recente da função buscar.
+   */
+  const buscarRef = useRef(buscar);
 
   useEffect(() => {
-    if (!map || !mapLoaded) return;
+    buscarRef.current = buscar;
+  }, [buscar]);
 
-    buscarVagasDoMapa();
-  }, [map, mapLoaded, buscarVagasDoMapa]);
-
-  // ==================== ATUALIZAR AO MOVER MAPA ====================
-
+  /**
+   * Busca as vagas do viewport sempre que o mapa
+   * terminar de se mover.
+   *
+   * IMPORTANTE:
+   * Aqui estamos mantendo a lógica de busca que já
+   * existia no seu componente.
+   */
   useEffect(() => {
-    if (!map || !mapLoaded) return;
+    if (!map || !mapLoaded) {
+      return;
+    }
 
-    map.on('moveend', buscarVagasDoMapa);
+    const buscarVagasViewport = () => {
+      const bounds = map.getBounds();
+      const zoom = map.getZoom();
+
+      buscarRef.current({
+        north: bounds!.getNorth(),
+        south: bounds!.getSouth(),
+        east: bounds!.getEast(),
+        west: bounds!.getWest(),
+        zoom,
+        status,
+      });
+    };
+
+    // Busca inicial
+    buscarVagasViewport();
+
+    // Busca quando o mapa terminar de se mover
+    map.on('moveend', buscarVagasViewport);
 
     return () => {
-      map.off('moveend', buscarVagasDoMapa);
+      map.off('moveend', buscarVagasViewport);
     };
-  }, [map, mapLoaded, buscarVagasDoMapa]);
+  }, [map, mapLoaded, status]);
 
-  // ==================== SELEÇÃO DE LOCAL ====================
-
+  /**
+   * Atualiza os markers quando a resposta da API muda.
+   *
+   * Agora utiliza EXATAMENTE os mesmos markers
+   * utilizados pelo MapReserva.
+   */
   useEffect(() => {
-    if (!map || !firstCoord) return;
+    if (!map || !mapLoaded) {
+      return;
+    }
+
+    // Remove markers anteriores
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
+
+    if (!vagasMap) {
+      return;
+    }
+
+    // ==================== CLUSTERS ====================
+
+    if (vagasMap.tipo === 'CLUSTERS') {
+      if (vagasMap.clusters.length > 0) {
+        addClusterMarkerReserva(
+          map,
+          vagasMap.clusters,
+          markersRef
+        );
+      }
+
+      return;
+    }
+
+    // ==================== VAGAS ====================
+
+    if (
+      vagasMap.tipo === 'VAGAS' &&
+      vagasMap.vagas.length > 0
+    ) {
+      addVagaMarkersReserva(
+        map,
+        vagasMap.vagas,
+        markersRef
+      );
+    }
+
+    return () => {
+      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current = [];
+    };
+  }, [vagasMap, map, mapLoaded]);
+
+  /**
+   * Move o mapa para o local selecionado na pesquisa.
+   *
+   * O moveend gerado pelo flyTo irá disparar
+   * a busca das vagas do novo viewport.
+   */
+  useEffect(() => {
+    if (!map || !firstCoord) {
+      return;
+    }
 
     const { lat, lng } = firstCoord;
+
+    const ultimaCoordenada = ultimaCoordenadaRef.current;
+
+    /**
+     * Se a coordenada já foi utilizada,
+     * não inicia outro flyTo.
+     */
+    if (
+      ultimaCoordenada?.lat === lat &&
+      ultimaCoordenada?.lng === lng
+    ) {
+      return;
+    }
+
+    ultimaCoordenadaRef.current = {
+      lat,
+      lng,
+    };
 
     map.flyTo({
       center: [lng, lat],
@@ -121,40 +230,11 @@ export function ViewMap({ onSelectPlace, firstCoord, filtro }: MapProps) {
       curve: 1.4,
       essential: true,
     });
-  }, [firstCoord, map]);
-
-  // ==================== MARCADORES ====================
-
-  useEffect(() => {
-    if (!map || !mapLoaded) return;
-
-    // Remove marcadores anteriores
-    markersRef.current.forEach((marker) => {
-      marker.remove();
-    });
-
-    markersRef.current = [];
-
-    // API retornou clusters
-    if (vagasMap?.tipo === 'CLUSTERS') {
-      return;
-    }
-
-    // API retornou vagas
-    if (vagasMap?.tipo === 'VAGAS' && vagasMap.vagas.length > 0) {
-      addVagaMarkers(map, vagasMap, markersRef);
-    }
-
-    return () => {
-      markersRef.current.forEach((marker) => {
-        marker.remove();
-      });
-
-      markersRef.current = [];
-    };
-  }, [vagasMap, map, mapLoaded]);
-
-  // ==================== RENDER ====================
+  }, [
+    map,
+    firstCoord?.lat,
+    firstCoord?.lng,
+  ]);
 
   return (
     <div className="w-full h-full rounded-2xl overflow-visible relative">

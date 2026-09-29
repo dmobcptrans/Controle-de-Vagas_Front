@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import VagaItem from '@/features/vaga/vagas/components/cards/vagas-item';
 
@@ -29,7 +29,10 @@ function useDebounce(value: string, delay = 300) {
 type ListaVagasProps = {
   searchQuery: string;
   filtro: FiltroVaga;
-  onSelectFirstCoordinate?: (coord: { lat: number; lng: number }) => void;
+  onSelectFirstCoordinate?: (coord: {
+    lat: number;
+    lng: number;
+  }) => void;
 };
 
 export function ListaVagas({
@@ -40,6 +43,17 @@ export function ListaVagas({
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const [paginaAtual, setPaginaAtual] = useState(0);
+
+  /**
+   * Guarda a última coordenada enviada para o mapa.
+   *
+   * Isso evita chamar onSelectFirstCoordinate novamente
+   * para a mesma vaga/coordenada.
+   */
+  const ultimaCoordenadaRef = useRef<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
   // ==================== STATUS ====================
 
@@ -64,33 +78,75 @@ export function ListaVagas({
 
   // ==================== VAGAS ====================
 
-  const { vagas, loading, error, totalElementos, totalPaginas, buscaPaginada } =
-    useVagas({
-      params,
-      buscarAutomaticamente: true,
-    });
+  const {
+    vagas,
+    loading,
+    error,
+    totalElementos,
+    totalPaginas,
+    buscaPaginada,
+  } = useVagas({
+    params,
+    buscarAutomaticamente: true,
+  });
 
   // ==================== FOCO NO MAPA ====================
 
   useEffect(() => {
     if (
-      vagas.length > 0 &&
-      onSelectFirstCoordinate &&
-      debouncedSearchQuery !== ''
+      vagas.length === 0 ||
+      !onSelectFirstCoordinate ||
+      debouncedSearchQuery.trim() === ''
     ) {
-      const primeira = vagas[0];
-
-      if (
-        primeira?.latitudeInicio !== undefined &&
-        primeira?.longitudeInicio !== undefined
-      ) {
-        onSelectFirstCoordinate({
-          lat: primeira.latitudeInicio,
-          lng: primeira.longitudeInicio,
-        });
-      }
+      return;
     }
-  }, [vagas, debouncedSearchQuery, onSelectFirstCoordinate]);
+
+    const primeira = vagas[0];
+
+    if (
+      primeira?.latitudeInicio === undefined ||
+      primeira?.longitudeInicio === undefined
+    ) {
+      return;
+    }
+
+    const lat = primeira.latitudeInicio;
+    const lng = primeira.longitudeInicio;
+
+    const ultimaCoordenada = ultimaCoordenadaRef.current;
+
+    /**
+     * Não envia novamente a mesma coordenada.
+     */
+    if (
+      ultimaCoordenada?.lat === lat &&
+      ultimaCoordenada?.lng === lng
+    ) {
+      return;
+    }
+
+    ultimaCoordenadaRef.current = {
+      lat,
+      lng,
+    };
+
+    onSelectFirstCoordinate({
+      lat,
+      lng,
+    });
+  }, [
+    vagas,
+    debouncedSearchQuery,
+    onSelectFirstCoordinate,
+  ]);
+
+  /**
+   * Quando o usuário inicia uma nova pesquisa,
+   * permite que uma nova coordenada seja enviada.
+   */
+  useEffect(() => {
+    ultimaCoordenadaRef.current = null;
+  }, [debouncedSearchQuery]);
 
   // ==================== RESET PAGINAÇÃO ====================
 
@@ -102,11 +158,17 @@ export function ListaVagas({
 
   const vagasOrdenadas = useMemo(() => {
     return [...vagas].sort((a, b) => {
-      if (a.status === 'DISPONIVEL' && b.status !== 'DISPONIVEL') {
+      if (
+        a.status === 'DISPONIVEL' &&
+        b.status !== 'DISPONIVEL'
+      ) {
         return -1;
       }
 
-      if (b.status === 'DISPONIVEL' && a.status !== 'DISPONIVEL') {
+      if (
+        b.status === 'DISPONIVEL' &&
+        a.status !== 'DISPONIVEL'
+      ) {
         return 1;
       }
 
@@ -117,10 +179,14 @@ export function ListaVagas({
   // ==================== PAGINAÇÃO ====================
 
   const podeVoltar = paginaAtual > 0;
-  const podeAvancar = paginaAtual + 1 < totalPaginas;
+  const podeAvancar =
+    paginaAtual + 1 < totalPaginas;
 
   const mudarPagina = (novaPagina: number) => {
-    if (novaPagina < 0 || novaPagina >= totalPaginas) {
+    if (
+      novaPagina < 0 ||
+      novaPagina >= totalPaginas
+    ) {
       return;
     }
 
@@ -133,11 +199,20 @@ export function ListaVagas({
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-4">
         {loading ? (
-          <p className="text-center text-gray-500 mt-4">Carregando vagas...</p>
+          <p className="text-center text-gray-500 mt-4">
+            Carregando vagas...
+          </p>
         ) : error ? (
-          <p className="text-center text-red-500 mt-4">{error}</p>
+          <p className="text-center text-red-500 mt-4">
+            {error}
+          </p>
         ) : vagasOrdenadas.length > 0 ? (
-          vagasOrdenadas.map((vaga) => <VagaItem key={vaga.id} vaga={vaga} />)
+          vagasOrdenadas.map(vaga => (
+            <VagaItem
+              key={vaga.id}
+              vaga={vaga}
+            />
+          ))
         ) : (
           <p className="text-gray-500 text-center mt-4">
             Nenhuma vaga encontrada.
@@ -149,7 +224,9 @@ export function ListaVagas({
         <div className="flex items-center justify-between border-t pt-3 mt-2 px-1">
           <button
             type="button"
-            onClick={() => mudarPagina(paginaAtual - 1)}
+            onClick={() =>
+              mudarPagina(paginaAtual - 1)
+            }
             disabled={!podeVoltar}
             className="px-3 py-1 text-sm rounded-md border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
           >
@@ -158,12 +235,15 @@ export function ListaVagas({
 
           <span className="text-sm text-gray-600">
             Página {paginaAtual + 1} de {totalPaginas}
-            {totalElementos > 0 && ` · ${totalElementos} vagas`}
+            {totalElementos > 0 &&
+              ` · ${totalElementos} vagas`}
           </span>
 
           <button
             type="button"
-            onClick={() => mudarPagina(paginaAtual + 1)}
+            onClick={() =>
+              mudarPagina(paginaAtual + 1)
+            }
             disabled={!podeAvancar}
             className="px-3 py-1 text-sm rounded-md border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100"
           >
