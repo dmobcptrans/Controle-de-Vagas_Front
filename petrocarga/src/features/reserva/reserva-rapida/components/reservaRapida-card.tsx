@@ -11,7 +11,7 @@ import {
   MapPin,
   Truck,
 } from 'lucide-react';
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 
 interface ReservaRapidaCardProps {
   reserva: ReservaRapidaResponse;

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronDown, ChevronUp, Archive } from 'lucide-react';
-import ReservaRapidaCard from '../cards/reservaRapida-card';
+import ReservaRapidaCard from './reservaRapida-card';
 import { ReservaRapidaResponse } from '@/features/reserva/reservas/types/reservaRapida';
 import EmptyState from '@/features/reserva/reservas/components/EmptyState';
 

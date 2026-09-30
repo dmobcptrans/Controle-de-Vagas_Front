@@ -169,7 +169,7 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
         {/* Seção: Localização da Vaga */}
         <div className="space-y-2">
           <div className="flex items-start gap-2">
-            <MapPin className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <MapPin className="w-4 h-4 text-blue-600 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-500">Local da Vaga</p>
               <p className="text-sm text-gray-900">

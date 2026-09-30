@@ -7,7 +7,7 @@ import { Info } from 'lucide-react';
 
 import { MapReserva } from '@/features/map/components/MapReserva';
 
-import ReservaAgente from '@/features/usuarios/(personas)/agentes/components/reserva/ReservaAgente';
+import ReservaAgente from '@/features/reserva/reserva-rapida/components/ReservaAgente';
 
 import { VagasMapa } from '@/features/vaga/vagas/types/vaga';
 import { useVaga } from '@/features/vaga/vagas/hooks/useVaga';
@@ -21,7 +21,7 @@ import { CTAInfoReserva } from '@/components/ui/CTA/reserva/CTAInfoReserva';
 
 import { useMapboxSuggestions } from '@/features/map/hooks/useMapboxSuggestions';
 
-import { useReservaAgenteState } from '@/features/usuarios/(personas)/agentes/components/reserva/hooks/useReservaAgenteState';
+import { useReservaAgenteState } from '@/features/reserva/reserva-rapida/hooks/useReservaAgenteState';
 
 import { Header } from '@/components/ui/Header/Header';
 

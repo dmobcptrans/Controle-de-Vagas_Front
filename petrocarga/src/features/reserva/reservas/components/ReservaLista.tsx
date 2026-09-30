@@ -6,7 +6,7 @@ import { ChevronDown, ChevronUp, Archive, CopyPlus } from 'lucide-react';
 
 import ReservaCard from './ReservaCard';
 
-import ReservaRapidaCard from '@/features/usuarios/(personas)/agentes/components/cards/reservaRapida-card';
+import ReservaRapidaCard from '@/features/reserva/reserva-rapida/components/reservaRapida-card';
 
 import { ReservaPorUsuarioResponse } from '../types/reservas';
 import { ReservaRapidaResponse } from '../types/reservaRapida';

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useReserva } from '@/features/reserva/reservar-vaga/hooks/useReserva';
-import { useReservaAgenteState } from './hooks/useReservaAgenteState';
+import { useReservaAgenteState } from '../hooks/useReservaAgenteState';
 import { VagaResponse, DiaSemana } from '@/features/vaga/vagas/types/vaga';
 import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import StepIndicator from '@/features/reserva/reservar-vaga/components/StepIndicator';
