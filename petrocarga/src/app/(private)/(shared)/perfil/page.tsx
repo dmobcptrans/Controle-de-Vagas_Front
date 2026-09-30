@@ -7,8 +7,8 @@ import {
   deleteMotorista,
   getMotoristaByUserId,
 } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
-import { deleteAgente, getAgenteByUserId } from '@/features/usuarios/(personas)/agentes/services/agenteApi';
-import { deleteGestor, getGestorByUserId } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
+import {  getAgenteByUserId } from '@/features/usuarios/(personas)/agentes/services/agenteApi';
+import {  getGestorByUserId } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
 import { getEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
 
 import { Empresa } from '@/features/usuarios/(personas)/empresas/types/empresa';
