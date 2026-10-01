@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
-import { getGestores } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
-import { FiltrosGestor, GestorResult } from '@/features/usuarios/(personas)/gestores/types/gestor';
 import { Search, X, Users, CheckCircle, XCircle, Menu } from 'lucide-react';
 import GestorCard from '@/features/usuarios/(personas)/gestores/components/cards/gestores-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
@@ -11,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import FloatingButton from '@/components/ui/floatingButton';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/ui/Header/Header';
+import { useGestores } from '@/features/usuarios/(personas)/gestores/hooks/useGestores';
+import type { gestorParams } from '@/features/usuarios/(personas)/gestores/types/gestor2';
 
 const ITENS_POR_PAGINA = 9;
 
@@ -33,103 +33,67 @@ function useDebounce<T>(value: T, delay = 400): T {
 
 /**
  * @component GestoresPage
- * @version 4.0.0
+ * @version 5.0.0
  *
- * @description Página de listagem e gerenciamento de gestores para administradores.
- * Segue o mesmo padrão visual/estrutural da página de Agentes: header azul,
- * cartão de busca + filtros escuro com drawer interno, grid de cards e
- * paginação. A lógica de dados (debounce, paginação server-side, botão
- * flutuante de adicionar) foi preservada.
- *
- * @example
- * <GestoresPage />
+ * @description Listagem de gestores. Os dados (gestores, loading, error,
+ * totais) vêm do hook `useGestores`. A página só controla os filtros e a
+ * página atual, e chama `buscar(params)` quando eles mudam.
  */
 export default function GestoresPage() {
   // --------------------------------------------------------------------------
-  // ESTADOS
+  // HOOKS E ESTADOS
   // --------------------------------------------------------------------------
 
   const { user } = useAuth();
   const router = useRouter();
 
-  const [gestores, setGestores] = useState<GestorResult[]>([]);
-  const [isLoadingGestores, setIsLoadingGestores] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // buscarAutomaticamente: false -> a página decide quando buscar,
+  // porque o hook só busca sozinho uma vez, na montagem.
+  const { gestores, loading, error, totalPaginas, totalElementos, buscar } =
+    useGestores({ buscarAutomaticamente: false });
+
   const [busca, setBusca] = useState('');
-  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [paginaAtual, setPaginaAtual] = useState(1); // 1-indexed na UI
   const [searchFocused, setSearchFocused] = useState(false);
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-  const [totalPaginas, setTotalPaginas] = useState(0);
-  const [totalElementos, setTotalElementos] = useState(0);
-
-  // Estado inicial como 'ativos' (filtro padrão)
   const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('ativos');
 
   const buscaDebounced = useDebounce(busca, 400);
 
   // --------------------------------------------------------------------------
-  // BUSCA DE DADOS
+  // PARÂMETROS DA BUSCA
   // --------------------------------------------------------------------------
 
-  const fetchGestores = useCallback(
-    async (status: FiltroStatus, nome: string, pagina: number) => {
-      if (!user?.id) return;
+  const montarParams = (): gestorParams => {
+    const params: gestorParams = {
+      // backend é 0-indexed; a UI é 1-indexed
+      pagina: paginaAtual - 1,
+      tamanhoPagina: ITENS_POR_PAGINA,
+    };
 
-      setIsLoadingGestores(true);
-      setError(null);
+    if (filtroStatus === 'ativos') params.ativo = true;
+    if (filtroStatus === 'inativos') params.ativo = false;
+    if (buscaDebounced.trim()) params.nome = buscaDebounced.trim();
 
-      try {
-        const filtros: FiltrosGestor = {};
+    return params;
+  };
 
-        if (status === 'ativos') {
-          filtros.ativo = true;
-        } else if (status === 'inativos') {
-          filtros.ativo = false;
-        }
-
-        if (nome.trim()) {
-          filtros.nome = nome.trim();
-        }
-
-        // numeroPagina é 0-indexed no backend; paginaAtual (UI) é 1-indexed
-        const resultado = await getGestores(
-          filtros,
-          pagina - 1,
-          ITENS_POR_PAGINA,
-        );
-
-        setGestores(resultado.content ?? []);
-        setTotalPaginas(resultado.totalPaginas ?? 0);
-        setTotalElementos(resultado.totalElementos ?? 0);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Erro ao buscar os gestores cadastrados. Tente novamente mais tarde.',
-        );
-        setGestores([]);
-      } finally {
-        setIsLoadingGestores(false);
-      }
-    },
-    [user?.id],
-  );
-
+  // Refaz a busca quando muda filtro, busca (debounced) ou página.
+  // A página volta para 1 nos próprios handlers (e não em um effect),
+  // evitando uma segunda requisição com a página antiga.
   useEffect(() => {
-    fetchGestores(filtroStatus, buscaDebounced, paginaAtual);
-  }, [fetchGestores, filtroStatus, buscaDebounced, paginaAtual]);
-
-  // Sempre volta para a primeira página quando muda um filtro
-  useEffect(() => {
-    setPaginaAtual(1);
-  }, [filtroStatus, buscaDebounced]);
+    if (!user?.id) return;
+    buscar(montarParams());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, filtroStatus, buscaDebounced, paginaAtual]);
 
   // --------------------------------------------------------------------------
-  // FILTROS
+  // HANDLERS
   // --------------------------------------------------------------------------
 
   const handleFiltroStatus = (status: FiltroStatus) => {
     setFiltroStatus(status);
+    setPaginaAtual(1);
   };
 
   const mostrarTodos = () => {
@@ -143,14 +107,10 @@ export default function GestoresPage() {
     setPaginaAtual(1);
   };
 
-  const handlePageChange = (pagina: number) => {
-    setPaginaAtual(pagina);
-  };
-
   const filtrosAtivos = Boolean(busca) || filtroStatus !== 'todos';
 
   // --------------------------------------------------------------------------
-  // RENDERIZAÇÃO CONDICIONAL
+  // ESTADO DE ERRO
   // --------------------------------------------------------------------------
 
   if (error && !gestores.length) {
@@ -168,9 +128,7 @@ export default function GestoresPage() {
               {error}
             </p>
             <button
-              onClick={() =>
-                fetchGestores(filtroStatus, buscaDebounced, paginaAtual)
-              }
+              onClick={() => buscar(montarParams())}
               className="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-sm"
             >
               Tentar novamente
@@ -181,9 +139,12 @@ export default function GestoresPage() {
     );
   }
 
+  // --------------------------------------------------------------------------
+  // RENDERIZAÇÃO
+  // --------------------------------------------------------------------------
+
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* Header */}
       <Header
         title="Gestores Cadastrados"
         subtitle="Gerencie e visualize todos os gestores do sistema"
@@ -196,7 +157,6 @@ export default function GestoresPage() {
             className="bg-[#071D41] rounded-2xl border-l-4 border-[#FFCD07] overflow-hidden"
             style={{ boxShadow: '0 4px 16px rgba(7,29,65,0.18)' }}
           >
-            {/* Barra principal */}
             <div className="px-5 py-4">
               <div className="flex items-center gap-3">
                 {/* Busca */}
@@ -344,7 +304,7 @@ export default function GestoresPage() {
         </div>
 
         {/* Indicador de carregamento durante filtros/paginação */}
-        {isLoadingGestores && gestores.length > 0 && (
+        {loading && gestores.length > 0 && (
           <div className="mb-4 p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-2">
               <div className="h-3.5 w-3.5 rounded-full border-2 border-blue-400 border-t-transparent animate-spin" />
@@ -363,60 +323,61 @@ export default function GestoresPage() {
             itensPorPagina={ITENS_POR_PAGINA}
             itemLabel="gestor"
             itemLabelPlural="gestores"
-            onPageChange={handlePageChange}
+            onPageChange={setPaginaAtual}
           />
         </div>
 
         {/* LISTA DE GESTORES */}
         <div className="space-y-3 sm:space-y-4 md:space-y-6">
           {gestores.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 md:p-12 text-center">
-              {filtrosAtivos ? (
-                <div className="max-w-md mx-auto">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Search className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-400" />
+            // Evita piscar "nenhum gestor" enquanto a primeira busca carrega
+            !loading && (
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 md:p-12 text-center">
+                {filtrosAtivos ? (
+                  <div className="max-w-md mx-auto">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Search className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">
+                      Nenhum gestor encontrado
+                    </h3>
+                    <p className="text-gray-600 mb-5 sm:mb-6 text-xs sm:text-sm md:text-base">
+                      {busca
+                        ? `Não encontramos gestores para "${busca}".`
+                        : `Não encontramos gestores ${
+                            filtroStatus === 'ativos' ? 'ativos' : 'inativos'
+                          }.`}
+                    </p>
+                    <button
+                      onClick={mostrarTodos}
+                      className="px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm"
+                    >
+                      Ver todos os gestores
+                    </button>
                   </div>
-                  <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">
-                    Nenhum gestor encontrado
-                  </h3>
-                  <p className="text-gray-600 mb-5 sm:mb-6 text-xs sm:text-sm md:text-base">
-                    {busca
-                      ? `Não encontramos gestores para "${busca}".`
-                      : `Não encontramos gestores ${
-                          filtroStatus === 'ativos' ? 'ativos' : 'inativos'
-                        }.`}
-                  </p>
-                  <button
-                    onClick={mostrarTodos}
-                    className="px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm"
-                  >
-                    Ver todos os gestores
-                  </button>
-                </div>
-              ) : (
-                <div className="max-w-md mx-auto">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Users className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-400" />
+                ) : (
+                  <div className="max-w-md mx-auto">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Users className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">
+                      Nenhum gestor cadastrado
+                    </h3>
+                    <p className="text-gray-600 text-xs sm:text-sm md:text-base">
+                      Não há gestores cadastrados no sistema no momento.
+                    </p>
                   </div>
-                  <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">
-                    Nenhum gestor cadastrado
-                  </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-                    Não há gestores cadastrados no sistema no momento.
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                {gestores.map((gestor) => (
-                  <div key={gestor.usuario.id} className="h-full">
-                    <GestorCard gestor={gestor} />
-                  </div>
-                ))}
+                )}
               </div>
-            </>
+            )
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              {gestores.map((gestor) => (
+                <div key={gestor.usuario.id} className="h-full">
+                  <GestorCard gestor={gestor} />
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </main>

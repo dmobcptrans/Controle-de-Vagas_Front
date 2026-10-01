@@ -180,18 +180,17 @@
 
 'use client';
 
-import { deleteGestor } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
 import { reativarUsuario } from '@/services/api/recuperacaoApi';
-import { Gestor, GestorResult } from '@/features/usuarios/(personas)/gestores/types/gestor';
 import { cn } from '@/lib/utils';
 import { Mail, Phone, Trash2, UserCircle, UserCheck } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
+import { gestorResponse } from '../../types/gestor2';
+import { useGestorMutation } from '../../hooks/useGestorMutation';
 
 interface GestorCardProps {
-  gestor: GestorResult;
+  gestor: gestorResponse;
   onStatusChange?: () => void; // Callback opcional para atualizar a lista após mudança de status
 }
 
@@ -266,6 +265,7 @@ export default function GestorCard({
   gestor,
   onStatusChange,
 }: GestorCardProps) {
+  const {deletar, error, loading,limparError} = useGestorMutation();
   const [modalExcluirAberto, setModalExcluirAberto] = useState(false);
   const [modalAtivarAberto, setModalAtivarAberto] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -288,7 +288,7 @@ export default function GestorCard({
     setIsUpdating(true);
 
     try {
-      await deleteGestor(gestor.id);
+      await deletar(gestor.id);
 
       setModalExcluirAberto(false);
       toast.success('Gestor desativado com sucesso!');

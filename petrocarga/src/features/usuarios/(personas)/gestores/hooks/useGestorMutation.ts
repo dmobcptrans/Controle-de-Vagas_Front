@@ -24,7 +24,7 @@ interface UseGestorMutationReturn {
   limparError: () => void;
 }
 
-export function useVeiculoMutation(): UseGestorMutationReturn {
+export function useGestorMutation(): UseGestorMutationReturn {
   const { loading, error, execute, limparError } = useApi();
 
   const criar = async (payload: gestorPayload) => {
