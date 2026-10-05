@@ -1,7 +1,7 @@
 
 import { clientApi } from "@/services/clientApi";
 import { buildSearchParams } from "@/services/utils/buildSearchParams";
-import { atualizarGestorPayload, gestorPaginadoResponse, gestorParams, gestorPayload, gestorResponse } from "../types/gestor2";
+import { atualizarGestorPayload, gestorPaginadoResponse, gestorParams, gestorPayload, gestorResponse } from "../types/gestor";
 
 const BASE_URL = '/petrocarga/gestores'
 

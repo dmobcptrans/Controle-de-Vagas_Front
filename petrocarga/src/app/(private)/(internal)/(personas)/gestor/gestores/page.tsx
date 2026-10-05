@@ -10,7 +10,7 @@ import FloatingButton from '@/components/ui/floatingButton';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/ui/Header/Header';
 import { useGestores } from '@/features/usuarios/(personas)/gestores/hooks/useGestores';
-import type { gestorParams } from '@/features/usuarios/(personas)/gestores/types/gestor2';
+import type { gestorParams } from '@/features/usuarios/(personas)/gestores/types/gestor';
 
 const ITENS_POR_PAGINA = 9;
 

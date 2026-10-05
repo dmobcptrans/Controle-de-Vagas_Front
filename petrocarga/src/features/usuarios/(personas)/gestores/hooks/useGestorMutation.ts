@@ -2,9 +2,9 @@
 
 import { useApi } from '@/services/hooks/useApi';
 
-import { CriarGestor, AtualizarGestor, DeleteGestor } from '../services/gestorApi2';
+import { CriarGestor, AtualizarGestor, DeleteGestor } from '../services/gestorApi';
 
-import { gestorPayload, atualizarGestorPayload, gestorResponse } from '../types/gestor2';
+import { gestorPayload, atualizarGestorPayload, gestorResponse } from '../types/gestor';
 
 interface UseGestorMutationReturn {
   loading: boolean;

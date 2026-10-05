@@ -14,7 +14,7 @@ import { CheckCircle, CircleAlert, UserIcon } from 'lucide-react';
 import Form from 'next/form';
 import { useEffect, useState } from 'react';
 import FormItem from '@/components/form/form-item';
-import { atualizarGestorPayload, gestorResponse } from '../../types/gestor2';
+import { atualizarGestorPayload, gestorResponse } from '../../types/gestor';
 import { useGestorMutation } from '../../hooks/useGestorMutation';
 
 interface EditarGestorProps {

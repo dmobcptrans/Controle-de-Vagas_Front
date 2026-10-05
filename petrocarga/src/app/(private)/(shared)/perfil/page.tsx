@@ -8,13 +8,13 @@ import { DeleteMotorista } from '@/features/usuarios/(personas)/motoristas/servi
 
 import { getMotoristaPorId } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 import { getAgentePorId } from '@/features/usuarios/(personas)/agentes/services/agenteApi2';
-import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi2';
+import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
 import { getEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
 
-import { Empresa } from '@/features/usuarios/(personas)/empresas/types/empresa';
+import { EmpresaResponse } from '@/features/usuarios/(personas)/empresas/types/empresa2';
 import { MotoristaResponse1 } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente2';
-import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor2';
+import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle,
@@ -93,7 +93,7 @@ import { Header } from '@/components/ui/Header/Header';
 
 type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' | 'EMPRESA';
 
-type Perfil = MotoristaResponse1 | agenteResponse | gestorResponse | Empresa;
+type Perfil = MotoristaResponse1 | agenteResponse | gestorResponse | EmpresaResponse;
 
 interface FetchPerfilResultado {
   error?: boolean;

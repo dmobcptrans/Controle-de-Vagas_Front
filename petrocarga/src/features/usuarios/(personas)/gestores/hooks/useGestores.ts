@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { getGestores } from '../services/gestorApi2';
-import { gestorParams, gestorResponse } from '../types/gestor2';
+import { getGestores } from '../services/gestorApi';
+import { gestorParams, gestorResponse } from '../types/gestor';
 import { useApi } from '@/services/hooks/useApi';
 
 interface UseGestoresOptions {

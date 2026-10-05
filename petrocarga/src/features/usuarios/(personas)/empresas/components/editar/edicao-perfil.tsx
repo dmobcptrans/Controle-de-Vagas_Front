@@ -1,6 +1,6 @@
 'use client';
 
-import { Empresa } from '../../types/empresa';
+import { EmpresaResponse } from '../../types/empresa2';
 import { useActionState, useEffect, useState } from 'react';
 import { atualizarEmpresa } from '../../services/empresaApi';
 import {
@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 interface EditarEmpresaProps {
-  empresa: Empresa;
+  empresa: EmpresaResponse;
   onSuccess?: () => void;
 }
 

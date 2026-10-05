@@ -186,7 +186,7 @@ import { Mail, Phone, Trash2, UserCircle, UserCheck } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
-import { gestorResponse } from '../../types/gestor2';
+import { gestorResponse } from '../../types/gestor';
 import { useGestorMutation } from '../../hooks/useGestorMutation';
 
 interface GestorCardProps {

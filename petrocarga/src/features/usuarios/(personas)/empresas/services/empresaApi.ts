@@ -1,11 +1,8 @@
 import { MotoristaEmpresaPaginadoResponse } from '../types/empresa2';
 import { VeiculoPaginadoResponse } from '@/features/veiculos/types/veiculo';
 import { clientApi } from '@/services/clientApi';
-import {
-  EmpresaInput,
-  EmpresaResponse,
-} from '../types/empresa';
 
+import { EmpresaInput, EmpresaResponse } from '../types/empresa';
 
 /**
  * Cadastra uma nova empresa.

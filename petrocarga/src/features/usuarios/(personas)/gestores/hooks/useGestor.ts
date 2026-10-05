@@ -1,9 +1,9 @@
 'use client';
 
 import { useApi } from '@/services/hooks/useApi';
-import { gestorResponse } from '../types/gestor2';
+import { gestorResponse } from '../types/gestor';
 import { useCallback, useEffect, useState } from 'react';
-import { getGestorPorId } from '../services/gestorApi2';
+import { getGestorPorId } from '../services/gestorApi';
 
 interface UseGestorOptions {
   gestorId: string;

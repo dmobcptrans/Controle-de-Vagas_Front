@@ -7,8 +7,8 @@ import EditarEmpresa from '@/features/usuarios/(personas)/empresas/components/ed
 
 import { MotoristaResponse1 } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente2';
-import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor2';
-import { Empresa } from '@/features/usuarios/(personas)/empresas/types/empresa';
+import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor';
+import { EmpresaResponse } from '@/features/usuarios/(personas)/empresas/types/empresa2';
 
 import {
   AlertCircle,
@@ -28,7 +28,7 @@ import { useEffect, useState } from 'react';
 
 import { getMotoristaPorId } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 import { getAgentePorId } from '@/features/usuarios/(personas)/agentes/services/agenteApi2';
-import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi2';
+import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
 import { getEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
 
 /**
@@ -39,7 +39,7 @@ type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' | 'EMPRESA';
 /**
  * Dados possíveis retornados pelas APIs.
  */
-type Dados = MotoristaResponse1 | agenteResponse | gestorResponse | Empresa;
+type Dados = MotoristaResponse1 | agenteResponse | gestorResponse | EmpresaResponse;
 
 interface FetchResultado {
   error?: boolean;
@@ -141,7 +141,7 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
 
     renderForm: (dados, onSuccess) => (
       <EditarEmpresa
-        empresa={dados as Empresa}
+        empresa={dados as EmpresaResponse}
         onSuccess={onSuccess}
       />
     ),
