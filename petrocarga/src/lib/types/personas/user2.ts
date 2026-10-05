@@ -13,6 +13,14 @@ export interface DadosExtras {
   possuiVeiculoAtivo?: boolean;
 }
 
+export type UsuarioPayload = {
+  nome: string,
+  telefone: string,
+  email: string,
+  senha: string,
+  aceitouTemos: boolean
+}
+
 export interface Usuario {
   id: string;
   nome: string;
