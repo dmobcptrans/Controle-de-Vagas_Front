@@ -3,16 +3,16 @@
 import { buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
-import {
-  deleteMotorista,
-  getMotoristaByUserId,
-} from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
+
+import { DeleteMotorista } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
+
+import { getMotoristaPorId } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 import { getAgentePorId } from '@/features/usuarios/(personas)/agentes/services/agenteApi2';
 import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi2';
 import { getEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
 
 import { Empresa } from '@/features/usuarios/(personas)/empresas/types/empresa';
-import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
+import { MotoristaResponse1 } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente2';
 import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor2';
 import { cn } from '@/lib/utils';
@@ -93,7 +93,7 @@ import { Header } from '@/components/ui/Header/Header';
 
 type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' | 'EMPRESA';
 
-type Perfil = Motorista | agenteResponse | gestorResponse | Empresa;
+type Perfil = MotoristaResponse1 | agenteResponse | gestorResponse | Empresa;
 
 interface FetchPerfilResultado {
   error?: boolean;
@@ -119,14 +119,12 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
   MOTORISTA: {
     label: 'Motorista',
     fetchPerfil: async (userId) => {
-      const resultado = await getMotoristaByUserId(userId);
+      const resultado = await getMotoristaPorId(userId);
       return {
-        error: resultado.error,
-        message: resultado.message,
-        perfil: resultado.motorista,
+        perfil: resultado,
       };
     },
-    deletePerfil: (userId) => deleteMotorista(userId),
+    deletePerfil: (userId) => DeleteMotorista(userId),
   },
   AGENTE: {
     label: 'Agente',
@@ -179,7 +177,7 @@ function getCampo(
   return (aninhado?.[campo] ?? plano?.[campo] ?? '') as string;
 }
 
-function isMotorista(perfil: Perfil | null): perfil is Motorista {
+function isMotorista(perfil: Perfil | null): perfil is MotoristaResponse1 {
   return !!perfil && 'numeroCnh' in perfil;
 }
 
@@ -375,7 +373,7 @@ export default function Perfil() {
                             Número da CNH
                           </p>
                           <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
-                            {(perfil as Motorista).numeroCnh}
+                            {(perfil as MotoristaResponse1).numeroCnh}
                           </p>
                         </div>
                       </div>
@@ -387,7 +385,7 @@ export default function Perfil() {
                             Tipo da CNH
                           </p>
                           <p className="text-base sm:text-lg font-semibold text-gray-900">
-                            {(perfil as Motorista).tipoCnh}
+                            {(perfil as MotoristaResponse1).tipoCnh}
                           </p>
                         </div>
                       </div>

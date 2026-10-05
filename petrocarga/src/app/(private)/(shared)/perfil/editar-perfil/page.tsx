@@ -5,7 +5,7 @@ import EditarGestor from '@/features/usuarios/(personas)/gestores/components/edi
 import EditarAgente from '@/features/usuarios/(personas)/agentes/components/editar/edicao-perfil';
 import EditarEmpresa from '@/features/usuarios/(personas)/empresas/components/editar/edicao-perfil';
 
-import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
+import { MotoristaResponse1 } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente2';
 import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor2';
 import { Empresa } from '@/features/usuarios/(personas)/empresas/types/empresa';
@@ -26,7 +26,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { useEffect, useState } from 'react';
 
-import { getMotoristaByUserId } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
+import { getMotoristaPorId } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 import { getAgentePorId } from '@/features/usuarios/(personas)/agentes/services/agenteApi2';
 import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi2';
 import { getEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
@@ -39,7 +39,7 @@ type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' | 'EMPRESA';
 /**
  * Dados possíveis retornados pelas APIs.
  */
-type Dados = Motorista | agenteResponse | gestorResponse | Empresa;
+type Dados = MotoristaResponse1 | agenteResponse | gestorResponse | Empresa;
 
 interface FetchResultado {
   error?: boolean;
@@ -79,18 +79,16 @@ interface PersonaTema {
 const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
   MOTORISTA: {
     fetchDados: async (userId) => {
-      const resultado = await getMotoristaByUserId(userId);
+      const resultado = await getMotoristaPorId(userId);
 
       return {
-        error: resultado.error,
-        message: resultado.message,
-        dados: resultado.motorista,
+        dados: resultado,
       };
     },
 
     renderForm: (dados, onSuccess) => (
       <EditarMotorista
-        motorista={dados as Motorista}
+        motorista={dados as MotoristaResponse1}
         onSuccess={onSuccess}
       />
     ),

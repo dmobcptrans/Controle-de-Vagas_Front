@@ -28,7 +28,7 @@ export type EmpresaResponse = {
     usuario: Usuario
 }
 
-export type MotoristaEmpresa = {
+export type MotoristaEmpresaResponse = {
   id: string;
   nome: string;
   telefone: string;
@@ -41,7 +41,7 @@ export type MotoristaEmpresa = {
 
 export type EmpresasPaginadaResponse = Paginacao<EmpresaResponse>
 
-export type MotoristaEmpresaPaginadoResponse = Paginacao<MotoristaEmpresa>;
+export type MotoristaEmpresaPaginadoResponse = Paginacao<MotoristaEmpresaResponse>;
 
 export type AtualizarEmpresaPayload = {
     nome: string,

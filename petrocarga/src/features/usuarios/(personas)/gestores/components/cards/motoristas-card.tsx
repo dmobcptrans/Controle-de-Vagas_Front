@@ -1,15 +1,15 @@
 'use client';
 
 
-import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 import { cn } from '@/lib/utils';
 import { Mail, Phone, UserCircle, Bell, Car, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { NotificacaoModal } from '@/features/usuarios/(personas)/gestores/components/modal/notificacaoModal';
+import { MotoristaResumidoResponse } from '../../../motoristas/types/motorista';
 
 interface MotoristaCardProps {
-  motorista: Motorista;
+  motorista: MotoristaResumidoResponse;
 }
 
 /**

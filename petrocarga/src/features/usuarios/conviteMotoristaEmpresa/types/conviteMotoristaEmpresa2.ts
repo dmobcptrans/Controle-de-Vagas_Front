@@ -1,4 +1,4 @@
-import { MotoristaPayload } from "../../(personas)/motoristas/types/motorista2"
+import { MotoristaPayload } from "../../(personas)/motoristas/types/motorista"
 
 
 export type StatusConviteMotorista =

@@ -1,9 +1,11 @@
 'use client';
 
-import { useActionState, useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { addMotorista } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 import toast from 'react-hot-toast';
+
+import { useMotoristaMutation } from '@/features/usuarios/(personas)/motoristas/hooks/useMotoristaMutation';
+import { MotoristaPayload1 } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 import ButtonLoginGoogle from '@/components/ui/buttonLoginGoogle';
 
 type FormularioMotoristaProps = {
@@ -12,87 +14,112 @@ type FormularioMotoristaProps = {
 
 const etapas = ['Dados pessoais', 'Acesso', 'CNH'];
 
+const FORM_INICIAL = {
+  nome: '',
+  cpf: '',
+  telefone: '',
+  email: '',
+  senha: '',
+  confirmarSenha: '',
+  numeroCnh: '',
+  tipoCnh: '',
+  dataValidadeCnh: '',
+  aceitouTermos: false,
+};
+
+type FormData = typeof FORM_INICIAL;
+
+// Ajuste aqui se o MotoristaPayload1 tiver outro formato
+function montarPayload(
+  data: FormData,
+): MotoristaPayload1 {
+  return {
+    usuario: {
+      nome: data.nome.trim(),
+      telefone: data.telefone,
+      email: data.email.trim(),
+      senha: data.senha,
+      aceitouTemos: data.aceitouTermos,
+    },
+    cpf: data.cpf,
+    tipoCnh: data.tipoCnh,
+    numeroCnh: data.numeroCnh,
+    dataValidadeCnh: data.dataValidadeCnh,
+  };
+}
+
 export default function FormularioMotorista({
   onSuccess,
 }: FormularioMotoristaProps) {
   const [step, setStep] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
+  const [formData, setFormData] = useState<FormData>(FORM_INICIAL);
 
-  const [formData, setFormData] = useState({
-    nome: '',
-    cpf: '',
-    telefone: '',
-    email: '',
-    senha: '',
-    confirmarSenha: '',
-    numeroCnh: '',
-    tipoCnh: '',
-    dataValidadeCnh: '',
-  });
+  const { criar, loading: pending, error, limparError } = useMotoristaMutation();
 
-  const [state, action, pending] = useActionState(addMotorista, null);
-
+  // Erro vindo do hook
   useEffect(() => {
-    if (!state?.message) return;
-
-    if (state.error) {
-      toast.error(state.message);
-      return;
-    }
-
-    toast.success(state.message);
-
-    formRef.current?.reset();
-
-    setFormData({
-      nome: '',
-      cpf: '',
-      telefone: '',
-      email: '',
-      senha: '',
-      confirmarSenha: '',
-      numeroCnh: '',
-      tipoCnh: '',
-      dataValidadeCnh: '',
-    });
-
-    setStep(0);
-
-    onSuccess?.();
-  }, [state, onSuccess]);
+    if (error) toast.error(error);
+  }, [error]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  function proximo() {
-    if (!formRef.current) return;
+  const somenteNumeros =
+    (maxLength: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, maxLength);
+      handleChange(e);
+    };
+
+  /**
+   * Valida a confirmação de senha comparando com o estado atual.
+   * (setCustomValidity no onChange ficava desatualizado se a senha
+   * fosse alterada depois da confirmação.)
+   */
+  function validarSenhas(): boolean {
+    const confirmar = formRef.current?.elements.namedItem(
+      'confirmarSenha',
+    ) as HTMLInputElement | null;
+
+    if (!confirmar) return true;
+
+    confirmar.setCustomValidity(
+      formData.senha !== formData.confirmarSenha
+        ? 'As senhas não coincidem'
+        : '',
+    );
+
+    return confirmar.reportValidity();
+  }
+
+  function validarEtapaAtual(): boolean {
+    if (!formRef.current) return false;
 
     const containerAtual = formRef.current.querySelector(
       `[data-step="${step}"]`,
     );
-    if (!containerAtual) return;
+    if (!containerAtual) return false;
 
     const inputs = containerAtual.querySelectorAll<
       HTMLInputElement | HTMLSelectElement
     >('input, select');
 
-    let valid = true;
     for (const input of Array.from(inputs)) {
-      if (!input.reportValidity()) {
-        valid = false;
-        break;
-      }
+      if (input.name === 'confirmarSenha') continue; // tratado em validarSenhas
+      if (!input.reportValidity()) return false;
     }
 
-    if (!valid) return;
+    if (step === 1 && !validarSenhas()) return false;
 
+    return true;
+  }
+
+  function proximo() {
+    if (!validarEtapaAtual()) return;
     setStep((s) => s + 1);
   }
 
@@ -100,10 +127,31 @@ export default function FormularioMotorista({
     setStep((s) => s - 1);
   }
 
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (pending) return;
+    if (!validarEtapaAtual()) return;
+
+    limparError();
+
+    const response = await criar(montarPayload(formData));
+
+    if (!response) return; // o erro já aparece pelo useEffect acima
+
+    toast.success('Motorista cadastrado com sucesso!');
+
+    formRef.current?.reset();
+    setFormData(FORM_INICIAL);
+    setStep(0);
+
+    onSuccess?.();
+  }
+
   return (
     <form
       ref={formRef}
-      action={action}
+      onSubmit={handleSubmit}
       className="w-full max-w-xl rounded-4xl p-3 border border-slate-200 bg-white shadow-2xl overflow-hidden"
     >
       {/* Cabeçalho Fixo / Progresso */}
@@ -123,9 +171,7 @@ export default function FormularioMotorista({
         <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100">
           <div
             className="h-full bg-blue-600 transition-all duration-300 ease-out"
-            style={{
-              width: `${((step + 1) / etapas.length) * 100}%`,
-            }}
+            style={{ width: `${((step + 1) / etapas.length) * 100}%` }}
           />
         </div>
       </div>
@@ -150,11 +196,9 @@ export default function FormularioMotorista({
             required
             inputMode="numeric"
             maxLength={11}
+            minLength={11}
             value={formData.cpf}
-            onChange={(e) => {
-              e.target.value = e.target.value.replace(/\D/g, '');
-              handleChange(e);
-            }}
+            onChange={somenteNumeros(11)}
           />
 
           <Input
@@ -164,11 +208,9 @@ export default function FormularioMotorista({
             required
             inputMode="numeric"
             maxLength={11}
+            minLength={10}
             value={formData.telefone}
-            onChange={(e) => {
-              e.target.value = e.target.value.replace(/\D/g, '');
-              handleChange(e);
-            }}
+            onChange={somenteNumeros(11)}
           />
         </div>
 
@@ -190,6 +232,7 @@ export default function FormularioMotorista({
             label="Senha"
             placeholder="Mínimo 6 caracteres"
             required
+            minLength={6}
             value={formData.senha}
             onChange={handleChange}
           />
@@ -201,17 +244,8 @@ export default function FormularioMotorista({
             placeholder="Digite a senha novamente"
             required
             value={formData.confirmarSenha}
-            onChange={(e) => {
-              handleChange(e);
-
-              if (e.target.value !== formData.senha) {
-                e.target.setCustomValidity('As senhas não coincidem');
-              } else {
-                e.target.setCustomValidity('');
-              }
-            }}
+            onChange={handleChange}
           />
-
         </div>
 
         {/* ETAPA 2: CNH */}
@@ -224,10 +258,7 @@ export default function FormularioMotorista({
             inputMode="numeric"
             maxLength={11}
             value={formData.numeroCnh}
-            onChange={(e) => {
-              e.target.value = e.target.value.replace(/\D/g, '');
-              handleChange(e);
-            }}
+            onChange={somenteNumeros(11)}
           />
 
           <div>
@@ -274,7 +305,8 @@ export default function FormularioMotorista({
             <button
               type="button"
               onClick={voltar}
-              className="h-12 flex-1 rounded-xl border border-slate-300 bg-white text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98]"
+              disabled={pending}
+              className="h-12 flex-1 rounded-xl border border-slate-300 bg-white text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98] disabled:opacity-50"
             >
               Voltar
             </button>

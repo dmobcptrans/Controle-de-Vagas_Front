@@ -22,7 +22,7 @@ import {
   X,
 } from 'lucide-react';
 
-import { MotoristaEmpresaResponse } from '@/features/usuarios/(personas)/motoristas/types/motorista';
+import { MotoristaEmpresaPaginadoResponse } from '@/features/usuarios/(personas)/empresas/types/empresa2';
 
 import toast from 'react-hot-toast';
 
@@ -243,7 +243,7 @@ export default function MotoristasEmpresa() {
   // ==================== MOTORISTAS ====================
 
   const [paginatedData, setPaginatedData] =
-    useState<MotoristaEmpresaResponse | null>(null);
+    useState<MotoristaEmpresaPaginadoResponse | null>(null);
 
   const [loading, setLoading] = useState(true);
 

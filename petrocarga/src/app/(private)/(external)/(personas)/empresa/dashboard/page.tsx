@@ -89,7 +89,7 @@ export default function Dashboard() {
           </div>
 
           <div className="lg:col-span-1">
-            <UltimosMotoristas />
+            <UltimosMotoristas usuarioId={user?.id}/>
           </div>
         </div>
 

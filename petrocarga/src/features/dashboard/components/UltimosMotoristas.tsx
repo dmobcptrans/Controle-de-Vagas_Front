@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { User } from 'lucide-react';
 
-import { MotoristaDaEmpresa } from '@/features/usuarios/(personas)/motoristas/hooks/useMotorista';
+import { useMotoristasEmpresa } from '@/features/usuarios/(personas)/motoristas/hooks/useMotoristasEmpresa';
 
 interface UltimosMotoristasProps {
   usuarioId?: string;
@@ -30,9 +30,12 @@ export function UltimosMotoristas({
   usuarioId,
 }: UltimosMotoristasProps) {
   const {
-    motoristas,
     loading,
-  } = MotoristaDaEmpresa(usuarioId);
+    motoristas,
+  } = useMotoristasEmpresa({
+    empresaId: usuarioId ?? '',
+    buscarAutomaticamente: !!usuarioId,
+  });
 
   const ultimosMotoristas = motoristas.slice(0, 4);
 
@@ -97,11 +100,7 @@ export function UltimosMotoristas({
                     ? 'bg-green-500'
                     : 'bg-gray-300'
                 }`}
-                title={
-                  motorista.ativo
-                    ? 'Ativo'
-                    : 'Inativo'
-                }
+                title={motorista.ativo ? 'Ativo' : 'Inativo'}
               />
             </Link>
           ))

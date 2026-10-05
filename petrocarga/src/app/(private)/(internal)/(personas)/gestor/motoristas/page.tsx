@@ -1,18 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
-import { getMotoristas } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
+import { useMotoristas } from '@/features/usuarios/(personas)/motoristas/hooks/useMotoristas';
 
-import {
-  Search,
-  Users,
-  CheckCircle,
-  XCircle,
-} from 'lucide-react';
-
-import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
+import { Search, Users, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 import MotoristaCard from '@/features/usuarios/(personas)/gestores/components/cards/motoristas-card';
 import { Paginacao } from '@/components/paginacao/paginacao';
@@ -37,97 +30,73 @@ export default function MotoristasPage() {
 
   const { user } = useAuth();
 
-  const [motoristas, setMotoristas] = useState<Motorista[]>([]);
-  const [isLoadingMotoristas, setIsLoadingMotoristas] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    motoristas,
+    loading,
+    error,
+    totalPaginas,
+    totalElementos: totalItens,
+    buscar,
+  } = useMotoristas({ buscarAutomaticamente: false });
 
+  const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('ativos');
   const [busca, setBusca] = useState('');
-  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [buscaDebounced, setBuscaDebounced] = useState('');
+  const [paginaAtual, setPaginaAtual] = useState(1); // 1-based (Paginacao)
 
-  const [totalPaginas, setTotalPaginas] = useState(0);
-  const [totalItens, setTotalItens] = useState(0);
+  // --------------------------------------------------------------------------
+  // DEBOUNCE DA BUSCA
+  // --------------------------------------------------------------------------
 
-  // Filtro padrão
-  const [filtroStatus, setFiltroStatus] =
-    useState<FiltroStatus>('ativos');
+  useEffect(() => {
+    const timeout = setTimeout(() => setBuscaDebounced(busca.trim()), 400);
+    return () => clearTimeout(timeout);
+  }, [busca]);
 
   // --------------------------------------------------------------------------
   // BUSCA DE DADOS
   // --------------------------------------------------------------------------
 
-  const fetchMotoristas = useCallback(
-    async (status: FiltroStatus) => {
-      if (!user?.id) return;
-
-      setIsLoadingMotoristas(true);
-      setError(null);
-
-      try {
-        const result = await getMotoristas({
-          nome: busca.trim() || undefined,
-
-          ativo:
-            status === 'todos'
-              ? undefined
-              : status === 'ativos',
-
-          pagina: paginaAtual - 1,
-          tamanhoPagina: ITENS_POR_PAGINA,
-          ordem: 'ASC',
-        });
-
-        if (result.error) {
-          setError(result.message);
-          return;
-        }
-
-        setMotoristas(result.motoristas.content);
-        setTotalPaginas(result.motoristas.totalPaginas);
-        setTotalItens(result.motoristas.totalElementos);
-      } catch {
-        setError(
-          'Erro ao buscar os motoristas cadastrados. Tente novamente mais tarde.',
-        );
-      } finally {
-        setIsLoadingMotoristas(false);
-      }
-    },
-    [user?.id, paginaAtual, busca],
+  const parametros = useMemo(
+    () => ({
+      nome: buscaDebounced || undefined,
+      ativo: filtroStatus === 'todos' ? undefined : filtroStatus === 'ativos',
+      pagina: paginaAtual - 1, // API é 0-based
+      tamanhoPagina: ITENS_POR_PAGINA,
+      ordem: 'ASC' as const,
+    }),
+    [buscaDebounced, filtroStatus, paginaAtual],
   );
 
   useEffect(() => {
-    fetchMotoristas(filtroStatus);
-  }, [fetchMotoristas, filtroStatus]);
-
-  // --------------------------------------------------------------------------
-  // RESET DE PAGINAÇÃO
-  // --------------------------------------------------------------------------
-
-  useEffect(() => {
-    setPaginaAtual(1);
-  }, [filtroStatus, busca]);
+    if (!user?.id) return;
+    buscar(parametros);
+  }, [user?.id, parametros, buscar]);
 
   // --------------------------------------------------------------------------
   // FILTROS
+  // (o reset de página é feito nos handlers, sem useEffect extra,
+  //  para não disparar duas buscas)
   // --------------------------------------------------------------------------
+
+  const handleBusca = (value: string) => {
+    setBusca(value);
+    setPaginaAtual(1);
+  };
 
   const handleFiltroStatus = (status: FiltroStatus) => {
     setFiltroStatus(status);
+    setPaginaAtual(1);
   };
 
   const mostrarTodos = () => {
     setFiltroStatus('todos');
     setBusca('');
+    setBuscaDebounced('');
     setPaginaAtual(1);
   };
 
-  const limparBusca = () => {
-    setBusca('');
-    setPaginaAtual(1);
-  };
-
-  const hasActiveFilters =
-    Boolean(busca.trim()) || filtroStatus !== 'todos';
+  const hasActiveFilters = Boolean(busca.trim()) || filtroStatus !== 'todos';
 
   // --------------------------------------------------------------------------
   // RENDERIZAÇÃO CONDICIONAL
@@ -151,23 +120,8 @@ export default function MotoristasPage() {
             </p>
 
             <button
-              onClick={() => fetchMotoristas(filtroStatus)}
-              className="
-                inline-flex
-                items-center
-                justify-center
-                px-4
-                py-2
-                sm:px-5
-                sm:py-2.5
-                bg-blue-600
-                hover:bg-blue-700
-                text-white
-                rounded-lg
-                transition
-                font-medium
-                text-sm
-              "
+              onClick={() => buscar(parametros)}
+              className="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition font-medium text-sm"
             >
               Tentar novamente
             </button>
@@ -183,30 +137,16 @@ export default function MotoristasPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* -------------------------------------------------------------------- */}
-      {/* HEADER */}
-      {/* -------------------------------------------------------------------- */}
-
       <Header
         title="Motoristas Cadastrados"
         subtitle="Gerencie e visualize todos os motoristas do sistema"
       />
 
-      {/* -------------------------------------------------------------------- */}
-      {/* CONTEÚDO */}
-      {/* -------------------------------------------------------------------- */}
-
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-        {/* ------------------------------------------------------------------ */}
         {/* CTA: BUSCA + FILTROS */}
-        {/* ------------------------------------------------------------------ */}
-
         <CTASearch
           value={busca}
-          onChange={(value) => {
-            setBusca(value);
-            setPaginaAtual(1);
-          }}
+          onChange={handleBusca}
           placeholder="Buscar por nome do motorista..."
           hasActiveFilters={hasActiveFilters}
           onClearFilters={mostrarTodos}
@@ -219,14 +159,8 @@ export default function MotoristasPage() {
               <div className="grid grid-cols-3 gap-2">
                 <Button
                   type="button"
-                  variant={
-                    filtroStatus === 'todos'
-                      ? 'default'
-                      : 'outline'
-                  }
-                  onClick={() =>
-                    handleFiltroStatus('todos')
-                  }
+                  variant={filtroStatus === 'todos' ? 'default' : 'outline'}
+                  onClick={() => handleFiltroStatus('todos')}
                 >
                   <Users className="mr-2 h-4 w-4" />
                   Todos
@@ -234,14 +168,8 @@ export default function MotoristasPage() {
 
                 <Button
                   type="button"
-                  variant={
-                    filtroStatus === 'ativos'
-                      ? 'default'
-                      : 'outline'
-                  }
-                  onClick={() =>
-                    handleFiltroStatus('ativos')
-                  }
+                  variant={filtroStatus === 'ativos' ? 'default' : 'outline'}
+                  onClick={() => handleFiltroStatus('ativos')}
                 >
                   <CheckCircle className="mr-2 h-4 w-4" />
                   Ativos
@@ -249,14 +177,8 @@ export default function MotoristasPage() {
 
                 <Button
                   type="button"
-                  variant={
-                    filtroStatus === 'inativos'
-                      ? 'default'
-                      : 'outline'
-                  }
-                  onClick={() =>
-                    handleFiltroStatus('inativos')
-                  }
+                  variant={filtroStatus === 'inativos' ? 'default' : 'outline'}
+                  onClick={() => handleFiltroStatus('inativos')}
                 >
                   <XCircle className="mr-2 h-4 w-4" />
                   Inativos
@@ -275,19 +197,7 @@ export default function MotoristasPage() {
               </div>
 
               {hasActiveFilters && (
-                <span
-                  className="
-                    ml-3
-                    flex-shrink-0
-                    text-xs
-                    rounded-full
-                    bg-[#FFCD07]
-                    px-2
-                    py-1
-                    text-[#071D41]
-                    font-semibold
-                  "
-                >
+                <span className="ml-3 flex-shrink-0 text-xs rounded-full bg-[#FFCD07] px-2 py-1 text-[#071D41] font-semibold">
                   Filtros ativos
                 </span>
               )}
@@ -295,10 +205,7 @@ export default function MotoristasPage() {
           }
         />
 
-        {/* ------------------------------------------------------------------ */}
         {/* PAGINAÇÃO */}
-        {/* ------------------------------------------------------------------ */}
-
         <div className="mb-4">
           <Paginacao
             paginaAtual={paginaAtual}
@@ -311,12 +218,13 @@ export default function MotoristasPage() {
           />
         </div>
 
-        {/* ------------------------------------------------------------------ */}
         {/* LISTA DE MOTORISTAS */}
-        {/* ------------------------------------------------------------------ */}
-
         <div className="space-y-3 sm:space-y-4 md:space-y-6">
-          {motoristas.length === 0 ? (
+          {loading && motoristas.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-12 flex justify-center">
+              <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
+            </div>
+          ) : motoristas.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 md:p-12 text-center">
               {busca || filtroStatus !== 'todos' ? (
                 <div className="max-w-md mx-auto">
@@ -332,27 +240,13 @@ export default function MotoristasPage() {
                     {busca
                       ? `Não encontramos motoristas para "${busca}".`
                       : `Não encontramos motoristas ${
-                          filtroStatus === 'ativos'
-                            ? 'ativos'
-                            : 'inativos'
+                          filtroStatus === 'ativos' ? 'ativos' : 'inativos'
                         }.`}
                   </p>
 
                   <button
                     onClick={mostrarTodos}
-                    className="
-                      px-4
-                      py-2
-                      sm:px-5
-                      sm:py-2.5
-                      bg-blue-600
-                      hover:bg-blue-700
-                      text-white
-                      rounded-lg
-                      transition-colors
-                      font-medium
-                      text-sm
-                    "
+                    className="px-4 py-2 sm:px-5 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm"
                   >
                     Ver todos os motoristas
                   </button>

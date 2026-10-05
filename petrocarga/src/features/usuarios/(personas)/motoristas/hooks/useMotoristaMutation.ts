@@ -6,13 +6,13 @@ import {
   CriarMotorista,
   AtualizarMotorista,
   DeleteMotorista,
-} from '../services/motoristaApi2';
+} from '../services/motoristaApi';
 
 import {
   MotoristaPayload1,
   MotoristaResponse1,
   AtualizarMotoristaPayload,
-} from './../types/motorista2';
+} from '../types/motorista';
 
 
 interface UseMotoristaReturn {

@@ -1,4 +1,4 @@
-import { MotoristaEmpresaResponse } from '@/features/usuarios/(personas)/motoristas/types/motorista';
+import { MotoristaEmpresaPaginadoResponse } from '../types/empresa2';
 import { VeiculoPaginadoResponse } from '@/features/veiculos/types/veiculo';
 import { clientApi } from '@/services/clientApi';
 import {
@@ -149,7 +149,7 @@ export async function getMotoristaEmpresaByUsuarioId(
   nome?: string,
   ativo?: boolean,
   ordem: 'ASC' | 'DESC' = 'ASC',
-): Promise<MotoristaEmpresaResponse> {
+): Promise<MotoristaEmpresaPaginadoResponse> {
   try {
     const params = new URLSearchParams({
       pagina: numeroPagina.toString(),

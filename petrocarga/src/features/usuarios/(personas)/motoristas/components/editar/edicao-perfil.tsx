@@ -15,11 +15,11 @@ import { FormEvent, useEffect, useState } from 'react';
 import FormItem from '@/components/form/form-item';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import { useMotoristaMutation } from '../../hooks/useMotoristaMutation';
-import { Motorista } from '../../types/motorista';
-import { AtualizarMotoristaPayload } from '../../types/motorista2';
+import { MotoristaResponse1 } from '../../types/motorista';
+import { AtualizarMotoristaPayload } from '../../types/motorista';
 
 interface EditarMotoristaProps {
-  motorista: Motorista;
+  motorista: MotoristaResponse1;
   onSuccess?: () => void;
 }
 

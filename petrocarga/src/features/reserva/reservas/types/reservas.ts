@@ -1,4 +1,4 @@
-import { MotoristaResponse } from '@/features/usuarios/(personas)/motoristas/types/motorista2';
+import { MotoristaResponse } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 import { AreaVaga, Endereco } from '@/features/vaga/vagas/types/vaga';
 import { VagasResumo } from '@/features/vaga/vagas/types/vaga';
 import { TipoVeiculo } from '@/features/veiculos/types/tipoVeiculo';
