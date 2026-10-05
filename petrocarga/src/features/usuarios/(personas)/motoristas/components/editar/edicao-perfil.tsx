@@ -1,4 +1,5 @@
 'use client';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,13 +10,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { atualizarMotorista } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 import { CheckCircle, CircleAlert, UserIcon } from 'lucide-react';
-import Form from 'next/form';
-import { useActionState, useEffect } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import FormItem from '@/components/form/form-item';
-import { Motorista } from '../../types/motorista';
 import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
+import { useMotoristaMutation } from '../../hooks/useMotoristaMutation';
+import { Motorista } from '../../types/motorista';
+import { AtualizarMotoristaPayload } from '../../types/motorista2';
 
 interface EditarMotoristaProps {
   motorista: Motorista;
@@ -24,94 +25,60 @@ interface EditarMotoristaProps {
 
 /**
  * @component EditarMotorista
- * @version 1.0.0
- * 
+ * @version 2.0.0
+ *
  * @description Formulário de edição de perfil para motoristas.
  * Permite atualizar nome, telefone, categoria da CNH e data de validade.
- * 
- * ----------------------------------------------------------------------------
- * 📋 CAMPOS EDITÁVEIS:
- * ----------------------------------------------------------------------------
- * 
- * 1. DADOS PESSOAIS:
- *    - Nome completo (obrigatório)
- *    - Telefone (obrigatório, apenas números, 11 dígitos)
- * 
- * 2. CNH:
- *    - Categoria da CNH (select com 8 opções)
- *    - Data de validade da CNH (date picker)
- * 
- * ----------------------------------------------------------------------------
- * 📋 CAMPOS NÃO EDITÁVEIS:
- * ----------------------------------------------------------------------------
- * 
- * - CPF (fixo)
- * - Email (fixo)
- * - Número da CNH (fixo)
- * - Senha (não aparece no formulário)
- * 
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- * 
- * - useActionState: Gerencia estado da Server Action
- * - Wrapper assíncrono: Para compatibilidade com useActionState
- * - useEffect com timer: Redirecionamento suave após sucesso (250ms)
- * - Máscara de telefone: remove não números e limita 11 dígitos
- * - Hidden input: Envia ID do usuário sem exibir na UI
- * 
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- * 
- * - atualizarMotorista: Server Action de atualização
- * - FormItem: Campo com label e descrição
- * - SelecaoCustomizada: Select estilizado para categoria CNH
- * 
- * @example
- * ```tsx
- * <EditarMotorista
- *   motorista={motorista}
- *   onSuccess={() => router.push('/motorista/perfil')}
- * />
- * ```
- * 
- * @see /lib/api/motoristaApi.ts - Função atualizarMotorista
+ *
+ * 🧠 DECISÕES TÉCNICAS (v2):
+ * - useMotoristaMutation: loading/error vêm do hook (via useApi),
+ *   substituindo useActionState + Server Action.
+ * - onSubmit + FormData: monta o payload tipado e chama atualizar(id, payload).
+ * - Estado local `sucesso`: o hook só expõe `error`, então o sucesso
+ *   é controlado aqui (resposta !== null).
+ * - useEffect com timer: redireciona 250ms após o sucesso.
+ * - O ID do motorista agora vai como argumento, não mais em input hidden.
+ *
+ * CAMPOS NÃO EDITÁVEIS: CPF, e-mail, número da CNH e senha.
  */
-
 export default function EditarMotorista({
   motorista,
   onSuccess,
 }: EditarMotoristaProps) {
-  // ==================== SERVER ACTION ====================
-  /**
-   * Wrapper assíncrono para atualizarMotorista
-   * Permite uso com useActionState
-   */
-  const atualizar = async (prevState: unknown, formData: FormData) => {
-    return atualizarMotorista(formData);
-  };
+  const { loading, error, atualizar, limparError } = useMotoristaMutation();
+  const [sucesso, setSucesso] = useState(false);
 
-  const [state, atualizarMotoristaAction, pending] = useActionState(
-    atualizar,
-    null,
-  );
-
-  // ==================== EFEITO DE REDIRECIONAMENTO ====================
+  // ==================== REDIRECIONAMENTO APÓS SUCESSO ====================
   useEffect(() => {
-    if (state && !state.error && state.message && onSuccess) {
-      const timer = setTimeout(() => {
-        onSuccess();
-      }, 250);
-
+    if (sucesso && onSuccess) {
+      const timer = setTimeout(onSuccess, 250);
       return () => clearTimeout(timer);
     }
-  }, [state, onSuccess]);
+  }, [sucesso, onSuccess]);
+
+  // ==================== SUBMIT ====================
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    limparError();
+    setSucesso(false);
+
+    const formData = new FormData(e.currentTarget);
+
+    const payload: AtualizarMotoristaPayload = {
+      nome: String(formData.get('nome') ?? ''),
+      telefone: String(formData.get('telefone') ?? ''),
+      tipoCnh: String(formData.get('tipoCnh') ?? ''),
+      dataValidadeCnh: String(formData.get('dataValidadeCnh') ?? ''),
+    };
+
+    const resultado = await atualizar(motorista.usuario.id, payload);
+
+    if (resultado) setSucesso(true);
+  };
 
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">
       <Card className="w-full max-w-5xl mx-auto">
-        
         {/* Header do card */}
         <CardHeader className="space-y-3 text-center pb-6">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -126,30 +93,27 @@ export default function EditarMotorista({
         </CardHeader>
 
         {/* Formulário */}
-        <Form action={atualizarMotoristaAction}>
-          
-          {/* Campo oculto com ID do usuário */}
-          <input type="hidden" name="id" value={motorista.usuario.id} />
-
+        <form onSubmit={handleSubmit}>
           <CardContent className="p-4 md:p-6 lg:p-8">
-            
             {/* ==================== MENSAGEM DE FEEDBACK ==================== */}
-            {(state?.error || state?.message) && (
+            {(error || sucesso) && (
               <div
                 className={`flex items-start gap-3 rounded-md border p-4 mb-6 ${
-                  state.error
+                  error
                     ? 'border-red-200 bg-red-50 text-red-900'
                     : 'border-green-200 bg-green-50 text-green-900'
                 }`}
               >
-                {state.error ? (
+                {error ? (
                   <CircleAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
                 ) : (
                   <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
                 )}
                 <div>
-                  <span className="text-sm md:text-base">{state.message}</span>
-                  {!state.error && (
+                  <span className="text-sm md:text-base">
+                    {error ?? 'Perfil atualizado com sucesso!'}
+                  </span>
+                  {!error && (
                     <p className="text-green-700 text-sm mt-1">
                       Redirecionando para o perfil...
                     </p>
@@ -163,7 +127,6 @@ export default function EditarMotorista({
               Dados Pessoais
             </CardDescription>
 
-            {/* Campo Nome */}
             <FormItem name="Nome" description="Insira seu nome completo.">
               <Input
                 className="rounded-sm border-gray-400 text-sm md:text-base"
@@ -175,7 +138,6 @@ export default function EditarMotorista({
               />
             </FormItem>
 
-            {/* Campo Telefone (com máscara) */}
             <FormItem
               name="Número de Telefone"
               description="Digite seu número de telefone com DDD (apenas números). Exemplo: 22912345678"
@@ -202,7 +164,6 @@ export default function EditarMotorista({
               CNH
             </CardDescription>
 
-            {/* Campo Categoria da CNH (select) */}
             <FormItem
               name="Categoria da CNH"
               description="Selecione a categoria da sua CNH"
@@ -225,7 +186,6 @@ export default function EditarMotorista({
               />
             </FormItem>
 
-            {/* Campo Data de Validade da CNH */}
             <FormItem
               name="Data de Vencimento da CNH"
               description="Informe a data de vencimento da sua CNH"
@@ -245,13 +205,13 @@ export default function EditarMotorista({
           <CardFooter className="px-4 md:px-6 lg:px-8 pb-6 pt-2">
             <Button
               type="submit"
-              disabled={pending}
+              disabled={loading}
               className="w-full md:w-auto md:ml-auto rounded-sm px-6 md:px-10 py-2 md:py-2.5 text-sm md:text-base font-medium text-blue-800 bg-blue-200 hover:bg-blue-300 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              {pending ? 'Salvando...' : 'Salvar Alterações'}
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </CardFooter>
-        </Form>
+        </form>
       </Card>
     </main>
   );

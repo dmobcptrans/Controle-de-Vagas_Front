@@ -50,3 +50,10 @@ export async function getMotoristaEmpresa(empresaId: string, params: EmpresaPara
     const response = await clientApi(`/petrocarga/motoristas/byEmpresa/${empresaId}?${searchParams.toString()}`)
     return response.json();
 }
+
+export async function DesvincularMotoristaEmpresa(empresaId: string, motoristaId: string) {
+    const response = await clientApi(`/petrocarga/motoristas/desvincularEmpresa/${empresaId}/${motoristaId}`, {
+        method: 'PATCH'
+    })
+    return response.json()
+};

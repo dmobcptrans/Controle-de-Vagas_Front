@@ -1,315 +1,534 @@
 'use client';
 
-import { useAgenteMutation } from '@/features/usuarios/(personas)/agentes/hooks/useAgenteMutation';
+import EditarMotorista from '@/features/usuarios/(personas)/motoristas/components/editar/edicao-perfil';
+import EditarGestor from '@/features/usuarios/(personas)/gestores/components/editar/edicao-perfil';
+import EditarAgente from '@/features/usuarios/(personas)/agentes/components/editar/edicao-perfil';
+import EditarEmpresa from '@/features/usuarios/(personas)/empresas/components/editar/edicao-perfil';
 
-import { reativarUsuario } from '@/services/api/recuperacaoApi';
-
-import { cn } from '@/lib/utils';
+import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
+import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente2';
+import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor2';
+import { Empresa } from '@/features/usuarios/(personas)/empresas/types/empresa';
 
 import {
-  IdCard,
-  Mail,
-  Phone,
-  UserCircle,
-  Trash2,
-  UserCheck,
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle,
+  Info,
+  Loader2,
+  ShieldCheck,
+  UserX,
+  Building2,
 } from 'lucide-react';
 
-import { useState } from 'react';
-import toast from 'react-hot-toast';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { useEffect, useState } from 'react';
 
-import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
-
-import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente2';
-
-interface AgenteCardProps {
-  agente: agenteResponse;
-  onStatusChange?: () => void;
-}
+import { getMotoristaByUserId } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
+import { getAgentePorId } from '@/features/usuarios/(personas)/agentes/services/agenteApi2';
+import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi2';
+import { getEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
 
 /**
- * @component AgenteCard
- * @version 2.0.0
- *
- * @description Card de exibição de agente para gestores.
- * Exibe informações resumidas do agente e permite exclusão/ativação.
+ * Permissões que possuem edição de perfil.
  */
-export default function AgenteCard({
-  agente,
-  onStatusChange,
-}: AgenteCardProps) {
-  const {
-    deletar,
-    loading,
-    error,
-    limparError,
-  } = useAgenteMutation();
+type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' | 'EMPRESA';
 
-  const [modalExcluirAberto, setModalExcluirAberto] =
-    useState(false);
+/**
+ * Dados possíveis retornados pelas APIs.
+ */
+type Dados = Motorista | agenteResponse | gestorResponse | Empresa;
 
-  const [modalAtivarAberto, setModalAtivarAberto] =
-    useState(false);
+interface FetchResultado {
+  error?: boolean;
+  message?: string;
+  dados?: Dados | null;
+}
 
-  const [isUpdating, setIsUpdating] =
-    useState(false);
+interface PersonaConfig {
+  fetchDados: (userId: string) => Promise<FetchResultado>;
 
-  // Determina se o agente está ativo
-  const isAtivo = agente.usuario.ativo === true;
+  renderForm: (
+    dados: Dados,
+    onSuccess: () => void,
+  ) => React.ReactNode | null;
+}
 
-  /**
-   * Processa a desativação do agente.
-   *
-   * A chamada da API é feita através do useAgenteMutation.
-   */
-  const handleExcluir = async () => {
-    if (isUpdating || loading) return;
+interface PersonaTema {
+  label: string;
+  corGradiente: string;
+  corBotao: string;
+  corCardInfo: string;
+  corTextoInfo: string;
+  corTextoInfoDescricao: string;
+  corIconeInfo: string;
+  IconeSucesso: typeof CheckCircle;
+  corIconeSucesso: string;
+  corFundoIconeSucesso: string;
+  tituloInfo: string;
+  descricaoInfo: string;
+  descricaoPagina: string;
+}
 
-    setIsUpdating(true);
-    limparError();
+// --------------------------------------------------------------------------
+// CONFIGURAÇÃO POR PERSONA
+// --------------------------------------------------------------------------
 
-    try {
-      const sucesso = await deletar(
-        agente.usuario.id,
+const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
+  MOTORISTA: {
+    fetchDados: async (userId) => {
+      const resultado = await getMotoristaByUserId(userId);
+
+      return {
+        error: resultado.error,
+        message: resultado.message,
+        dados: resultado.motorista,
+      };
+    },
+
+    renderForm: (dados, onSuccess) => (
+      <EditarMotorista
+        motorista={dados as Motorista}
+        onSuccess={onSuccess}
+      />
+    ),
+  },
+
+  AGENTE: {
+    fetchDados: async (userId) => {
+      const resultado = await getAgentePorId(userId);
+
+      return {
+        dados: resultado,
+      };
+    },
+
+    renderForm: (dados, onSuccess) => (
+      <EditarAgente
+        agente={dados as agenteResponse}
+        onSuccess={onSuccess}
+      />
+    ),
+  },
+
+  GESTOR: {
+    fetchDados: async (userId) => {
+      const resultado = await getGestorPorId(userId);
+
+      return {
+        dados: resultado,
+      };
+    },
+
+    renderForm: (dados, onSuccess) => (
+      <EditarGestor
+        gestor={dados as gestorResponse}
+        onSuccess={onSuccess}
+      />
+    ),
+  },
+
+  EMPRESA: {
+    fetchDados: async (userId) => {
+      const resultado = await getEmpresaByUsuarioId(userId);
+
+      return {
+        error: resultado.error,
+        message: resultado.message,
+        dados: resultado.empresa,
+      };
+    },
+
+    renderForm: (dados, onSuccess) => (
+      <EditarEmpresa
+        empresa={dados as Empresa}
+        onSuccess={onSuccess}
+      />
+    ),
+  },
+};
+
+// --------------------------------------------------------------------------
+// TEMA VISUAL POR PERSONA
+// --------------------------------------------------------------------------
+
+const PERSONA_TEMAS: Record<Permissao, PersonaTema> = {
+  MOTORISTA: {
+    label: 'motorista',
+    corGradiente:
+      'from-orange-50/30 via-white to-yellow-50/30',
+    corBotao: 'bg-orange-600 hover:bg-orange-700',
+    corCardInfo:
+      'bg-orange-50 border-orange-100',
+    corTextoInfo:
+      'text-orange-900',
+    corTextoInfoDescricao:
+      'text-orange-700',
+    corIconeInfo:
+      'text-orange-500',
+    IconeSucesso:
+      CheckCircle,
+    corIconeSucesso:
+      'text-blue-600',
+    corFundoIconeSucesso:
+      'from-blue-100 to-purple-100',
+    tituloInfo:
+      'Informação importante para motoristas',
+    descricaoInfo:
+      'Certifique-se de manter seus documentos de habilitação e veículo sempre atualizados. Informações incorretas podem afetar sua elegibilidade para viagens.',
+    descricaoPagina:
+      'Atualize suas informações de condução, documentos e disponibilidade',
+  },
+
+  AGENTE: {
+    label: 'agente',
+    corGradiente:
+      'from-emerald-50/30 via-white to-teal-50/30',
+    corBotao:
+      'bg-emerald-600 hover:bg-emerald-700',
+    corCardInfo:
+      'bg-emerald-50 border-emerald-100',
+    corTextoInfo:
+      'text-emerald-900',
+    corTextoInfoDescricao:
+      'text-emerald-700',
+    corIconeInfo:
+      'text-emerald-500',
+    IconeSucesso:
+      CheckCircle,
+    corIconeSucesso:
+      'text-emerald-600',
+    corFundoIconeSucesso:
+      'from-emerald-100 to-teal-100',
+    tituloInfo:
+      'Informação importante para agentes',
+    descricaoInfo:
+      'Mantenha seus dados de contato sempre atualizados para garantir a comunicação com motoristas e gestores.',
+    descricaoPagina:
+      'Atualize suas informações de contato e atuação',
+  },
+
+  GESTOR: {
+    label: 'gestor',
+    corGradiente:
+      'from-purple-50/30 via-white to-indigo-50/30',
+    corBotao:
+      'bg-purple-600 hover:bg-purple-700',
+    corCardInfo:
+      'bg-purple-50 border-purple-100',
+    corTextoInfo:
+      'text-purple-900',
+    corTextoInfoDescricao:
+      'text-purple-700',
+    corIconeInfo:
+      'text-purple-500',
+    IconeSucesso:
+      ShieldCheck,
+    corIconeSucesso:
+      'text-purple-600',
+    corFundoIconeSucesso:
+      'from-purple-100 to-indigo-100',
+    tituloInfo:
+      'Informação importante para gestores',
+    descricaoInfo:
+      'Mantenha seus dados atualizados para garantir o acesso correto às ferramentas de gestão.',
+    descricaoPagina:
+      'Atualize suas informações de gestão e contato',
+  },
+
+  EMPRESA: {
+    label: 'empresa',
+    corGradiente:
+      'from-blue-50/30 via-white to-cyan-50/30',
+    corBotao:
+      'bg-blue-600 hover:bg-blue-700',
+    corCardInfo:
+      'bg-blue-50 border-blue-100',
+    corTextoInfo:
+      'text-blue-900',
+    corTextoInfoDescricao:
+      'text-blue-700',
+    corIconeInfo:
+      'text-blue-500',
+    IconeSucesso:
+      Building2,
+    corIconeSucesso:
+      'text-blue-600',
+    corFundoIconeSucesso:
+      'from-blue-100 to-cyan-100',
+    tituloInfo:
+      'Informação importante para empresas',
+    descricaoInfo:
+      'Mantenha os dados da empresa e do responsável sempre atualizados para garantir o correto funcionamento das reservas e dos vínculos com motoristas e veículos.',
+    descricaoPagina:
+      'Atualize os dados da empresa, responsável e documentos',
+  },
+};
+
+// --------------------------------------------------------------------------
+// COMPONENTE
+// --------------------------------------------------------------------------
+
+export default function EditarPerfilPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const [dados, setDados] = useState<Dados | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+
+  const permissao = user?.permissao as Permissao | undefined;
+
+  const config = permissao
+    ? PERSONA_CONFIG[permissao]
+    : undefined;
+
+  const tema = permissao
+    ? PERSONA_TEMAS[permissao]
+    : PERSONA_TEMAS.MOTORISTA;
+
+  // --------------------------------------------------------------------------
+  // BUSCA DOS DADOS
+  // --------------------------------------------------------------------------
+
+  useEffect(() => {
+    if (!user?.id) {
+      setError('Usuário não autenticado.');
+      setLoading(false);
+      return;
+    }
+
+    if (!config) {
+      setError(
+        'Não foi possível identificar o tipo de perfil do usuário.',
       );
+      setLoading(false);
+      return;
+    }
 
-      if (!sucesso) {
-        throw new Error(
-          error ??
-            'Erro ao desativar agente. Tente novamente.',
+    async function fetchDados() {
+      setLoading(true);
+      setError('');
+
+      try {
+        const resultado = await config!.fetchDados(user!.id);
+
+        if (resultado.error) {
+          setError(
+            resultado.message ||
+              `Erro ao buscar perfil de ${tema.label}.`,
+          );
+
+          setDados(null);
+        } else if (!resultado.dados) {
+          setError(
+            `Perfil de ${tema.label} não encontrado.`,
+          );
+
+          setDados(null);
+        } else {
+          setDados(resultado.dados);
+        }
+      } catch {
+        setError(
+          `Erro ao buscar perfil de ${tema.label}.`,
         );
+
+        setDados(null);
+      } finally {
+        setLoading(false);
       }
-
-      setModalExcluirAberto(false);
-
-      toast.success(
-        'Agente desativado com sucesso!',
-      );
-
-      if (onStatusChange) {
-        await onStatusChange();
-      }
-    } catch (err) {
-      console.error(err);
-
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao desativar agente. Tente novamente.',
-      );
-    } finally {
-      setIsUpdating(false);
     }
-  };
 
-  /**
-   * Processa a ativação do agente.
-   *
-   * A reativação continua utilizando diretamente
-   * a função existente no recuperacaoApi.
-   */
-  const handleAtivar = async () => {
-    if (isUpdating || loading) return;
+    fetchDados();
+  }, [user?.id, config, tema.label]);
 
-    setIsUpdating(true);
+  // --------------------------------------------------------------------------
+  // LOADING
+  // --------------------------------------------------------------------------
 
-    try {
-      await reativarUsuario(
-        agente.usuario.id,
-      );
+  if (loading) {
+    return (
+      <div className="p-4 flex flex-col items-center justify-center min-h-[60vh] gap-2 text-center">
+        <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
+        <span className="text-gray-600">
+          Carregando perfil...
+        </span>
+      </div>
+    );
+  }
 
-      setModalAtivarAberto(false);
+  // --------------------------------------------------------------------------
+  // ERRO
+  // --------------------------------------------------------------------------
 
-      toast.success(
-        'Agente ativado com sucesso!',
-      );
+  if (error) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="max-w-md w-full p-4 sm:p-6 bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-red-500" />
+          </div>
 
-      if (onStatusChange) {
-        await onStatusChange();
-      }
-    } catch (err) {
-      console.error(err);
+          <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">
+            Ocorreu um erro
+          </h3>
 
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao ativar agente. Tente novamente.',
-      );
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+          <p className="text-red-600 mb-4 sm:mb-6 text-sm sm:text-base break-words">
+            {error}
+          </p>
+
+          <Link
+            href="/perfil"
+            className={`inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 text-white rounded-lg transition-colors text-sm sm:text-base font-medium w-full ${tema.corBotao}`}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar para perfil
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // FORMULÁRIO
+  // --------------------------------------------------------------------------
+
+  const formulario = dados
+    ? config?.renderForm(
+        dados,
+        () => router.push('/perfil'),
+      )
+    : null;
+
+  // --------------------------------------------------------------------------
+  // RENDER
+  // --------------------------------------------------------------------------
 
   return (
-    <>
-      <article
-        className={cn(
-          'bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all',
-          !isAtivo && 'bg-gray-50/50',
-        )}
-      >
-        {/* Header */}
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <UserCircle
-              className={cn(
-                'h-10 w-10 shrink-0',
-                isAtivo
-                  ? 'text-green-500'
-                  : 'text-gray-400',
-              )}
+    <div className="min-h-screen bg-gray-50">
+      <div className="mx-auto px-3 xs:px-4 sm:px-5 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="max-w-5xl mx-auto">
+
+          {/* HEADER */}
+          <div className="mb-8 sm:mb-10 lg:mb-12 relative">
+            <div
+              className={`absolute inset-0 -top-4 sm:-top-6 -mx-4 sm:-mx-6 lg:-mx-8 h-40 sm:h-48 bg-gradient-to-br ${tema.corGradiente} rounded-b-2xl sm:rounded-b-3xl pointer-events-none`}
             />
 
-            <div className="min-w-0">
-              <h3 className="font-semibold text-gray-900 truncate leading-none">
-                {agente.usuario.nome.split(' ')[0]}{' '}
-                {agente.usuario.nome.split(' ').at(-1)}
-              </h3>
+            <div className="relative">
 
-              <div className="flex items-center gap-1 mt-1">
-                <Mail className="h-3 w-3 text-gray-400 shrink-0" />
+              {/* VOLTAR */}
+              <div className="flex justify-between items-start mb-6 sm:mb-0">
+                <Link
+                  href="/perfil"
+                  className="inline-flex items-center text-gray-600 hover:text-gray-900 group transition-all duration-200 text-sm sm:text-base bg-white/80 backdrop-blur-sm sm:bg-transparent px-3 py-2 sm:px-0 sm:py-0 rounded-lg sm:rounded-none border border-gray-200 sm:border-none"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200" />
 
-                <span className="text-xs text-gray-500 truncate">
-                  {agente.usuario.email}
-                </span>
+                  <span className="font-medium">
+                    Voltar para perfil
+                  </span>
+                </Link>
+
+                <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
+                  <div className="w-2 h-2 rounded-full bg-blue-600" />
+
+                  <span>
+                    Editando perfil de {tema.label}
+                  </span>
+                </div>
+              </div>
+
+              {/* TÍTULO */}
+              <div className="text-center pt-4 sm:pt-8 lg:pt-12 pb-6 sm:pb-8">
+                <div className="flex justify-center mb-4 sm:mb-6">
+                  <div
+                    className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-full bg-gradient-to-br ${tema.corFundoIconeSucesso} flex items-center justify-center border-4 border-white shadow-sm`}
+                  >
+                    <tema.IconeSucesso
+                      className={`w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 ${tema.corIconeSucesso}`}
+                    />
+                  </div>
+                </div>
+
+                <h1 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-3">
+                  Edição de Perfil
+                </h1>
+
+                <p className="text-gray-600 text-base sm:text-lg lg:text-xl max-w-xl mx-auto px-4 leading-relaxed">
+                  {tema.descricaoPagina}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-1">
-            <span
-              className={cn(
-                'text-[11px] font-medium px-2 py-1 rounded-full',
-                isAtivo
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-100 text-gray-600',
-              )}
-            >
-              {isAtivo ? 'Ativo' : 'Inativo'}
-            </span>
-          </div>
-        </div>
+          {/* FORMULÁRIO */}
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            {!dados || !formulario ? (
+              <div className="p-4 sm:p-6 md:p-8 text-center">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                  <UserX className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-gray-400" />
+                </div>
 
-        {/* Informações */}
-        <div className="px-4 py-3 border-y border-gray-100">
-          <div className="grid grid-cols-2 gap-3">
-            {/* Telefone */}
-            <div className="flex items-start gap-2 min-w-0">
-              <Phone className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">
+                  {!dados
+                    ? `${tema.label.charAt(0).toUpperCase()}${tema.label.slice(1)} não encontrado`
+                    : 'Edição ainda não disponível'}
+                </h3>
 
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                  Telefone
+                <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
+                  {!dados
+                    ? `Não foi possível carregar as informações de ${tema.label}.`
+                    : `A edição de perfil para ${tema.label} ainda não está disponível nesta versão.`}
                 </p>
+
+                <Link
+                  href="/perfil"
+                  className={`inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 text-white rounded-lg transition-colors text-sm sm:text-base font-medium ${tema.corBotao}`}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Voltar para perfil
+                </Link>
+              </div>
+            ) : (
+              <div className="p-3 xs:p-4 sm:p-6 lg:p-8">
+                {formulario}
+              </div>
+            )}
+          </div>
+
+          {/* INFORMAÇÃO */}
+          <div
+            className={`mt-4 xs:mt-5 sm:mt-6 md:mt-8 p-3 xs:p-4 sm:p-6 rounded-lg border ${tema.corCardInfo}`}
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+              <div className="flex-shrink-0">
+                <Info
+                  className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 ${tema.corIconeInfo}`}
+                />
+              </div>
+
+              <div className="flex-1">
+                <h4
+                  className={`font-medium text-xs xs:text-sm sm:text-base ${tema.corTextoInfo}`}
+                >
+                  {tema.tituloInfo}
+                </h4>
 
                 <p
-                  className={cn(
-                    'text-sm font-medium truncate',
-                    isAtivo
-                      ? 'text-gray-800'
-                      : 'text-gray-500',
-                  )}
+                  className={`text-xs sm:text-sm mt-0.5 sm:mt-1 leading-relaxed ${tema.corTextoInfoDescricao}`}
                 >
-                  {agente.usuario.telefone ||
-                    'Não informado'}
-                </p>
-              </div>
-            </div>
-
-            {/* Matrícula */}
-            <div className="flex items-start gap-2 min-w-0">
-              <IdCard className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
-
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                  Matrícula
-                </p>
-
-                <p
-                  className={cn(
-                    'text-sm font-medium truncate',
-                    isAtivo
-                      ? 'text-gray-800'
-                      : 'text-gray-500',
-                  )}
-                >
-                  {agente.matricula}
+                  {tema.descricaoInfo}
                 </p>
               </div>
             </div>
           </div>
+
         </div>
-
-        {/* Ações */}
-        <div className="p-3">
-          {isAtivo ? (
-            <button
-              onClick={() =>
-                setModalExcluirAberto(true)
-              }
-              disabled={isUpdating || loading}
-              className={cn(
-                'w-full h-9 rounded-lg bg-red-600 hover:bg-red-700',
-                'text-white text-sm font-medium',
-                'flex items-center justify-center gap-2',
-                (isUpdating || loading) &&
-                  'opacity-50 cursor-not-allowed',
-              )}
-            >
-              <Trash2 className="h-4 w-4" />
-
-              {isUpdating || loading
-                ? 'Processando...'
-                : 'Desativar'}
-            </button>
-          ) : (
-            <button
-              onClick={() =>
-                setModalAtivarAberto(true)
-              }
-              disabled={isUpdating || loading}
-              className={cn(
-                'w-full h-9 rounded-lg bg-green-600 hover:bg-green-700',
-                'text-white text-sm font-medium',
-                'flex items-center justify-center gap-2',
-                (isUpdating || loading) &&
-                  'opacity-50 cursor-not-allowed',
-              )}
-            >
-              <UserCheck className="h-4 w-4" />
-
-              {isUpdating || loading
-                ? 'Processando...'
-                : 'Reativar'}
-            </button>
-          )}
-        </div>
-      </article>
-
-      {/* Modal de desativação */}
-      <ModalConfirmacaoExclusao
-        isOpen={modalExcluirAberto}
-        onClose={() =>
-          setModalExcluirAberto(false)
-        }
-        onConfirm={handleExcluir}
-        titulo="Confirmar desativação"
-        mensagem="Quer mesmo desativar este agente?"
-        tipo="exclusao"
-      />
-
-      {/* Modal de ativação */}
-      <ModalConfirmacaoExclusao
-        isOpen={modalAtivarAberto}
-        onClose={() =>
-          setModalAtivarAberto(false)
-        }
-        onConfirm={handleAtivar}
-        titulo="Confirmar ativação"
-        mensagem="Quer mesmo ativar este agente?"
-        textoConfirmar="Reativar"
-        tipo="ativacao"
-      />
-    </>
+      </div>
+    </div>
   );
 }

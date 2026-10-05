@@ -8,13 +8,13 @@ import {
   getMotoristaByUserId,
 } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 import { getAgentePorId } from '@/features/usuarios/(personas)/agentes/services/agenteApi2';
-import {  getGestorByUserId } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
+import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi2';
 import { getEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
 
 import { Empresa } from '@/features/usuarios/(personas)/empresas/types/empresa';
 import { Motorista } from '@/features/usuarios/(personas)/motoristas/types/motorista';
 import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente2';
-import { Gestor } from '@/features/usuarios/(personas)/gestores/types/gestor';
+import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor2';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle,
@@ -93,7 +93,7 @@ import { Header } from '@/components/ui/Header/Header';
 
 type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' | 'EMPRESA';
 
-type Perfil = Motorista | agenteResponse | Gestor | Empresa;
+type Perfil = Motorista | agenteResponse | gestorResponse | Empresa;
 
 interface FetchPerfilResultado {
   error?: boolean;
@@ -141,11 +141,9 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
   GESTOR: {
     label: 'Gestor',
     fetchPerfil: async (userId) => {
-      const resultado = await getGestorByUserId(userId);
+      const resultado = await getGestorPorId(userId);
       return {
-        error: resultado.error,
-        message: resultado.message,
-        perfil: resultado.gestor,
+        perfil: resultado,
       };
     },
     // deletePerfil: (userId) => deleteGestor(userId),
