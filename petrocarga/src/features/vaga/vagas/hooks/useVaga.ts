@@ -1,47 +1,59 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+
 import { VagaResponse } from '../types/vaga';
 import { useApi } from '@/services/hooks/useApi';
 import { getVagaById } from '../service/vagaApi';
 
-interface useVagaOptions {
-  vagaId: string;
+interface UseVagaOptions {
+  vagaId?: string;
   buscarAutomaticamente?: boolean;
 }
 
-interface useVagaReturn {
+interface UseVagaReturn {
   vaga: VagaResponse | null;
   loading: boolean;
   error: string | null;
-  buscar: () => Promise<void>;
-  recarregar: () => Promise<void>;
+  buscar: (vagaId: string) => Promise<VagaResponse | null>;
+  recarregar: (vagaId: string) => Promise<VagaResponse | null>;
 }
 
 export function useVaga({
   vagaId,
-  buscarAutomaticamente = true,
-}: useVagaOptions): useVagaReturn {
+  buscarAutomaticamente = false,
+}: UseVagaOptions = {}): UseVagaReturn {
   const [vaga, setVaga] = useState<VagaResponse | null>(null);
+
   const { loading, error, execute } = useApi();
 
-  const buscar = useCallback(async () => {
-    const response = await execute(() => getVagaById(vagaId));
+  const buscar = useCallback(
+    async (id: string): Promise<VagaResponse | null> => {
+      if (!id) return null;
 
-    if (response) {
-      setVaga(response);
-    }
-  }, [vagaId, execute]);
+      const response = await execute(() => getVagaById(id));
 
-  const recarregar = useCallback(async () => {
-    await buscar();
-  }, [buscar]);
+      if (response) {
+        setVaga(response);
+      }
+
+      return response ?? null;
+    },
+    [execute],
+  );
+
+  const recarregar = useCallback(
+    async (id: string): Promise<VagaResponse | null> => {
+      return buscar(id);
+    },
+    [buscar],
+  );
 
   useEffect(() => {
-    if (buscarAutomaticamente) {
-      buscar();
-    }
-  }, [buscarAutomaticamente, buscar]);
+    if (!buscarAutomaticamente || !vagaId) return;
+
+    buscar(vagaId);
+  }, [buscarAutomaticamente, vagaId, buscar]);
 
   return {
     vaga,

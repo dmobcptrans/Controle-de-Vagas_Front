@@ -5,9 +5,7 @@ import { useState } from 'react';
 import { MapReserva } from '@/features/map/components/MapReserva';
 import ReservaComponent from '@/features/reserva/reservar-vaga/components/ReservaComponent';
 
-import {
-  VagasMapa,
-} from '@/features/vaga/vagas/types/vaga';
+import { VagasMapa } from '@/features/vaga/vagas/types/vaga';
 
 import {
   CTASearch,
@@ -44,17 +42,20 @@ export default function ReservaPage() {
   const suggestions = useMapboxSuggestions(searchValue, true);
 
   const {
-    vaga: selectedVaga,
+    vaga,
     loading: loadingVaga,
     error: errorVaga,
   } = useVaga({
-    vagaId: selectedVagaId!,
+    vagaId: selectedVagaId ?? undefined,
     buscarAutomaticamente: Boolean(selectedVagaId),
   });
 
-  const handleSuggestionSelect = (
-    suggestion: SuggestionWithCoords,
-  ) => {
+  // Evita mostrar uma vaga antiga enquanto a nova carrega:
+  // só considera a vaga se ela for a que está selecionada.
+  const selectedVaga =
+    vaga && vaga.id === selectedVagaId ? vaga : null;
+
+  const handleSuggestionSelect = (suggestion: SuggestionWithCoords) => {
     setSearchValue(suggestion.label);
 
     setSelectedLocation({

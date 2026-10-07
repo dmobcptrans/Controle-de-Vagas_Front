@@ -6,7 +6,7 @@ import { Search, Users, CheckCircle, XCircle } from 'lucide-react';
 
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { useAgentes } from '@/features/usuarios/(personas)/agentes/hooks/useAgentes';
-import { agenteParams } from '@/features/usuarios/(personas)/agentes/types/agente2';
+import { agenteParams } from '@/features/usuarios/(personas)/agentes/types/agente';
 import AgenteCard from '@/features/usuarios/(personas)/gestores/components/cards/agentes-card';
 import { Button } from '@/components/ui/button';
 import FloatingButton from '@/components/ui/floatingButton';

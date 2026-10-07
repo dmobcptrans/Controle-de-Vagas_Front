@@ -23,6 +23,13 @@ export type EmpresaPayload = {
     aceitouTermos: boolean
 }
 
+export type EmpresaMotoristaVeiculoResponse = {
+    id: string;
+    nome: string;
+    cnpj: string;
+    ativo: boolean
+}
+
 export type EmpresaResponse = {
     id: string,
     usuario: Usuario
@@ -44,16 +51,16 @@ export type EmpresasPaginadaResponse = Paginacao<EmpresaResponse>
 export type MotoristaEmpresaPaginadoResponse = Paginacao<MotoristaEmpresaResponse>;
 
 export type AtualizarEmpresaPayload = {
-    nome: string,
-    email: string,
-    telefone: string,
-    senha: string,
-    cpf: string,
-    matricula: string,
-    cnpj: string,
-    razaoSocial: string,
-    tipoCnh: TipoCnh,
-    numeroCnh: string,
-    DateValidadeCnh: string,
-    empresaId: string
+    nome?: string,
+    email?: string,
+    telefone?: string,
+    senha?: string,
+    cpf?: string,
+    matricula?: string,
+    cnpj?: string,
+    razaoSocial?: string,
+    tipoCnh?: TipoCnh,
+    numeroCnh?: string,
+    DateValidadeCnh?: string,
+    empresaId?: string
 } 

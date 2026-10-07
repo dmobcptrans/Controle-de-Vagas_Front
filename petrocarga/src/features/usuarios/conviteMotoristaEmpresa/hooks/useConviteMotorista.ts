@@ -8,7 +8,7 @@ import {
   responderConviteMotoristaExistenteEmpresa,
 } from '../services/conviteMotoristaApi';
 
-import { desvincularMotoristaEmpresa } from '../../(personas)/empresas/services/empresaApi';
+import { DesvincularMotoristaEmpresa } from '../../(personas)/empresas/services/empresaApi2';
 
 import type {
   ConviteMotoristaEmpresaListaItem,
@@ -110,7 +110,7 @@ export function useConvitesMotorista({
       }
 
       try {
-        await desvincularMotoristaEmpresa(empresaId, motoristaId);
+        await DesvincularMotoristaEmpresa(empresaId, motoristaId);
 
         toast.success('Motorista desvinculado com sucesso.');
 

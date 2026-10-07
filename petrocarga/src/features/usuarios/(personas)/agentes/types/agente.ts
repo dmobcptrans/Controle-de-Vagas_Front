@@ -1,5 +1,5 @@
 import { Paginacao } from '@/lib/types/paginacao';
-import { TipoCnh } from './../../motoristas/types/tipoCnh';
+import { TipoCnh } from '../../motoristas/types/tipoCnh';
 import { Usuario } from "@/lib/types/personas/user2"
 import { Ordem } from '@/features/denuncias/types/denuncia';
 

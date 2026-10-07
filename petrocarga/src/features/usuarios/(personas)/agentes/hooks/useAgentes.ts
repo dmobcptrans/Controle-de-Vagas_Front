@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { getAgentes } from '../services/agenteApi2';
-import { agenteParams, agenteResponse } from '../types/agente2';
+import { getAgentes } from '../services/agenteApi';
+import { agenteParams, agenteResponse } from '../types/agente';
 import { useApi } from '@/services/hooks/useApi';
 
 interface UseAgentesOptions {

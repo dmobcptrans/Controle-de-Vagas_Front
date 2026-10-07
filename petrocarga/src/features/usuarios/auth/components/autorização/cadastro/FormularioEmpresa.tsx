@@ -1,23 +1,30 @@
 'use client';
 
-import { useActionState, useEffect, useState, useRef } from 'react';
+import { useRef, useState } from 'react';
+
 import { Eye, EyeOff } from 'lucide-react';
-import { addEmpresa } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
+
+import { useEmpresaMutation } from '@/features/usuarios/(personas)/empresas/hooks/useEmpresaMutation';
+
 import ModalTermos from '@/features/usuarios/auth/components/modal/autorizacao/login/ModalTermos';
+
 import toast from 'react-hot-toast';
 
 type FormularioEmpresaProps = {
   onSuccess?: () => void;
 };
 
-
 const etapas = ['Dados da empresa', 'Complementos'];
 
 export default function FormularioEmpresa({
   onSuccess,
 }: FormularioEmpresaProps) {
+  const { criar, loading, error } = useEmpresaMutation();
+
   const [step, setStep] = useState(0);
+
   const formRef = useRef<HTMLFormElement>(null);
+
   const [mostrarModalTermos, setMostrarModalTermos] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -30,19 +37,36 @@ export default function FormularioEmpresa({
     aceitouTermos: false,
   });
 
-  const [state, action, pending] = useActionState(addEmpresa, null);
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
-  useEffect(() => {
-    if (!state?.message) return;
-
-    if (state.error) {
-      toast.error(state.message);
+    if (formData.senha !== formData.confirmarSenha) {
+      toast.error('As senhas não coincidem');
       return;
     }
 
-    toast.success(state.message);
+    if (!formData.aceitouTermos) {
+      toast.error('Você precisa aceitar os termos de uso');
+      return;
+    }
 
-    formRef.current?.reset();
+    const payload = {
+      nome: formData.nome,
+      telefone: formData.telefone.replace(/\D/g, ''),
+      email: formData.email,
+      senha: formData.senha,
+      cnpj: formData.cnpj.replace(/\D/g, ''),
+      aceitouTermos: formData.aceitouTermos,
+    };
+
+    const response = await criar(payload);
+
+    if (!response) {
+      toast.error(error ?? 'Não foi possível cadastrar a empresa');
+      return;
+    }
+
+    toast.success('Empresa cadastrada com sucesso!');
 
     setFormData({
       nome: '',
@@ -55,8 +79,9 @@ export default function FormularioEmpresa({
     });
 
     setStep(0);
+
     onSuccess?.();
-  }, [state, onSuccess]);
+  }
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -66,7 +91,9 @@ export default function FormularioEmpresa({
     setFormData((prev) => ({
       ...prev,
       [name]:
-        type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+        type === 'checkbox'
+          ? (e.target as HTMLInputElement).checked
+          : value,
     }));
   };
 
@@ -110,14 +137,14 @@ export default function FormularioEmpresa({
     <>
       <form
         ref={formRef}
-        action={action}
-        className="w-full max-w-xl rounded-4xl p-3 border border-slate-200 bg-white shadow-2xl overflow-hidden"
+        onSubmit={handleSubmit}
+        className="w-full max-w-xl rounded-4xl border border-slate-200 bg-white p-3 shadow-2xl overflow-hidden"
       >
-        {/* Cabeçalho Fixo / Progresso */}
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-slate-100 p-5">
+        {/* CABEÇALHO FIXO / PROGRESSO */}
+        <div className="sticky top-0 z-10 border-b border-slate-100 bg-white/95 p-5 backdrop-blur-sm">
           <div className="flex flex-col">
             <div className="flex justify-end">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-blue-600">
                 Etapa {step + 1} de {etapas.length}
               </span>
             </div>
@@ -140,7 +167,10 @@ export default function FormularioEmpresa({
         {/* BODY */}
         <div className="space-y-6 p-6">
           {/* STEP 0 */}
-          <div data-step={0} className={step === 0 ? 'space-y-5' : 'hidden'}>
+          <div
+            data-step={0}
+            className={step === 0 ? 'space-y-5' : 'hidden'}
+          >
             <Input
               name="nome"
               label="Nome da Empresa"
@@ -155,16 +185,25 @@ export default function FormularioEmpresa({
               label="CNPJ"
               placeholder="00.000.000/0001-00"
               required
-              inputMode='numeric'
+              inputMode="numeric"
               maxLength={14}
               value={formData.cnpj}
-              onChange={handleChange}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+
+                setFormData((prev) => ({
+                  ...prev,
+                  cnpj: value,
+                }));
+              }}
             />
           </div>
 
           {/* STEP 1 */}
-          <div data-step={1} className={step === 1 ? 'space-y-5' : 'hidden'}>
-
+          <div
+            data-step={1}
+            className={step === 1 ? 'space-y-5' : 'hidden'}
+          >
             <Input
               name="telefone"
               label="Telefone"
@@ -174,8 +213,12 @@ export default function FormularioEmpresa({
               maxLength={11}
               value={formData.telefone}
               onChange={(e) => {
-                e.target.value = e.target.value.replace(/\D/g, '');
-                handleChange(e);
+                const value = e.target.value.replace(/\D/g, '');
+
+                setFormData((prev) => ({
+                  ...prev,
+                  telefone: value,
+                }));
               }}
             />
 
@@ -185,7 +228,7 @@ export default function FormularioEmpresa({
               label="E-mail"
               placeholder="exemplo@email.com"
               required
-              inputMode='email'
+              inputMode="email"
               value={formData.email}
               onChange={handleChange}
             />
@@ -196,6 +239,7 @@ export default function FormularioEmpresa({
               label="Senha"
               placeholder="Mínimo 6 caracteres"
               required
+              minLength={6}
               value={formData.senha}
               onChange={handleChange}
             />
@@ -206,6 +250,7 @@ export default function FormularioEmpresa({
               label="Confirmar senha"
               placeholder="Digite a senha novamente"
               required
+              minLength={6}
               value={formData.confirmarSenha}
               onChange={(e) => {
                 handleChange(e);
@@ -218,7 +263,7 @@ export default function FormularioEmpresa({
               }}
             />
 
-            {/* TERMO */}
+            {/* TERMOS */}
             <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4">
               <input
                 type="checkbox"
@@ -230,7 +275,7 @@ export default function FormularioEmpresa({
               />
 
               <div className="grid gap-1.5 leading-none">
-                <span className="text-sm text-gray-600 leading-relaxed">
+                <span className="text-sm leading-relaxed text-gray-600">
                   Li e aceito os{' '}
                   <button
                     type="button"
@@ -255,7 +300,8 @@ export default function FormularioEmpresa({
             <button
               type="button"
               onClick={voltar}
-              className="h-12 flex-1 rounded-xl border border-slate-300 bg-white text-sm font-bold text-slate-700"
+              disabled={loading}
+              className="h-12 flex-1 rounded-xl border border-slate-300 bg-white text-sm font-bold text-slate-700 disabled:opacity-50"
             >
               Voltar
             </button>
@@ -272,10 +318,10 @@ export default function FormularioEmpresa({
           ) : (
             <button
               type="submit"
-              disabled={pending}
+              disabled={loading}
               className="h-12 flex-1 rounded-xl bg-blue-600 text-sm font-bold text-white disabled:opacity-50"
             >
-              {pending ? 'Cadastrando...' : 'Cadastrar empresa'}
+              {loading ? 'Cadastrando...' : 'Cadastrar empresa'}
             </button>
           )}
         </div>
@@ -295,7 +341,12 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label: string;
 };
 
-function Input({ label, type = 'text', className, ...props }: InputProps) {
+function Input({
+  label,
+  type = 'text',
+  className,
+  ...props
+}: InputProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   const isPassword = type === 'password';
@@ -303,14 +354,19 @@ function Input({ label, type = 'text', className, ...props }: InputProps) {
   return (
     <div className="w-full">
       <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-        {label} {props.required && <span className="text-red-500">*</span>}
+        {label}{' '}
+        {props.required && (
+          <span className="text-red-500">*</span>
+        )}
       </label>
 
       <div className="relative">
         <input
           {...props}
           type={isPassword && showPassword ? 'text' : type}
-          className="h-12 w-full rounded-xl border border-slate-300 px-4 pr-12 text-base text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-50"
+          className={`h-12 w-full rounded-xl border border-slate-300 px-4 pr-12 text-base text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-50 ${
+            className ?? ''
+          }`}
         />
 
         {isPassword && (

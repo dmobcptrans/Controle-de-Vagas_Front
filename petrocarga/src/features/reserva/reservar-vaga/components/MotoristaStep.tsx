@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { getMotoristaEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
+
+import { getMotoristaEmpresa } from '@/features/usuarios/(personas)/empresas/services/empresaApi2';
+
 import {
   Check,
   ChevronLeft,
@@ -97,7 +99,8 @@ export default function MotoristaStep({
 
   const TAMANHO_PAGINA = 10;
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceRef =
+    useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ==================== BUSCA MOTORISTAS ====================
 
@@ -126,12 +129,15 @@ export default function MotoristaStep({
 
     debounceRef.current = setTimeout(async () => {
       try {
-        const result = await getMotoristaEmpresaByUsuarioId(
+        const result = await getMotoristaEmpresa(
           empresaId,
-          pagina,
-          TAMANHO_PAGINA,
-          termo || undefined,
-          true, // somente ativos
+          {
+            pagina,
+            tamanhoPagina: TAMANHO_PAGINA,
+            nome: termo || undefined,
+            ativo: true,
+            ordem: 'ASC',
+          }
         );
 
         const motoristas = result.content ?? [];
@@ -140,12 +146,17 @@ export default function MotoristaStep({
 
         setTotalPaginas(result.totalPaginas ?? 0);
         setTotalElementos(result.totalElementos ?? 0);
+
       } catch (error) {
-        console.error('Erro ao buscar motoristas:', error);
+        console.error(
+          'Erro ao buscar motoristas:',
+          error
+        );
 
         setDriverResults([]);
         setTotalPaginas(0);
         setTotalElementos(0);
+
       } finally {
         setLoadingDrivers(false);
       }
@@ -158,6 +169,7 @@ export default function MotoristaStep({
     };
   }, [driverSearch, empresaId, pagina]);
 
+
   // ==================== RESET AO TROCAR EMPRESA ====================
 
   useEffect(() => {
@@ -168,6 +180,7 @@ export default function MotoristaStep({
     setDriverSearch('');
   }, [empresaId]);
 
+
   // ==================== SELECIONAR MOTORISTA ====================
 
   const handleSelectDriver = (motorista: MotoristaAPI) => {
@@ -177,6 +190,7 @@ export default function MotoristaStep({
 
     onDriverChange(motorista.id);
   };
+
 
   // ==================== PESQUISA ====================
 
@@ -192,6 +206,7 @@ export default function MotoristaStep({
       setPagina(0);
     }
   };
+
 
   // ==================== PAGINAÇÃO ====================
 
@@ -212,8 +227,10 @@ export default function MotoristaStep({
     !loadingDrivers &&
     totalPaginas > 1;
 
+
   return (
     <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-xl mx-auto px-2 sm:px-0">
+
       <p className="font-semibold mb-2 sm:mb-3 text-center text-base sm:text-lg">
         Selecione o motorista
       </p>
@@ -231,7 +248,9 @@ export default function MotoristaStep({
           <input
             type="text"
             value={driverSearch}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={(e) =>
+              handleSearchChange(e.target.value)
+            }
             placeholder="Pesquisar motorista por nome"
             className="w-full pl-9 pr-10 py-3 text-sm sm:text-base rounded-2xl border border-gray-200 bg-gray-50/60 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
           />
@@ -244,8 +263,6 @@ export default function MotoristaStep({
         {/* ==================== STATUS ==================== */}
 
         <div className="mt-2 flex items-center gap-2">
-
-
           {totalElementos > 0 && (
             <span className="text-xs text-gray-400">
               {totalElementos} motorista
@@ -277,6 +294,7 @@ export default function MotoristaStep({
 
         {!motoristaSelecionado && (
           <div className="mt-2 max-h-[300px] overflow-y-auto space-y-2 pr-0.5">
+
             {loadingDrivers ? (
               <div className="flex flex-col items-center justify-center py-6 gap-2">
                 <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
@@ -285,13 +303,17 @@ export default function MotoristaStep({
                   Buscando motoristas...
                 </p>
               </div>
+
             ) : driverResults.length === 0 ? (
+
               <p className="text-xs text-gray-400 text-center py-6">
                 {driverSearch.trim()
                   ? 'Nenhum motorista encontrado.'
                   : 'Nenhum motorista ativo encontrado.'}
               </p>
+
             ) : (
+
               driverResults.map((motorista) => (
                 <OptionCard
                   key={motorista.id}
@@ -317,10 +339,14 @@ export default function MotoristaStep({
 
         {mostrarPaginacao && (
           <div className="flex items-center justify-between mt-3 px-1">
+
             <button
               type="button"
               onClick={handlePaginaAnterior}
-              disabled={pagina === 0 || loadingDrivers}
+              disabled={
+                pagina === 0 ||
+                loadingDrivers
+              }
               className="flex items-center gap-1 px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -356,6 +382,7 @@ export default function MotoristaStep({
               Próxima
               <ChevronRight className="w-4 h-4" />
             </button>
+
           </div>
         )}
       </div>

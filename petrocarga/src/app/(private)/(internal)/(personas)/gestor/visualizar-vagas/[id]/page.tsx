@@ -53,7 +53,7 @@ export default function VagaPosting() {
         <p className="text-gray-500 text-sm max-w-md mx-auto mb-6">{error}</p>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={recarregar} variant="outline">
+          <Button onClick={() => recarregar(id)} variant="outline">
             Tentar novamente
           </Button>
 

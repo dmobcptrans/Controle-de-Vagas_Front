@@ -8,7 +8,7 @@ import { ReservaModal } from '@/features/usuarios/(personas)/gestores/components
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { toDateKey, dayStartISO } from '@/components/utils/gestor/calendario/utils';
 import type { EventClickArg, EventInput } from '@fullcalendar/core';
-import { getVagaById } from '@/features/vaga/vagas/service/vagaApi';
+import { useVaga } from '@/features/vaga/vagas/hooks/useVaga';
 import type { ReservaResponse } from '@/features/reserva/reservas/types/reservas';
 import type { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 import { useCalendarioMes } from '@/contexts/CalendarioMesContext';
@@ -53,6 +53,7 @@ export default function CalendarioReservasGestor() {
     carregarReservasDoDia,
   } = useReservas();
   const { ano, mes } = useCalendarioMes();
+  const { buscar } = useVaga();
   const calendarRef = useRef<InstanceType<typeof FullCalendar>>(null);
 
   useEffect(() => {
@@ -149,8 +150,12 @@ export default function CalendarioReservasGestor() {
 
   // ==================== CACHE ====================
 
-  const ensureVagasInCache = useCallback(async (vagaIds: string[]) => {
-    const missing = vagaIds.filter((id) => !(id in vagaCacheRef.current));
+  const ensureVagasInCache = useCallback(
+  async (vagaIds: string[]) => {
+    const missing = vagaIds.filter(
+      (id) => !(id in vagaCacheRef.current),
+    );
+
     if (!missing.length) return;
 
     const newEntries: Record<string, VagaResponse | null> = {};
@@ -158,8 +163,9 @@ export default function CalendarioReservasGestor() {
     await Promise.all(
       missing.map(async (id) => {
         try {
-          const v = await getVagaById(id);
-          newEntries[id] = v ?? null;
+          const vaga = await buscar(id);
+
+          newEntries[id] = vaga;
         } catch {
           newEntries[id] = null;
         }
@@ -167,10 +173,16 @@ export default function CalendarioReservasGestor() {
     );
 
     if (Object.keys(newEntries).length) {
-      vagaCacheRef.current = { ...vagaCacheRef.current, ...newEntries };
+      vagaCacheRef.current = {
+        ...vagaCacheRef.current,
+        ...newEntries,
+      };
+
       forceUpdate((n) => n + 1);
     }
-  }, []);
+  },
+  [buscar],
+);
 
   // ==================== HANDLERS ====================
 

@@ -177,7 +177,7 @@ export function ViewMap({
 
     if (
       vagasMap.tipo === 'VAGAS' &&
-      vagasMap.vagas.length > 0
+      vagasMap.vagas && vagasMap.vagas.length && vagasMap.vagas.length > 0
     ) {
       addVagaMarkersReserva(
         map,

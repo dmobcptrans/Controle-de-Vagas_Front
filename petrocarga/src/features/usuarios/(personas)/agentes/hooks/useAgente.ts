@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useApi } from '@/services/hooks/useApi';
 
-import { agenteResponse } from '../types/agente2';
-import { getAgentePorId } from '../services/agenteApi2';
+import { agenteResponse } from '../types/agente';
+import { getAgentePorId } from '../services/agenteApi';
 
 interface UseAgenteOptions {
   agenteId: string;

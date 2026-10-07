@@ -1,8 +1,11 @@
 'use client';
 
-import { EmpresaResponse } from '../../types/empresa2';
-import { useActionState, useEffect, useState } from 'react';
-import { atualizarEmpresa } from '../../services/empresaApi';
+import { EmpresaResponse, AtualizarEmpresaPayload } from '../../types/empresa2';
+
+import { useState } from 'react';
+
+import { useEmpresaMutation } from '../../hooks/useEmpresaMutation';
+
 import {
   Card,
   CardContent,
@@ -11,11 +14,20 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { CheckCircle, CircleAlert, Building2 } from 'lucide-react';
-import Form from 'next/form';
+
+import {
+  CheckCircle,
+  CircleAlert,
+  Building2,
+} from 'lucide-react';
+
 import FormItem from '@/components/form/form-item';
+
 import { Input } from '@/components/ui/input';
+
 import { Button } from '@/components/ui/button';
+
+import toast from 'react-hot-toast';
 
 interface EditarEmpresaProps {
   empresa: EmpresaResponse;
@@ -26,12 +38,8 @@ export default function EditarEmpresa({
   empresa,
   onSuccess,
 }: EditarEmpresaProps) {
-  const [state, atualizarEmpresaAction, pending] = useActionState(
-    async (_prevState: unknown, formData: FormData) => {
-      return await atualizarEmpresa(formData);
-    },
-    null,
-  );
+  const { atualizar, loading, error, limparError } =
+    useEmpresaMutation();
 
   /*
    * Dados da empresa/usuário
@@ -42,35 +50,78 @@ export default function EditarEmpresa({
    * empresa.usuario.email
    * empresa.usuario.cnpj
    */
-  const [nome, setNome] = useState(empresa.usuario?.nome ?? '');
+
+  const [nome, setNome] = useState(
+    empresa.usuario?.nome ?? '',
+  );
+
   const [telefone, setTelefone] = useState(
     empresa.usuario?.telefone?.replace(/\D/g, '') ?? '',
   );
-  const [email, setEmail] = useState(empresa.usuario?.email ?? '');
+
+  const [email, setEmail] = useState(
+    empresa.usuario?.email ?? '',
+  );
+
   const [cnpj, setCnpj] = useState(
     empresa.usuario?.cnpj?.replace(/\D/g, '') ?? '',
   );
 
-  useEffect(() => {
-    if (state && !state.error && state.message && onSuccess) {
-      const timer = setTimeout(() => {
+  const [senha, setSenha] = useState('');
+
+  const [success, setSuccess] = useState(false);
+
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>,
+  ) {
+    e.preventDefault();
+
+    limparError();
+    setSuccess(false);
+
+    const payload: AtualizarEmpresaPayload = {
+      nome,
+      telefone: telefone.replace(/\D/g, ''),
+      email,
+      cnpj: cnpj.replace(/\D/g, ''),
+      senha,
+    };
+
+    const sucesso = await atualizar(
+      empresa.id,
+      payload,
+    );
+
+    if (!sucesso) {
+      toast.error(
+        error ?? 'Não foi possível atualizar a empresa.',
+      );
+
+      return;
+    }
+
+    setSuccess(true);
+
+    toast.success('Empresa atualizada com sucesso!');
+
+    if (onSuccess) {
+      setTimeout(() => {
         onSuccess();
       }, 250);
-
-      return () => clearTimeout(timer);
     }
-  }, [state, onSuccess]);
+  }
 
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">
-      <Card className="w-full max-w-4xl mx-auto">
+      <Card className="mx-auto w-full max-w-4xl">
+
         {/* Header */}
-        <CardHeader className="space-y-3 text-center pb-6">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <Building2 className="w-8 h-8 text-white" />
+        <CardHeader className="space-y-3 pb-6 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+            <Building2 className="h-8 w-8 text-white" />
           </div>
 
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          <CardTitle className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-3xl font-bold text-transparent">
             Edição de Empresa
           </CardTitle>
 
@@ -79,36 +130,31 @@ export default function EditarEmpresa({
           </CardDescription>
         </CardHeader>
 
-        <Form action={atualizarEmpresaAction}>
-          {/* ID da empresa utilizado na URL do PATCH */}
-          <input type="hidden" name="id" value={empresa.id} />
-
-          {/* ID da empresa enviado no payload */}
-          <input type="hidden" name="empresaId" value={empresa.id} />
-
+        <form onSubmit={handleSubmit}>
           <CardContent className="p-4 md:p-6 lg:p-8">
+
             {/* Feedback */}
-            {(state?.error || state?.message) && (
+            {(error || success) && (
               <div
-                className={`flex items-start gap-3 rounded-md border p-4 mb-6 ${
-                  state.error
+                className={`mb-6 flex items-start gap-3 rounded-md border p-4 ${
+                  error
                     ? 'border-red-200 bg-red-50 text-red-900'
                     : 'border-green-200 bg-green-50 text-green-900'
                 }`}
               >
-                {state.error ? (
-                  <CircleAlert className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                {error ? (
+                  <CircleAlert className="mt-0.5 h-5 w-5 flex-shrink-0" />
                 ) : (
-                  <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
                 )}
 
                 <div>
                   <span className="text-sm md:text-base">
-                    {state.message}
+                    {error ?? 'Empresa atualizada com sucesso!'}
                   </span>
 
-                  {!state.error && (
-                    <p className="text-green-700 text-sm mt-1">
+                  {!error && (
+                    <p className="mt-1 text-sm text-green-700">
                       Redirecionando para o perfil...
                     </p>
                   )}
@@ -120,7 +166,7 @@ export default function EditarEmpresa({
             {/* DADOS DA EMPRESA */}
             {/* ========================================================= */}
 
-            <CardDescription className="text-base text-center mb-6 text-blue-800 font-bold">
+            <CardDescription className="mb-6 text-center text-base font-bold text-blue-800">
               Dados da Empresa
             </CardDescription>
 
@@ -154,7 +200,9 @@ export default function EditarEmpresa({
                 inputMode="numeric"
                 value={cnpj}
                 onChange={(e) =>
-                  setCnpj(e.target.value.replace(/\D/g, ''))
+                  setCnpj(
+                    e.target.value.replace(/\D/g, ''),
+                  )
                 }
                 required
               />
@@ -172,7 +220,9 @@ export default function EditarEmpresa({
                 type="email"
                 placeholder="empresa@email.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) =>
+                  setEmail(e.target.value)
+                }
                 required
               />
             </FormItem>
@@ -191,7 +241,9 @@ export default function EditarEmpresa({
                 inputMode="numeric"
                 value={telefone}
                 onChange={(e) =>
-                  setTelefone(e.target.value.replace(/\D/g, ''))
+                  setTelefone(
+                    e.target.value.replace(/\D/g, ''),
+                  )
                 }
                 required
               />
@@ -201,7 +253,7 @@ export default function EditarEmpresa({
             {/* SENHA */}
             {/* ========================================================= */}
 
-            <CardDescription className="text-base text-center mt-8 mb-6 text-blue-800 font-bold">
+            <CardDescription className="mb-6 mt-8 text-center text-base font-bold text-blue-800">
               Alteração de Senha
             </CardDescription>
 
@@ -215,21 +267,25 @@ export default function EditarEmpresa({
                 name="senha"
                 type="password"
                 placeholder="Digite uma nova senha"
+                value={senha}
+                onChange={(e) =>
+                  setSenha(e.target.value)
+                }
               />
             </FormItem>
           </CardContent>
 
           {/* Footer */}
-          <CardFooter className="px-4 md:px-6 lg:px-8 pb-6 pt-2">
+          <CardFooter className="px-4 pb-6 pt-2 md:px-6 lg:px-8">
             <Button
               type="submit"
-              disabled={pending}
-              className="w-full md:w-auto md:ml-auto rounded-sm px-6 md:px-10 py-2 md:py-2.5 text-sm md:text-base font-medium text-blue-800 bg-blue-200 hover:bg-blue-300 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              disabled={loading}
+              className="w-full rounded-sm bg-blue-200 px-6 py-2 text-sm font-medium text-blue-800 transition hover:bg-blue-300 focus:ring-4 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50 md:ml-auto md:w-auto md:px-10 md:py-2.5 md:text-base"
             >
-              {pending ? 'Salvando...' : 'Atualizar'}
+              {loading ? 'Salvando...' : 'Atualizar'}
             </Button>
           </CardFooter>
-        </Form>
+        </form>
       </Card>
     </main>
   );

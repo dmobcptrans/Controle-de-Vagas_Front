@@ -61,7 +61,7 @@ export default function EditarVagaPage() {
 
         <p className="text-gray-500 text-sm max-w-md mx-auto mb-6">{error}</p>
 
-        <Button onClick={recarregar} variant="outline">
+        <Button onClick={() => recarregar(id)} variant="outline">
           Tentar novamente
         </Button>
       </div>

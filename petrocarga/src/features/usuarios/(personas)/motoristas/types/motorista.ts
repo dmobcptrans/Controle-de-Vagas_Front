@@ -81,3 +81,14 @@ export type MotoristaResponse = {
   email: string;
   ativo: boolean;
 };
+
+export type MotoristaEmpresResponse = {
+  id: string;
+  nome: string;
+  telefone: string;
+  email: string;
+  ativo: boolean;
+  empresaId: string;
+  empresaCnpj: string;
+  empresaRazaoSocial: string
+}

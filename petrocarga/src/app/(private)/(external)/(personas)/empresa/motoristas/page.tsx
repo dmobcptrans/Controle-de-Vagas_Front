@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-
 import { useSearchParams } from 'next/navigation';
 
 import { useAuth } from '@/features/usuarios/auth/service/useAuth';
@@ -22,20 +21,22 @@ import {
   X,
 } from 'lucide-react';
 
-import { MotoristaEmpresaPaginadoResponse } from '@/features/usuarios/(personas)/empresas/types/empresa2';
-
 import toast from 'react-hot-toast';
 
 import { Button } from '@/components/ui/button';
-
 import Link from 'next/link';
 
 import {
-  desvincularMotoristaEmpresa,
-  getMotoristaEmpresaByUsuarioId,
-} from '@/features/usuarios/(personas)/empresas/services/empresaApi';
+  getMotoristaEmpresa,
+  DesvincularMotoristaEmpresa,
+} from '@/features/usuarios/(personas)/empresas/services/empresaApi2';
 
-import { MotoristaCard }from '@/features/usuarios/(personas)/empresas/components/cards/MotoristaCard';
+import {
+  MotoristaEmpresaPaginadoResponse,
+  EmpresaParams,
+} from '@/features/usuarios/(personas)/empresas/types/empresa2';
+
+import { MotoristaCard } from '@/features/usuarios/(personas)/empresas/components/cards/MotoristaCard';
 
 import { CTASplit } from '@/components/ui/CTA/split/CTASplit';
 
@@ -47,7 +48,9 @@ import {
 } from '@/features/usuarios/conviteMotoristaEmpresa/services/conviteMotoristaApi';
 
 import { ConviteMotoristaEmpresaListaItem } from '@/features/usuarios/conviteMotoristaEmpresa/types/conviteMotoristaEmpresa';
+
 import { Header } from '@/components/ui/Header/Header';
+
 
 // ==================== CARD DE CONVITE PENDENTE ====================
 
@@ -97,6 +100,7 @@ function ConvitePendenteCard({
   );
 }
 
+
 // ==================== PAGINAÇÃO ====================
 
 function PaginationControls({
@@ -116,7 +120,10 @@ function PaginationControls({
 }) {
   const startItem = currentPage * currentPageSize + 1;
 
-  const endItem = Math.min((currentPage + 1) * currentPageSize, totalElements);
+  const endItem = Math.min(
+    (currentPage + 1) * currentPageSize,
+    totalElements
+  );
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
@@ -185,7 +192,9 @@ function PaginationControls({
           {getPageNumbers().map((page, index) => (
             <button
               key={index}
-              onClick={() => typeof page === 'number' && onPageChange(page)}
+              onClick={() =>
+                typeof page === 'number' && onPageChange(page)
+              }
               disabled={typeof page !== 'number' || isLoading}
               className={`
                 h-8 min-w-[32px] rounded-md px-2 text-xs transition-colors
@@ -222,11 +231,15 @@ function PaginationControls({
   );
 }
 
+
 // ==================== ONLINE / OFFLINE ====================
 
-const updateOnlineStatus = (setIsOffline: (value: boolean) => void) => {
+const updateOnlineStatus = (
+  setIsOffline: (value: boolean) => void
+) => {
   setIsOffline(!navigator.onLine);
 };
+
 
 // ==================== PÁGINA ====================
 
@@ -235,10 +248,10 @@ export default function MotoristasEmpresa() {
 
   const searchParams = useSearchParams();
 
-  // ==================== ABA ATIVA ====================
-
   const aba =
-    searchParams.get('aba') === 'pendencias' ? 'pendencias' : 'motoristas';
+    searchParams.get('aba') === 'pendencias'
+      ? 'pendencias'
+      : 'motoristas';
 
   // ==================== MOTORISTAS ====================
 
@@ -265,6 +278,7 @@ export default function MotoristasEmpresa() {
 
   const [loadingPendencias, setLoadingPendencias] = useState(true);
 
+
   // ==================== BUSCAR MOTORISTAS ====================
 
   const fetchMotoristas = useCallback(
@@ -277,23 +291,39 @@ export default function MotoristasEmpresa() {
       setLoading(true);
 
       try {
-        const response = await getMotoristaEmpresaByUsuarioId(user.id, page);
+        const params: EmpresaParams = {
+          pagina: page,
+          tamanhoPagina: 10,
+          ordem: 'DESC',
+        };
+
+        const response = await getMotoristaEmpresa(
+          user.id,
+          params
+        );
 
         setPaginatedData(response);
         setCurrentPage(response.pagina);
         setIsOffline(false);
-      } catch {
-        toast.error('Não foi possível carregar os motoristas atuais.');
+
+      } catch (error) {
+        console.error('Erro ao buscar motoristas:', error);
+
+        toast.error(
+          'Não foi possível carregar os motoristas atuais.'
+        );
 
         if (!navigator.onLine) {
           setIsOffline(true);
         }
+
       } finally {
         setLoading(false);
       }
     },
     [user?.id],
   );
+
 
   // ==================== BUSCAR PENDÊNCIAS ====================
 
@@ -306,15 +336,20 @@ export default function MotoristasEmpresa() {
     setLoadingPendencias(true);
 
     try {
-      const response = await listarConvitesMotoristaEmpresaPorEmpresa(user.id, {
-        listaStatus: ['PENDENTE'],
-        pagina: 0,
-        tamanhoPagina: 10,
-        ordem: 'DESC',
-      });
+      const response =
+        await listarConvitesMotoristaEmpresaPorEmpresa(
+          user.id,
+          {
+            listaStatus: ['PENDENTE'],
+            pagina: 0,
+            tamanhoPagina: 10,
+            ordem: 'DESC',
+          }
+        );
 
       setPendencias(response.content ?? []);
       setPendenciasCount(response.totalElementos ?? 0);
+
     } catch (error) {
       console.error('Erro ao buscar pendências:', error);
 
@@ -324,10 +359,12 @@ export default function MotoristasEmpresa() {
       if (!navigator.onLine) {
         setIsOffline(true);
       }
+
     } finally {
       setLoadingPendencias(false);
     }
   }, [user?.id]);
+
 
   // ==================== EFEITOS ====================
 
@@ -357,6 +394,7 @@ export default function MotoristasEmpresa() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchMotoristas, fetchPendencias]);
 
+
   // ==================== PAGINAÇÃO ====================
 
   const handlePageChange = (newPage: number) => {
@@ -374,67 +412,101 @@ export default function MotoristasEmpresa() {
     }
   };
 
+
   // ==================== DESVINCULAR MOTORISTA ====================
 
-  const handleDesvincularMotorista = async (motoristaId: string) => {
-    if (!navigator.onLine) {
-      toast.error(
-        'Você está offline. A exclusão de motorista só é permitida com conexão à internet.',
-      );
-      return;
-    }
-
-    try {
-      await desvincularMotoristaEmpresa(user?.id, motoristaId);
-
-      toast.success('Motorista desvinculado com sucesso!');
-      fetchMotoristas(currentPage);
-    } catch (err: unknown) {
-      console.error('Erro ao desvincular motorista:', err);
-
-      toast.error(
-        err instanceof Error ? err.message : 'Erro ao desvincular motorista.',
-      );
-    }
-  };
-  // ==================== CANCELAR CONVITE ====================
-
-  const handleCancelarConvite = async (
-    convite: ConviteMotoristaEmpresaListaItem,
+  const handleDesvincularMotorista = async (
+    motoristaId: string
   ) => {
     if (!navigator.onLine) {
       toast.error(
-        'Você está offline. O cancelamento de convite só é permitido com conexão à internet.',
+        'Você está offline. A exclusão de motorista só é permitida com conexão à internet.'
       );
+
       return;
     }
 
-    if (!user) {
+    if (!user?.id) {
       toast.error('Não foi possível identificar a empresa.');
       return;
     }
 
     try {
-      await cancelarConviteMotoristaEmpresa(user.id, convite.id);
+      await DesvincularMotoristaEmpresa(
+        user.id,
+        motoristaId
+      );
+
+      toast.success('Motorista desvinculado com sucesso!');
+
+      await fetchMotoristas(currentPage);
+
+    } catch (err: unknown) {
+      console.error(
+        'Erro ao desvincular motorista:',
+        err
+      );
+
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : 'Erro ao desvincular motorista.'
+      );
+    }
+  };
+
+
+  // ==================== CANCELAR CONVITE ====================
+
+  const handleCancelarConvite = async (
+    convite: ConviteMotoristaEmpresaListaItem
+  ) => {
+    if (!navigator.onLine) {
+      toast.error(
+        'O cancelamento de convite só é permitido com conexão à internet.'
+      );
+
+      return;
+    }
+
+    if (!user?.id) {
+      toast.error('Não foi possível identificar a empresa.');
+      return;
+    }
+
+    try {
+      await cancelarConviteMotoristaEmpresa(
+        user.id,
+        convite.id
+      );
 
       toast.success('Convite cancelado com sucesso!');
 
       await fetchPendencias();
+
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Erro ao cancelar convite.',
+        error instanceof Error
+          ? error.message
+          : 'Erro ao cancelar convite.'
       );
     }
   };
+
+
   // ==================== DADOS ====================
 
   const motoristas = paginatedData?.content ?? [];
 
-  const totalPaginas = paginatedData?.totalPaginas ?? 0;
+  const totalPaginas =
+    paginatedData?.totalPaginas ?? 0;
 
-  const totalElementos = paginatedData?.totalElementos ?? 0;
+  const totalElementos =
+    paginatedData?.totalElementos ?? 0;
 
-  const tamanhoPagina = paginatedData?.tamanhoPagina ?? 10;
+  const tamanhoPagina =
+    paginatedData?.tamanhoPagina ?? 10;
+
 
   // ==================== HEADER ====================
 
@@ -457,13 +529,17 @@ export default function MotoristasEmpresa() {
           subtitulo: null,
         };
 
-  const isLoadingAba = aba === 'pendencias' ? loadingPendencias : loading;
+  const isLoadingAba =
+    aba === 'pendencias'
+      ? loadingPendencias
+      : loading;
+
 
   // ==================== RENDER ====================
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* ==================== HEADER ==================== */}
+
       <Header
         title={headerContent.titulo}
         subtitle={headerContent.subtitulo}
@@ -480,46 +556,60 @@ export default function MotoristasEmpresa() {
       />
 
       <main className="mx-auto max-w-4xl px-3 pb-12 sm:px-6 sm:pb-16 md:px-8">
+
         {/* ==================== CTA ==================== */}
 
         <div className="-mt-4 mb-5">
           <CTASplit
             paramName="aba"
+
             left={{
               title: 'Motoristas conectados',
               mobileTitle: 'Motorista',
               description: 'Veja quem já está na sua frota',
-              icon: <UsersIcon className="h-5 w-5 text-white" />,
+              icon: (
+                <UsersIcon className="h-5 w-5 text-white" />
+              ),
               value: 'motoristas',
             }}
+
             right={{
               title: 'Gerenciar convites e pendências',
               mobileTitle: 'Gerenciar',
               description: 'visualize e convide motoristas',
-              icon: <MailPlus className="h-5 w-5 text-white" />,
+              icon: (
+                <MailPlus className="h-5 w-5 text-white" />
+              ),
               value: 'pendencias',
               badge: pendenciasCount,
             }}
           />
         </div>
 
+
         {/* ==================== OFFLINE ==================== */}
 
         {isOffline && (
           <div className="mb-4 flex w-full items-center gap-2 rounded-lg border border-amber-300 bg-amber-100 p-3 text-xs text-amber-800 sm:p-4 sm:text-sm">
-            <WifiOff size={16} className="shrink-0 sm:h-[18px] sm:w-[18px]" />
+
+            <WifiOff
+              size={16}
+              className="shrink-0 sm:h-[18px] sm:w-[18px]"
+            />
 
             <span>
-              Você está offline. Conecte-se para atualizar ou editar os
-              motoristas.
+              Você está offline. Conecte-se para atualizar ou
+              editar os motoristas.
             </span>
           </div>
         )}
+
 
         {/* ==================== LOADING ==================== */}
 
         {isLoadingAba ? (
           <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
+
             <Loader2 className="h-6 w-6 animate-spin text-blue-600 sm:h-8 sm:w-8" />
 
             <span className="text-sm text-gray-600 sm:text-base">
@@ -528,19 +618,26 @@ export default function MotoristasEmpresa() {
                 : 'Carregando motoristas...'}
             </span>
           </div>
+
         ) : aba === 'pendencias' ? (
+
           /* ==================== PENDÊNCIAS ==================== */
 
           pendencias.length === 0 ? (
+
             <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white px-4 text-center">
+
               <CheckCircle2 className="mb-3 h-8 w-8 text-green-500 sm:h-10 sm:w-10" />
 
               <p className="text-sm text-gray-500 sm:text-base">
                 Tudo certo por aqui. Nenhuma pendência encontrada.
               </p>
             </div>
+
           ) : (
+
             <section className="flex animate-in flex-col gap-4 fade-in duration-200">
+
               {pendencias.map((convite) => (
                 <ConvitePendenteCard
                   key={`${convite.motoristaEmail}-${convite.criadoEm}`}
@@ -548,31 +645,44 @@ export default function MotoristasEmpresa() {
                   onCancelar={handleCancelarConvite}
                 />
               ))}
+
             </section>
           )
+
         ) : motoristas.length === 0 ? (
+
           /* ==================== SEM MOTORISTAS ==================== */
 
           <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-white px-4 text-center">
+
             <User2 className="mb-3 h-8 w-8 text-gray-400 sm:h-10 sm:w-10" />
 
             <p className="text-sm text-gray-500 sm:text-base">
               Nenhum motorista encontrado.
             </p>
           </div>
+
         ) : (
+
           <>
             {/* ==================== LISTA DE MOTORISTAS ==================== */}
 
             <section className="flex animate-in flex-col gap-4 fade-in duration-200">
+
               {motoristas.map((motorista) => (
                 <MotoristaCard
                   key={motorista.id}
                   motorista={motorista}
-                  onDesvincular={() => handleDesvincularMotorista(motorista.id)}
+                  onDesvincular={() =>
+                    handleDesvincularMotorista(
+                      motorista.id
+                    )
+                  }
                 />
               ))}
+
             </section>
+
 
             {/* ==================== PAGINAÇÃO ==================== */}
 
@@ -589,6 +699,7 @@ export default function MotoristasEmpresa() {
           </>
         )}
 
+
         {/* ==================== TUTORIAL ==================== */}
 
         <Link
@@ -596,7 +707,9 @@ export default function MotoristasEmpresa() {
           className="mt-6 flex items-center gap-3 rounded-xl border border-gray-100 border-l-4 border-l-[#1351B4] bg-white p-3 transition-colors hover:bg-blue-50/30 sm:mt-8 sm:gap-4 sm:p-4"
         >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 sm:h-11 sm:w-11">
+
             <Info className="h-4 w-4 text-[#1351B4] sm:h-5 sm:w-5" />
+
           </div>
 
           <div>
@@ -609,7 +722,9 @@ export default function MotoristasEmpresa() {
             </p>
           </div>
         </Link>
+
       </main>
+
 
       {/* ==================== MODAL DE CONVITE ==================== */}
 
@@ -623,6 +738,7 @@ export default function MotoristasEmpresa() {
         }}
       />
 
+
       {/* ==================== BOTÃO FLUTUANTE ==================== */}
 
       {aba === 'pendencias' && !modalAberto && (
@@ -631,6 +747,7 @@ export default function MotoristasEmpresa() {
           onClick={() => setModalAberto(true)}
         />
       )}
+
     </div>
   );
 }

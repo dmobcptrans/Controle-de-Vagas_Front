@@ -47,9 +47,7 @@ export default function ReservaRapidaPage() {
 
   const suggestions = useMapboxSuggestions(searchValue, true);
 
-  const handleSuggestionSelect = (
-    suggestion: SuggestionWithCoords,
-  ) => {
+  const handleSuggestionSelect = (suggestion: SuggestionWithCoords) => {
     setSearchValue(suggestion.label);
 
     setSelectedLocation({
@@ -61,13 +59,15 @@ export default function ReservaRapidaPage() {
   // ==================== VAGA ====================
 
   const {
-    vaga: selectedVaga,
+    vaga,
     loading: loadingVaga,
     error: errorVaga,
   } = useVaga({
-    vagaId: selectedVagaId!,
+    vagaId: selectedVagaId ?? undefined,
     buscarAutomaticamente: Boolean(selectedVagaId),
   });
+
+  const selectedVaga = vaga && vaga.id === selectedVagaId ? vaga : null;
 
   // ==================== HANDLERS ====================
 
@@ -81,7 +81,6 @@ export default function ReservaRapidaPage() {
     setSelectedVagaId(null);
     clearDefaults();
   };
-
 
   // ==================== DADOS DERIVADOS ====================
 

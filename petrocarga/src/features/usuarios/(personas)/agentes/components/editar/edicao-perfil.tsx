@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { useAgenteMutation } from '../../hooks/useAgenteMutation';
-import { agenteResponse } from '../../types/agente2';
+import { agenteResponse } from '../../types/agente';
 
 import {
   Card,

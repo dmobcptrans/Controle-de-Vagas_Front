@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 
@@ -16,14 +16,10 @@ import {
   Check,
 } from 'lucide-react';
 
-import { getVeiculosPorUsuario } from '@/features/veiculos/services/veiculoApi';
+import { useVeiculos } from '@/features/veiculos/hooks/useVeiculos';
+import { useVeiculosAssociadosAoMotorista } from '@/features/usuarios/veiculoMotoristaEmpresa/hooks/useVeiculosAssociadosAoMotorista';
 
-import {
-  getVeiculosVinculadosMotoristaEmpresa,
-  vincularVeiculoMotoristaEmpresa,
-} from '../../services/empresaApi';
-
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
+import { useVeiculoEmpresaMotoristaInteraction } from '@/features/usuarios/veiculoMotoristaEmpresa/hooks/useVeiculoEmpresaMotoristaInteraction';
 
 interface VincularVeiculoMotoristaModalProps {
   empresaId: string;
@@ -42,7 +38,7 @@ export default function VincularVeiculoMotoristaModal({
   onOpenChange,
   onSuccess,
 }: VincularVeiculoMotoristaModalProps) {
-  const [isPending, startTransition] = useTransition();
+  const [vinculando, setVinculando] = useState(false);
 
   // ============================================================
   // CONTROLE DO MODAL
@@ -63,43 +59,66 @@ export default function VincularVeiculoMotoristaModal({
   };
 
   // ============================================================
-  // VEÍCULOS
-  // ============================================================
-
-  const [veiculos, setVeiculos] = useState<VeiculoResponse[]>([]);
-
-  const [loadingVeiculos, setLoadingVeiculos] = useState(false);
-
-  // IDs dos veículos que já estão vinculados ao motorista
-  const [veiculosVinculados, setVeiculosVinculados] = useState<Set<string>>(
-    new Set(),
-  );
-
-  const [loadingVinculados, setLoadingVinculados] = useState(false);
-
-  // ============================================================
-  // PAGINAÇÃO
+  // ESTADO LOCAL: PAGINAÇÃO, BUSCA E SELEÇÃO
+  // (precisa vir antes dos hooks, pois alimenta os params)
   // ============================================================
 
   const [paginaVeiculos, setPaginaVeiculos] = useState(0);
 
-  const [totalPaginasVeiculos, setTotalPaginasVeiculos] = useState(0);
-
-  // ============================================================
-  // SELEÇÃO
-  // ============================================================
-
-  const [veiculoId, setVeiculoId] = useState('');
-
-  // ============================================================
-  // BUSCA POR PLACA
-  // ============================================================
-
   const [busca, setBusca] = useState('');
-
   const [filtroPlaca, setFiltroPlaca] = useState('');
 
+  const [veiculoId, setVeiculoId] = useState('');
+  const {vincular} = useVeiculoEmpresaMotoristaInteraction()
   const buscaInputRef = useRef<HTMLInputElement>(null);
+
+  // ============================================================
+  // VEÍCULOS DA EMPRESA (hook)
+  // A busca é controlada pelo effect abaixo, por isso
+  // buscarAutomaticamente = false (evita busca duplicada).
+  // ============================================================
+
+  const {
+    veiculos,
+    loading: loadingVeiculos,
+    error: errorVeiculos,
+    totalPaginas: totalPaginasVeiculos,
+    buscar: buscarVeiculos,
+  } = useVeiculos({
+    usuarioId: empresaId,
+    buscarAutomaticamente: false,
+  });
+
+  // ============================================================
+  // VEÍCULOS JÁ VINCULADOS AO MOTORISTA (hook)
+  // `params` PRECISA ser memoizado: o hook refaz a busca
+  // sempre que a referência de `params` muda.
+  // ============================================================
+
+  const paramsAssociados = useMemo(
+    () => ({ empresaId, motoristaId }),
+    [empresaId, motoristaId],
+  );
+
+  const {
+    veiculos: veiculosAssociados,
+    loading: loadingVinculados,
+    error: errorAssociados,
+  } = useVeiculosAssociadosAoMotorista({
+    params: paramsAssociados,
+    buscarAutomaticamente: open && Boolean(empresaId) && Boolean(motoristaId),
+  });
+
+  // IDs dos veículos já vinculados (derivado, não precisa de state)
+  const veiculosVinculados = useMemo(
+    () =>
+      new Set(
+        veiculosAssociados
+          .map((veiculo) => veiculo.id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    [veiculosAssociados],
+  );
 
   const podeEnviar =
     Boolean(veiculoId) &&
@@ -107,65 +126,8 @@ export default function VincularVeiculoMotoristaModal({
     !veiculosVinculados.has(veiculoId);
 
   // ============================================================
-  // CARREGAR VEÍCULOS VINCULADOS AO MOTORISTA
-  // ============================================================
-
-  useEffect(() => {
-    if (!open || !empresaId || !motoristaId) {
-      return;
-    }
-
-    let ativo = true;
-
-    const carregarVeiculosVinculados = async () => {
-      setLoadingVinculados(true);
-
-      try {
-        const result = await getVeiculosVinculadosMotoristaEmpresa(
-          empresaId,
-          motoristaId,
-        );
-
-        if (!ativo) {
-          return;
-        }
-
-        const ids = new Set(
-          (result?.content ?? [])
-            .map((veiculo) => veiculo.id)
-            .filter((id): id is string => Boolean(id)),
-        );
-
-        setVeiculosVinculados(ids);
-      } catch (err: unknown) {
-        if (!ativo) {
-          return;
-        }
-
-        const message =
-          err instanceof Error
-            ? err.message
-            : 'Erro ao carregar veículos vinculados';
-
-        toast.error(message);
-
-        setVeiculosVinculados(new Set());
-      } finally {
-        if (ativo) {
-          setLoadingVinculados(false);
-        }
-      }
-    };
-
-    carregarVeiculosVinculados();
-
-    return () => {
-      ativo = false;
-    };
-  }, [open, empresaId, motoristaId]);
-
-  // ============================================================
-  // CARREGAR VEÍCULOS DA EMPRESA
+  // BUSCAR VEÍCULOS DA EMPRESA
+  // Dispara ao abrir, ao trocar de página e ao mudar o filtro.
   // ============================================================
 
   useEffect(() => {
@@ -173,53 +135,30 @@ export default function VincularVeiculoMotoristaModal({
       return;
     }
 
-    let ativo = true;
+    buscarVeiculos({
+      ativo: true,
+      placa: filtroPlaca || undefined,
+      pagina: paginaVeiculos,
+      tamanhoPagina: TAMANHO_PAGINA_VEICULOS,
+      ordem: 'ASC',
+    });
+  }, [open, empresaId, paginaVeiculos, filtroPlaca, buscarVeiculos]);
 
-    const carregarVeiculos = async () => {
-      setLoadingVeiculos(true);
+  // ============================================================
+  // ERROS DOS HOOKS
+  // ============================================================
 
-      try {
-        const result = await getVeiculosPorUsuario(empresaId, {
-          ativo: true,
-          placa: filtroPlaca || undefined,
-          pagina: paginaVeiculos,
-          tamanhoPagina: TAMANHO_PAGINA_VEICULOS,
-          ordem: 'ASC',
-        });
+  useEffect(() => {
+    if (open && errorVeiculos) {
+      toast.error(errorVeiculos);
+    }
+  }, [open, errorVeiculos]);
 
-        if (!ativo) {
-          return;
-        }
-
-        setVeiculos(result.content);
-
-        setTotalPaginasVeiculos(result.totalPaginas);
-      } catch (err: unknown) {
-        if (!ativo) {
-          return;
-        }
-
-        const message =
-          err instanceof Error ? err.message : 'Erro ao carregar veículos';
-
-        toast.error(message);
-
-        setVeiculos([]);
-
-        setTotalPaginasVeiculos(0);
-      } finally {
-        if (ativo) {
-          setLoadingVeiculos(false);
-        }
-      }
-    };
-
-    carregarVeiculos();
-
-    return () => {
-      ativo = false;
-    };
-  }, [open, empresaId, paginaVeiculos, filtroPlaca]);
+  useEffect(() => {
+    if (open && errorAssociados) {
+      toast.error(errorAssociados);
+    }
+  }, [open, errorAssociados]);
 
   // ============================================================
   // DEBOUNCE DA BUSCA
@@ -287,7 +226,7 @@ export default function VincularVeiculoMotoristaModal({
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isPending]);
+  }, [open, vinculando]);
 
   // ============================================================
   // VEÍCULO SELECIONADO
@@ -299,22 +238,19 @@ export default function VincularVeiculoMotoristaModal({
   // RESET
   // ============================================================
 
-function resetForm() {
-  setVeiculoId('');
-  setVeiculos([]);
-  setVeiculosVinculados(new Set());
-  setBusca('');
-  setFiltroPlaca('');
-  setPaginaVeiculos(0);
-  setTotalPaginasVeiculos(0);
-}
+  function resetForm() {
+    setVeiculoId('');
+    setBusca('');
+    setFiltroPlaca('');
+    setPaginaVeiculos(0);
+  }
 
   // ============================================================
   // FECHAR MODAL
   // ============================================================
 
   function fecharModal() {
-    if (isPending) {
+    if (vinculando) {
       return;
     }
 
@@ -330,54 +266,47 @@ function resetForm() {
   async function handleVincular() {
     if (!empresaId) {
       toast.error('Empresa não identificada. Faça login novamente.');
-
       return;
     }
 
     if (!motoristaId) {
       toast.error('Motorista não identificado.');
-
       return;
     }
 
     if (!veiculoId) {
       toast.error('Selecione um veículo para vincular.');
-
       return;
     }
 
-    // Segurança adicional:
-    // impede tentativa de vincular novamente
-    // um veículo que já está vinculado.
     if (veiculosVinculados.has(veiculoId)) {
       toast.error('Este veículo já está vinculado a este motorista.');
-
       return;
     }
 
-    startTransition(async () => {
-      try {
-        const result = await vincularVeiculoMotoristaEmpresa(
-          empresaId,
-          veiculoId,
-          motoristaId,
-        );
+    setVinculando(true);
 
-        if (result?.error) {
-          toast.error(result.message || 'Erro ao vincular veículo');
+    try {
+      vincular({
+        empresaId,
+        veiculoId,
+        motoristaId,
+      });
 
-          return;
-        }
+      toast.success('Veículo vinculado com sucesso!');
 
-        toast.success(result?.message || 'Veículo vinculado com sucesso!');
+      setVinculando(false);
+      fecharModal();
+      onSuccess?.();
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Erro inesperado ao vincular veículo ao motorista.';
 
-        fecharModal();
-
-        onSuccess?.();
-      } catch {
-        toast.error('Erro inesperado ao vincular veículo ao motorista.');
-      }
-    });
+      toast.error(message);
+      setVinculando(false);
+    }
   }
 
   // ============================================================
@@ -395,9 +324,7 @@ function resetForm() {
             className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl border border-gray-100 shadow-2xl overflow-hidden transform transition-all max-h-[90vh] sm:max-h-[85vh] flex flex-col animate-in fade-in slide-in-from-bottom"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* =====================================================
-                CABEÇALHO
-            ====================================================== */}
+            {/* CABEÇALHO */}
 
             <div className="px-6 py-5 border-b border-gray-100 shrink-0">
               <div className="flex items-center justify-between">
@@ -428,9 +355,7 @@ function resetForm() {
               </div>
             </div>
 
-            {/* =====================================================
-                CORPO
-            ====================================================== */}
+            {/* CORPO */}
 
             <div className="flex-1 px-6 py-5 overflow-y-auto custom-scrollbar space-y-4">
               {/* BUSCA POR PLACA */}
@@ -628,7 +553,6 @@ function resetForm() {
                         }
                         onClick={() => {
                           setVeiculoId('');
-
                           setPaginaVeiculos((prev) => prev - 1);
                         }}
                         className="rounded-lg"
@@ -651,7 +575,6 @@ function resetForm() {
                         }
                         onClick={() => {
                           setVeiculoId('');
-
                           setPaginaVeiculos((prev) => prev + 1);
                         }}
                         className="rounded-lg"
@@ -664,9 +587,7 @@ function resetForm() {
               )}
             </div>
 
-            {/* =====================================================
-                RODAPÉ
-            ====================================================== */}
+            {/* RODAPÉ */}
 
             <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/40 flex flex-col gap-3 shrink-0">
               {veiculoSelecionado && (
@@ -688,7 +609,7 @@ function resetForm() {
                   type="button"
                   variant="ghost"
                   className="w-full sm:w-auto rounded-xl font-medium text-gray-500 hover:text-gray-700 transition-all"
-                  disabled={isPending}
+                  disabled={vinculando}
                   onClick={fecharModal}
                 >
                   Cancelar
@@ -697,7 +618,7 @@ function resetForm() {
                 <Button
                   type="button"
                   disabled={
-                    isPending ||
+                    vinculando ||
                     !podeEnviar ||
                     loadingVeiculos ||
                     loadingVinculados
@@ -705,7 +626,7 @@ function resetForm() {
                   onClick={handleVincular}
                   className="w-full sm:w-auto rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium min-w-[160px] shadow-sm transition-all disabled:opacity-40"
                 >
-                  {isPending ? (
+                  {vinculando ? (
                     <span className="flex items-center gap-2 justify-center">
                       <Loader2 className="w-4 h-4 animate-spin opacity-80" />
                       Vinculando...

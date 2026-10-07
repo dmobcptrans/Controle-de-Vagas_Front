@@ -27,7 +27,7 @@ import {
 
 import FormItem from '@/components/form/form-item';
 import { useAgenteMutation } from '@/features/usuarios/(personas)/agentes/hooks/useAgenteMutation';
-import { agentePayload } from '@/features/usuarios/(personas)/agentes/types/agente2';
+import { agentePayload } from '@/features/usuarios/(personas)/agentes/types/agente';
 import Link from 'next/link';
 
 /**

@@ -2,9 +2,9 @@
 
 import { useApi } from "@/services/hooks/useApi";
 
-import { CriarAgente, AtualizarAgente, DeletarAgente } from "../services/agenteApi2";
+import { CriarAgente, AtualizarAgente, DeletarAgente } from "../services/agenteApi";
 
-import { agentePayload, atualizarAgente, agenteResponse } from "../types/agente2";
+import { agentePayload, atualizarAgente, agenteResponse } from "../types/agente";
 
 interface UseAgenteMutationReturn {
     loading: boolean;

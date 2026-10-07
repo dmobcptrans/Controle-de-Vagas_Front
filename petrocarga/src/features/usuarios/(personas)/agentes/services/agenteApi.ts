@@ -1,6 +1,6 @@
 import { clientApi } from '@/services/clientApi';
 import { buildSearchParams } from '@/services/utils/buildSearchParams';
-import { agentePaginadoResponse, agenteParams, agentePayload, agenteResponse, atualizarAgente } from '../types/agente2';
+import { agentePaginadoResponse, agenteParams, agentePayload, agenteResponse, atualizarAgente } from '../types/agente';
 
 
 export async function CriarAgente(payload: agentePayload): Promise<agenteResponse> {

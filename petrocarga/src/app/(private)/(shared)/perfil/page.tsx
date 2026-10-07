@@ -7,13 +7,13 @@ import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { DeleteMotorista } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
 
 import { getMotoristaPorId } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
-import { getAgentePorId } from '@/features/usuarios/(personas)/agentes/services/agenteApi2';
+import { getAgentePorId } from '@/features/usuarios/(personas)/agentes/services/agenteApi';
 import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
-import { getEmpresaByUsuarioId } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
+import { getEmpresaPorId } from '@/features/usuarios/(personas)/empresas/services/empresaApi2';
 
 import { EmpresaResponse } from '@/features/usuarios/(personas)/empresas/types/empresa2';
 import { MotoristaResponse1 } from '@/features/usuarios/(personas)/motoristas/types/motorista';
-import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente2';
+import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente';
 import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor';
 import { cn } from '@/lib/utils';
 import {
@@ -149,11 +149,9 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
   EMPRESA: {
     label: 'Empresa',
     fetchPerfil: async (userId) => {
-      const resultado = await getEmpresaByUsuarioId(userId);
+      const resultado = await getAgentePorId(userId);
       return {
-        error: resultado.error,
-        message: resultado.message,
-        perfil: resultado.empresa,
+        perfil: resultado,
       };
     },
     // deletePerfil: (userId) => deleteEmpresa(userId),

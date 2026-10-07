@@ -25,7 +25,7 @@ import {
   ReservaResponse,
 } from '../../reservas/types/reservas';
 
-import { getVeiculosVinculadosMotoristaEmpresa } from '@/features/usuarios/(personas)/empresas/services/empresaApi';
+import { useVeiculosAssociadosAoMotorista } from '@/features/usuarios/veiculoMotoristaEmpresa/hooks/useVeiculosAssociadosAoMotorista';
 import { DisponibilidadesParam } from '@/features/vaga/disponibilidadeVaga/types/disponibilidadeVaga';
 import { CriarReservaRapidaPayload } from '../../reservas/types/reservaRapida';
 
@@ -69,6 +69,7 @@ export function useReserva(selectedVaga: VagaResponse | null) {
   const isAgente = user?.permissao === 'AGENTE';
   const isEmpresa = user?.permissao === 'EMPRESA';
   const motoristaId = user?.id;
+  const {buscar, error, jaBuscou, loading, pagina, recarregar, totalElementos, totalPaginas, veiculos} = useVeiculosAssociadosAoMotorista();
 
   const {
     criar,
@@ -135,47 +136,29 @@ export function useReserva(selectedVaga: VagaResponse | null) {
     buscarAutomaticamente: !isAgente && !isEmpresa,
   });
 
-  // ==================== VEÍCULOS VINCULADOS A MOTORISTA (EMPRESA) ====================
-  // Sem hook novo equivalente para este endpoint; mantido manual.
-  const [veiculosEmpresa, setVeiculosEmpresa] = useState<VeiculoResponse[]>([]);
-  const [vehicleTotalPagesEmpresa, setVehicleTotalPagesEmpresa] = useState(0);
-  const [vehiclesLoadingEmpresa, setVehiclesLoadingEmpresa] = useState(false);
+
   const [motoristaSelecionadoId, setMotoristaSelecionadoId] = useState<
     string | null
   >(null);
 
-  const fetchVeiculosMotorista = useCallback(
-    async (motoristaAlvoId: string, pagina?: number) => {
-      if (!user?.id || !motoristaAlvoId) return;
+const fetchVeiculosMotorista = useCallback(
+  async (motoristaAlvoId: string, pagina?: number) => {
+    if (!user?.id || !motoristaAlvoId) return;
 
-      setVehiclesLoadingEmpresa(true);
+    const paginaAtual = pagina ?? vehiclePage;
 
-      try {
-        const paginaAtual = pagina ?? vehiclePage;
+    setMotoristaSelecionadoId(motoristaAlvoId);
 
-        const r = await getVeiculosVinculadosMotoristaEmpresa(
-          user.id,
-          motoristaAlvoId,
-          {
-            ativo: true,
-            pagina: paginaAtual,
-            tamanhoPagina: VEHICLE_PAGE_SIZE,
-          },
-        );
-
-        setVeiculosEmpresa(r.content);
-        setVehicleTotalPagesEmpresa(r.totalPaginas);
-        setMotoristaSelecionadoId(motoristaAlvoId);
-      } catch (err) {
-        console.error('Erro ao carregar veículos do motorista:', err);
-        setVeiculosEmpresa([]);
-        setVehicleTotalPagesEmpresa(0);
-      } finally {
-        setVehiclesLoadingEmpresa(false);
-      }
-    },
-    [user?.id, vehiclePage],
-  );
+    await buscar({
+      empresaId: user.id,
+      motoristaId: motoristaAlvoId,
+      ativo: true,
+      pagina: paginaAtual,
+      tamanhoPagina: VEHICLE_PAGE_SIZE,
+    });
+  },
+  [user?.id, vehiclePage, buscar],
+);
 
   useEffect(() => {
     if (!isEmpresa || !motoristaSelecionadoId) return;
@@ -183,12 +166,12 @@ export function useReserva(selectedVaga: VagaResponse | null) {
   }, [isEmpresa, motoristaSelecionadoId, vehiclePage, fetchVeiculosMotorista]);
 
   // ==================== VEÍCULOS UNIFICADOS ====================
-  const vehicles = isEmpresa ? veiculosEmpresa : veiculosMotorista;
+  const vehicles = isEmpresa ? veiculos : veiculosMotorista;
   const vehiclesLoading = isEmpresa
-    ? vehiclesLoadingEmpresa
+    ? loading
     : loadingVeiculosMotorista;
   const vehicleTotalPages = isEmpresa
-    ? vehicleTotalPagesEmpresa
+    ? totalPaginas
     : totalPaginasVeiculosMotorista;
   const loadingMotorista = vehiclesLoading;
 
@@ -372,22 +355,20 @@ export function useReserva(selectedVaga: VagaResponse | null) {
    * garante que dia/veículo estejam selecionados; o cálculo dos horários
    * acontece de forma reativa (efeitos acima), por isso o retorno é void.
    */
- const fetchHorariosDisponiveis = useCallback(
-  async (
-    day: Date,
-    _vaga: VagaResponse,
-    vehicleId?: string,
-  ): Promise<void> => {
-    setReservaState((prev) => ({
-      ...prev,
-      selectedDay: day,
-      ...(vehicleId
-        ? { selectedVehicleId: vehicleId }
-        : {}),
-    }));
-  },
-  [],
-);
+  const fetchHorariosDisponiveis = useCallback(
+    async (
+      day: Date,
+      _vaga: VagaResponse,
+      vehicleId?: string,
+    ): Promise<void> => {
+      setReservaState((prev) => ({
+        ...prev,
+        selectedDay: day,
+        ...(vehicleId ? { selectedVehicleId: vehicleId } : {}),
+      }));
+    },
+    [],
+  );
 
   // ==================== CÁLCULO DE HORÁRIOS FINAIS (limite por área) ====================
   const calcularReservedTimesEnd = useCallback(

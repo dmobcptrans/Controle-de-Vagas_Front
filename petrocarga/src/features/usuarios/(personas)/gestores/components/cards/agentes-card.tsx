@@ -20,7 +20,7 @@ import toast from 'react-hot-toast';
 
 import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
 
-import { agenteResponse } from '../../../agentes/types/agente2';
+import { agenteResponse } from '../../../agentes/types/agente';
 
 interface AgenteCardProps {
   agente: agenteResponse;
