@@ -1,380 +1,128 @@
 'use client';
 
 import { useState } from 'react';
-import { useReserva } from '@/features/reserva/reservar-vaga/hooks/useReserva';
-import { useReservaAgenteState } from '../hooks/useReservaAgenteState';
-import { VagaResponse, DiaSemana } from '@/features/vaga/vagas/types/vaga';
-import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
-import StepIndicator from '@/features/reserva/reservar-vaga/components/StepIndicator';
 import toast from 'react-hot-toast';
-import { getReservasBloqueios } from '@/features/reserva/reservas/services/reservaApi';
+import type { VagaResponse } from '@/features/vaga/vagas/types/vaga';
+import type { ConfirmResult } from '@/lib/types/confirmResult';
+import StepIndicator from '@/features/reserva/reservar-vaga/components/StepIndicator';
 
+import { useReservaRapida } from '../hooks/useReservaRapida';
 import StepVeiculo from './steps/StepVeiculo';
 import StepStatusVaga from './steps/StepStatusVaga';
 import StepHorario from './steps/StepHorario';
 import StepConfirmacao from './steps/StepConfirmacao';
 import StepFeedback from './steps/StepFeedback';
-import { ReservaParams } from '@/features/reserva/reservas/types/reservas';
 
-interface ReservaAgenteProps {
+interface Props {
   selectedVaga: VagaResponse;
   onNewReservation?: () => void;
   onBack?: () => void;
 }
 
-interface SlotLivre {
-  inicio: Date;
-  fim: Date | null;
-  duracaoMinutos: number | null;
-}
+const FLUXO = ['veiculo', 'status', 'fim', 'confirmacao', 'feedback'] as const;
+type StepKey = (typeof FLUXO)[number];
 
-type ReservaBloqueio = {
-  inicio: string;
-  fim: string;
-};
+export default function ReservaAgente({ selectedVaga, onNewReservation }: Props) {
+  const r = useReservaRapida(selectedVaga);
+  const { form, setField } = r;
 
-export default function ReservaAgente({
-  selectedVaga,
-  onNewReservation,
-}: ReservaAgenteProps) {
-  // --------------------------------------------------------------------------
-  // HOOKS
-  // --------------------------------------------------------------------------
-  const reserva = useReserva(selectedVaga);
-  const {
-    selectedDay,
-    setSelectedDay,
-    availableTimes,
-    reservedTimesEnd,
-    startHour,
-    setStartHour,
-    endHour,
-    setEndHour,
-    handleConfirm,
-  } = reserva;
+  const [stepKey, setStepKey] = useState<StepKey>('veiculo');
+  const [resultado, setResultado] = useState<ConfirmResult | null>(null);
 
-  // Estado persistido (placa, tipo, cidade, etc.)
-  const { defaults, hydrated, updateField, clearDefaults } =
-    useReservaAgenteState();
-
-  // Hook do reserva usa seus próprios setters; espelhamos os defaults persistidos neles
-  const {
-    tipoVeiculoAgente,
-    setTipoVeiculoAgente,
-    placaAgente,
-    setPlacaAgente,
-  } = reserva;
-
-  // --------------------------------------------------------------------------
-  // ESTADOS LOCAIS (transitórios — não precisam persistir)
-  // --------------------------------------------------------------------------
-  const [step, setStep] = useState(1);
-  const [success, setSuccess] = useState<boolean | null>(null);
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [vagaIncompativel, setVagaIncompativel] = useState(false);
-  const [validandoVeiculo, setValidandoVeiculo] = useState(false);
-  const [vagaDisponivel, setVagaDisponivel] = useState<boolean | null>(null);
-  const [slotLivre, setSlotLivre] = useState<SlotLivre | null>(null);
-
-  // --------------------------------------------------------------------------
-  // HELPERS
-  // --------------------------------------------------------------------------
-  const getNow = (): string => {
-    const now = new Date();
-    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  };
-
-  /**
-   * Busca pontual dos bloqueios da vaga para um dia/tipo de veículo.
-   * Chamada diretamente (fora do fluxo reativo de useReserva/useReservas)
-   * porque aqui o valor é precisado de forma imediata dentro de um handler,
-   * e não como estado derivado renderizado na tela.
-
-   */
-  const buscarBloqueiosDoDia = async (
-    vagaId: string,
-    data: string,
-    tipoVeiculo: VeiculoResponse['tipo'],
-  ): Promise<ReservaBloqueio[]> => {
-    const response = await getReservasBloqueios(vagaId, {
-      data,
-      tipoVeiculo,
-    } as ReservaParams);
-
-    return (response ?? []) as unknown as ReservaBloqueio[];
-  };
-
-  const encontrarProximoSlotLivre = (
-    reservas: ReservaBloqueio[],
-    agora: Date,
-    limite: Date,
-  ): SlotLivre => {
-    const MINIMO_MS = 15 * 60 * 1000;
-
-    if (!reservas.length) {
-      return {
-        inicio: agora,
-        fim: limite,
-        duracaoMinutos: Math.round(
-          (limite.getTime() - agora.getTime()) / 60000,
-        ),
-      };
-    }
-
-    const ordenadas = reservas
-      .map((r) => ({ inicio: new Date(r.inicio), fim: new Date(r.fim) }))
-      .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
-
-    let cursor = new Date(agora);
-
-    for (const atual of ordenadas) {
-      if (cursor.getTime() + MINIMO_MS <= atual.inicio.getTime()) {
-        return {
-          inicio: new Date(cursor),
-          fim: atual.inicio,
-          duracaoMinutos: Math.round(
-            (atual.inicio.getTime() - cursor.getTime()) / 60000,
-          ),
-        };
-      }
-      if (cursor < atual.fim) cursor = new Date(atual.fim);
-    }
-
-    return {
-      inicio: cursor,
-      fim: limite,
-      duracaoMinutos: Math.round((limite.getTime() - cursor.getTime()) / 60000),
-    };
-  };
-
-  const isNowInReservedRange = (reservas: ReservaBloqueio[]) => {
-    const now = new Date();
-    return reservas.some((r) => {
-      if (!r.inicio || !r.fim) return false;
-      const inicio = new Date(r.inicio);
-      const fim = new Date(r.fim);
-      const inicioComMargem = new Date(inicio.getTime() - 15 * 60 * 1000);
-      return now >= inicioComMargem && now < fim;
-    });
-  };
-
-  // --------------------------------------------------------------------------
-  // HANDLERS
-  // --------------------------------------------------------------------------
-  const handleTipoVeiculoChange = async (tipo: VeiculoResponse['tipo']) => {
-    setTipoVeiculoAgente(tipo);
-    updateField('tipoVeiculo', tipo);
-    setVagaIncompativel(false);
-
-    if (!tipo) return;
-
-    setValidandoVeiculo(true);
-    try {
-      const dataFormatada = new Date().toISOString().split('T')[0];
-      await buscarBloqueiosDoDia(selectedVaga.id, dataFormatada, tipo);
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : 'Veículo incompatível com esta vaga.';
-      toast.error(msg);
-      setVagaIncompativel(true);
-    } finally {
-      setValidandoVeiculo(false);
-    }
-  };
-
-  const handlePlacaChange = (placa: string) => {
-    setPlacaAgente(placa);
-    updateField('placa', placa);
-  };
-
-  const handleNextFromStep1 = async () => {
-    const now = new Date();
-    const today = new Date();
-    const dataFormatada = today.toISOString().split('T')[0];
-
-    setStartHour(getNow());
-    setSelectedDay(today);
-
-    const reservas: ReservaBloqueio[] = await buscarBloqueiosDoDia(
-      selectedVaga.id,
-      dataFormatada,
-      tipoVeiculoAgente!,
-    );
-
-    const diasSemanas: DiaSemana[] = [
-      'DOMINGO',
-      'SEGUNDA',
-      'TERCA',
-      'QUARTA',
-      'QUINTA',
-      'SEXTA',
-      'SABADO',
-    ];
-    const hojeEnum = diasSemanas[today.getDay()];
-    const operacaoHoje =
-      selectedVaga.operacoesVaga.find(
-        (op) => op.diaSemanaAsEnum === hojeEnum,
-      ) || selectedVaga.operacoesVaga[0];
-
-    if (!operacaoHoje) {
-      setVagaDisponivel(false);
-      setStep(2);
-      return;
-    }
-
-    const [horaFim, minFim] = operacaoHoje.horaFim.split(':').map(Number);
-    const limiteDisponibilidade = new Date(today);
-    limiteDisponibilidade.setHours(horaFim, minFim, 0, 0);
-
-    const estaOcupadoAgora = isNowInReservedRange(reservas);
-    const proximoSlot = encontrarProximoSlotLivre(
-      reservas,
-      now,
-      limiteDisponibilidade,
-    );
-
-    // Ajusta slot muito curto (≤30min → mostra 15min)
-    const slotAjustado =
-      proximoSlot?.fim &&
-      (proximoSlot.fim.getTime() - proximoSlot.inicio.getTime()) / 60000 <= 30
-        ? {
-            ...proximoSlot,
-            fim: new Date(proximoSlot.inicio.getTime() + 15 * 60 * 1000),
-            duracaoMinutos: 15,
-          }
-        : proximoSlot;
-
-    if (estaOcupadoAgora) {
-      setVagaDisponivel(false);
-      setSlotLivre(
-        slotAjustado?.inicio.getTime() < limiteDisponibilidade.getTime()
-          ? slotAjustado
-          : null,
-      );
-    } else if (now > limiteDisponibilidade) {
-      setVagaDisponivel(false);
-      setSlotLivre(null);
-    } else {
-      setVagaDisponivel(true);
-      setSlotLivre(slotAjustado);
-    }
-
-    setStep(2);
+  const onNext = async () => {
+    if (await r.verificarAgora()) setStepKey('status');
   };
 
   const onConfirm = async () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      const result = await handleConfirm({
-        cidadeOrigem: defaults.cidadeOrigem,
-        entradaCidade: defaults.entradaCidade,
-      });
-      if (!result.success) {
-        toast.error('Erro ao confirmar reserva');
-      } else {
-        toast.success('Reserva confirmada com sucesso!');
-      }
-      setSuccess(result.success);
-      setFeedbackMessage(result.message ?? null);
-      setStep(5);
-    } finally {
-      setIsSubmitting(false);
-    }
+    if (r.confirmando) return;
+    const result = await r.confirmar(); // cidade/entrada/placa/tipo já estão no form
+    result.success
+      ? toast.success('Reserva confirmada com sucesso!')
+      : toast.error(result.message ?? 'Erro ao confirmar reserva');
+    setResultado(result);
+    setStepKey('feedback');
   };
 
-  const handleNovaReserva = () => {
-    // Volta ao step 1 mantendo os defaults (placa, tipo, etc.)
-    setStep(1);
-    setSuccess(null);
-    setFeedbackMessage(null);
-    setEndHour(null);
-    clearDefaults();
-
-    if (onNewReservation) onNewReservation();
+  const onNovaReserva = () => {
+    r.novaReserva();
+    setResultado(null);
+    setStepKey('veiculo');
+    onNewReservation?.();
   };
 
-  // Aguarda hidratação para evitar flash de valores em branco
-  if (!hydrated) return null;
+  if (!r.hydrated) return null; // evita flash de campos em branco
 
-  // --------------------------------------------------------------------------
-  // RENDER
-  // --------------------------------------------------------------------------
   return (
     <div className="p-4 sm:p-6 border rounded-2xl shadow-2xl bg-white min-h-[80vh] flex flex-col gap-4">
-      {step < 5 && <StepIndicator step={step} isReservaRapida={true} />}
+      {stepKey !== 'feedback' && (
+        <StepIndicator step={FLUXO.indexOf(stepKey) + 1} isReservaRapida />
+      )}
 
       <div className="flex-1 flex flex-col overflow-y-auto pb-4">
-        {step === 1 && (
+        {stepKey === 'veiculo' && (
           <StepVeiculo
-            tipoVeiculo={tipoVeiculoAgente || null}
-            placa={placaAgente}
-            cidadeOrigem={defaults.cidadeOrigem}
-            entradaCidade={defaults.entradaCidade}
-            mostrarDadosRota={defaults.mostrarDadosRota}
-            vagaIncompativel={vagaIncompativel}
-            validandoVeiculo={validandoVeiculo}
-            onTipoVeiculoChange={handleTipoVeiculoChange}
-            onPlacaChange={handlePlacaChange}
-            onCidadeOrigemChange={(v) => updateField('cidadeOrigem', v)}
-            onEntradaCidadeChange={(v) => updateField('entradaCidade', v)}
-            onToggleDadosRota={() =>
-              updateField('mostrarDadosRota', !defaults.mostrarDadosRota)
-            }
-            onNext={handleNextFromStep1}
+            tipoVeiculo={form.tipoVeiculo ?? null}
+            placa={form.placa}
+            cidadeOrigem={form.cidadeOrigem}
+            entradaCidade={form.entradaCidade}
+            mostrarDadosRota={r.mostrarDadosRota}
+            vagaIncompativel={r.vagaIncompativel}
+            validandoVeiculo={r.validandoVeiculo}
+            onTipoVeiculoChange={r.selecionarTipoVeiculo}
+            onPlacaChange={r.setPlaca}
+            onCidadeOrigemChange={r.setCidadeOrigem}
+            onEntradaCidadeChange={r.setEntradaCidade}
+            onToggleDadosRota={r.toggleDadosRota}
+            onNext={onNext}
           />
         )}
 
-        {step === 2 && (
+        {stepKey === 'status' && (
           <StepStatusVaga
-            vagaDisponivel={vagaDisponivel}
+            vagaDisponivel={r.status?.vagaDisponivel ?? null}
             selectedVaga={selectedVaga}
-            slotLivre={slotLivre}
-            onContinuar={() => setStep(3)}
-            onVoltar={() => setStep(1)}
+            slotLivre={r.status?.slotLivre ?? null}
+            onContinuar={() => setStepKey('fim')}
+            onVoltar={() => setStepKey('veiculo')}
           />
         )}
 
-        {step === 3 && startHour && (
+        {stepKey === 'fim' && form.startHour && (
           <StepHorario
-            startHour={startHour}
-            endHour={endHour}
-            availableTimes={availableTimes}
-            reservedTimesEnd={reservedTimesEnd}
+            startHour={form.startHour}
+            endHour={form.endHour}
+            availableTimes={r.availableTimes}
+            reservedTimesEnd={r.reservedTimesEnd}
             onSelect={(t) => {
-              setEndHour(t);
-              setStep(4);
+              setField('endHour', t);
+              setStepKey('confirmacao');
             }}
-            onBack={() => setStep(2)}
+            onBack={() => setStepKey('status')}
           />
         )}
 
-        {step === 4 && startHour && endHour && selectedDay && (
+        {stepKey === 'confirmacao' && form.day && form.startHour && form.endHour && (
           <StepConfirmacao
-            selectedDay={selectedDay}
-            startHour={startHour}
-            endHour={endHour}
+            selectedDay={form.day}
+            startHour={form.startHour}
+            endHour={form.endHour}
             selectedVaga={selectedVaga}
-            tipoVeiculo={tipoVeiculoAgente || null}
-            placa={placaAgente}
+            tipoVeiculo={form.tipoVeiculo ?? null}
+            placa={form.placa}
             onConfirm={onConfirm}
-            onBack={() => setStep(3)}
+            onBack={() => setStepKey('fim')}
           />
         )}
 
-        {step === 5 && success !== null && (
+        {stepKey === 'feedback' && resultado && (
           <div className="flex-1 flex items-center justify-center w-full animate-in fade-in zoom-in duration-300">
             <StepFeedback
-              success={success}
-              message={feedbackMessage}
-              onNovaReserva={handleNovaReserva}
+              success={resultado.success}
+              message={resultado.message ?? null}
+              onNovaReserva={onNovaReserva}
               onTentarNovamente={() => {
-                setStep(4);
-                setSuccess(null);
-                setFeedbackMessage(null);
+                setResultado(null);
+                setStepKey('confirmacao');
               }}
             />
           </div>

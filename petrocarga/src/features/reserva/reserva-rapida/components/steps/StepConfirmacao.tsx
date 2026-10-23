@@ -1,6 +1,6 @@
 'use client';
 
-import Confirmation from '@/features/reserva/reservar-vaga/components/Confirmation';
+import Confirmation from '@/features/reserva/reservar-vaga/components/steps/Confirmation';
 import { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 

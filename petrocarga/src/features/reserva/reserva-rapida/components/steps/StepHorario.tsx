@@ -1,6 +1,6 @@
 'use client';
 
-import TimeSelection from '@/features/reserva/reservar-vaga/components/TimeSelection';
+import TimeSelection from '@/features/reserva/reservar-vaga/components/steps/TimeSelection';
 
 interface StepHorarioProps {
   startHour: string;

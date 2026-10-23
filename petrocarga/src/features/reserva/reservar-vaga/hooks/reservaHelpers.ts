@@ -1,281 +1,153 @@
-import { ReservaBloqueiosResponse, ReservaResponse } from '../../reservas/types/reservas';
-import { VagaResponse, DiaSemana, OperacoesVaga } from '@/features/vaga/vagas/types/vaga';
+import type {
+  DiaSemana,
+  OperacoesVaga,
+  VagaResponse,
+} from '@/features/vaga/vagas/types/vaga';
+import type { ReservaBloqueiosResponse } from '../../reservas/types/reservas';
 
-
-/**
- * @module utils/reserva/horarios
- * @description Funções utilitárias para gerenciamento de horários no fluxo de reserva.
- * 
- * ----------------------------------------------------------------------------
- * 📋 FUNÇÕES DISPONÍVEIS:
- * ----------------------------------------------------------------------------
- * 
- * 1. DIAS_SEMANA - Constante com os dias da semana em português
- * 2. INTERVALO_MINUTOS - Intervalo padrão entre horários (30 minutos)
- * 3. padNumber - Preenche número com zero à esquerda
- * 4. formatDateTime - Formata data e hora para ISO string
- * 5. gerarHorariosOcupados - Gera horários ocupados por uma reserva
- * 6. gerarHorariosDia - Gera horários disponíveis para um dia baseado na operação
- * 7. getOperacaoDia - Retorna a operação de funcionamento para um dia específico
- * 8. gerarHorariosBloqueados - Gera horários bloqueados (reservas existentes)
- * 9. filtrarHorariosDisponiveis - Filtra horários disponíveis removendo os bloqueados
- * 10. removerHorariosPassadosDeHoje - Remove horários já passados (quando o dia é hoje)
- * 11. gerarHorariosOcupadosPorArea - Gera horários ocupados com limite por área
- */
 
 export const DIAS_SEMANA: DiaSemana[] = [
-  'DOMINGO',
-  'SEGUNDA',
-  'TERCA',
-  'QUARTA',
-  'QUINTA',
-  'SEXTA',
-  'SABADO',
+  'DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO',
 ];
 
-/**
- * @function padNumber
- */
-export const padNumber = (n: number): string => n.toString().padStart(2, '0');
+export const INTERVALO_MINUTOS = { AGENTE: 15, MOTORISTA: 30 } as const;
 
-/**
- * 🔥 NOVO: formatação padrão (remove dependência de 30min)
- */
-const formatarHoraFromDate = (date: Date): string => {
-  return `${padNumber(date.getHours())}:${padNumber(date.getMinutes())}`;
+export const LIMITE_HORAS_POR_AREA: Record<string, number> = {
+  VERMELHA: 1,
+  AMARELA: 2,
+  AZUL: 4,
+  BRANCA: 6,
 };
 
-const formatarHora = (dateString: string): string => {
-  return formatarHoraFromDate(new Date(dateString));
+// ---------- conversões ----------
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** "HH:mm" -> minutos desde 00:00 */
+export const toMinutes = (hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
 };
 
-/**
- * @function formatDateTime
- */
-export const formatDateTime = (day: Date, hour: string): string => {
-  const [h, m] = hour.split(':').map(Number);
+/** Date -> "HH:mm" (horário local) */
+export const toHHmm = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+/** Date -> "YYYY-MM-DD" no fuso LOCAL (toISOString() usa UTC e pode virar o dia) */
+export const toDateKey = (d: Date) =>
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+/** dia + "HH:mm" -> ISO string */
+export const formatDateTime = (day: Date, hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number);
   const date = new Date(day);
   date.setHours(h, m, 0, 0);
   return date.toISOString();
 };
 
-/**
- * gerarHorariosOcupadosInicio
- */
-export const gerarHorariosOcupadosInicio = (
-  bloqueios: ReservaBloqueiosResponse[],
-  intervalo: number
-): string[] => {
-  const resultado = new Set<string>();
+const isMesmoDia = (a: Date, b: Date) => toDateKey(a) === toDateKey(b);
 
-  bloqueios.forEach((bloqueios) => {
-    const inicio = new Date(bloqueios.inicio);
-    const fim = new Date(bloqueios.fim);
-
-    if (fim <= inicio) {
-      fim.setDate(fim.getDate() + 1);
-    }
-
-    const current = new Date(inicio);
-    current.setMinutes(current.getMinutes() - intervalo);
-
-    while (current <= fim) {
-      resultado.add(formatarHoraFromDate(current));
-      current.setMinutes(current.getMinutes() + intervalo);
-    }
-  });
-
-  return Array.from(resultado);
-};
-
-/**
- * gerarHorariosOcupadosFim
- */
-export const gerarHorariosOcupadosFim = (
-  bloqueios: ReservaBloqueiosResponse[],
-  intervalo: number
-): string[] => {
-  const resultado = new Set<string>();
-
-  bloqueios.forEach((bloqueios) => {
-    const inicio = new Date(bloqueios.inicio);
-    const fim = new Date(bloqueios.fim);
-
-    if (fim <= inicio) {
-      fim.setDate(fim.getDate() + 1);
-    }
-
-    const current = new Date(inicio);
-
-    while (current <= fim) {
-      resultado.add(formatarHoraFromDate(current));
-      current.setMinutes(current.getMinutes() + intervalo);
-    }
-  });
-
-  return Array.from(resultado);
-};
-
-/**
- * gerarHorariosDia
- */
-export const gerarHorariosDia = (
-  operacao: OperacoesVaga,
-  intervalo: number
-): string[] => {
-  const [hInicio, mInicio] = operacao.horaInicio.split(':').map(Number);
-  const [hFim, mFim] = operacao.horaFim.split(':').map(Number);
-
-  const times: string[] = [];
-  let h = hInicio;
-  let m = mInicio;
-
-  while (h < hFim || (h === hFim && m <= mFim)) {
-    times.push(`${padNumber(h)}:${padNumber(m)}`);
-
-    m += intervalo;
-    if (m >= 60) {
-      h += 1;
-      m -= 60;
-    }
-  }
-
-  return times;
-};
-
-/**
- * getOperacaoDia
- */
+// ---------- operação / grade de horários ----------
 export const getOperacaoDia = (
   day: Date,
   vaga: { operacoesVaga?: OperacoesVaga[] },
-) => {
-  const diaSemana = DIAS_SEMANA[day.getDay()];
-  return vaga.operacoesVaga?.find((op) => op.diaSemanaAsEnum === diaSemana);
+) => vaga.operacoesVaga?.find((op) => op.diaSemanaAsEnum === DIAS_SEMANA[day.getDay()]);
+
+export const gerarHorariosDia = (operacao: OperacoesVaga, intervalo: number) => {
+  const fim = toMinutes(operacao.horaFim);
+  const times: string[] = [];
+  for (let t = toMinutes(operacao.horaInicio); t <= fim; t += intervalo) {
+    times.push(`${pad(Math.floor(t / 60))}:${pad(t % 60)}`);
+  }
+  return times;
 };
 
-/**
- * gerarHorariosBloqueados
- */
-export const gerarHorariosBloqueados = (
-  bloqueios: { inicio: string; fim: string }[],
-  intervalo: number
-): string[] => {
-  const horarios: string[] = [];
+export const removerHorariosPassados = (day: Date, horarios: string[], agora = new Date()) => {
+  if (!isMesmoDia(day, agora)) return horarios;
+  const atual = agora.getHours() * 60 + agora.getMinutes();
+  return horarios.filter((h) => toMinutes(h) > atual);
+};
 
-  bloqueios.forEach((b) => {
+// ---------- bloqueios ----------
+/**
+ * Expande cada bloqueio em slots "HH:mm".
+ * `margem` recua o início (usado p/ impedir início colado numa reserva existente).
+ */
+export const expandirBloqueios = (
+  bloqueios: Pick<ReservaBloqueiosResponse, 'inicio' | 'fim'>[],
+  intervalo: number,
+  margem = 0,
+) => {
+  const slots = new Set<string>();
+  for (const b of bloqueios) {
     const inicio = new Date(b.inicio);
     const fim = new Date(b.fim);
-    const current = new Date(inicio);
+    if (fim <= inicio) fim.setDate(fim.getDate() + 1); // vira a noite
 
-    while (current < fim) {
-      horarios.push(formatarHoraFromDate(current));
-      current.setMinutes(current.getMinutes() + intervalo);
+    const cur = new Date(inicio);
+    cur.setMinutes(cur.getMinutes() - margem);
+    while (cur <= fim) {
+      slots.add(toHHmm(cur));
+      cur.setMinutes(cur.getMinutes() + intervalo);
     }
-  });
-
-  return horarios;
+  }
+  return Array.from(slots);
 };
 
-/**
- * filtrarHorariosDisponiveis
- */
-export const filtrarHorariosDisponiveis = (
-  horariosDia: string[],
-  horariosBloqueados: string[],
-) => {
-  return horariosDia.filter((h) => !horariosBloqueados.includes(h));
-};
-
-/**
- * removerHorariosPassadosDeHoje
- */
-export const removerHorariosPassadosDeHoje = (
+export const calcularHorarios = (
   day: Date,
-  horarios: string[],
-): string[] => {
-  const agora = new Date();
-
-  const isHoje =
-    day.getDate() === agora.getDate() &&
-    day.getMonth() === agora.getMonth() &&
-    day.getFullYear() === agora.getFullYear();
-
-  if (!isHoje) return horarios;
-
-  const horaAtual = agora.getHours();
-  const minutoAtual = agora.getMinutes();
-
-  return horarios.filter((h) => {
-    const [hh, mm] = h.split(':').map(Number);
-
-    if (hh > horaAtual) return true;
-    if (hh === horaAtual && mm > minutoAtual) return true;
-
-    return false;
-  });
-};
-
-/**
- * filtrarHorariosFim
- */
-export const filtrarHorariosFim = (
-  horariosDia: string[],
-  reservas: ReservaResponse[],
-  inicioSelecionado: string
-): string[] => {
-  return horariosDia.filter((horarioFim) => {
-    if (horarioFim <= inicioSelecionado) return false;
-
-    return !reservas.some((reserva) => {
-      const inicioReserva = formatarHora(reserva.inicio);
-      const fimReserva = formatarHora(reserva.fim);
-
-      return (
-        inicioSelecionado < fimReserva &&
-        horarioFim > inicioReserva
-      );
-    });
-  });
-};
-
-/**
- * gerarHorariosOcupadosPorArea
- */
-export const gerarHorariosOcupadosPorArea = (
-  reserva: ReservaResponse,
+  vaga: VagaResponse,
+  bloqueios: ReservaBloqueiosResponse[],
   intervalo: number,
-  area: VagaResponse['area'],
-): string[] => {
-  const limites: Record<string, number> = {
-    VERMELHA: 1,
-    AMARELA: 2,
-    AZUL: 4,
-    BRANCA: 6,
-  };
+) => {
+  const operacao = getOperacaoDia(day, vaga);
+  if (!operacao) return { availableTimes: [], reservedStart: [], reservedEnd: [] };
 
-  const limiteHoras = limites[area];
+  const reservedStart = expandirBloqueios(bloqueios, intervalo, intervalo);
+  const reservedEnd = expandirBloqueios(bloqueios, intervalo);
+  const availableTimes = removerHorariosPassados(day, gerarHorariosDia(operacao, intervalo))
+    .filter((h) => !reservedStart.includes(h));
 
-  const horariosOcupados: string[] = [];
+  return { availableTimes, reservedStart, reservedEnd };
+};
 
-  const inicio = new Date(reserva.inicio);
-  const fimOriginal = new Date(reserva.fim);
+/** Horários de FIM bloqueados após escolher o início (limite por área + já ocupados). */
+export const calcularFimBloqueado = (
+  inicio: string,
+  availableTimes: string[],
+  area: string,
+  reservedEndBase: string[],
+) => {
+  const limite = toMinutes(inicio) + (LIMITE_HORAS_POR_AREA[area] ?? 1) * 60;
+  return availableTimes.filter(
+    (h) => toMinutes(h) > toMinutes(inicio) && (toMinutes(h) > limite || reservedEndBase.includes(h)),
+  );
+};
 
-  const fimLimitado = new Date(inicio);
-  fimLimitado.setHours(fimLimitado.getHours() + limiteHoras);
+// ---------- dias disponíveis ----------
+export const calcularDiasDisponiveis = (
+  disponibilidades: { inicio: string; fim: string }[],
+  vaga: VagaResponse,
+  agora = new Date(),
+) => {
+  const hoje = new Date(agora);
+  hoje.setHours(0, 0, 0, 0);
 
-  const fim = fimOriginal < fimLimitado ? fimOriginal : fimLimitado;
+  const datas = new Map<string, Date>();
 
-  if (fim <= inicio) {
-    fim.setDate(fim.getDate() + 1);
+  for (const disp of disponibilidades) {
+    const cur = new Date(disp.inicio);
+    const fim = new Date(disp.fim);
+    cur.setHours(0, 0, 0, 0);
+    fim.setHours(0, 0, 0, 0);
+
+    for (; cur <= fim; cur.setDate(cur.getDate() + 1)) {
+      if (cur < hoje) continue;
+      const operacao = getOperacaoDia(cur, vaga);
+      if (!operacao) continue;
+      // hoje: só vale se a operação ainda não terminou
+      if (isMesmoDia(cur, agora) && agora.getHours() * 60 + agora.getMinutes() >= toMinutes(operacao.horaFim)) continue;
+
+      datas.set(toDateKey(cur), new Date(cur));
+    }
   }
-
-  const current = new Date(inicio);
-
-  while (current <= fim) {
-    horariosOcupados.push(formatarHoraFromDate(current));
-    current.setMinutes(current.getMinutes() + intervalo);
-  }
-
-  return horariosOcupados;
+  return Array.from(datas.values());
 };

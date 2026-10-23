@@ -12,8 +12,8 @@ import { useVeiculo } from '@/features/veiculos/hooks/useVeiculo';
 import { useVaga } from '@/features/vaga/vagas/hooks/useVaga';
 
 import { useReserva } from '@/features/reserva/reservar-vaga/hooks/useReserva';
-import OriginVehicleStep from '@/features/reserva/reservar-vaga/components/OriginVehicleStep';
-import MotoristaStep from '@/features/reserva/reservar-vaga/components/MotoristaStep';
+import OriginVehicleStep from '@/features/reserva/reservar-vaga/components/steps/OriginVehicleStep';
+import MotoristaStep from '@/features/reserva/reservar-vaga/components/steps/MotoristaStep';
 
 import { ReservaSummary } from './ReservaSummary';
 import { EditTimeForm } from './EditTimeForm';
@@ -34,19 +34,14 @@ export default function ReservaEditarModal({
   const router = useRouter();
   const { user } = useAuth();
 
-  // ============================================================
-  // TIPO DE USUÁRIO
-  // ============================================================
-
   const isEmpresa = user?.permissao === 'EMPRESA';
-
   const empresaId = user?.id ?? '';
 
   // ============================================================
-  // ESTADO INICIAL
+  // FORMULÁRIO DA RESERVA EXISTENTE
   // ============================================================
 
-  const [initialForm] = useState({
+  const [initialForm, setInitialForm] = useState({
     veiculoId: reserva.veiculo.id,
     cidadeOrigem: reserva.cidadeOrigem,
     inicio: reserva.inicio,
@@ -54,45 +49,41 @@ export default function ReservaEditarModal({
     motoristaId: reserva.motorista?.id ?? '',
   });
 
-  // ============================================================
-  // ESTADO EDITÁVEL
-  // ============================================================
+  const [form, setForm] = useState({ ...initialForm });
 
-  const [form, setForm] = useState({
-    ...initialForm,
-  });
-
-  // ============================================================
-  // ESTADOS DA UI
-  // ============================================================
-
-  // Erros de validação local (campos obrigatórios etc.)
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
   const [editField, setEditField] = useState<EditField>(null);
-
-  /*
-   * Indica que a etapa de horário foi aberta como continuação
-   * automática da troca de motorista/veículo (fluxo de empresa),
-   * e não como uma edição independente disparada pelo resumo.
-   */
   const [chainedFromVehicle, setChainedFromVehicle] = useState(false);
-
-  // ============================================================
-  // ESTADO DO MOTORISTA
-  // ============================================================
 
   const [selectedDriverId, setSelectedDriverId] = useState(
     initialForm.motoristaId,
   );
 
+  const [selectedVehicleId, setSelectedVehicleId] = useState(
+    initialForm.veiculoId,
+  );
+
+  const [origin, setOrigin] = useState('');
+  const [entryCity, setEntryCity] = useState<string | null>(null);
+
+  // Estado visual das etapas do formulário de horários.
+  const [step, setStep] = useState(1);
+  const [startHour, setStartHour] = useState<string | null>(null);
+  const [endHour, setEndHour] = useState<string | null>(null);
+
+  // ============================================================
+  // DADOS DA RESERVA
+  // ============================================================
+
   const {
+    buscar,
     veiculo,
     loading: loadingVeiculo,
     error: errorVeiculo,
   } = useVeiculo({
     veiculoId: form.veiculoId,
+    buscarAutomaticamente: false,
   });
 
   const {
@@ -101,13 +92,20 @@ export default function ReservaEditarModal({
     error: errorVaga,
   } = useVaga({
     vagaId: reserva.vaga.id,
+    buscarAutomaticamente: true,
   });
 
-  const loading = loadingVeiculo || loadingVaga;
+  const loading = loadingVaga || (Boolean(form.veiculoId) && loadingVeiculo);
   const dataError = errorVeiculo || errorVaga;
 
+  console.log('Resultado do useVaga:', {
+    vagaId: reserva.vaga.id,
+    vaga,
+    loadingVaga,
+    errorVaga,
+  });
   // ============================================================
-  // MUTAÇÃO DE ATUALIZAÇÃO
+  // ATUALIZAÇÃO DA RESERVA EXISTENTE
   // ============================================================
 
   const {
@@ -118,48 +116,24 @@ export default function ReservaEditarModal({
   } = useReservaMutation();
 
   // ============================================================
-  // HOOK DE RESERVA
+  // NOVO HOOK DE RESERVA
   // ============================================================
 
   const {
-    step,
-    setStep,
-
-    setSelectedDay,
-
-    fetchHorariosDisponiveis,
-    fetchVeiculosMotorista,
-
-    availableTimes,
-    reservedTimesStart,
-    reservedTimesEnd,
-
-    startHour,
-    setStartHour,
-
-    endHour,
-    setEndHour,
-
+    form: reservaForm,
+    setField,
+    selecionarMotorista,
     vehicles,
-
     vehiclePage,
     vehiclesLoading,
     vehicleTotalPages,
     setVehiclePage,
-
-    origin,
-    setOrigin,
-
-    entryCity,
-    setEntryCity,
-
-    selectedVehicleId,
-    setSelectedVehicleId,
+    availableTimes,
+    reservedTimesStart,
+    reservedTimesEnd,
+    loadingHorarios,
+    horariosCarregados,
   } = useReserva(vaga);
-
-  // ============================================================
-  // VEÍCULOS FORMATADOS PARA O COMPONENTE
-  // ============================================================
 
   const vehiclesForStep = vehicles.map((v) => ({
     ...v,
@@ -169,47 +143,54 @@ export default function ReservaEditarModal({
   }));
 
   // ============================================================
-  // INICIALIZAÇÃO
+  // SINCRONIZAÇÃO INICIAL COM O NOVO HOOK
   // ============================================================
 
   useEffect(() => {
-    if (isEmpresa && initialForm.motoristaId) {
-      setSelectedDriverId(initialForm.motoristaId);
+  if (!form.veiculoId) return;
 
-      setVehiclePage(0);
+  buscar();
+}, [form.veiculoId, buscar]);
 
-      fetchVeiculosMotorista(initialForm.motoristaId, 0);
+  useEffect(() => {
+    if (!vaga) return;
+
+    const inicio = new Date(form.inicio);
+    const horaInicial = inicio.toTimeString().slice(0, 5);
+
+    setField('day', inicio);
+    setField('startHour', horaInicial);
+    setField('veiculoId', form.veiculoId);
+
+    if (form.motoristaId) {
+      setField('motoristaId', form.motoristaId);
     }
-    // Executa somente na abertura do modal.
-    // As funções do useReserva não são estáveis entre renders.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [vaga, form.inicio, form.veiculoId, form.motoristaId, setField]);
 
   // ============================================================
   // SELEÇÃO DO MOTORISTA
   // ============================================================
 
-  const handleDriverChange = async (driverId: string) => {
+  const handleDriverChange = (driverId: string) => {
     setSelectedDriverId(driverId);
 
     setForm((prev) => ({
       ...prev,
       motoristaId: driverId,
+      veiculoId: '',
     }));
 
     setSelectedVehicleId('');
-    setVehiclePage(0);
-
-    await fetchVeiculosMotorista(driverId, 0);
+    selecionarMotorista(driverId);
   };
 
   // ============================================================
-  // SALVAMENTO
+  // SALVAR ALTERAÇÕES
   // ============================================================
 
   const handleSave = async () => {
     if (!user?.id) {
-      setError('Sessão expirada');
+      setError('Sessão expirada.');
       return;
     }
 
@@ -237,15 +218,19 @@ export default function ReservaEditarModal({
       cidadeOrigem: form.cidadeOrigem,
       inicio: form.inicio,
       fim: form.fim,
-      // Empresa pode trocar o motorista vinculado à reserva.
       ...(isEmpresa ? { motoristaId: form.motoristaId } : {}),
     });
 
-    if (!result) {
-      // A mensagem específica da falha já fica disponível em apiError
-      // (estado do useReservaMutation), exibida abaixo no JSX.
-      return;
-    }
+    if (!result) return;
+
+    // Atualiza os valores de referência após o salvamento.
+    setInitialForm({
+      veiculoId: form.veiculoId,
+      cidadeOrigem: form.cidadeOrigem,
+      inicio: form.inicio,
+      fim: form.fim,
+      motoristaId: form.motoristaId,
+    });
 
     const updatedReserva: ReservaPorUsuarioResponse = {
       ...reserva,
@@ -254,7 +239,6 @@ export default function ReservaEditarModal({
     };
 
     setSuccessMsg('Reserva atualizada com sucesso!');
-
     router.refresh();
 
     setTimeout(() => {
@@ -271,17 +255,13 @@ export default function ReservaEditarModal({
     if (!startHour) return;
 
     const base = new Date(form.inicio);
-
     const [sh, sm] = startHour.split(':').map(Number);
-
     const [eh, em] = time.split(':').map(Number);
 
     const inicio = new Date(base);
-
     inicio.setHours(sh, sm, 0, 0);
 
     const fim = new Date(base);
-
     fim.setHours(eh, em, 0, 0);
 
     setForm((prev) => ({
@@ -290,14 +270,14 @@ export default function ReservaEditarModal({
       fim: fim.toISOString(),
     }));
 
+    setEndHour(time);
     setEditField(null);
     setChainedFromVehicle(false);
-
     setStep(1);
   };
 
   // ============================================================
-  // EDITAR VEÍCULO (E MOTORISTA, QUANDO EMPRESA)
+  // EDITAR VEÍCULO
   // ============================================================
 
   const handleEditVehicle = () => {
@@ -306,21 +286,17 @@ export default function ReservaEditarModal({
     setChainedFromVehicle(false);
 
     if (isEmpresa) {
-      /*
-       * Para empresa, sempre voltamos para a seleção
-       * do motorista.
-       *
-       * Isso permite trocar o motorista e, depois,
-       * carregar os veículos vinculados a ele.
-       */
       setSelectedDriverId('');
       setSelectedVehicleId('');
+
+      setForm((prev) => ({
+        ...prev,
+        motoristaId: '',
+        veiculoId: '',
+      }));
+
       setVehiclePage(0);
     } else {
-      /*
-       * Usuário comum continua diretamente
-       * na seleção do veículo.
-       */
       setSelectedVehicleId(form.veiculoId);
     }
 
@@ -331,75 +307,43 @@ export default function ReservaEditarModal({
   // EDITAR HORÁRIO
   // ============================================================
 
-  const handleEditTime = async () => {
+  const handleEditTime = () => {
     setError(null);
     limparError();
     setChainedFromVehicle(false);
 
     const dia = new Date(form.inicio);
 
-    setSelectedDay(dia);
+    setField('day', dia);
+    setField('startHour', null);
+    setField('veiculoId', form.veiculoId);
 
+    setStartHour(null);
+    setEndHour(null);
     setSelectedVehicleId(form.veiculoId);
-
     setEditField('horario');
-
-    try {
-      if (!vaga) {
-        setError('Não foi possível identificar a vaga da reserva.');
-
-        return;
-      }
-
-      /*
-       * Muito importante:
-       *
-       * No caso de EMPRESA, os horários precisam ser
-       * buscados utilizando o veículo atualmente
-       * selecionado na reserva.
-       */
-      await fetchHorariosDisponiveis(dia, vaga, form.veiculoId);
-
-      /*
-       * O EditTimeForm usa:
-       *
-       * 3 = horário inicial
-       * 4 = horário final
-       */
-      setStep(3);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Não foi possível carregar os horários.',
-      );
-    }
+    setStep(3);
   };
 
   // ============================================================
-  // LOADING
+  // CARREGAMENTO
   // ============================================================
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-3 items-center justify-center min-h-[320px]">
+      <div className="flex min-h-[320px] flex-col items-center justify-center gap-3">
         <p>Carregando edição</p>
-
-        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
       </div>
     );
   }
 
   // ============================================================
-  // RENDER
+  // RENDERIZAÇÃO
   // ============================================================
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden">
-      {/* ======================================================
-          HEADER
-      ====================================================== */}
-
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <header className="flex items-center justify-between border-b px-5 py-4">
         <h1 className="font-semibold text-gray-900">
           {editField === 'horario'
@@ -424,44 +368,30 @@ export default function ReservaEditarModal({
                 }
               : onClose
           }
-          className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100"
         >
           <X size={18} />
         </button>
       </header>
 
-      {/* ======================================================
-          CONTEÚDO
-      ====================================================== */}
-
       <div className="flex-1 overflow-y-auto">
-        {/* ====================================================
-            MENSAGENS
-        ==================================================== */}
-
-        <div className="px-5 pt-4 space-y-3">
+        <div className="space-y-3 px-5 pt-4">
           {(error || apiError || dataError) && (
-            <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm flex gap-2">
-              <AlertCircle size={16} className="shrink-0 mt-0.5" />
-
+            <div className="flex gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
               <span>{error || apiError || dataError}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm flex gap-2">
-              <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
-
+            <div className="flex gap-2 rounded-xl bg-green-50 p-3 text-sm text-green-700">
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
         </div>
 
         <main>
-          {/* ==================================================
-              MODO RESUMO
-          ================================================== */}
-
           {!editField && (
             <ReservaSummary
               form={form}
@@ -481,16 +411,8 @@ export default function ReservaEditarModal({
             />
           )}
 
-          {/* ==================================================
-              MODO EDIÇÃO DE VEÍCULO / ORIGEM
-          ================================================== */}
-
           {editField === 'veiculo-origem' && (
             <>
-              {/* =================================================
-                  EMPRESA → MOTORISTA
-              ================================================= */}
-
               {isEmpresa && !selectedDriverId && (
                 <MotoristaStep
                   empresaId={empresaId}
@@ -499,25 +421,13 @@ export default function ReservaEditarModal({
                 />
               )}
 
-              {/* =================================================
-                  EMPRESA → VEÍCULO
-                  OU
-                  USUÁRIO COMUM → VEÍCULO
-              ================================================= */}
-
               {(!isEmpresa || !!selectedDriverId) && (
                 <OriginVehicleStep
                   vehicles={vehiclesForStep}
                   vehiclesLoading={vehiclesLoading}
                   vehiclePage={vehiclePage}
                   vehicleTotalPages={vehicleTotalPages}
-                  onVehiclePageChange={(page) => {
-                    setVehiclePage(page);
-
-                    if (isEmpresa && selectedDriverId) {
-                      fetchVeiculosMotorista(selectedDriverId, page);
-                    }
-                  }}
+                  onVehiclePageChange={setVehiclePage}
                   motoristaId={selectedDriverId}
                   isEmpresa={isEmpresa}
                   origin={origin}
@@ -526,73 +436,41 @@ export default function ReservaEditarModal({
                   onOriginChange={setOrigin}
                   onEntryCityChange={setEntryCity}
                   onVehicleChange={setSelectedVehicleId}
-                  onNext={async (cidade, entradaCidade, veiculoId) => {
-                    if (!veiculoId) {
-                      return;
-                    }
+                  onNext={(cidade, entradaCidade, veiculoId) => {
+                    if (!veiculoId) return;
 
                     setForm((prev) => ({
                       ...prev,
                       cidadeOrigem: cidade,
-                      veiculoId: veiculoId,
+                      veiculoId,
                       motoristaId: selectedDriverId || prev.motoristaId,
                     }));
 
-                    if (isEmpresa) {
-                      setError(null);
+                    setField('veiculoId', veiculoId);
 
+                    if (isEmpresa) {
                       if (!vaga) {
                         setError(
                           'Não foi possível identificar a vaga da reserva.',
                         );
-                        setEditField(null);
                         return;
                       }
 
-                      try {
-                        const dia = new Date(form.inicio);
+                      /*
+                       * A alteração do veículo pode mudar os horários
+                       * disponíveis. Abrimos a etapa de horário para
+                       * que sejam consultados pelo novo tipo de veículo.
+                       */
+                      const dia = new Date(form.inicio);
 
-                        setSelectedDay(dia);
-                        setSelectedVehicleId(veiculoId);
+                      setField('day', dia);
+                      setField('startHour', null);
 
-                        const horarios = await fetchHorariosDisponiveis(
-                          dia,
-                          vaga,
-                          veiculoId,
-                        );
-
-                        const inicioAtual = new Date(form.inicio);
-                        const fimAtual = new Date(form.fim);
-
-                        const startAtual = inicioAtual
-                          .toTimeString()
-                          .slice(0, 5);
-                        const endAtual = fimAtual.toTimeString().slice(0, 5);
-
-                        const aindaValido =
-                          availableTimes.includes(startAtual) &&
-                          !reservedTimesStart.includes(startAtual) &&
-                          !reservedTimesEnd.includes(endAtual);
-
-                        if (aindaValido) {
-                          setEditField(null);
-                          return;
-                        }
-
-                        setStartHour(null);
-                        setEndHour(null);
-                        setChainedFromVehicle(true);
-                        setEditField('horario');
-                        setStep(3);
-                      } catch (err) {
-                        setError(
-                          err instanceof Error
-                            ? err.message
-                            : 'Não foi possível carregar os horários para o novo veículo.',
-                        );
-                        setEditField(null);
-                      }
-
+                      setStartHour(null);
+                      setEndHour(null);
+                      setChainedFromVehicle(true);
+                      setEditField('horario');
+                      setStep(3);
                       return;
                     }
 
@@ -600,10 +478,6 @@ export default function ReservaEditarModal({
                   }}
                   onBack={() => {
                     if (isEmpresa) {
-                      /*
-                       * Volta para a seleção
-                       * do motorista.
-                       */
                       setSelectedDriverId('');
                       setSelectedVehicleId('');
                       setVehiclePage(0);
@@ -616,41 +490,55 @@ export default function ReservaEditarModal({
             </>
           )}
 
-          {/* ==================================================
-              MODO EDIÇÃO DE HORÁRIO
-          ================================================== */}
-
           {editField === 'horario' && (
-            <EditTimeForm
-              step={step}
-              availableTimes={availableTimes}
-              reservedTimesStart={reservedTimesStart}
-              reservedTimesEnd={reservedTimesEnd}
-              startHour={startHour}
-              endHour={endHour}
-              onSelectStart={(time) => {
-                setStartHour(time);
-                setEndHour(null);
-                setStep(4);
-              }}
-              onSelectEnd={handleTimeSelectEnd}
-              onBackToStart={() => setStep(3)}
-              onBack={() => {
-                if (chainedFromVehicle && isEmpresa) {
-                  /*
-                   * Veio do fluxo encadeado motorista/veículo → horário.
-                   * Voltar deve retornar para a etapa de veículo,
-                   * mantendo o motorista já selecionado.
-                   */
-                  setChainedFromVehicle(false);
-                  setEditField('veiculo-origem');
-                  return;
-                }
+            <>
+              {loadingHorarios && (
+                <div className="flex items-center gap-2 px-5 py-4 text-sm text-gray-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Carregando horários disponíveis...
+                </div>
+              )}
 
-                setEditField(null);
-                setStep(1);
-              }}
-            />
+              {!loadingHorarios && !horariosCarregados && (
+                <p className="px-5 py-4 text-sm text-gray-500">
+                  Aguardando a consulta dos horários...
+                </p>
+              )}
+
+              {!loadingHorarios && horariosCarregados && (
+                <EditTimeForm
+                  step={step}
+                  availableTimes={availableTimes}
+                  reservedTimesStart={reservedTimesStart}
+                  reservedTimesEnd={reservedTimesEnd}
+                  startHour={startHour}
+                  endHour={endHour}
+                  onSelectStart={(time) => {
+                    setStartHour(time);
+                    setEndHour(null);
+                    setField('startHour', time);
+                    setStep(4);
+                  }}
+                  onSelectEnd={handleTimeSelectEnd}
+                  onBackToStart={() => {
+                    setStartHour(null);
+                    setEndHour(null);
+                    setField('startHour', null);
+                    setStep(3);
+                  }}
+                  onBack={() => {
+                    if (chainedFromVehicle && isEmpresa) {
+                      setChainedFromVehicle(false);
+                      setEditField('veiculo-origem');
+                      return;
+                    }
+
+                    setEditField(null);
+                    setStep(1);
+                  }}
+                />
+              )}
+            </>
           )}
         </main>
       </div>
