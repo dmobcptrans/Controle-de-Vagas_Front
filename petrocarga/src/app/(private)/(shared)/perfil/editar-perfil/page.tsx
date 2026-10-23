@@ -130,7 +130,7 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
 
   EMPRESA: {
     fetchDados: async (userId) => {
-      const resultado = await getAgentePorId(userId);
+      const resultado = await getEmpresaPorId(userId);
 
       return {
         dados: resultado,

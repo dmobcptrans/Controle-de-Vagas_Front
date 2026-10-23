@@ -9,7 +9,6 @@ import {
   Calendar,
   CalendarClock,
   SquareParking,
-  MapPlus,
   Car,
   IdCard,
   Bell,

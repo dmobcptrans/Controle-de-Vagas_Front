@@ -5,6 +5,7 @@ import { EmpresaResponse, AtualizarEmpresaPayload } from '../../types/empresa2';
 import { useState } from 'react';
 
 import { useEmpresaMutation } from '../../hooks/useEmpresaMutation';
+import { Switch } from '@/components/ui/switch';
 
 import {
   Card,
@@ -15,11 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-import {
-  CheckCircle,
-  CircleAlert,
-  Building2,
-} from 'lucide-react';
+import { CheckCircle, CircleAlert, Building2 } from 'lucide-react';
 
 import FormItem from '@/components/form/form-item';
 
@@ -38,8 +35,7 @@ export default function EditarEmpresa({
   empresa,
   onSuccess,
 }: EditarEmpresaProps) {
-  const { atualizar, loading, error, limparError } =
-    useEmpresaMutation();
+  const { atualizar, loading, error, limparError } = useEmpresaMutation();
 
   /*
    * Dados da empresa/usuário
@@ -51,51 +47,41 @@ export default function EditarEmpresa({
    * empresa.usuario.cnpj
    */
 
-  const [nome, setNome] = useState(
-    empresa.usuario?.nome ?? '',
-  );
+  const [nome, setNome] = useState(empresa.usuario?.nome ?? '');
 
   const [telefone, setTelefone] = useState(
     empresa.usuario?.telefone?.replace(/\D/g, '') ?? '',
   );
 
-  const [email, setEmail] = useState(
-    empresa.usuario?.email ?? '',
-  );
+  const [email, setEmail] = useState(empresa.usuario?.email ?? '');
 
   const [cnpj, setCnpj] = useState(
     empresa.usuario?.cnpj?.replace(/\D/g, '') ?? '',
   );
 
   const [senha, setSenha] = useState('');
+  const [alterarSenha, setAlterarSenha] = useState(false);
 
   const [success, setSuccess] = useState(false);
 
-  async function handleSubmit(
-    e: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     limparError();
     setSuccess(false);
 
-    const payload: AtualizarEmpresaPayload = {
+    const payload = {
       nome,
-      telefone: telefone.replace(/\D/g, ''),
+      cnpj,
       email,
-      cnpj: cnpj.replace(/\D/g, ''),
-      senha,
+      telefone,
+      ...(alterarSenha && senha.length > 0 ? { senha } : {}),
     };
 
-    const sucesso = await atualizar(
-      empresa.id,
-      payload,
-    );
+    const sucesso = await atualizar(empresa.id, payload);
 
     if (!sucesso) {
-      toast.error(
-        error ?? 'Não foi possível atualizar a empresa.',
-      );
+      toast.error(error ?? 'Não foi possível atualizar a empresa.');
 
       return;
     }
@@ -110,11 +96,9 @@ export default function EditarEmpresa({
       }, 250);
     }
   }
-
   return (
     <main className="container mx-auto px-4 py-4 md:py-8">
       <Card className="mx-auto w-full max-w-4xl">
-
         {/* Header */}
         <CardHeader className="space-y-3 pb-6 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
@@ -132,7 +116,6 @@ export default function EditarEmpresa({
 
         <form onSubmit={handleSubmit}>
           <CardContent className="p-4 md:p-6 lg:p-8">
-
             {/* Feedback */}
             {(error || success) && (
               <div
@@ -171,10 +154,7 @@ export default function EditarEmpresa({
             </CardDescription>
 
             {/* Nome da empresa */}
-            <FormItem
-              name="Nome"
-              description="Informe o nome da empresa."
-            >
+            <FormItem name="Nome" description="Informe o nome da empresa.">
               <Input
                 className="rounded-sm border-gray-400 text-sm md:text-base"
                 id="nome"
@@ -187,10 +167,7 @@ export default function EditarEmpresa({
             </FormItem>
 
             {/* CNPJ */}
-            <FormItem
-              name="CNPJ"
-              description="Informe o CNPJ da empresa."
-            >
+            <FormItem name="CNPJ" description="Informe o CNPJ da empresa.">
               <Input
                 className="rounded-sm border-gray-400 text-sm md:text-base"
                 id="cnpj"
@@ -199,11 +176,7 @@ export default function EditarEmpresa({
                 maxLength={14}
                 inputMode="numeric"
                 value={cnpj}
-                onChange={(e) =>
-                  setCnpj(
-                    e.target.value.replace(/\D/g, ''),
-                  )
-                }
+                onChange={(e) => setCnpj(e.target.value.replace(/\D/g, ''))}
                 required
               />
             </FormItem>
@@ -220,9 +193,7 @@ export default function EditarEmpresa({
                 type="email"
                 placeholder="empresa@email.com"
                 value={email}
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </FormItem>
@@ -240,17 +211,13 @@ export default function EditarEmpresa({
                 maxLength={11}
                 inputMode="numeric"
                 value={telefone}
-                onChange={(e) =>
-                  setTelefone(
-                    e.target.value.replace(/\D/g, ''),
-                  )
-                }
+                onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
                 required
               />
             </FormItem>
 
             {/* ========================================================= */}
-            {/* SENHA */}
+            {/* ALTERAÇÃO DE SENHA */}
             {/* ========================================================= */}
 
             <CardDescription className="mb-6 mt-8 text-center text-base font-bold text-blue-800">
@@ -258,21 +225,53 @@ export default function EditarEmpresa({
             </CardDescription>
 
             <FormItem
-              name="Nova Senha"
-              description="Deixe em branco caso não queira alterar a senha."
+              name="Alterar senha"
+              description="Ative esta opção somente se desejar cadastrar uma nova senha."
             >
-              <Input
-                className="rounded-sm border-gray-400 text-sm md:text-base"
-                id="senha"
-                name="senha"
-                type="password"
-                placeholder="Digite uma nova senha"
-                value={senha}
-                onChange={(e) =>
-                  setSenha(e.target.value)
-                }
-              />
+              <div className="flex items-center justify-between gap-4 rounded-lg border border-gray-200 p-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium text-gray-900">
+                    Desejo alterar minha senha
+                  </span>
+
+                  <span className="text-xs text-gray-500">
+                    Desativada, sua senha atual será mantida.
+                  </span>
+                </div>
+
+                <Switch
+                  checked={alterarSenha}
+                  onCheckedChange={(checked) => {
+                    setAlterarSenha(checked);
+
+                    if (!checked) {
+                      setSenha('');
+                    }
+                  }}
+                  aria-label="Alterar senha da empresa"
+                />
+              </div>
             </FormItem>
+
+            {/* Campo de senha exibido somente quando habilitado */}
+            {alterarSenha && (
+              <FormItem
+                name="Nova Senha"
+                description="Informe a nova senha. Ela será atualizada ao salvar o formulário."
+              >
+                <Input
+                  className="rounded-sm border-gray-400 text-sm md:text-base"
+                  id="senha"
+                  name="senha"
+                  type="password"
+                  placeholder="Digite uma nova senha"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+              </FormItem>
+            )}
           </CardContent>
 
           {/* Footer */}
