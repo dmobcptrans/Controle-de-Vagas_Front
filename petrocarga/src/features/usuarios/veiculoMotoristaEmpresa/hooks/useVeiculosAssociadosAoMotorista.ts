@@ -8,6 +8,8 @@ import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
 import { useApi } from '@/services/hooks/useApi';
 
 interface UseVeiculoOptions {
+  empresaId?: string;
+  motoristaId?: string;
   params?: VeiculosAssociadosAoMotoristaParams;
   buscarAutomaticamente?: boolean;
 }
@@ -27,6 +29,8 @@ interface UseVeiculoReturn {
 const DEFAULT_PARAMS: VeiculosAssociadosAoMotoristaParams = {};
 
 export function useVeiculosAssociadosAoMotorista({
+  empresaId,
+  motoristaId,
   params = DEFAULT_PARAMS,
   buscarAutomaticamente = true,
 }: UseVeiculoOptions = {}): UseVeiculoReturn {
@@ -38,16 +42,29 @@ export function useVeiculosAssociadosAoMotorista({
 
   const { loading, error, execute } = useApi();
 
-  // Guarda os params mais recentes sem mudar a referência do `buscar`
   const paramsRef = useRef<VeiculosAssociadosAoMotoristaParams>(params);
+
+  // Mantém os filtros atuais disponíveis para buscar e recarregar.
+  const filtrosRef = useRef({ empresaId, motoristaId });
+
+  useEffect(() => {
+    paramsRef.current = params;
+    filtrosRef.current = { empresaId, motoristaId };
+  }, [params, empresaId, motoristaId]);
 
   const buscar = useCallback(
     async (novosParams?: VeiculosAssociadosAoMotoristaParams) => {
       const parametros = novosParams ?? paramsRef.current;
-      paramsRef.current = parametros; // `recarregar` mantém a página atual
+      paramsRef.current = parametros;
+
+      const filtros = filtrosRef.current;
 
       const response = await execute(() =>
-        ListarVeiculosAssociadosAoMotorista(parametros),
+        ListarVeiculosAssociadosAoMotorista({
+          ...parametros,
+          empresaId: filtros.empresaId,
+          motoristaId: filtros.motoristaId,
+        }),
       );
 
       setJaBuscou(true);
@@ -66,11 +83,12 @@ export function useVeiculosAssociadosAoMotorista({
     await buscar(paramsRef.current);
   }, [buscar]);
 
-  // Busca automática: refaz quando `params` muda (ex.: trocou de motorista)
   useEffect(() => {
     if (!buscarAutomaticamente) return;
-    buscar(params);
-  }, [buscarAutomaticamente, buscar, params]);
+    if (!motoristaId) return;
+
+    void buscar(params);
+  }, [buscarAutomaticamente, buscar, params, empresaId, motoristaId]);
 
   return {
     veiculos,

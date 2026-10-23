@@ -129,7 +129,7 @@ export default function Cadastro() {
       latitudeFim: Number(formData.get('latitudeFim')),
       longitudeInicio: Number(formData.get('longitudeInicio')),
       longitudeFim: Number(formData.get('longitudeFim')),
-      TipoVaga: (formData.get('tipo') as string).toUpperCase() as TipoVaga,
+      tipoVaga: (formData.get('tipo') as string).toUpperCase() as TipoVaga,
       comprimento: Number(formData.get('comprimento')),
       operacoesVaga: JSON.parse(
         (formData.get('diaSemana') as string) ?? '[]',
