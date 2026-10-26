@@ -129,12 +129,13 @@ export default function ReservaEditarModal({
     vehicleTotalPages,
     setVehiclePage,
     availableTimes,
+    availableTimesNextDay,
+    podeContinuarNoDiaSeguinte,
     reservedTimesStart,
     reservedTimesEnd,
     loadingHorarios,
     horariosCarregados,
   } = useReserva(vaga);
-
   const vehiclesForStep = vehicles.map((v) => ({
     ...v,
     id: v.id,
@@ -147,10 +148,10 @@ export default function ReservaEditarModal({
   // ============================================================
 
   useEffect(() => {
-  if (!form.veiculoId) return;
+    if (!form.veiculoId) return;
 
-  buscar();
-}, [form.veiculoId, buscar]);
+    buscar();
+  }, [form.veiculoId, buscar]);
 
   useEffect(() => {
     if (!vaga) return;
@@ -254,14 +255,33 @@ export default function ReservaEditarModal({
   const handleTimeSelectEnd = (time: string) => {
     if (!startHour) return;
 
+    const terminaNoDiaSeguinte = time.startsWith('D+1 ');
+    const horaFim = terminaNoDiaSeguinte ? time.slice(4) : time;
+
     const base = new Date(form.inicio);
+
     const [sh, sm] = startHour.split(':').map(Number);
-    const [eh, em] = time.split(':').map(Number);
+    const [eh, em] = horaFim.split(':').map(Number);
 
     const inicio = new Date(base);
     inicio.setHours(sh, sm, 0, 0);
 
     const fim = new Date(base);
+
+    // Avança a data antes de definir o horário final.
+    if (terminaNoDiaSeguinte) {
+      fim.setDate(fim.getDate() + 1);
+    } else {
+      // Protege também o caso de um horário final menor ou igual
+      // ao inicial, caso esse formato seja permitido pela regra.
+      const minutosInicio = sh * 60 + sm;
+      const minutosFim = eh * 60 + em;
+
+      if (minutosFim <= minutosInicio) {
+        fim.setDate(fim.getDate() + 1);
+      }
+    }
+
     fim.setHours(eh, em, 0, 0);
 
     setForm((prev) => ({
@@ -509,6 +529,8 @@ export default function ReservaEditarModal({
                 <EditTimeForm
                   step={step}
                   availableTimes={availableTimes}
+                  availableTimesNextDay={availableTimesNextDay}
+                  podeContinuarNoDiaSeguinte={podeContinuarNoDiaSeguinte}
                   reservedTimesStart={reservedTimesStart}
                   reservedTimesEnd={reservedTimesEnd}
                   startHour={startHour}
