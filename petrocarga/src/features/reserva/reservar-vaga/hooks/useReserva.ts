@@ -60,25 +60,45 @@ export function useReserva(selectedVaga: VagaResponse | null) {
     day: form.day,
     tipoVeiculo,
     startHour: form.startHour,
-    intervalo: persona === 'AGENTE' ? INTERVALO_MINUTOS.AGENTE : INTERVALO_MINUTOS.MOTORISTA,
+    intervalo:
+      persona === 'AGENTE'
+        ? INTERVALO_MINUTOS.AGENTE
+        : INTERVALO_MINUTOS.MOTORISTA,
   });
 
   // confirmação
-  const { criar, loading: confirmando, error: erroConfirmar } = useReservaMutation();
+  const {
+    criar,
+    loading: confirmando,
+    error: erroConfirmar,
+  } = useReservaMutation();
 
   const confirmar = useCallback(async (): Promise<ConfirmResult> => {
     if (!user?.id || !selectedVaga) {
-      return { success: false, message: 'Sessão inválida ou vaga não selecionada.' };
+      return {
+        success: false,
+        message: 'Sessão inválida ou vaga não selecionada.',
+      };
     }
 
-    const built = buildPayload(persona, form, { vagaId: selectedVaga.id, userId: user.id });
+    const built = buildPayload(persona, form, {
+      vagaId: selectedVaga.id,
+      userId: user.id,
+    });
     if (!built.ok) return { success: false, message: built.message };
 
-    const resultado = await criar(personaMutation(persona), built.ownerId, built.payload as never);
+    const resultado = await criar(
+      personaMutation(persona),
+      built.ownerId,
+      built.payload as never,
+    );
 
     return resultado
       ? { success: true, message: 'Reserva confirmada com sucesso!' }
-      : { success: false, message: erroConfirmar ?? 'Não foi possível confirmar a reserva.' };
+      : {
+          success: false,
+          message: erroConfirmar ?? 'Não foi possível confirmar a reserva.',
+        };
   }, [user?.id, selectedVaga, persona, form, criar, erroConfirmar]);
 
   return {

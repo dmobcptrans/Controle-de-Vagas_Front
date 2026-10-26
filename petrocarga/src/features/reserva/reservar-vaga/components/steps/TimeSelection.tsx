@@ -1,3 +1,4 @@
+
 interface TimeSelectionProps {
   times: string[];
   reserved: string[];
@@ -7,82 +8,22 @@ interface TimeSelectionProps {
   color?: 'blue' | 'green';
 }
 
-/**
- * @component TimeSelection
- * @version 1.0.0
- * 
- * @description Componente de seleção de horário em grid 3 colunas.
- * Exibe horários disponíveis, reservados e permite seleção.
- * 
- * ----------------------------------------------------------------------------
- * 📋 PROPRIEDADES:
- * ----------------------------------------------------------------------------
- * 
- * @property {string[]} times - Lista de horários disponíveis (ex: ["08:00", "09:00"])
- * @property {string[]} reserved - Lista de horários já reservados (não selecionáveis)
- * @property {string | null} selected - Horário atualmente selecionado
- * @property {(time: string) => void} onSelect - Callback ao selecionar um horário
- * @property {() => void} [onBack] - Callback para voltar (botão opcional)
- * @property {'blue' | 'green'} [color='blue'] - Cor de destaque (azul ou verde)
- * 
- * ----------------------------------------------------------------------------
- * 🎨 COMPORTAMENTO:
- * ----------------------------------------------------------------------------
- * 
- * 1. HORÁRIOS DISPONÍVEIS:
- *    - Botões clicáveis
- *    - Cor de hover conforme prop color
- * 
- * 2. HORÁRIOS RESERVADOS:
- *    - Botões desabilitados
- *    - Estilo: bg-gray-300, cursor-not-allowed
- * 
- * 3. HORÁRIO SELECIONADO:
- *    - Destaque com cor sólida (bg-blue-600 ou bg-green-600)
- *    - Texto branco
- * 
- * 4. BOTÃO VOLTAR:
- *    - Exibido apenas se onBack for fornecido
- *    - Estilo: bg-gray-200, rounded
- * 
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- * 
- * - GRID: 3 colunas para layout responsivo
- * - CORES DINÂMICAS: hoverClass e selectedClass baseadas na prop color
- * - DESABILITADO: Botões reservados não são clicáveis
- * 
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- * 
- * - DaySelection: Seleção de dia
- * - EditTimeForm: Formulário de edição de horários
- * 
- * @example
- * ```tsx
- * // Seleção de horário inicial (azul)
- * <TimeSelection
- *   times={availableTimes}
- *   reserved={reservedTimesStart}
- *   selected={startHour}
- *   onSelect={setStartHour}
- *   onBack={() => setStep(2)}
- *   color="blue"
- * />
- * 
- * // Seleção de horário final (verde)
- * <TimeSelection
- *   times={availableTimes}
- *   reserved={reservedTimesEnd}
- *   selected={endHour}
- *   onSelect={setEndHour}
- *   onBack={() => setStep(3)}
- *   color="green"
- * />
- * ```
- */
+type TimeOption = {
+  value: string;
+  hour: string;
+  nextDay: boolean;
+};
+
+function parseTime(value: string): TimeOption {
+  const nextDay = value.startsWith('D+1 ');
+  const hour = nextDay ? value.slice(4) : value;
+
+  return {
+    value,
+    hour,
+    nextDay,
+  };
+}
 
 export default function TimeSelection({
   times,
@@ -96,65 +37,100 @@ export default function TimeSelection({
     color === 'blue'
       ? 'hover:bg-blue-500 hover:text-white'
       : 'hover:bg-green-500 hover:text-white';
-  const selectedClass =
-    color === 'blue' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white';
 
-  // Agrupa os horários por período do dia
-  const groups = {
-    Manhã: times.filter((t) => Number(t.split(':')[0]) < 12),
-    Tarde: times.filter((t) => {
-      const h = Number(t.split(':')[0]);
-      return h >= 12 && h < 18;
-    }),
-    Noite: times.filter((t) => Number(t.split(':')[0]) >= 18),
-  };
+  const selectedClass =
+    color === 'blue'
+      ? 'bg-blue-600 text-white border-blue-600'
+      : 'bg-green-600 text-white border-green-600';
+
+  const options = times.map(parseTime);
+
+  const groups = [
+    {
+      label: 'Manhã',
+      filter: (option: TimeOption) => {
+        const hour = Number(option.hour.split(':')[0]);
+        return !option.nextDay && hour < 12;
+      },
+    },
+    {
+      label: 'Tarde',
+      filter: (option: TimeOption) => {
+        const hour = Number(option.hour.split(':')[0]);
+        return !option.nextDay && hour >= 12 && hour < 18;
+      },
+    },
+    {
+      label: 'Noite',
+      filter: (option: TimeOption) => {
+        const hour = Number(option.hour.split(':')[0]);
+        return !option.nextDay && hour >= 18;
+      },
+    },
+    {
+      label: 'Dia seguinte',
+      filter: (option: TimeOption) => option.nextDay,
+    },
+  ];
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <p className="font-semibold mb-3 text-center flex-shrink-0">
+    <div className="flex h-full w-full flex-col">
+      <p className="mb-3 flex-shrink-0 text-center font-semibold">
         Escolha o horário
       </p>
 
-      {/* Área rolável — só os horários rolam, o resto fica fixo */}
       <div className="flex-1 overflow-y-auto pr-1 -mr-1">
-        {Object.entries(groups).map(([label, group]) =>
-          group.length > 0 ? (
-            <div key={label} className="mb-4">
-              <p className="sticky top-0 bg-white/95 backdrop-blur-sm text-xs font-semibold text-gray-500 uppercase tracking-wide py-1 z-10">
+        {groups.map(({ label, filter }) => {
+          const group = options.filter(filter);
+
+          if (group.length === 0) return null;
+
+          return (
+            <section key={label} className="mb-4">
+              <p className="sticky top-0 z-10 bg-white/95 py-1 text-xs font-semibold uppercase tracking-wide text-gray-500 backdrop-blur-sm">
                 {label}
               </p>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                {group.map((time) => {
-                  const disabled = reserved.includes(time);
-                  const isSelected = selected === time;
+
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+                {group.map((option) => {
+                  const disabled = reserved.includes(option.value);
+                  const isSelected = selected === option.value;
 
                   return (
                     <button
-                      key={time}
+                      key={option.value}
+                      type="button"
                       disabled={disabled}
-                      onClick={() => onSelect(time)}
-                      className={`p-2 rounded border text-center transition
-                      ${
+                      onClick={() => onSelect(option.value)}
+                      aria-pressed={isSelected}
+                      className={`rounded border p-2 text-center transition ${
                         disabled
-                          ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                          ? 'cursor-not-allowed border-gray-200 bg-gray-300 text-gray-500'
                           : `cursor-pointer ${hoverClass}`
-                      }
-                      ${isSelected ? selectedClass : ''}`}
+                      } ${
+                        isSelected ? selectedClass : 'border-gray-200'
+                      }`}
                     >
-                      {time}
+                      <span className="block">{option.hour}</span>
+
+                      {option.nextDay && (
+                        <span className="mt-1 block text-[10px] leading-tight">
+                          Dia seguinte
+                        </span>
+                      )}
                     </button>
                   );
                 })}
               </div>
-            </div>
-          ) : null
-        )}
+            </section>
+          );
+        })}
       </div>
 
-      {/* Botão fixo na parte de baixo */}
-       {onBack && (
+      {onBack && (
         <button
-          className="w-full sm:w-auto px-4 py-3 bg-gray-200 rounded-xl hover:bg-gray-300 text-sm sm:text-base"
+          type="button"
+          className="w-full rounded-xl bg-gray-200 px-4 py-3 text-sm hover:bg-gray-300 sm:w-auto sm:text-base"
           onClick={onBack}
         >
           Voltar

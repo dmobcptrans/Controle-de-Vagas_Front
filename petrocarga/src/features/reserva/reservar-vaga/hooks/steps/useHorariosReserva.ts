@@ -1,56 +1,204 @@
 import { useEffect, useMemo, useRef } from 'react';
+
 import type { VagaResponse } from '@/features/vaga/vagas/types/vaga';
 import { useReservas } from '@/features/reserva/reservas/hooks/useReservas';
-import type { ReservaParams, ReservaResponse } from '@/features/reserva/reservas/types/reservas';
-import { calcularFimBloqueado, calcularHorarios, toDateKey } from '../reservaHelpers';
+
+import type {
+  ReservaParams,
+  ReservaResponse,
+} from '@/features/reserva/reservas/types/reservas';
+
+import {
+  adicionarDia,
+  calcularFimBloqueado,
+  calcularHorarios,
+  expandirBloqueios,
+  getOperacaoDia,
+  toDateKey,
+} from '../reservaHelpers';
 
 interface Args {
-  vaga: VagaResponse | null;
+  vaga?: VagaResponse | null;
   day?: Date;
   tipoVeiculo?: string;
   startHour: string | null;
   intervalo: number;
 }
 
-export function useHorariosReserva({ vaga, day, tipoVeiculo, startHour, intervalo }: Args) {
-  const params = useMemo(
-    () => (day && tipoVeiculo ? ({ data: toDateKey(day), tipoVeiculo } as ReservaParams) : undefined),
+export function useHorariosReserva({
+  vaga,
+  day,
+  tipoVeiculo,
+  startHour,
+  intervalo,
+}: Args) {
+  const diaSeguinte = useMemo(
+    () => (day ? adicionarDia(day) : undefined),
+    [day],
+  );
+
+  const paramsAtual = useMemo(
+    () =>
+      day && tipoVeiculo
+        ? ({ data: toDateKey(day), tipoVeiculo } as ReservaParams)
+        : undefined,
     [day, tipoVeiculo],
   );
 
-  const { bloqueios, loading, buscarBloqueios } = useReservas<ReservaResponse>({
+  const paramsSeguinte = useMemo(
+    () =>
+      diaSeguinte && tipoVeiculo
+        ? ({
+            data: toDateKey(diaSeguinte),
+            tipoVeiculo,
+          } as ReservaParams)
+        : undefined,
+    [diaSeguinte, tipoVeiculo],
+  );
+
+  const atual = useReservas<ReservaResponse>({
     vagaId: vaga?.id,
-    params,
+    params: paramsAtual,
+    buscarAutomaticamente: false,
+  });
+
+  const seguinte = useReservas<ReservaResponse>({
+    vagaId: vaga?.id,
+    params: paramsSeguinte,
     buscarAutomaticamente: false,
   });
 
   useEffect(() => {
-    if (vaga && params) buscarBloqueios();
-  }, [vaga, params, buscarBloqueios]);
+    if (vaga && paramsAtual) {
+      atual.buscarBloqueios();
+    }
+  }, [vaga, paramsAtual, atual.buscarBloqueios]);
+
+  useEffect(() => {
+    if (vaga && paramsSeguinte) {
+      seguinte.buscarBloqueios();
+    }
+  }, [vaga, paramsSeguinte, seguinte.buscarBloqueios]);
 
   const horarios = useMemo(() => {
-    if (!vaga || !day || !tipoVeiculo) return { availableTimes: [], reservedStart: [], reservedEnd: [] };
-    return calcularHorarios(day, vaga, bloqueios ?? [], intervalo);
-  }, [vaga, day, tipoVeiculo, bloqueios, intervalo]);
+    if (!vaga || !day || !tipoVeiculo) {
+      return {
+        availableTimes: [],
+        reservedStart: [],
+        reservedEnd: [],
+      };
+    }
 
-  // fim bloqueado depende do início escolhido; senão usa os ocupados base
-  const reservedTimesEnd = useMemo(
-    () =>
-      startHour && vaga
-        ? calcularFimBloqueado(startHour, horarios.availableTimes, vaga.area, horarios.reservedEnd)
-        : horarios.reservedEnd,
-    [startHour, vaga, horarios],
-  );
+    return calcularHorarios(
+      day,
+      vaga,
+      atual.bloqueios ?? [],
+      intervalo,
+    );
+  }, [vaga, day, tipoVeiculo, atual.bloqueios, intervalo]);
 
-  // "carregou" = já houve ao menos uma busca concluída p/ estes params
-  const buscou = useRef(false);
-  useEffect(() => { if (!loading && params) buscou.current = true; }, [loading, params]);
+  const horariosSeguinte = useMemo(() => {
+    if (!vaga || !diaSeguinte || !tipoVeiculo) {
+      return {
+        availableTimes: [],
+        reservedStart: [],
+        reservedEnd: [],
+      };
+    }
+
+    return calcularHorarios(
+      diaSeguinte,
+      vaga,
+      seguinte.bloqueios ?? [],
+      intervalo,
+    );
+  }, [
+    vaga,
+    diaSeguinte,
+    tipoVeiculo,
+    seguinte.bloqueios,
+    intervalo,
+  ]);
+
+  const podeContinuarNoDiaSeguinte = useMemo(() => {
+    if (!vaga || !day || !diaSeguinte) return false;
+
+    const operacaoAtual = getOperacaoDia(day, vaga);
+    const operacaoSeguinte = getOperacaoDia(diaSeguinte, vaga);
+
+    if (!operacaoAtual || !operacaoSeguinte) return false;
+
+    const fimAtual = operacaoAtual.horaFim.slice(0, 5);
+    const inicioSeguinte = operacaoSeguinte.horaInicio.slice(0, 5);
+
+    // Só conecta dias quando a operação chega à meia-noite
+    // e a operação seguinte começa à meia-noite.
+    return fimAtual === '23:59' && inicioSeguinte === '00:00';
+  }, [vaga, day, diaSeguinte]);
+
+  const reservedEndBase = useMemo(() => {
+    const bloqueiosAtuais = expandirBloqueios(
+      atual.bloqueios ?? [],
+      intervalo,
+    );
+
+    const bloqueiosSeguintes = expandirBloqueios(
+      seguinte.bloqueios ?? [],
+      intervalo,
+    ).map((hora) => `D+1 ${hora}`);
+
+    return [...bloqueiosAtuais, ...bloqueiosSeguintes];
+  }, [atual.bloqueios, seguinte.bloqueios, intervalo]);
+
+  const reservedTimesEnd = useMemo(() => {
+    if (!startHour || !vaga) return horarios.reservedEnd;
+
+    return calcularFimBloqueado(
+      startHour,
+      horarios.availableTimes,
+      vaga.area,
+      reservedEndBase,
+      podeContinuarNoDiaSeguinte
+        ? horariosSeguinte.availableTimes
+        : [],
+    );
+  }, [
+    startHour,
+    vaga,
+    horarios,
+    horariosSeguinte.availableTimes,
+    reservedEndBase,
+    podeContinuarNoDiaSeguinte,
+  ]);
+
+  const buscouAtual = useRef(false);
+  const buscouSeguinte = useRef(false);
+
+  useEffect(() => {
+    if (!atual.loading && paramsAtual) {
+      buscouAtual.current = true;
+    }
+  }, [atual.loading, paramsAtual]);
+
+  useEffect(() => {
+    if (!seguinte.loading && paramsSeguinte) {
+      buscouSeguinte.current = true;
+    }
+  }, [seguinte.loading, paramsSeguinte]);
 
   return {
     availableTimes: horarios.availableTimes,
+    availableTimesNextDay: podeContinuarNoDiaSeguinte
+      ? horariosSeguinte.availableTimes
+      : [],
     reservedTimesStart: horarios.reservedStart,
     reservedTimesEnd,
-    loadingHorarios: loading,
-    horariosCarregados: buscou.current && !loading,
+    loadingHorarios: atual.loading || seguinte.loading,
+    horariosCarregados:
+      buscouAtual.current &&
+      buscouSeguinte.current &&
+      !atual.loading &&
+      !seguinte.loading,
+    podeContinuarNoDiaSeguinte,
   };
 }

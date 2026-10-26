@@ -23,11 +23,26 @@ import type { Persona } from '../hooks/reservaPayload';
  * que é o que o StepIndicator e o `form.step` já usam.
  * 'veiculo' para AGENTE será o formulário de tipo/placa (TODO: rota rápida).
  */
-type StepKey = 'dia' | 'motorista' | 'veiculo' | 'inicio' | 'fim' | 'confirmacao' | 'feedback';
+type StepKey =
+  | 'dia'
+  | 'motorista'
+  | 'veiculo'
+  | 'inicio'
+  | 'fim'
+  | 'confirmacao'
+  | 'feedback';
 
 const FLUXOS: Record<Persona, StepKey[]> = {
   MOTORISTA: ['dia', 'veiculo', 'inicio', 'fim', 'confirmacao', 'feedback'],
-  EMPRESA: ['dia', 'motorista', 'veiculo', 'inicio', 'fim', 'confirmacao', 'feedback'],
+  EMPRESA: [
+    'dia',
+    'motorista',
+    'veiculo',
+    'inicio',
+    'fim',
+    'confirmacao',
+    'feedback',
+  ],
   AGENTE: ['dia', 'veiculo', 'inicio', 'fim', 'confirmacao', 'feedback'],
 };
 
@@ -50,7 +65,11 @@ export default function ReservaComponent({ selectedVaga, empresaId }: Props) {
   const voltar = () => setField('step', Math.max(1, form.step - 1));
 
   // ---------- dados derivados p/ a UI ----------
-  const vehiclesForStep = r.vehicles.map((v) => ({ ...v, name: `${v.marca} ${v.modelo}`, plate: v.placa }));
+  const vehiclesForStep = r.vehicles.map((v) => ({
+    ...v,
+    name: `${v.marca} ${v.modelo}`,
+    plate: v.placa,
+  }));
   const veiculoSel = vehiclesForStep.find((v) => v.id === form.veiculoId);
 
   // dias: busca ao entrar na etapa 'dia'
@@ -69,7 +88,9 @@ export default function ReservaComponent({ selectedVaga, empresaId }: Props) {
 
   return (
     <div className="p-6 border rounded-2xl shadow-lg mx-auto bg-white min-h-[60vh] flex flex-col">
-      {stepKey !== 'feedback' && <StepIndicator step={form.step} isEmpresa={r.isEmpresa} />}
+      {stepKey !== 'feedback' && (
+        <StepIndicator step={form.step} isEmpresa={r.isEmpresa} />
+      )}
 
       <div className="flex flex-1 justify-center">
         {stepKey === 'dia' && (
@@ -144,7 +165,14 @@ export default function ReservaComponent({ selectedVaga, empresaId }: Props) {
 
         {stepKey === 'fim' && form.startHour && (
           <TimeSelection
-            times={r.availableTimes.filter((t) => toMinutes(t) > toMinutes(form.startHour!))}
+            times={[
+              ...r.availableTimes.filter(
+                (t) => toMinutes(t) > toMinutes(form.startHour!),
+              ),
+              ...(r.podeContinuarNoDiaSeguinte
+                ? r.availableTimesNextDay.map((t) => `D+1 ${t}`)
+                : []),
+            ]}
             reserved={r.reservedTimesEnd}
             selected={form.endHour}
             onSelect={(t) => {
@@ -156,19 +184,24 @@ export default function ReservaComponent({ selectedVaga, empresaId }: Props) {
           />
         )}
 
-        {stepKey === 'confirmacao' && form.day && form.startHour && form.endHour && (
-          <Confirmation
-            day={form.day}
-            startHour={form.startHour}
-            endHour={form.endHour}
-            origin={form.cidadeOrigem}
-            entryCity={form.entradaCidade}
-            destination={`${selectedVaga.endereco.logradouro}, ${selectedVaga.endereco.bairro}`}
-            vehicleName={veiculoSel ? `${veiculoSel.name} - ${veiculoSel.plate}` : ''}
-            onConfirm={onConfirm}
-            onReset={r.reset}
-          />
-        )}
+        {stepKey === 'confirmacao' &&
+          form.day &&
+          form.startHour &&
+          form.endHour && (
+            <Confirmation
+              day={form.day}
+              startHour={form.startHour}
+              endHour={form.endHour}
+              origin={form.cidadeOrigem}
+              entryCity={form.entradaCidade}
+              destination={`${selectedVaga.endereco.logradouro}, ${selectedVaga.endereco.bairro}`}
+              vehicleName={
+                veiculoSel ? `${veiculoSel.name} - ${veiculoSel.plate}` : ''
+              }
+              onConfirm={onConfirm}
+              onReset={r.reset}
+            />
+          )}
 
         {stepKey === 'feedback' && resultado && (
           <ResultadoReserva
@@ -197,7 +230,9 @@ const SemHorarios = ({ onBack }: { onBack: () => void }) => (
     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 mb-4">
       <Clock3 className="h-6 w-6 text-gray-400" />
     </div>
-    <h3 className="text-sm font-semibold text-gray-800">Nenhum horário disponível</h3>
+    <h3 className="text-sm font-semibold text-gray-800">
+      Nenhum horário disponível
+    </h3>
     <p className="mt-1 max-w-sm text-sm text-gray-500">
       Não encontramos horários disponíveis para o dia selecionado.
     </p>
