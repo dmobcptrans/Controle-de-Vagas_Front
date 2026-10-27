@@ -1,11 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/components/hooks/useAuth';
-import {
-  getVeiculosUsuario,
-  FiltrosVeiculosUsuario,
-} from '@/services/api/veiculoApi';
+import { useMemo, useState } from 'react';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { useVeiculos } from '@/features/veiculos/hooks/useVeiculos';
+import { useVeiculosAssociadosAoMotorista } from '@/features/usuarios/veiculoMotoristaEmpresa/hooks/useVeiculosAssociadosAoMotorista';
 import {
   AlertCircle,
   CarIcon,
@@ -15,125 +13,183 @@ import {
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { Veiculo } from '@/lib/types/veiculo';
-import VeiculoCard from '@/components/motorista/cards/veiculo-item';
+
+import VeiculoCard from '@/features/veiculos/components/(motorista)/veiculo-item';
 import { Button } from '@/components/ui/button';
-import CadastroVeiculoModal from '@/components/modal/cadastroVeiculo/Cadastroveiculomodal';
+import CadastroVeiculoModal from '@/features/veiculos/components/modal/Cadastroveiculomodal';
+import { CTA } from '@/components/ui/CTA/CTA';
+import { Header } from '@/components/ui/Header/Header';
 
 const TAMANHO_PAGINA = 10;
 
+// Quantidade solicitada a cada hook para montar a lista unificada.
+// Se a API tiver limite máximo, será necessário buscar as páginas restantes.
+const TAMANHO_CONSULTA = 1000;
+
 export default function VeiculosPage() {
   const { user } = useAuth();
-  const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Estado de paginação
-  const [pagina, setPagina] = useState(0);
-  const [totalPaginas, setTotalPaginas] = useState(0);
-  const [totalElementos, setTotalElementos] = useState(0);
+  const isEmpresa = user?.permissao === 'EMPRESA';
+  const isMotorista = user?.permissao === 'MOTORISTA';
 
-  // Controla a abertura do modal a partir daqui, já que o botão
-  // que o dispara ("Adicionar novo veículo") não é mais um <Link>.
   const [modalAberto, setModalAberto] = useState(false);
+  const [paginaAtual, setPaginaAtual] = useState(0);
 
-  const fetchVeiculos = useCallback(
-    async (paginaAlvo: number = pagina) => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const filtros: FiltrosVeiculosUsuario = {
-          pagina: paginaAlvo,
-          tamanhoPagina: TAMANHO_PAGINA,
-          ordem: 'ASC',
-        };
-
-        const result = await getVeiculosUsuario(user.id, filtros);
-
-        setVeiculos(result.content);
-        setTotalPaginas(result.totalPaginas);
-        setTotalElementos(result.totalElementos);
-        setPagina(result.pagina);
-      } catch {
-        setError('Erro ao buscar seus veículos. Tente novamente mais tarde.');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [user?.id, pagina],
+  const paramsConsulta = useMemo(
+    () => ({
+      pagina: 0,
+      tamanhoPagina: TAMANHO_CONSULTA,
+      ativo: true,
+      ordem: 'ASC' as const,
+    }),
+    [],
   );
 
-  useEffect(() => {
-    fetchVeiculos(0);
-  }, [user?.id]);
+  // Veículos cadastrados pelo usuário.
+  // Para EMPRESA, esta é a única fonte de veículos.
+  const {
+    buscar: buscarVeiculos,
+    veiculos: vP,
+    error,
+    loading,
+  } = useVeiculos({
+    usuarioId: user?.id,
+    params: paramsConsulta,
+    buscarAutomaticamente: true,
+  });
+
+  // Veículos associados: somente para MOTORISTA.
+  const {
+    veiculos: vA,
+    buscar: buscarAssociados,
+    error: errorAssociados,
+    loading: loadingAssociados,
+  } = useVeiculosAssociadosAoMotorista({
+    empresaId: isMotorista ? user?.dadosExtras?.empresaId : undefined,
+    motoristaId: isMotorista ? user?.id : undefined,
+    params: paramsConsulta,
+    buscarAutomaticamente: isMotorista,
+  });
+
+  // EMPRESA: apenas veículos próprios.
+  // MOTORISTA: veículos próprios + associados.
+  const veiculos = useMemo(() => {
+    const pessoais = (vP ?? []).map((veiculo) => ({
+      ...veiculo,
+      isEmpresa: isEmpresa,
+    }));
+
+    if (!isMotorista) {
+      return pessoais;
+    }
+
+    const empresariais = (vA ?? []).map((veiculo) => ({
+      ...veiculo,
+      isEmpresa: true,
+    }));
+
+    return Array.from(
+      new Map(
+        [...pessoais, ...empresariais].map((veiculo) => [veiculo.id, veiculo]),
+      ).values(),
+    );
+  }, [vP, vA, isEmpresa, isMotorista]);
+
+  const carregando = loading || (isMotorista && loadingAssociados);
+
+  const erro = error || (isMotorista ? errorAssociados : null);
+
+  // Paginação local da lista unificada.
+  const totalElementos = veiculos.length;
+  const totalPaginas = Math.ceil(totalElementos / TAMANHO_PAGINA);
+
+  const veiculosPaginados = useMemo(() => {
+    const inicio = paginaAtual * TAMANHO_PAGINA;
+
+    return veiculos.slice(inicio, inicio + TAMANHO_PAGINA);
+  }, [veiculos, paginaAtual]);
 
   const irParaPagina = (novaPagina: number) => {
-    if (novaPagina < 0 || novaPagina >= totalPaginas) return;
-    fetchVeiculos(novaPagina);
+    if (novaPagina < 0 || novaPagina >= totalPaginas) {
+      return;
+    }
+
+    setPaginaAtual(novaPagina);
+  };
+
+  const recarregar = async () => {
+    setPaginaAtual(0);
+
+    const consultas = [
+      buscarVeiculos({
+        pagina: 0,
+        tamanhoPagina: TAMANHO_CONSULTA,
+        ativo: true,
+        ordem: 'ASC',
+      }),
+    ];
+
+    if (isMotorista) {
+      consultas.push(
+        buscarAssociados({
+          pagina: 0,
+          tamanhoPagina: TAMANHO_CONSULTA,
+          ativo: true,
+          ordem: 'ASC',
+        }),
+      );
+    }
+
+    await Promise.all(consultas);
   };
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* ==================== HEADER ==================== */}
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Seus Veículos, {user?.nome?.split(' ')[0] || 'motorista'}
-          </h1>
-          <p className="text-xs text-white/50">
-            Aqui Estão Seus Veículos Cadastrados
-          </p>
-        </div>
-      </header>
+      {/* HEADER */}
+      <Header
+        title={`Seus Veículos, ${user?.nome?.split(' ')[0] || 'motorista'}`}
+        subtitle="Aqui estão seus veículos cadastrados e associados"
+      />
 
-      <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
-
+      <main className="mx-auto max-w-4xl px-4 pb-16 sm:px-8">
         <div className="-mt-4 mb-5">
-          <button
+          <CTA
             onClick={() => setModalAberto(true)}
-            className="w-full flex items-center justify-between cursor-pointer bg-[#071D41] hover:bg-[#0C3D8A] transition-colors rounded-2xl px-5 py-4 border-l-4 border-[#FFCD07]"
-          >
-            <div className="text-left">
-              <p className="text-white font-semibold text-[15px] mb-0.5">
-                Adicionar novo veículo
-              </p>
-              <p className="text-white/70 text-xs">Cadastre um veículo</p>
-            </div>
-
-            <div className="bg-white/15 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
-              <CarIcon className="h-5 w-5 text-white" />
-            </div>
-          </button>
+            title="Reservar uma vaga"
+            description="Encontre e faça uma reserva rápida"
+            icon={<CarIcon className="h-5 w-5 text-white" />}
+          />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] gap-2 text-center">
-              <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
+          {/* CARREGAMENTO */}
+          {carregando ? (
+            <div className="flex min-h-[50vh] flex-col items-center justify-center gap-2 text-center">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
               <span className="text-gray-600">Carregando seus veículos...</span>
             </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
-                <AlertCircle className="w-8 h-8 text-red-600" />
+          ) : erro ? (
+            /* ERRO */
+            <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+                <AlertCircle className="h-8 w-8 text-red-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+
+              <h3 className="mb-2 text-lg font-semibold text-gray-700">
                 Erro ao carregar veículos
               </h3>
-              <p className="text-gray-500 text-sm mb-6">{error}</p>
-              <Button onClick={() => fetchVeiculos(pagina)} variant="outline">
+
+              <p className="mb-6 text-sm text-gray-500">{erro}</p>
+
+              <Button onClick={recarregar} variant="outline">
                 Tentar novamente
               </Button>
             </div>
           ) : veiculos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center mt-10 gap-3">
+            /* LISTA VAZIA */
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 text-center">
               <p className="text-gray-500">Nenhum veículo encontrado.</p>
+
               <Button
                 onClick={() => setModalAberto(true)}
                 variant="outline"
@@ -144,18 +200,26 @@ export default function VeiculosPage() {
             </div>
           ) : (
             <>
-              <div className="grid gap-4 w-full mt-4">
-                {veiculos.map((veiculo) => (
-                  <VeiculoCard key={veiculo.id} veiculo={veiculo} />
+              {/* VEÍCULOS */}
+              <div className="mt-4 grid w-full gap-4">
+                {veiculosPaginados.map((veiculo) => (
+                  <VeiculoCard
+                    persona={
+                      user?.permissao === 'EMPRESA' ? 'EMPRESA' : 'MOTORISTA'
+                    }
+                    key={veiculo.id}
+                    veiculo={veiculo}
+                    isEmpresa={veiculo.isEmpresa}
+                  />
                 ))}
               </div>
 
-              {/* ==================== PAGINAÇÃO ==================== */}
+              {/* PAGINAÇÃO */}
               {totalPaginas > 1 && (
-                <div className="flex items-center justify-between mt-6 bg-white border border-gray-100 rounded-xl px-4 py-3">
+                <div className="mt-6 flex items-center justify-between rounded-xl border border-gray-100 bg-white px-4 py-3">
                   <Button
-                    onClick={() => irParaPagina(pagina - 1)}
-                    disabled={pagina === 0}
+                    onClick={() => irParaPagina(paginaAtual - 1)}
+                    disabled={paginaAtual === 0 || carregando}
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-1"
@@ -164,11 +228,13 @@ export default function VeiculosPage() {
                     Anterior
                   </Button>
 
-                  <div className="text-xs text-gray-500 text-center">
+                  <div className="text-center text-xs text-gray-500">
                     <p>
-                      Página <span className="font-semibold">{pagina + 1}</span>{' '}
+                      Página{' '}
+                      <span className="font-semibold">{paginaAtual + 1}</span>{' '}
                       de <span className="font-semibold">{totalPaginas}</span>
                     </p>
+
                     <p className="text-gray-400">
                       {totalElementos} veículo
                       {totalElementos !== 1 ? 's' : ''} no total
@@ -176,8 +242,8 @@ export default function VeiculosPage() {
                   </div>
 
                   <Button
-                    onClick={() => irParaPagina(pagina + 1)}
-                    disabled={pagina >= totalPaginas - 1}
+                    onClick={() => irParaPagina(paginaAtual + 1)}
+                    disabled={paginaAtual >= totalPaginas - 1 || carregando}
                     variant="outline"
                     size="sm"
                     className="flex items-center gap-1"
@@ -190,29 +256,33 @@ export default function VeiculosPage() {
             </>
           )}
 
-          {/* Tutorial */}
+          {/* TUTORIAL */}
           <Link
             href="/tutorial#meusveiculos"
-            className="flex items-center gap-4 bg-white border border-gray-100 border-l-4 border-l-[#1351B4] rounded-xl p-4 hover:bg-blue-50/30 transition-colors mt-6"
+            className="mt-6 flex items-center gap-4 rounded-xl border border-gray-100 border-l-4 border-l-[#1351B4] bg-white p-4 transition-colors hover:bg-blue-50/30"
           >
-            <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50">
               <Info className="h-5 w-5 text-[#1351B4]" />
             </div>
+
             <div>
               <p className="text-sm font-semibold text-[#071D41]">
                 Gerenciando seus veículos?
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+
+              <p className="mt-0.5 text-xs text-gray-400">
                 Aprenda a cadastrar e gerenciar seus veículos
               </p>
             </div>
           </Link>
         </div>
       </main>
+
+      {/* MODAL */}
       <CadastroVeiculoModal
         open={modalAberto}
         onOpenChange={setModalAberto}
-        onSuccess={() => fetchVeiculos(pagina)}
+        onSuccess={recarregar}
       />
     </div>
   );

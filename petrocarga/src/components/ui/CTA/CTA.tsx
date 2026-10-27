@@ -1,13 +1,22 @@
-import Link from "next/link";
-import { ReactNode } from "react";
+import Link from 'next/link';
+import { ReactNode } from 'react';
 
 type CTAProps = {
   href?: string;
-  title: string;
+  title?: string;
   description?: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   onClick?: () => void;
-  variant?: "dark" | "light";
+  variant?: 'dark' | 'light';
+  children?: ReactNode;
+  className?: string;
+
+  /**
+   * Quando true, o CTA filho controla
+   * a estrutura interna, mas mantém
+   * a identidade visual do CTA pai.
+   */
+  unstyled?: boolean;
 };
 
 export function CTA({
@@ -15,54 +24,159 @@ export function CTA({
   title,
   description,
   icon,
-  variant = "dark",
   onClick,
+  variant = 'dark',
+  children,
+  className = '',
+  unstyled = false,
 }: CTAProps) {
-  const styles = {
-    dark: {
-      container:
-        "bg-[#071D41] hover:bg-[#0C3D8A] border-[#FFCD07] text-white",
-      description: "text-white/60",
-      iconWrapper: "bg-white/15",
-    },
-    light: {
-      container:
-        "bg-white hover:bg-black/10 border-green-700 text-black shadow-sm",
-      description: "text-gray-500",
-      iconWrapper: "bg-green-700",
-    },
-  };
+const styles = {
+  dark: {
+    container: 'bg-[#071D41] border-[#FFCD07]',
+    text: 'text-white',
+    hover: 'hover:bg-[#0C3D8A]',
+    description: 'text-white/60',
+    iconWrapper: 'bg-white/15',
+  },
+
+  light: {
+    container: 'bg-white border-green-700 shadow-sm',
+    text: 'text-black',
+    hover: 'hover:bg-black/10',
+    description: 'text-gray-500',
+    iconWrapper: 'bg-green-700',
+  },
+};
 
   const current = styles[variant];
 
   const content = (
     <>
-      <div>
-        <p className="font-semibold text-[15px] mb-0.5">{title}</p>
-        <p className={`text-xs ${current.description}`}>{description}</p>
-      </div>
+      {(title || description) && (
+        <div className="min-w-0">
+          {title && (
+            <p className="font-semibold text-[15px] mb-0.5">
+              {title}
+            </p>
+          )}
 
-      <div
-        className={`rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 ${current.iconWrapper}`}
-      >
-        {icon}
-      </div>
+          {description && (
+            <p className={`text-xs ${current.description}`}>
+              {description}
+            </p>
+          )}
+        </div>
+      )}
+
+      {icon && (
+        <div
+          className={`
+            rounded-xl
+            w-11 h-11
+            flex items-center justify-center
+            flex-shrink-0
+            ${current.iconWrapper}
+          `}
+        >
+          {icon}
+        </div>
+      )}
+
+      {children}
     </>
   );
 
-  const className = `flex items-center cursor-pointer justify-between transition-colors rounded-2xl px-5 py-4 border-l-4 w-full text-left ${current.container}`;
+  /**
+   * Estrutura padrão do CTA.
+   *
+   * O unstyled remove apenas essa parte,
+   * permitindo que o filho controle seu layout.
+   */
+  const defaultClassName = `
+    flex
+    items-center
+    justify-between
+    gap-4
+    w-full
+    px-5
+    py-4
+    text-left
+  `;
 
-  return (
-    <div className="-mt-4 mb-5">
-      {href ? (
-        <Link href={href} className={className}>
+  /**
+   * Identidade visual compartilhada por todos os CTAs.
+   */
+  const baseClassName = `
+    rounded-2xl
+    border-l-4
+    overflow-hidden
+  `;
+
+  const isInteractive =
+    !!href || (!!onClick && !children);
+
+const classNameFinal = `
+  ${baseClassName}
+  ${unstyled ? '' : defaultClassName}
+
+  ${current.container}
+  ${unstyled ? '' : current.text}
+  ${unstyled || !isInteractive ? '' : current.hover}
+
+  ${className}
+`;
+  /**
+   * O espaçamento externo continua sendo
+   * responsabilidade do CTA pai.
+   */
+  const wrapperClassName = '-mt-4 mb-5';
+
+  // CTA de navegação
+  if (href) {
+    return (
+      <div className={wrapperClassName}>
+        <Link
+          href={href}
+          className={`
+            ${classNameFinal}
+            ${isInteractive ? 'cursor-pointer' : ''}
+          `}
+        >
           {content}
         </Link>
-      ) : (
-        <button type="button" onClick={onClick} className={className}>
+      </div>
+    );
+  }
+
+  // CTA com interação simples
+  if (onClick && !children) {
+    return (
+      <div className={wrapperClassName}>
+        <button
+          type="button"
+          onClick={onClick}
+          className={`
+            ${classNameFinal}
+            cursor-pointer
+          `}
+        >
           {content}
         </button>
-      )}
+      </div>
+    );
+  }
+
+  // CTA composto
+  return (
+    <div className={wrapperClassName}>
+      <div
+        className={`
+          ${classNameFinal}
+          cursor-default
+        `}
+      >
+        {content}
+      </div>
     </div>
   );
 }

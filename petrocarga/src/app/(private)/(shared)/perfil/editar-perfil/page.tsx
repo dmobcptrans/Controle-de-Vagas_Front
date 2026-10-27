@@ -1,14 +1,14 @@
 'use client';
 
-import EditarMotorista from '@/components/motorista/editar/edicao-perfil';
-import EditarGestor from '@/components/gestor/editar/edicao-perfil';
-import EditarAgente from '@/components/agente/editar/edicao-perfil';
-import EditarEmpresa from '@/components/empresa/editar/edicao-perfil';
+import EditarMotorista from '@/features/usuarios/(personas)/motoristas/components/editar/edicao-perfil';
+import EditarGestor from '@/features/usuarios/(personas)/gestores/components/editar/edicao-perfil';
+import EditarAgente from '@/features/usuarios/(personas)/agentes/components/editar/edicao-perfil';
+import EditarEmpresa from '@/features/usuarios/(personas)/empresas/components/editar/edicao-perfil';
 
-import { Motorista } from '@/lib/types/personas/motorista';
-import { Agente } from '@/lib/types/personas/agente';
-import { Gestor } from '@/lib/types/personas/gestor';
-import { Empresa } from '@/lib/types/personas/empresa';
+import { MotoristaResponse1 } from '@/features/usuarios/(personas)/motoristas/types/motorista';
+import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente';
+import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor';
+import { EmpresaResponse } from '@/features/usuarios/(personas)/empresas/types/empresa2';
 
 import {
   AlertCircle,
@@ -23,13 +23,13 @@ import {
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { useEffect, useState } from 'react';
 
-import { getMotoristaByUserId } from '@/services/api/motoristaApi';
-import { getAgenteByUserId } from '@/services/api/agenteApi';
-import { getGestorByUserId } from '@/services/api/gestorApi';
-import { getEmpresaByUsuarioId } from '@/services/api/empresaApi';
+import { getMotoristaPorId } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
+import { getAgentePorId } from '@/features/usuarios/(personas)/agentes/services/agenteApi';
+import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
+import { getEmpresaPorId } from '@/features/usuarios/(personas)/empresas/services/empresaApi2';
 
 /**
  * Permissões que possuem edição de perfil.
@@ -39,7 +39,7 @@ type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' | 'EMPRESA';
 /**
  * Dados possíveis retornados pelas APIs.
  */
-type Dados = Motorista | Agente | Gestor | Empresa;
+type Dados = MotoristaResponse1 | agenteResponse | gestorResponse | EmpresaResponse;
 
 interface FetchResultado {
   error?: boolean;
@@ -79,18 +79,16 @@ interface PersonaTema {
 const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
   MOTORISTA: {
     fetchDados: async (userId) => {
-      const resultado = await getMotoristaByUserId(userId);
+      const resultado = await getMotoristaPorId(userId);
 
       return {
-        error: resultado.error,
-        message: resultado.message,
-        dados: resultado.motorista,
+        dados: resultado,
       };
     },
 
     renderForm: (dados, onSuccess) => (
       <EditarMotorista
-        motorista={dados as Motorista}
+        motorista={dados as MotoristaResponse1}
         onSuccess={onSuccess}
       />
     ),
@@ -98,18 +96,16 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
 
   AGENTE: {
     fetchDados: async (userId) => {
-      const resultado = await getAgenteByUserId(userId);
+      const resultado = await getAgentePorId(userId);
 
       return {
-        error: resultado.error,
-        message: resultado.message,
-        dados: resultado.agente,
+        dados: resultado,
       };
     },
 
     renderForm: (dados, onSuccess) => (
       <EditarAgente
-        agente={dados as Agente}
+        agente={dados as agenteResponse}
         onSuccess={onSuccess}
       />
     ),
@@ -117,18 +113,16 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
 
   GESTOR: {
     fetchDados: async (userId) => {
-      const resultado = await getGestorByUserId(userId);
+      const resultado = await getGestorPorId(userId);
 
       return {
-        error: resultado.error,
-        message: resultado.message,
-        dados: resultado.gestor,
+        dados: resultado,
       };
     },
 
     renderForm: (dados, onSuccess) => (
       <EditarGestor
-        gestor={dados as Gestor}
+        gestor={dados as gestorResponse}
         onSuccess={onSuccess}
       />
     ),
@@ -136,18 +130,16 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
 
   EMPRESA: {
     fetchDados: async (userId) => {
-      const resultado = await getEmpresaByUsuarioId(userId);
+      const resultado = await getEmpresaPorId(userId);
 
       return {
-        error: resultado.error,
-        message: resultado.message,
-        dados: resultado.empresa,
+        dados: resultado,
       };
     },
 
     renderForm: (dados, onSuccess) => (
       <EditarEmpresa
-        empresa={dados as Empresa}
+        empresa={dados as EmpresaResponse}
         onSuccess={onSuccess}
       />
     ),

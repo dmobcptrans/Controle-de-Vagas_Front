@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Eye, EyeOff, Lock, Mail, AlertCircle, Key, User } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/components/hooks/useAuth';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
-import ModalAtivacaoConta from '@/components/modal/autorizacao/login/ModalAtivacaoConta';
+import ModalAtivacaoConta from '@/features/usuarios/auth/components/modal/autorizacao/login/ModalAtivacaoConta';
 import ButtonLoginGoogle from '@/components/ui/buttonLoginGoogle';
 
 /**

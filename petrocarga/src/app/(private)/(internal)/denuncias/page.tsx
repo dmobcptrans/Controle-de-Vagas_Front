@@ -1,35 +1,50 @@
 'use client';
 
-import { useDenuncias } from '@/components/hooks/useDenuncias';
-import { useAuth } from '@/contexts/AuthContext';
+import { useMemo, useState } from 'react';
+
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { useDenuncias } from '@/features/denuncias/hooks/useDenuncias';
+import { Button } from '@/components/ui/button';
+import { CTA } from '@/components/ui/CTA/CTA';
+import { Header } from '@/components/ui/Header/Header';
+import DenunciaLista from '@/features/denuncias/components/(gestor)/DenunciaLista';
 import {
   AlertCircle,
-  Info,
-  Loader2,
   ChevronLeft,
   ChevronRight,
-  TriangleAlert,
+  Info,
+  TriangleAlert
 } from 'lucide-react';
-import DenunciaLista from '@/components/gestor/denuncia/DenunciaLista';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { CTA } from '@/components/ui/CTA/CTA';
+
+const TAMANHO_PAGINA = 10;
 
 export default function DenunciasAgente() {
+  const [currentPage, setCurrentPage] = useState(0);
+
+  // Memorizado para não recriar a referência a cada render
+  // (evita loop no useEffect de busca automática do hook)
+  const params = useMemo(
+    () => ({ pagina: currentPage, tamanho: TAMANHO_PAGINA }),
+    [currentPage],
+  );
+
   const {
     denuncias,
     loading,
     error,
-    refetch,
-    currentPage,
-    handlePageChange,
-    tamanhoPagina,
-    totalElementos,
     totalPaginas,
-  } = useDenuncias();
+    totalElementos,
+    recarregar,
+  } = useDenuncias({ params, buscarAutomaticamente: true });
 
   // TODO: substitua pelo hook/contexto real de usuário (ex: useAuth())
   const { user } = useAuth();
+
+  const handlePageChange = (novaPagina: number) => {
+    if (novaPagina < 0 || novaPagina >= totalPaginas) return;
+    setCurrentPage(novaPagina);
+  };
 
   // --------------------------------------------------------------------------
   // ESTADO 2: ERRO
@@ -47,7 +62,7 @@ export default function DenunciasAgente() {
           {error}
         </p>
         <Button
-          onClick={refetch}
+          onClick={recarregar}
           variant="outline"
           aria-label="Tentar carregar denúncias novamente"
         >
@@ -63,19 +78,15 @@ export default function DenunciasAgente() {
   if (!denuncias.length) {
     return (
       <div className="min-h-screen bg-[#f5f5f0]">
-        {/* ==================== HEADER ==================== */}
-        <header className="bg-blue-800 px-4 pt-3 pb-6 sm:px-6 md:px-8 sm:pt-4 sm:pb-7">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1">
-              Suas Denúncias, {user?.nome?.split(' ')[0] || 'motorista'}
-            </h1>
-
-            <div className="text-xs sm:text-sm text-white/70">
-              <p>Nenhuma denúncia encontrada</p>
-            </div>
-          </div>
-        </header>
-
+        <Header
+          title={`Suas Denúncias, ${user?.nome?.split(' ')[0] || 'usuario'}`}
+          pagination={{
+            totalElementos,
+            totalPaginas,
+            tamanhoPagina: TAMANHO_PAGINA,
+            pagina: currentPage,
+          }}
+        />
         <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
           <div className="-mt-4 mb-5">
             <CTA
@@ -86,22 +97,19 @@ export default function DenunciasAgente() {
           </div>
 
           <div className="w-full mx-auto px-4 md:px-6 lg:px-8 flex flex-col gap-6">
-            {/* ==================== ESTADO VAZIO ==================== */}
-           <div className="flex flex-col items-center justify-center py-12 md:py-16 px-4 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+            <div className="flex flex-col items-center justify-center py-12 md:py-16 px-4 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
               <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-100 flex items-center justify-center mb-5">
                 <AlertCircle className="w-8 h-8 md:w-10 md:h-10 text-gray-400" />
               </div>
-
               <h3 className="text-lg md:text-xl font-semibold text-gray-700 mb-2">
                 Nenhuma denúncia encontrada
               </h3>
-
               <p className="text-gray-500 text-sm md:text-base max-w-md mx-auto leading-relaxed">
-                O sistema não possui denúncias registradas. Quando houver uma denúncia, ela aparecerá aqui.
+                O sistema não possui denúncias registradas. Quando houver uma
+                denúncia, ela aparecerá aqui.
               </p>
             </div>
 
-            {/* Tutorial Link */}
             <div className="mt-0">
               <Link
                 href="/agente/tutorial#denuncias"
@@ -110,12 +118,10 @@ export default function DenunciasAgente() {
                 <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
                   <Info className="h-5 w-5 text-[#1351B4]" />
                 </div>
-
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800">
                     Novo por aqui?
                   </p>
-
                   <p className="text-xs text-gray-500 mt-0.5">
                     Aprenda a acompanhar e responder às denúncias dos motoristas
                   </p>
@@ -131,38 +137,22 @@ export default function DenunciasAgente() {
   // --------------------------------------------------------------------------
   // ESTADO 4: LISTA COM DADOS + PAGINAÇÃO
   // --------------------------------------------------------------------------
-  const startItem = currentPage * tamanhoPagina + 1;
-  const endItem = Math.min((currentPage + 1) * tamanhoPagina, totalElementos);
+  const startItem = currentPage * TAMANHO_PAGINA + 1;
+  const endItem = Math.min((currentPage + 1) * TAMANHO_PAGINA, totalElementos);
   const isFirstPage = currentPage === 0;
   const isLastPage = currentPage >= totalPaginas - 1;
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      {/* ==================== HEADER ==================== */}
-      <header className="bg-blue-800 px-4 pt-3 pb-6 sm:px-6 md:px-8 sm:pt-4 sm:pb-7">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1">
-            Suas Denúncias, {user?.nome?.split(' ')[0] || 'motorista'}
-          </h1>
-
-          <div className="text-xs sm:text-sm text-white/70 space-y-0.5">
-            {totalElementos > 0 ? (
-              <p className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                <span>
-                  Página {currentPage + 1} de {totalPaginas}
-                </span>
-                <span className="hidden sm:inline">•</span>
-                <span>
-                  Total: {totalElementos} denúncia
-                  {totalElementos !== 1 ? 's' : ''}
-                </span>
-              </p>
-            ) : (
-              <p>Nenhuma denúncia encontrada</p>
-            )}
-          </div>
-        </div>
-      </header>
+      <Header
+        title={`Suas Denúncias, ${user?.nome?.split(' ')[0] || 'usuario'}`}
+        pagination={{
+          totalElementos,
+          totalPaginas,
+          tamanhoPagina: TAMANHO_PAGINA,
+          pagina: currentPage,
+        }}
+      />
 
       <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
         <div className="-mt-4 mb-5">
@@ -174,9 +164,8 @@ export default function DenunciasAgente() {
         </div>
 
         <div className="w-full mx-auto px-4 md:px-6 lg:px-8 flex flex-col gap-6">
-          <DenunciaLista denuncias={denuncias} onRefresh={refetch} />
+          <DenunciaLista denuncias={denuncias} onRefresh={recarregar} />
 
-          {/* ==================== PAGINAÇÃO ==================== */}
           {totalPaginas > 1 && (
             <nav
               className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white border border-gray-100 rounded-xl p-4"
@@ -216,7 +205,6 @@ export default function DenunciasAgente() {
             </nav>
           )}
 
-          {/* Tutorial Link */}
           <div className="mt-6">
             <Link
               href="/agente/tutorial#denuncias"

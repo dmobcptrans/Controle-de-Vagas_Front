@@ -1,5 +1,5 @@
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
-import Footer from "@/components/gestor/layout/footer";
+//import Footer from "@/components/gestor/layout/footer";
 
 export default function PublicLayout({
   children,
@@ -10,7 +10,7 @@ export default function PublicLayout({
     <div className="flex min-h-screen flex-col">
       <PublicNavbar />
       <main className="flex-1 relative">{children}</main>
-      <Footer/>
+      {/* <Footer/> */}
     </div>
   );
 }

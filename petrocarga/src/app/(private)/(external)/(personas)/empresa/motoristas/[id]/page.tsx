@@ -1,21 +1,21 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { Veiculo } from '@/lib/types/veiculo';
-import VeiculoCard from '@/components/motorista/cards/veiculo-item';
+import { useMemo, useState } from 'react';
+import { VeiculoResponse } from '@/features/veiculos/types/veiculo';
+import VeiculoCard from '@/features/veiculos/components/(motorista)/veiculo-item';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import {
-  getVeiculosVinculadosMotoristaEmpresa,
-  desvincularVeiculoMotoristaEmpresa,
-} from '@/services/api/empresaApi';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { VeiculosAssociadosAoMotoristaParams } from '@/features/usuarios/veiculoMotoristaEmpresa/types/veiculoMotoristaEmpresa';
+import { useVeiculoEmpresaMotoristaInteraction } from '@/features/usuarios/veiculoMotoristaEmpresa/hooks/useVeiculoEmpresaMotoristaInteraction';
+import { useVeiculosAssociadosAoMotorista } from '@/features/usuarios/veiculoMotoristaEmpresa/hooks/useVeiculosAssociadosAoMotorista';
 import { CTA } from '@/components/ui/CTA/CTA';
 import { ChevronLeft, ChevronRight, Info, Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
-import VincularVeiculoMotoristaModal from '@/components/empresa/modal/VincularVeiculoMotoristaModal';
-import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
+import VincularVeiculoMotoristaModal from '@/features/usuarios/(personas)/empresas/components/modal/VincularVeiculoMotoristaModal';
+import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
+import { Header } from '@/components/ui/Header/Header';
 
 const TAMANHO_PAGINA = 10;
 
@@ -23,64 +23,47 @@ export default function MotoristaDetalhes() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
 
-  const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
-  const [loading, setLoading] = useState(true);
+const params = useMemo<VeiculosAssociadosAoMotoristaParams>(
+  () => ({
+    pagina: 0,
+    tamanhoPagina: TAMANHO_PAGINA,
+    ordem: 'ASC',
+  }),
+  [],
+);
+
+const {
+  veiculos,
+  loading,
+  jaBuscou,
+  pagina,
+  totalPaginas,
+  totalElementos,
+  buscar,
+  recarregar,
+} = useVeiculosAssociadosAoMotorista({
+  empresaId: user?.id,
+  motoristaId: id,
+  params,
+  buscarAutomaticamente: Boolean(user?.id && id),
+});
+
+  const { desvincular, loading: desvinculando } =
+    useVeiculoEmpresaMotoristaInteraction();
+
   const [modalAberto, setModalAberto] = useState(false);
-  const [pagina, setPagina] = useState(0);
-  const [totalPaginas, setTotalPaginas] = useState(0);
-  const [totalElementos, setTotalElementos] = useState(0);
-
-  // Controle da desvinculação
   const [veiculoParaDesvincular, setVeiculoParaDesvincular] =
-    useState<Veiculo | null>(null);
-  const [desvinculando, setDesvinculando] = useState(false);
+    useState<VeiculoResponse | null>(null);
 
-  const hoje = new Date().toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const carregando = loading || !jaBuscou;
 
-  const carregarVeiculos = useCallback(
-    async (paginaAlvo: number = pagina) => {
-      if (!user?.id || !id) return;
+const irParaPagina = (novaPagina: number) => {
+  if (novaPagina < 0 || novaPagina >= totalPaginas) return;
 
-      setLoading(true);
-      try {
-        const response = await getVeiculosVinculadosMotoristaEmpresa(
-          user.id,
-          id,
-          {
-            pagina: paginaAlvo,
-            tamanhoPagina: TAMANHO_PAGINA,
-            ordem: 'ASC',
-          },
-        );
+  buscar({ ...params, pagina: novaPagina });
+};
 
-        setVeiculos(response.content);
-        setTotalPaginas(response.totalPaginas);
-        setTotalElementos(response.totalElementos);
-        setPagina(response.pagina);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [user, id, pagina],
-  );
-
-  useEffect(() => {
-    carregarVeiculos(0);
-  }, [user?.id, id]);
-
-  const irParaPagina = (novaPagina: number) => {
-    if (novaPagina < 0 || novaPagina >= totalPaginas) return;
-    carregarVeiculos(novaPagina);
-  };
-
-  function abrirConfirmacaoDesvincular(veiculo: Veiculo) {
+  function abrirConfirmacaoDesvincular(veiculo: VeiculoResponse) {
     setVeiculoParaDesvincular(veiculo);
   }
 
@@ -92,42 +75,32 @@ export default function MotoristaDetalhes() {
   async function handleDesvincular() {
     if (!user?.id || !id || !veiculoParaDesvincular) return;
 
-    setDesvinculando(true);
-    try {
-      const result = await desvincularVeiculoMotoristaEmpresa(
-        user.id,
-        veiculoParaDesvincular.id,
-        id,
-      );
+    const result = await desvincular({
+      empresaId: user.id,
+      veiculoId: veiculoParaDesvincular.id,
+      motoristaId: id,
+    });
 
-      if (result?.error) {
-        toast.error(result.message || 'Erro ao desvincular veículo');
-        return;
-      }
+    if (result === null) {
+      toast.error('Erro ao desvincular veículo');
+      return;
+    }
 
-      toast.success(result?.message || 'Veículo desvinculado com sucesso!');
-      setVeiculoParaDesvincular(null);
-      
-      const eraUltimoDaPagina = veiculos.length === 1 && pagina > 0;
-      carregarVeiculos(eraUltimoDaPagina ? pagina - 1 : pagina);
-    } catch (error) {
-      console.error(error);
-      toast.error('Erro inesperado ao desvincular veículo.');
-    } finally {
-      setDesvinculando(false);
+    toast.success('Veículo desvinculado com sucesso!');
+    setVeiculoParaDesvincular(null);
+
+    // Se removeu o último item da página, volta uma página
+    const eraUltimoDaPagina = veiculos.length === 1 && pagina > 0;
+    if (eraUltimoDaPagina) {
+      buscar({ ...params, pagina: pagina - 1 });
+    } else {
+      recarregar();
     }
   }
 
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            Veículos do motorista
-          </h1>
-          <p className="text-xs text-white/50 capitalize">{hoje}</p>
-        </div>
-      </header>
+      <Header title="Veículos do motorista" showDate />
 
       <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
         <div className="-mt-4 mb-5">
@@ -140,14 +113,16 @@ export default function MotoristaDetalhes() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          {loading ? (
+          {carregando ? (
             <div className="flex flex-col items-center justify-center min-h-[50vh] gap-2 text-center">
               <Loader2 className="animate-spin w-6 h-6 text-blue-600" />
               <span className="text-gray-600">Carregando seus veículos...</span>
             </div>
           ) : veiculos.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 border-gray-200 border-dashed border-2 bg-white rounded-2xl">
-              <p className="text-sm sm:text-base text-gray-500">Nenhum veículo encontrado.</p>
+              <p className="text-sm sm:text-base text-gray-500">
+                Nenhum veículo encontrado.
+              </p>
               <Button
                 onClick={() => setModalAberto(true)}
                 className="mt-4 cursor-pointer"
@@ -170,7 +145,6 @@ export default function MotoristaDetalhes() {
                 ))}
               </div>
 
-              {/* ==================== PAGINAÇÃO ==================== */}
               {totalPaginas > 1 && (
                 <div className="flex items-center justify-between mt-6 bg-white border border-gray-100 rounded-xl px-4 py-3">
                   <Button
@@ -218,7 +192,6 @@ export default function MotoristaDetalhes() {
           <div className="bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">
             <Info className="h-5 w-5 text-[#1351B4]" />
           </div>
-
           <div>
             <p className="text-sm font-semibold text-[#071D41]">
               Novo por aqui?
@@ -236,7 +209,7 @@ export default function MotoristaDetalhes() {
           motoristaId={id}
           open={modalAberto}
           onOpenChange={setModalAberto}
-          onSuccess={() => carregarVeiculos(pagina)}
+          onSuccess={recarregar}
         />
       )}
 

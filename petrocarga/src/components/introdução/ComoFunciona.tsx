@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatedBeam } from '../ui/animated-beam';
+import { AnimatedBeam } from '@/components/ui/animated-beam';
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 

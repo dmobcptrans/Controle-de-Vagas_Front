@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
-import { useAuth } from '@/contexts/AuthContext';
-import { NotificationDrawer } from '@/components/notification/notificatioDrawer';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
+import { NotificationDrawer } from '@/features/notificacao/components/notificatioDrawer';
 import Logo from '../../../public/cache-images/logo.webp';
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
-import { LogoutButton } from '@/components/logoutButton/logoutButton';
+import { LogoutButton } from '../ui/logoutButton';
 import { getNavGroupsForRole, type NavGroup } from '@/lib/nav-config';
 
 /**

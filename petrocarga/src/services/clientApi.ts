@@ -1,23 +1,28 @@
 'use client';
 
 import { TOKEN_KEY } from '@/services/api';
+import { ApiError } from '@/lib/types/response/ApiError';
 
 type ClientApiOptions = RequestInit & {
   json?: unknown;
 };
 
-export async function clientApi(path: string, options: ClientApiOptions = {}) {
+export async function clientApi(
+  path: string,
+  options: ClientApiOptions = {},
+) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
   const headers: Record<string, string> = {
-    ...((options.headers as Record<string, string>) || {}),
+    ...(options.headers as Record<string, string> || {}),
     'ngrok-skip-browser-warning': 'true',
   };
 
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem(TOKEN_KEY);
+
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers.Authorization = `Bearer ${token}`;
     }
   }
 
@@ -28,39 +33,42 @@ export async function clientApi(path: string, options: ClientApiOptions = {}) {
     body = JSON.stringify(options.json);
   }
 
-  try {
-    const res = await fetch(`${baseUrl}${path}`, {
-      ...options,
-      headers,
-      body,
-      credentials: 'include',
-    });
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...options,
+    headers,
+    body,
+    credentials: 'include',
+  });
 
-    if (res.status === 401) {
-      localStorage.removeItem(TOKEN_KEY);
-      console.warn('Sessão expirada, redirecionando...');
-      window.location.href = '/autorizacao/login';
-    }
+  if (response.status === 401) {
+    localStorage.removeItem(TOKEN_KEY);
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
+    console.warn('Sessão expirada, redirecionando...');
 
-      const message =
-        typeof errorData.message === 'string'
-          ? errorData.message
-          : typeof errorData.erro === 'string'
-            ? errorData.erro
-            : typeof errorData.cause === 'string' &&
-                errorData.cause !== 'unknown'
-              ? errorData.cause
-              : 'Ocorreu um erro na requisição';
+    window.location.href = '/autorizacao/login';
 
-      throw new Error(message);
-    }
-
-    return res;
-  } catch (error) {
-    console.error('Erro na ClientApi:', error);
-    throw error;
+    throw {
+      message: 'Sessão expirada.',
+      code: 401,
+    } satisfies ApiError;
   }
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+
+    if (
+      errorData &&
+      typeof errorData.message === 'string' &&
+      typeof errorData.code === 'number'
+    ) {
+      throw errorData satisfies ApiError;
+    }
+
+    throw {
+      message: 'Ocorreu um erro na requisição.',
+      code: response.status,
+    } satisfies ApiError;
+  }
+
+  return response;
 }

@@ -1,9 +1,9 @@
 'use client';
 
 import { useNotifications } from '@/contexts/NotificationContext';
-import { NotificationHeader } from '@/components/notification/notificationHeader';
-import { NotificationList } from '@/components/notification/notificationList';
-import { NotificationModals } from '@/components/modal/notification/notificationModals';
+import { NotificationHeader } from '@/features/notificacao/components/notificationHeader';
+import { NotificationList } from '@/features/notificacao/components/notificationList';
+import { NotificationModals } from '@/features/notificacao/components/modal/notificationModals';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';

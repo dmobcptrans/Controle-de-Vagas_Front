@@ -2,19 +2,19 @@
 
 import { buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useAuth } from '@/components/hooks/useAuth';
-import {
-  deleteMotorista,
-  getMotoristaByUserId,
-} from '@/services/api/motoristaApi';
-import { deleteAgente, getAgenteByUserId } from '@/services/api/agenteApi';
-import { deleteGestor, getGestorByUserId } from '@/services/api/gestorApi';
-import { getEmpresaByUsuarioId } from '@/services/api/empresaApi';
+import { useAuth } from '@/features/usuarios/auth/service/useAuth';
 
-import { Empresa } from '@/lib/types/personas/empresa';
-import { Motorista } from '@/lib/types/personas/motorista';
-import { Agente } from '@/lib/types/personas/agente';
-import { Gestor } from '@/lib/types/personas/gestor';
+import { DeleteMotorista } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
+
+import { getMotoristaPorId } from '@/features/usuarios/(personas)/motoristas/services/motoristaApi';
+import { getAgentePorId } from '@/features/usuarios/(personas)/agentes/services/agenteApi';
+import { getGestorPorId } from '@/features/usuarios/(personas)/gestores/services/gestorApi';
+import { getEmpresaPorId } from '@/features/usuarios/(personas)/empresas/services/empresaApi2';
+
+import { EmpresaResponse } from '@/features/usuarios/(personas)/empresas/types/empresa2';
+import { MotoristaResponse1 } from '@/features/usuarios/(personas)/motoristas/types/motorista';
+import { agenteResponse } from '@/features/usuarios/(personas)/agentes/types/agente';
+import { gestorResponse } from '@/features/usuarios/(personas)/gestores/types/gestor';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle,
@@ -33,10 +33,11 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { PushNotificationToggle } from '@/components/notification/PushNotificationToggle';
-import ModalConfirmacaoExclusao from '@/components/modal/confirmacaoExclusao';
+import { PushNotificationToggle } from '@/features/notificacao/components/PushNotificationToggle';
+import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
 import toast from 'react-hot-toast';
-import { CtaProfileIcon } from '@/components/ui/CTA/CtaProfileIcon';
+import { CTAProfile } from '@/components/ui/CTA/profile/CTAProfile';
+import { Header } from '@/components/ui/Header/Header';
 
 /**
  * @component Perfil
@@ -92,7 +93,7 @@ import { CtaProfileIcon } from '@/components/ui/CTA/CtaProfileIcon';
 
 type Permissao = 'MOTORISTA' | 'AGENTE' | 'GESTOR' | 'EMPRESA';
 
-type Perfil = Motorista | Agente | Gestor | Empresa;
+type Perfil = MotoristaResponse1 | agenteResponse | gestorResponse | EmpresaResponse;
 
 interface FetchPerfilResultado {
   error?: boolean;
@@ -118,23 +119,19 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
   MOTORISTA: {
     label: 'Motorista',
     fetchPerfil: async (userId) => {
-      const resultado = await getMotoristaByUserId(userId);
+      const resultado = await getMotoristaPorId(userId);
       return {
-        error: resultado.error,
-        message: resultado.message,
-        perfil: resultado.motorista,
+        perfil: resultado,
       };
     },
-    deletePerfil: (userId) => deleteMotorista(userId),
+    deletePerfil: (userId) => DeleteMotorista(userId),
   },
   AGENTE: {
     label: 'Agente',
     fetchPerfil: async (userId) => {
-      const resultado = await getAgenteByUserId(userId);
+      const resultado = await getAgentePorId(userId);
       return {
-        error: resultado.error,
-        message: resultado.message,
-        perfil: resultado.agente,
+        perfil: resultado,
       };
     },
     // deletePerfil: (userId) => deleteAgente(userId),
@@ -142,11 +139,9 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
   GESTOR: {
     label: 'Gestor',
     fetchPerfil: async (userId) => {
-      const resultado = await getGestorByUserId(userId);
+      const resultado = await getGestorPorId(userId);
       return {
-        error: resultado.error,
-        message: resultado.message,
-        perfil: resultado.gestor,
+        perfil: resultado,
       };
     },
     // deletePerfil: (userId) => deleteGestor(userId),
@@ -154,11 +149,9 @@ const PERSONA_CONFIG: Record<Permissao, PersonaConfig> = {
   EMPRESA: {
     label: 'Empresa',
     fetchPerfil: async (userId) => {
-      const resultado = await getEmpresaByUsuarioId(userId);
+      const resultado = await getEmpresaPorId(userId);
       return {
-        error: resultado.error,
-        message: resultado.message,
-        perfil: resultado.empresa,
+        perfil: resultado,
       };
     },
     // deletePerfil: (userId) => deleteEmpresa(userId),
@@ -182,7 +175,7 @@ function getCampo(
   return (aninhado?.[campo] ?? plano?.[campo] ?? '') as string;
 }
 
-function isMotorista(perfil: Perfil | null): perfil is Motorista {
+function isMotorista(perfil: Perfil | null): perfil is MotoristaResponse1 {
   return !!perfil && 'numeroCnh' in perfil;
 }
 
@@ -322,22 +315,15 @@ export default function Perfil() {
   return (
     <div className="min-h-screen bg-[#f5f5f0]">
       {/* ── Header ── */}
-      <header className="bg-blue-800 px-4 pt-1 pb-7 sm:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-white tracking-tight mb-1">
-            {loading ? 'Seu Perfil!' : `Seu Perfil, ${primeiroNome}!`}
-          </h1>
-
-          <p className="text-xs text-white/50 capitalize">
-            Aqui você pode ver suas informações e atualizar seus dados.
-          </p>
-        </div>
-      </header>
-
-      <main className="px-4 sm:px-8 pb-16 max-w-4xl mx-auto">
+      <Header
+        title={`Seu Perfil, ${primeiroNome}!`}
+        subtitle="Aqui você pode ver suas informações e atualizar seus dados."
+      />
+     
+      <main className="px-3 sm:px-6 md:px-8 pb-12 sm:pb-16 max-w-4xl mx-auto">
         {/* CTA flutuante */}
-        <div className="-mt-4 mb-2 flex justify-center">
-          <CtaProfileIcon />
+        <div className="flex justify-center">
+          <CTAProfile />
         </div>
 
         {loading ? (
@@ -385,7 +371,7 @@ export default function Perfil() {
                             Número da CNH
                           </p>
                           <p className="text-base sm:text-lg font-semibold text-gray-900 break-all">
-                            {(perfil as Motorista).numeroCnh}
+                            {(perfil as MotoristaResponse1).numeroCnh}
                           </p>
                         </div>
                       </div>
@@ -397,7 +383,7 @@ export default function Perfil() {
                             Tipo da CNH
                           </p>
                           <p className="text-base sm:text-lg font-semibold text-gray-900">
-                            {(perfil as Motorista).tipoCnh}
+                            {(perfil as MotoristaResponse1).tipoCnh}
                           </p>
                         </div>
                       </div>

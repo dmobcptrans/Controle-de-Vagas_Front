@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 import { solicitarRecuperacaoSenha } from '@/services/api/recuperacaoApi';
 import { validateEmail } from '@/lib/utils';
-import ModalConfirmacaoEnvio from '@/components/modal/autorizacao/verificacao/ModalConfirmacaoEnvio';
-import ModalSucessoEnvio from '@/components/modal/autorizacao/verificacao/ModalSucessoEnvio';
+import ModalConfirmacaoEnvio from '@/features/usuarios/auth/components/modal/autorizacao/verificacao/ModalConfirmacaoEnvio';
+import ModalSucessoEnvio from '@/features/usuarios/auth/components/modal/autorizacao/verificacao/ModalSucessoEnvio';
 import { useRouter } from 'next/navigation';
 
 /**
