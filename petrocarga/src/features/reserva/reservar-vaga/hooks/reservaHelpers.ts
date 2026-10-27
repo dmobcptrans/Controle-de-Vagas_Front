@@ -1,13 +1,10 @@
-
 import type {
   DiaSemana,
   OperacoesVaga,
   VagaResponse,
 } from '@/features/vaga/vagas/types/vaga';
 
-import type {
-  ReservaBloqueiosResponse,
-} from '../../reservas/types/reservas';
+import type { ReservaBloqueiosResponse } from '../../reservas/types/reservas';
 
 export const DIAS_SEMANA: DiaSemana[] = [
   'DOMINGO',
@@ -64,41 +61,40 @@ export const formatDateTime = (day: Date, hhmm: string) => {
   return date.toISOString();
 };
 
-const isMesmoDia = (a: Date, b: Date) =>
-  toDateKey(a) === toDateKey(b);
+const isMesmoDia = (a: Date, b: Date) => toDateKey(a) === toDateKey(b);
 
 // ---------- operação / grade de horários ----------
 
-export const getOperacaoDia = (
+export const getOperacoesDia = (
   day: Date,
   vaga: { operacoesVaga?: OperacoesVaga[] },
 ) =>
-  vaga.operacoesVaga?.find(
+  (vaga.operacoesVaga ?? []).filter(
     (op) => op.diaSemanaAsEnum === DIAS_SEMANA[day.getDay()],
   );
-
 /**
  * Gera os horários da operação do dia.
  * A grade considera operações que terminam até 23:59.
  * A continuação após meia-noite é gerada pela operação do dia seguinte.
  */
 export const gerarHorariosDia = (
-  operacao: OperacoesVaga,
+  operacoes: OperacoesVaga[],
   intervalo: number,
 ) => {
-  const inicio = toMinutes(operacao.horaInicio);
-  const fim = toMinutes(operacao.horaFim);
-  const times: string[] = [];
+  const horarios = new Set<string>();
 
-  if (fim < inicio) return times;
+  for (const operacao of operacoes) {
+    const inicio = toMinutes(operacao.horaInicio);
+    const fim = toMinutes(operacao.horaFim);
 
-  for (let t = inicio; t <= fim; t += intervalo) {
-    times.push(
-      `${pad(Math.floor(t / 60))}:${pad(t % 60)}`,
-    );
+    if (fim < inicio) continue;
+
+    for (let t = inicio; t <= fim; t += intervalo) {
+      horarios.add(`${pad(Math.floor(t / 60))}:${pad(t % 60)}`);
+    }
   }
 
-  return times;
+  return Array.from(horarios).sort((a, b) => toMinutes(a) - toMinutes(b));
 };
 
 export const removerHorariosPassados = (
@@ -131,10 +127,7 @@ export const expandirBloqueios = (
     const inicio = new Date(bloqueio.inicio);
     const fim = new Date(bloqueio.fim);
 
-    if (
-      Number.isNaN(inicio.getTime()) ||
-      Number.isNaN(fim.getTime())
-    ) {
+    if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime())) {
       continue;
     }
 
@@ -156,30 +149,23 @@ export const calcularHorarios = (
   bloqueios: ReservaBloqueiosResponse[],
   intervalo: number,
 ) => {
-  const operacao = getOperacaoDia(day, vaga);
+  const operacoes = getOperacoesDia(day, vaga);
 
-  if (!operacao) {
+  const reservedStart = expandirBloqueios(bloqueios, intervalo, intervalo);
+
+  const reservedEnd = expandirBloqueios(bloqueios, intervalo);
+
+  if (operacoes.length === 0) {
     return {
       availableTimes: [],
-      reservedStart: [],
-      reservedEnd: [],
+      reservedStart,
+      reservedEnd,
     };
   }
 
-  const reservedStart = expandirBloqueios(
-    bloqueios,
-    intervalo,
-    intervalo,
-  );
-
-  const reservedEnd = expandirBloqueios(
-    bloqueios,
-    intervalo,
-  );
-
   const availableTimes = removerHorariosPassados(
     day,
-    gerarHorariosDia(operacao, intervalo),
+    gerarHorariosDia(operacoes, intervalo),
   ).filter((hora) => !reservedStart.includes(hora));
 
   return {
@@ -202,9 +188,7 @@ export const calcularFimBloqueado = (
 ) => {
   const inicioMinutos = toMinutes(inicio);
 
-  const limite =
-    inicioMinutos +
-    (LIMITE_HORAS_POR_AREA[area] ?? 1) * 60;
+  const limite = inicioMinutos + (LIMITE_HORAS_POR_AREA[area] ?? 1) * 60;
 
   const candidatos = [
     ...availableTimes.map((hora) => ({
@@ -227,14 +211,9 @@ export const calcularFimBloqueado = (
       const dentroDoLimite = minutos <= limite;
       const reservado = reservedEndBase.includes(chave);
 
-      return (
-        depoisDoInicio &&
-        (!dentroDoLimite || reservado)
-      );
+      return depoisDoInicio && (!dentroDoLimite || reservado);
     })
-    .map(({ hora, diaSeguinte }) =>
-      diaSeguinte ? `D+1 ${hora}` : hora,
-    );
+    .map(({ hora, diaSeguinte }) => (diaSeguinte ? `D+1 ${hora}` : hora));
 };
 
 // ---------- dias disponíveis ----------
@@ -259,16 +238,18 @@ export const calcularDiasDisponiveis = (
     for (; cur <= fim; cur.setDate(cur.getDate() + 1)) {
       if (cur < hoje) continue;
 
-      const operacao = getOperacaoDia(cur, vaga);
+      const operacoes = getOperacoesDia(cur, vaga);
 
-      if (!operacao) continue;
+      if (operacoes.length === 0) continue;
 
-      if (
-        isMesmoDia(cur, agora) &&
-        agora.getHours() * 60 + agora.getMinutes() >=
-          toMinutes(operacao.horaFim)
-      ) {
-        continue;
+      if (isMesmoDia(cur, agora)) {
+        const minutosAtuais = agora.getHours() * 60 + agora.getMinutes();
+
+        const aindaTemHorario = operacoes.some(
+          (operacao) => minutosAtuais < toMinutes(operacao.horaFim),
+        );
+
+        if (!aindaTemHorario) continue;
       }
 
       datas.set(toDateKey(cur), new Date(cur));
@@ -278,21 +259,15 @@ export const calcularDiasDisponiveis = (
   return Array.from(datas.values());
 };
 
-
 /**
  * Converte o dia e o horário selecionado em ISO.
  * Horários com prefixo "D+1" pertencem ao dia seguinte.
  */
-export const formatDateTimeReserva = (
-  day: Date,
-  horario: string,
-) => {
+export const formatDateTimeReserva = (day: Date, horario: string) => {
   const diaSeguinte = horario.startsWith('D+1 ');
   const hora = diaSeguinte ? horario.slice(4) : horario;
 
-  const data = diaSeguinte
-    ? adicionarDia(day)
-    : new Date(day);
+  const data = diaSeguinte ? adicionarDia(day) : new Date(day);
 
   return formatDateTime(data, hora);
 };

@@ -13,8 +13,9 @@ import {
   calcularFimBloqueado,
   calcularHorarios,
   expandirBloqueios,
-  getOperacaoDia,
+  getOperacoesDia,
   toDateKey,
+  toMinutes,
 } from '../reservaHelpers';
 
 interface Args {
@@ -121,20 +122,30 @@ export function useHorariosReserva({
   ]);
 
   const podeContinuarNoDiaSeguinte = useMemo(() => {
-    if (!vaga || !day || !diaSeguinte) return false;
+  if (!vaga || !day || !diaSeguinte) return false;
 
-    const operacaoAtual = getOperacaoDia(day, vaga);
-    const operacaoSeguinte = getOperacaoDia(diaSeguinte, vaga);
+  const operacoesAtuais = getOperacoesDia(day, vaga);
+  const operacoesSeguintes = getOperacoesDia(diaSeguinte, vaga);
 
-    if (!operacaoAtual || !operacaoSeguinte) return false;
+  if (!operacoesAtuais.length || !operacoesSeguintes.length) {
+    return false;
+  }
 
-    const fimAtual = operacaoAtual.horaFim.slice(0, 5);
-    const inicioSeguinte = operacaoSeguinte.horaInicio.slice(0, 5);
+  const ultimaOperacao = [...operacoesAtuais].sort(
+    (a, b) =>
+      toMinutes(b.horaFim) - toMinutes(a.horaFim),
+  )[0];
 
-    // Só conecta dias quando a operação chega à meia-noite
-    // e a operação seguinte começa à meia-noite.
-    return fimAtual === '23:59' && inicioSeguinte === '00:00';
-  }, [vaga, day, diaSeguinte]);
+  const primeiraOperacao = [...operacoesSeguintes].sort(
+    (a, b) =>
+      toMinutes(a.horaInicio) - toMinutes(b.horaInicio),
+  )[0];
+
+  const fimAtual = ultimaOperacao.horaFim.slice(0, 5);
+  const inicioSeguinte = primeiraOperacao.horaInicio.slice(0, 5);
+
+  return fimAtual === '23:59' && inicioSeguinte === '00:00';
+}, [vaga, day, diaSeguinte]);
 
   const reservedEndBase = useMemo(() => {
     const bloqueiosAtuais = expandirBloqueios(

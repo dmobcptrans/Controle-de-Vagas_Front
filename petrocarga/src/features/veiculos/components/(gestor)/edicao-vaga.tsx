@@ -60,7 +60,7 @@ import { useVagaMutation } from '@/features/vaga/vagas/hooks/useVagaMutation';
 export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
   // ==================== MUTATION HOOK ====================
   const { loading, error, atualizar, limparError } = useVagaMutation();
-
+  const [horariosValidos, setHorariosValidos] = useState(true);
   const [useMap, setUseMap] = useState(true);
   const [geoState, setGeoState] = useState({
     latitudeInicio: vaga.latitudeInicio,
@@ -393,7 +393,11 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
               name="Dias da semana"
               description="Selecione os dias em que a vaga estará disponível e defina os horários"
             >
-              <DiaSemana name="diaSemana" operacoesVaga={vaga.operacoesVaga} />
+              <DiaSemana
+                name="diaSemana"
+                operacoesVaga={vaga.operacoesVaga}
+                onValidChange={setHorariosValidos}
+              />
             </FormItem>
           </CardContent>
 
@@ -404,7 +408,7 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
               disabled={loading}
               className="w-full md:w-auto md:ml-auto rounded-sm px-6 md:px-10 py-2 md:py-2.5 text-sm md:text-base font-medium"
             >
-              {loading ? 'Atualizando...' : 'Atualizar'}
+              {loading || !horariosValidos ? 'Atualizando...' : 'Atualizar'}
             </Button>
           </CardFooter>
         </form>
