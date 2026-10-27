@@ -23,30 +23,30 @@ export default function MotoristaDetalhes() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
 
-  const params = useMemo<VeiculosAssociadosAoMotoristaParams>(
-    () => ({
-      empresaId: user?.id,
-      motoristaId: id,
-      pagina: 0,
-      tamanhoPagina: TAMANHO_PAGINA,
-      ordem: 'ASC',
-    }),
-    [user?.id, id],
-  );
+const params = useMemo<VeiculosAssociadosAoMotoristaParams>(
+  () => ({
+    pagina: 0,
+    tamanhoPagina: TAMANHO_PAGINA,
+    ordem: 'ASC',
+  }),
+  [],
+);
 
-  const {
-    veiculos,
-    loading,
-    jaBuscou,
-    pagina,
-    totalPaginas,
-    totalElementos,
-    buscar,
-    recarregar,
-  } = useVeiculosAssociadosAoMotorista({
-    params,
-    buscarAutomaticamente: Boolean(user?.id && id),
-  });
+const {
+  veiculos,
+  loading,
+  jaBuscou,
+  pagina,
+  totalPaginas,
+  totalElementos,
+  buscar,
+  recarregar,
+} = useVeiculosAssociadosAoMotorista({
+  empresaId: user?.id,
+  motoristaId: id,
+  params,
+  buscarAutomaticamente: Boolean(user?.id && id),
+});
 
   const { desvincular, loading: desvinculando } =
     useVeiculoEmpresaMotoristaInteraction();
@@ -57,10 +57,11 @@ export default function MotoristaDetalhes() {
 
   const carregando = loading || !jaBuscou;
 
-  const irParaPagina = (novaPagina: number) => {
-    if (novaPagina < 0 || novaPagina >= totalPaginas) return;
-    buscar({ ...params, pagina: novaPagina });
-  };
+const irParaPagina = (novaPagina: number) => {
+  if (novaPagina < 0 || novaPagina >= totalPaginas) return;
+
+  buscar({ ...params, pagina: novaPagina });
+};
 
   function abrirConfirmacaoDesvincular(veiculo: VeiculoResponse) {
     setVeiculoParaDesvincular(veiculo);

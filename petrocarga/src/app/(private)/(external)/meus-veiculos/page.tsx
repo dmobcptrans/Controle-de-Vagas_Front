@@ -29,6 +29,9 @@ const TAMANHO_CONSULTA = 1000;
 export default function VeiculosPage() {
   const { user } = useAuth();
 
+  const isEmpresa = user?.permissao === 'EMPRESA';
+  const isMotorista = user?.permissao === 'MOTORISTA';
+
   const [modalAberto, setModalAberto] = useState(false);
   const [paginaAtual, setPaginaAtual] = useState(0);
 
@@ -42,6 +45,8 @@ export default function VeiculosPage() {
     [],
   );
 
+  // Veículos cadastrados pelo usuário.
+  // Para EMPRESA, esta é a única fonte de veículos.
   const {
     buscar: buscarVeiculos,
     veiculos: vP,
@@ -53,23 +58,30 @@ export default function VeiculosPage() {
     buscarAutomaticamente: true,
   });
 
+  // Veículos associados: somente para MOTORISTA.
   const {
     veiculos: vA,
     buscar: buscarAssociados,
     error: errorAssociados,
     loading: loadingAssociados,
   } = useVeiculosAssociadosAoMotorista({
-    empresaId: user?.dadosExtras?.empresaId,
-    motoristaId: user?.id,
+    empresaId: isMotorista ? user?.dadosExtras?.empresaId : undefined,
+    motoristaId: isMotorista ? user?.id : undefined,
     params: paramsConsulta,
-    buscarAutomaticamente: true,
+    buscarAutomaticamente: isMotorista,
   });
-  // Une os veículos cadastrados e os associados, eliminando duplicados.
+
+  // EMPRESA: apenas veículos próprios.
+  // MOTORISTA: veículos próprios + associados.
   const veiculos = useMemo(() => {
     const pessoais = (vP ?? []).map((veiculo) => ({
       ...veiculo,
-      isEmpresa: false,
+      isEmpresa: isEmpresa,
     }));
+
+    if (!isMotorista) {
+      return pessoais;
+    }
 
     const empresariais = (vA ?? []).map((veiculo) => ({
       ...veiculo,
@@ -81,10 +93,11 @@ export default function VeiculosPage() {
         [...pessoais, ...empresariais].map((veiculo) => [veiculo.id, veiculo]),
       ).values(),
     );
-  }, [vP, vA]);
+  }, [vP, vA, isEmpresa, isMotorista]);
 
-  const carregando = loading || loadingAssociados;
-  const erro = error || errorAssociados;
+  const carregando = loading || (isMotorista && loadingAssociados);
+
+  const erro = error || (isMotorista ? errorAssociados : null);
 
   // Paginação local da lista unificada.
   const totalElementos = veiculos.length;
@@ -107,22 +120,27 @@ export default function VeiculosPage() {
   const recarregar = async () => {
     setPaginaAtual(0);
 
-    await Promise.all([
+    const consultas = [
       buscarVeiculos({
         pagina: 0,
         tamanhoPagina: TAMANHO_CONSULTA,
         ativo: true,
         ordem: 'ASC',
       }),
-      buscarAssociados({
-        empresaId: user?.dadosExtras?.empresaId,
-        motoristaId: user?.id,
-        pagina: 0,
-        tamanhoPagina: TAMANHO_CONSULTA,
-        ativo: true,
-        ordem: 'ASC',
-      }),
-    ]);
+    ];
+
+    if (isMotorista) {
+      consultas.push(
+        buscarAssociados({
+          pagina: 0,
+          tamanhoPagina: TAMANHO_CONSULTA,
+          ativo: true,
+          ordem: 'ASC',
+        }),
+      );
+    }
+
+    await Promise.all(consultas);
   };
 
   return (
@@ -186,6 +204,9 @@ export default function VeiculosPage() {
               <div className="mt-4 grid w-full gap-4">
                 {veiculosPaginados.map((veiculo) => (
                   <VeiculoCard
+                    persona={
+                      user?.permissao === 'EMPRESA' ? 'EMPRESA' : 'MOTORISTA'
+                    }
                     key={veiculo.id}
                     veiculo={veiculo}
                     isEmpresa={veiculo.isEmpresa}

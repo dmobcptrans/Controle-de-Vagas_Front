@@ -8,6 +8,7 @@ import { VeiculoResponse } from '../../types/veiculo';
 
 interface VeiculoCardProps {
   veiculo: VeiculoResponse;
+  persona?: 'MOTORISTA' | 'EMPRESA' | undefined;
   type?: 'motorista' | 'empresa';
   isEmpresa?: boolean;
   onDesvincular?: (veiculo: VeiculoResponse) => void;
@@ -15,6 +16,7 @@ interface VeiculoCardProps {
 
 export default function VeiculoCard({
   veiculo,
+  persona,
   type = 'motorista',
   isEmpresa = false,
   onDesvincular,
@@ -57,7 +59,20 @@ export default function VeiculoCard({
           {veiculo.tipo}
         </span>
 
-        {!isEmpresa && type === 'motorista' && (
+        {/* O acesso aos detalhes depende da persona, não da origem do veículo. */}
+        {persona === 'EMPRESA' && (
+          <Link
+            href={`/meus-veiculos/${veiculo.id}`}
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'w-full text-center text-sm sm:w-auto sm:text-base',
+            )}
+          >
+            Ver detalhes
+          </Link>
+        )}
+
+        {persona === 'MOTORISTA' && !isEmpresa && (
           <Link
             href={`/meus-veiculos/${veiculo.id}`}
             className={cn(
