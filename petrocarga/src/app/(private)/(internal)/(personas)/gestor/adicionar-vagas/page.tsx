@@ -138,6 +138,8 @@ export default function Cadastro() {
       ) as OperacoesVaga[],
     };
 
+    if (payload.quantidade <=0) payload.quantidade = 1;
+
     const vagaCriada = await criar(payload);
 
     if (vagaCriada) {
