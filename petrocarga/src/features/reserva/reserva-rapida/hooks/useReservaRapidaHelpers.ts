@@ -1,5 +1,5 @@
 import type { VagaResponse } from '@/features/vaga/vagas/types/vaga';
-import { getOperacaoDia } from '@/features/reserva/reservar-vaga/hooks/reservaHelpers';
+import { getOperacoesDia, toMinutes } from '@/features/reserva/reservar-vaga/hooks/reservaHelpers';
 
 /** Regras PURAS da reserva rápida: "a vaga está livre agora? até quando?" */
 
@@ -71,19 +71,42 @@ export function analisarAgora(
   vaga: VagaResponse,
   agora = new Date(),
 ): StatusAgora {
-  const operacao = getOperacaoDia(agora, vaga);
-  if (!operacao) return { vagaDisponivel: false, slotLivre: null };
+  const operacoes = getOperacoesDia(agora, vaga);
 
-  const [h, m] = operacao.horaFim.split(':').map(Number);
+  if (!operacoes.length) {
+    return { vagaDisponivel: false, slotLivre: null };
+  }
+
+  const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+
+  const operacaoAtual = operacoes.find((operacao) => {
+    const inicio = toMinutes(operacao.horaInicio);
+    const fim = toMinutes(operacao.horaFim);
+
+    return minutosAgora >= inicio && minutosAgora < fim;
+  });
+
+  if (!operacaoAtual) {
+    return { vagaDisponivel: false, slotLivre: null };
+  }
+
   const limite = new Date(agora);
+  const [h, m] = operacaoAtual.horaFim.split(':').map(Number);
   limite.setHours(h, m, 0, 0);
 
-  const slotLivre = ajustarSlotCurto(encontrarProximoSlotLivre(bloqueios, agora, limite));
+  const slotLivre = ajustarSlotCurto(
+    encontrarProximoSlotLivre(bloqueios, agora, limite),
+  );
 
   if (estaOcupadoAgora(bloqueios, agora)) {
-    return { vagaDisponivel: false, slotLivre: slotLivre.inicio < limite ? slotLivre : null };
+    return {
+      vagaDisponivel: false,
+      slotLivre: slotLivre.inicio < limite ? slotLivre : null,
+    };
   }
-  if (agora > limite) return { vagaDisponivel: false, slotLivre: null };
 
-  return { vagaDisponivel: true, slotLivre };
+  return {
+    vagaDisponivel: true,
+    slotLivre,
+  };
 }
