@@ -121,6 +121,8 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
       ) as OperacoesVaga[],
     };
 
+    if (payload.quantidade <=0) payload.quantidade = 1;
+
     const sucesso = await atualizar(vaga.id, payload);
 
     if (sucesso) {
