@@ -12,6 +12,7 @@ import SelecaoCustomizada from '@/components/selecaoItem/selecao-customizada';
 import {
   AreaVaga,
   OperacoesVaga,
+  StatusVaga,
   TipoVaga,
   VagaPayload,
   VagaResponse,
@@ -68,6 +69,9 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
     latitudeFim: vaga.latitudeFim,
     longitudeFim: vaga.longitudeFim,
   });
+  const [tipoVagaSelecionado, setTipoVagaSelecionado] = useState(
+    vaga.tipoVaga.toLowerCase()
+  );
 
   // ==================== FEEDBACK (TOAST) DE ERRO ====================
   useEffect(() => {
@@ -110,6 +114,8 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
       longitudeFim: Number(formData.get('longitudeFim')),
       tipoVaga: (formData.get('tipo') as string).toUpperCase() as TipoVaga,
       comprimento: Number(formData.get('comprimento')),
+      quantidade: Number(formData.get('quantidade')) ?? 0,
+      status: (formData.get('status') as string).toUpperCase() as StatusVaga,
       operacoesVaga: JSON.parse(
         (formData.get('diaSemana') as string) ?? '[]',
       ) as OperacoesVaga[],
@@ -220,7 +226,8 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
                 id="tipo"
                 name="tipo"
                 placeholder="Selecione o tipo"
-                defaultValue={vaga.tipoVaga.toLowerCase()}
+                value={tipoVagaSelecionado}
+                onChange={setTipoVagaSelecionado}
                 options={[
                   { value: 'paralela', label: 'Paralela' },
                   { value: 'perpendicular', label: 'Perpendicular' },
@@ -256,7 +263,7 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
               />
             </FormItem>
 
-            {vaga.tipoVaga === 'PERPENDICULAR' && (
+            {tipoVagaSelecionado === 'perpendicular' && (
               <FormItem
                 name="Quantidade"
                 description="Número de vagas disponíveis"

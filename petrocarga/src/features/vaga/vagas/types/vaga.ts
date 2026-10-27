@@ -93,6 +93,8 @@ export type VagaPayload = {
   longitudeFim: number;
   tipoVaga: TipoVaga;
   comprimento: number;
+  quantidade: number;
+  status: StatusVaga;
   operacoesVaga: OperacoesVaga[];
 };
 
