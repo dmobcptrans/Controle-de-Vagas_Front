@@ -193,14 +193,17 @@ export async function getNotificacoesDoUsuario(
 export async function deleteNotificacao(
   notificacaoId: string,
   usuarioId: string,
-) {
+): Promise<void> {
   const response = await clientApi(
     `/petrocarga/notificacoes/${usuarioId}/${notificacaoId}`,
     {
       method: 'DELETE',
     },
   );
-  return response.json();
+
+  if (!response.ok) {
+    throw new Error('Erro ao excluir notificação');
+  }
 }
 
 // ----------------------
@@ -210,15 +213,11 @@ export async function deleteNotificacao(
 export async function deleteVariasNotificacoes(
   listaNotificacaoId: string[],
   usuarioId: string,
-) {
+): Promise<void> {
   const params = new URLSearchParams();
   listaNotificacaoId.forEach((id) => {
     params.append('listaNotificacaoId', id);
   });
-
-  // ----------------------
-  // Deletar Várias Notificações
-  // ----------------------
 
   const response = await clientApi(
     `/petrocarga/notificacoes/deletarSelecionadas/${usuarioId}?${params.toString()}`,
@@ -227,5 +226,7 @@ export async function deleteVariasNotificacoes(
     },
   );
 
-  return response.json();
+  if (!response.ok) {
+    throw new Error('Erro ao excluir notificações');
+  }
 }
