@@ -330,21 +330,12 @@ export async function reativarUsuario(usuarioId: string): Promise<void> {
     throw new Error('ID do usuário é obrigatório');
   }
 
-  const res = await clientApi(
-    `/petrocarga/usuarios/reativar/${usuarioId}`,
-    {
-      method: 'POST',
-    },
-  );
+  const res = await clientApi(`/petrocarga/usuarios/reativar/${usuarioId}`, {
+    method: 'PATCH',
+  });
 
-  if (!res.ok) {
-    throw new Error('Não foi possível reativar o usuário.');
-  }
-
-  // Se existir corpo, lê.
-  // Se não existir (204), simplesmente retorna.
+  // Se existir corpo, lê. Se não existir (204), simplesmente retorna.
   const text = await res.text();
-
   if (!text) return;
 
   const data = JSON.parse(text);

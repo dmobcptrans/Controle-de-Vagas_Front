@@ -2,17 +2,23 @@
 
 import { useApi } from '@/services/hooks/useApi';
 
-import { CriarGestor, AtualizarGestor, DeleteGestor } from '../services/gestorApi';
+import {
+  CriarGestor,
+  AtualizarGestor,
+  DeleteGestor,
+} from '../services/gestorApi';
 
-import { gestorPayload, atualizarGestorPayload, gestorResponse } from '../types/gestor';
+import {
+  gestorPayload,
+  atualizarGestorPayload,
+  gestorResponse,
+} from '../types/gestor';
 
 interface UseGestorMutationReturn {
   loading: boolean;
   error: string | null;
 
-  criar: (
-    payload: gestorPayload,
-  ) => Promise<gestorResponse | null>;
+  criar: (payload: gestorPayload) => Promise<gestorResponse | null>;
 
   atualizar: (
     gestorId: string,
@@ -35,19 +41,20 @@ export function useGestorMutation(): UseGestorMutationReturn {
     gestorId: string,
     payload: atualizarGestorPayload,
   ) => {
-    const response = await execute(() =>
-      AtualizarGestor(gestorId, payload),
-    );
+    const response = await execute(() => AtualizarGestor(gestorId, payload));
 
     return response !== null;
   };
 
-  const deletar = async (gestorId: string) => {
-    const response = await execute(() => DeleteGestor(gestorId));
-
-    return response !== null;
-  };
-
+const deletar = async (gestorId: string): Promise<boolean> => {
+  try {
+    await DeleteGestor(gestorId);
+    return true;
+  } catch (err) {
+    console.error('Erro real no delete:', err);
+    return false;
+  }
+};
   return {
     loading,
     error,

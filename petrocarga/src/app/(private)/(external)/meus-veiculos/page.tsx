@@ -35,6 +35,9 @@ export default function VeiculosPage() {
   const [modalAberto, setModalAberto] = useState(false);
   const [paginaAtual, setPaginaAtual] = useState(0);
 
+  const empresaId = isMotorista ? user?.dadosExtras?.empresaId : undefined;
+  const possuiVinculo = Boolean(empresaId);
+
   const paramsConsulta = useMemo(
     () => ({
       pagina: 0,
@@ -65,10 +68,10 @@ export default function VeiculosPage() {
     error: errorAssociados,
     loading: loadingAssociados,
   } = useVeiculosAssociadosAoMotorista({
-    empresaId: isMotorista ? user?.dadosExtras?.empresaId : undefined,
+    empresaId,
     motoristaId: isMotorista ? user?.id : undefined,
     params: paramsConsulta,
-    buscarAutomaticamente: isMotorista,
+    buscarAutomaticamente: possuiVinculo, // antes era isMotorista
   });
 
   // EMPRESA: apenas veículos próprios.
@@ -95,9 +98,8 @@ export default function VeiculosPage() {
     );
   }, [vP, vA, isEmpresa, isMotorista]);
 
-  const carregando = loading || (isMotorista && loadingAssociados);
-
-  const erro = error || (isMotorista ? errorAssociados : null);
+  const carregando = loading || (possuiVinculo && loadingAssociados);
+  const erro = error || (possuiVinculo ? errorAssociados : null);
 
   // Paginação local da lista unificada.
   const totalElementos = veiculos.length;
@@ -120,24 +122,10 @@ export default function VeiculosPage() {
   const recarregar = async () => {
     setPaginaAtual(0);
 
-    const consultas = [
-      buscarVeiculos({
-        pagina: 0,
-        tamanhoPagina: TAMANHO_CONSULTA,
-        ativo: true,
-        ordem: 'ASC',
-      }),
-    ];
+    const consultas = [buscarVeiculos(paramsConsulta)];
 
-    if (isMotorista) {
-      consultas.push(
-        buscarAssociados({
-          pagina: 0,
-          tamanhoPagina: TAMANHO_CONSULTA,
-          ativo: true,
-          ordem: 'ASC',
-        }),
-      );
+    if (possuiVinculo) {
+      consultas.push(buscarAssociados(paramsConsulta));
     }
 
     await Promise.all(consultas);
@@ -155,8 +143,8 @@ export default function VeiculosPage() {
         <div className="-mt-4 mb-5">
           <CTA
             onClick={() => setModalAberto(true)}
-            title="Reservar uma vaga"
-            description="Encontre e faça uma reserva rápida"
+            title="Adicionar um veículo"
+            description="cadastre novos veículos clicando aqui"
             icon={<CarIcon className="h-5 w-5 text-white" />}
           />
         </div>
