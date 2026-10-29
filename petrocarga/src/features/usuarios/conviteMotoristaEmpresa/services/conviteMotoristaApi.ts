@@ -13,12 +13,13 @@ import type {
 /**
  * Gera um convite para um motorista.
  */
+
 export async function gerarConviteMotoristaEmpresa(
   empresaId: string,
   payload: ConviteMotoristaEmpresaPayload,
 ): Promise<ConviteMotoristaEmpresaResult> {
   try {
-    const res = await clientApi(
+    await clientApi(
       `/petrocarga/convite-motorista-empresa/${encodeURIComponent(empresaId)}`,
       {
         method: 'POST',
@@ -26,31 +27,21 @@ export async function gerarConviteMotoristaEmpresa(
       },
     );
 
-    if (!res.ok) {
-      let message = 'Erro ao gerar convite para motorista';
-
-      try {
-        const error = await res.json();
-        message = error.message ?? message;
-      } catch {}
-
-      return {
-        error: true,
-        message,
-      };
-    }
-
     return {
       error: false,
       message: 'Convite enviado com sucesso!',
     };
   } catch (err: unknown) {
+    const apiError = err as {
+      message?: string;
+      code?: number;
+    };
+
     return {
       error: true,
       message:
-        err instanceof Error
-          ? err.message
-          : 'Erro ao gerar convite para motorista',
+        apiError.message ??
+        'Erro ao gerar convite para motorista',
     };
   }
 }

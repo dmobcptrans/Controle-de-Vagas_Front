@@ -67,51 +67,42 @@ export default function GerarConviteMotoristaModal({
     setOpen(false);
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
 
-    if (!empresaId) {
-      toast.error('Empresa não identificada. Recarregue a página.');
-      return;
-    }
-
-    if (!podeEnviar) {
-      toast.error('Informe um nome e um e-mail válido.');
-      return;
-    }
-
-    const payload = {
-      nomeMotorista: nome.trim(),
-      emailMotorista: email.trim().toLowerCase(),
-    };
-
-    startTransition(async () => {
-      try {
-        const result = await gerarConviteMotoristaEmpresa(
-          empresaId,
-          payload,
-        );
-
-        if (result.error) {
-          toast.error(
-            result.message || 'Erro ao enviar convite para motorista',
-          );
-          return;
-        }
-
-        toast.success(
-          result.message || 'Convite enviado com sucesso!',
-        );
-
-        onSuccess?.();
-
-        resetForm();
-        setOpen(false);
-      } catch {
-        toast.error('Erro inesperado ao enviar convite.');
-      }
-    });
+  if (!empresaId) {
+    toast.error('Empresa não identificada. Recarregue a página.');
+    return;
   }
+
+  if (!podeEnviar) {
+    toast.error('Informe um nome e um e-mail válido.');
+    return;
+  }
+
+  const payload = {
+    nomeMotorista: nome.trim(),
+    emailMotorista: email.trim().toLowerCase(),
+  };
+
+  startTransition(async () => {
+    const result = await gerarConviteMotoristaEmpresa(
+      empresaId,
+      payload,
+    );
+
+    if (result.error) {
+      toast.error(result.message);
+      return;
+    }
+
+    toast.success(result.message);
+
+    onSuccess?.();
+    resetForm();
+    setOpen(false);
+  });
+}
 
   return (
     <>
