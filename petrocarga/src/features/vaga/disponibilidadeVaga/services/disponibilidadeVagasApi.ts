@@ -17,7 +17,7 @@ import {
 export async function criarMultiplasDisponibilidadesVaga(
   payload: DisponibilidadeVagasMultiplasPayload,
 ): Promise<DisponibildadeVagaResponse> {
-  const response = await clientApi(`/petrocarga/disponibilidade-vagas/vagas`, {
+  const response = await clientApi(`/disponibilidade-vagas/vagas`, {
     method: 'POST',
     json: payload,
   });
@@ -36,7 +36,7 @@ export async function getDisponibilidadeVagas(
   });
 
   const response = await clientApi(
-    `/petrocarga/disponibilidade-vagas?${searchParams.toString()}`,
+    `/disponibilidade-vagas?${searchParams.toString()}`,
   );
   return response.json();
 }
@@ -49,7 +49,7 @@ export async function getDisponibilidadeVagasByVagaId(
   vagaId: string,
 ): Promise<DisponibildadeVagaResponse> {
   const response = await clientApi(
-    `/petrocarga/disponibilidade-vagas/vaga/${vagaId}`,
+    `/disponibilidade-vagas/vaga/${vagaId}`,
   );
   return response.json();
 }
@@ -63,7 +63,7 @@ export async function atualizarDisponibilidadeVagas(
   payload: DisponibilidadeVagasPayload,
 ): Promise<DisponibilidadeVagaResumoResponse> {
   const response = await clientApi(
-    `/petrocarga/disponibilidade-vagas/${disponibilidadeId}`,
+    `/disponibilidade-vagas/${disponibilidadeId}`,
     {
       method: 'PATCH',
       json: payload,
@@ -77,7 +77,7 @@ export async function atualizarDisponibilidadeVagas(
 // ----------------------
 
 export async function deleteDisponibilidadeVagas(disponibilidadeId: string) {
-  await clientApi(`/petrocarga/disponibilidade-vagas/${disponibilidadeId}`, {
+  await clientApi(`/disponibilidade-vagas/${disponibilidadeId}`, {
     method: 'DELETE',
   });
 }

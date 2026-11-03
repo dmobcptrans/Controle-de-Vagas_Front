@@ -4,7 +4,7 @@ import { AtualizarEmpresaPayload, EmpresaParams , EmpresaPayload, EmpresasPagina
 import { EmpresaResponse } from "../types/empresa2";
 
 
-const BASE_URL = '/petrocarga/empresas';
+const BASE_URL = '/empresas';
 
 export async function CriarEmpresa(payload: EmpresaPayload): Promise<EmpresaResponse> {
     const response = await clientApi(`${BASE_URL}/cadastro`, {
@@ -47,12 +47,12 @@ export async function getMotoristaEmpresa(empresaId: string, params: EmpresaPara
         ... params
     })
 
-    const response = await clientApi(`/petrocarga/motoristas/byEmpresa/${empresaId}?${searchParams.toString()}`)
+    const response = await clientApi(`/motoristas/byEmpresa/${empresaId}?${searchParams.toString()}`)
     return response.json();
 }
 
 export async function DesvincularMotoristaEmpresa(empresaId: string, motoristaId: string) {
-    const response = await clientApi(`/petrocarga/motoristas/desvincularEmpresa/${empresaId}/${motoristaId}`, {
+    const response = await clientApi(`/motoristas/desvincularEmpresa/${empresaId}/${motoristaId}`, {
         method: 'PATCH'
     })
     return response.json()

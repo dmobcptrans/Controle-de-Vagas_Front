@@ -97,7 +97,7 @@ export async function solicitarRecuperacaoSenha(
       throw new Error('CPF deve conter 11 dígitos ou CNPJ deve conter 14 dígitos');
     }
 
-    const res = await clientApi('/petrocarga/auth/forgot-password', {
+    const res = await clientApi('/auth/forgot-password', {
       method: 'POST',
       json: jsonBody,
     });
@@ -170,7 +170,7 @@ export async function reenviarCodigoAtivacao(
       body.cpf = documentoLimpo;
     }
 
-    const res = await clientApi('/petrocarga/auth/resend-code', {
+    const res = await clientApi('/auth/resend-code', {
       method: 'POST',
       json: body,
     });
@@ -224,7 +224,7 @@ export async function redefinirSenhaComCodigo(
   novaSenha: string,
 ): Promise<{ message: string; code: number }> {
   try {
-    const res = await clientApi('/petrocarga/auth/reset-password', {
+    const res = await clientApi('/auth/reset-password', {
       method: 'POST',
       json: {
         email: email.trim(),
@@ -306,7 +306,7 @@ export async function ativarConta(
       body.cpf = documentoLimpo;
     }
 
-    const res = await clientApi('/petrocarga/auth/activate', {
+    const res = await clientApi('/auth/activate', {
       method: 'POST',
       json: body,
     });
@@ -331,7 +331,7 @@ export async function reativarUsuario(usuarioId: string): Promise<void> {
   }
 
   const res = await clientApi(
-    `/petrocarga/usuarios/reativar/${usuarioId}`,
+    `/usuarios/reativar/${usuarioId}`,
     {
       method: 'POST',
     },

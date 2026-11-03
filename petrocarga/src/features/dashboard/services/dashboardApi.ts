@@ -85,7 +85,7 @@ export async function RelatorioSumario(
 
   // Requisição à API
   const res = await clientApi(
-    `/petrocarga/api/v1/dashboard/summary${queryString}`,
+    `/api/v1/dashboard/summary${queryString}`,
     {
       method: 'GET',
     },
@@ -152,7 +152,7 @@ export async function RelatorioKpis(
 
   // Requisição à API
   const res = await clientApi(
-    `/petrocarga/api/v1/dashboard/kpis${queryString}`,
+    `/api/v1/dashboard/kpis${queryString}`,
     {
       method: 'GET',
     },

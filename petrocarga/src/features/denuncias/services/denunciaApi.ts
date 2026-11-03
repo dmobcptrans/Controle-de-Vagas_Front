@@ -18,7 +18,7 @@ import { buildSearchParams } from '@/services/utils/buildSearchParams';
 export async function CriarDenuncia(
   payload: DenunciaPayload,
 ): Promise<DenunciaResponse> {
-  const response = await clientApi('/petrocarga/denuncias', {
+  const response = await clientApi('/denuncias', {
     method: 'POST',
     json: payload,
   });
@@ -39,7 +39,7 @@ export async function getDenuncias(
     ordem: params?.ordem ?? 'DESC',
   });
   const response = await clientApi(
-    `/petrocarga/denuncias/all?${searchParams.toString()}`,
+    `/denuncias/all?${searchParams.toString()}`,
   );
   return response.json();
 }
@@ -59,7 +59,7 @@ export async function getDenunciasByUsuario(
     ordem: params?.ordem ?? 'DESC',
   });
   const response = await clientApi(
-    `/petrocarga/denuncias/byUsuario/${usuarioId}?${searchParams}`,
+    `/denuncias/byUsuario/${usuarioId}?${searchParams}`,
   );
 
   return response.json();
@@ -69,7 +69,7 @@ export async function getDenunciasByUsuario(
 // ----------------------
 
 export async function iniciarAnaliseDenuncia(denunciaId: string) {
-  return await clientApi(`/petrocarga/denuncias/iniciarAnalise/${denunciaId}`, {
+  return await clientApi(`/denuncias/iniciarAnalise/${denunciaId}`, {
     method: 'PATCH',
   });
 }
@@ -83,7 +83,7 @@ export async function finalizarAnaliseDenuncia(
   payload: RespostaDenunciaPayload,
 ): Promise<DenunciaResponse> {
   const response = await clientApi(
-    `/petrocarga/denuncias/finalizarAnalise/${denunciaId}`,
+    `/denuncias/finalizarAnalise/${denunciaId}`,
     {
       method: 'PATCH',
       json: payload,
