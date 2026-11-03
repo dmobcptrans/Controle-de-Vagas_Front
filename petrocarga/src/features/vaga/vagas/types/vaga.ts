@@ -67,7 +67,6 @@ export type VagasMapaResponse = {
 
 export interface Endereco {
   id?: string;
-  codigoPmp: string;
   logradouro: string;
   bairro: string;
 }
@@ -83,6 +82,7 @@ export interface OperacoesVaga {
 // Criar Vaga | Atualizar Vaga
 
 export type VagaPayload = {
+  codigoPmp: string;
   endereco: Endereco;
   area: AreaVaga;
   numeroEndereco: string;
@@ -101,6 +101,7 @@ export type VagaPayload = {
 // (/vagas/{id}) | (/vagas/all)
 export type VagaResponse = {
   id: string;
+  codigoPmp: string;
   endereco: Endereco;
   area: AreaVaga;
   numeroEndereco: string;

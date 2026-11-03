@@ -235,7 +235,7 @@ export default function ReservaPlacaCard({ reserva }: ReservaPlacaCardProps) {
         {/* Rodapé com metadados */}
         <div className="pt-2 border-t border-gray-100">
           <p className="text-xs text-gray-500">
-            <strong>Código PMP:</strong> {reserva.enderecoVaga.codigoPmp}
+            <strong>Código PMP:</strong> {reserva.codigoPmp}
           </p>
           <p className="text-xs text-gray-500">
             <strong>Criado em:</strong> {formatDate(reserva.criadoEm)}

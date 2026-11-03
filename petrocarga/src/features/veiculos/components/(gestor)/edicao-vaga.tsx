@@ -101,10 +101,10 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
 
     const payload: VagaPayload = {
       endereco: {
-        codigoPmp: formData.get('codigoPmp') as string,
         logradouro: formData.get('logradouro') as string,
         bairro: formData.get('bairro') as string,
       },
+      codigoPmp: formData.get('codigoPmp') as string,
       area: (formData.get('area') as string).toUpperCase() as AreaVaga,
       numeroEndereco: formData.get('numeroEndereco') as string,
       referenciaEndereco: formData.get('descricao') as string,
@@ -157,7 +157,7 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
                 name="codigoPmp"
                 maxLength={30}
                 placeholder="Md-1234"
-                defaultValue={vaga.endereco.codigoPmp}
+                defaultValue={vaga.codigoPmp}
               />
             </FormItem>
 
