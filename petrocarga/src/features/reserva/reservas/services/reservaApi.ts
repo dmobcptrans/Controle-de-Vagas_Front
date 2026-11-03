@@ -29,7 +29,7 @@ import {
 export async function criarReserva(
   payload: CriarReservaPayload,
 ): Promise<ReservaPorUsuarioResponse> {
-  const response = await clientApi('/petrocarga/reservas', {
+  const response = await clientApi('/reservas', {
     method: 'POST',
     json: payload,
   });
@@ -50,7 +50,7 @@ export async function getReservasPorUsuario(
     tamanhoPagina: params.tamanhoPagina ?? 10,
   });
   const response = await clientApi(
-    `/petrocarga/reservas/usuario/${usuarioId}?${searchParams.toString()}`,
+    `/reservas/usuario/${usuarioId}?${searchParams.toString()}`,
   );
 
   return response.json();
@@ -74,7 +74,7 @@ export async function getReservas(
   });
 
   const response = await clientApi(
-    `/petrocarga/reservas/all?${searchParams.toString()}`,
+    `/reservas/all?${searchParams.toString()}`,
   );
 
   return response.json();
@@ -94,7 +94,7 @@ export async function getReservasBloqueios(
   });
 
   const response = await clientApi(
-    `/petrocarga/reservas/bloqueios/${vagaId}?${searchParams.toString()}`,
+    `/reservas/bloqueios/${vagaId}?${searchParams.toString()}`,
   );
 
   return response.json();
@@ -108,7 +108,7 @@ export async function getReservasPorPlaca(
   placa: string,
 ): Promise<ReservaResponse[]> {
   const response = await clientApi(
-    `/petrocarga/reservas/placa?placa=${placa.trim().toUpperCase()}`,
+    `/reservas/placa?placa=${placa.trim().toUpperCase()}`,
     { method: 'GET' },
   );
 
@@ -123,7 +123,7 @@ export async function deleteReservaByID(
   reservaId: string,
   usuarioId: string,
 ): Promise<void> {
-  await clientApi(`/petrocarga/reservas/${reservaId}/${usuarioId}`, {
+  await clientApi(`/reservas/${reservaId}/${usuarioId}`, {
     method: 'DELETE',
   });
 }
@@ -136,7 +136,7 @@ export async function getGerarComprovanteReserva(
   reservaId: string,
 ): Promise<void> {
   const response = await clientApi(
-    `/petrocarga/documentos/reservas/${reservaId}/comprovante`,
+    `/documentos/reservas/${reservaId}/comprovante`,
   );
   const blob = await response.blob();
   const url = window.URL.createObjectURL(blob);
@@ -157,7 +157,7 @@ export async function atualizarReserva(
   usuarioId: string,
 ): Promise<ReservaPorUsuarioResponse> {
   const response = await clientApi(
-    `/petrocarga/reservas/${reservaId}/${usuarioId}`,
+    `/reservas/${reservaId}/${usuarioId}`,
     {
       method: 'PATCH',
       json: payload,
@@ -174,7 +174,7 @@ export async function checkinReserva(
   reservaID: string,
 ): Promise<ReservaPorUsuarioResponse> {
   const response = await clientApi(
-    `/petrocarga/reservas/${reservaID}/checkin`,
+    `/reservas/${reservaID}/checkin`,
     {
       method: 'POST',
     },
@@ -191,7 +191,7 @@ export async function checkoutReserva(
   reservaID: string,
 ): Promise<ReservaPorUsuarioResponse> {
   const response = await clientApi(
-    `/petrocarga/reservas/checkout/${reservaID}`,
+    `/reservas/checkout/${reservaID}`,
     {
       method: 'PATCH',
     },
@@ -208,7 +208,7 @@ export async function finalizarForcado(
   reservaID: string,
 ): Promise<ReservaResponse> {
   const response = await clientApi(
-    `/petrocarga/reservas/${reservaID}/finalizar-forcado`,
+    `/reservas/${reservaID}/finalizar-forcado`,
     {
       method: 'POST',
     },
@@ -228,7 +228,7 @@ export async function finalizarForcado(
 export async function criarReservaRapida(
   payload: CriarReservaRapidaPayload,
 ): Promise<ReservaPorUsuarioResponse> {
-  const response = await clientApi('/petrocarga/reserva-rapida', {
+  const response = await clientApi('/reserva-rapida', {
     method: 'POST',
     json: payload,
   });
@@ -256,7 +256,7 @@ export async function getReservasRapidas(
   });
 
   const response = await clientApi(
-    `/petrocarga/reserva-rapida/${usuarioId}?${SearchParams}`,
+    `/reserva-rapida/${usuarioId}?${SearchParams}`,
   );
 
   return response.json();

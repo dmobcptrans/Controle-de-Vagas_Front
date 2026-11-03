@@ -55,7 +55,7 @@ async function registerAndSendToken(): Promise<void> {
     throw new Error('token_not_returned');
   }
 
-  await clientApi('/petrocarga/notificacoes/pushToken', {
+  await clientApi('/notificacoes/pushToken', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token, plataforma: 'WEB' }),

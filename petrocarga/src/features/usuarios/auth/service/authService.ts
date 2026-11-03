@@ -21,7 +21,7 @@ export async function login(
   const payload: LoginPayload = prepareLoginData(data);
 
   const response = await api.post<LoginResponse>(
-    '/petrocarga/auth/login',
+    '/auth/login',
     payload,
   );
 
@@ -38,7 +38,7 @@ export async function loginWithGoogle(
   data: LoginWithGooglePayload,
 ): Promise<AuthMeResponse> {
   const response = await api.post<LoginResponse>(
-    '/petrocarga/auth/loginWithGoogle',
+    '/auth/loginWithGoogle',
     data,
   );
 
@@ -53,7 +53,7 @@ export async function loginWithGoogle(
 
 export async function getCurrentUser(): Promise<AuthMeResponse> {
   const response = await api.get(
-    '/petrocarga/auth/me',
+    '/auth/me',
   );
 
   return normalizeUserData(response.data);
@@ -61,7 +61,7 @@ export async function getCurrentUser(): Promise<AuthMeResponse> {
 
 export async function logout(): Promise<void> {
   try {
-    await api.post('/petrocarga/auth/logout');
+    await api.post('/auth/logout');
   } finally {
     localStorage.removeItem(TOKEN_KEY);
   }

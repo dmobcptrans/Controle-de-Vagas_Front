@@ -3,7 +3,7 @@ import { clientApi } from "@/services/clientApi";
 import { buildSearchParams } from "@/services/utils/buildSearchParams";
 import { atualizarGestorPayload, gestorPaginadoResponse, gestorParams, gestorPayload, gestorResponse } from "../types/gestor";
 
-const BASE_URL = '/petrocarga/gestores'
+const BASE_URL = '/gestores'
 
 export async function getGestores(params: gestorParams): Promise<gestorPaginadoResponse> {
     const searchParams = buildSearchParams({

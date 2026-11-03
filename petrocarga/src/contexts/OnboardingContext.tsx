@@ -170,7 +170,7 @@ export function OnboardingProvider({
   // ==================== SUBMIT CADASTRO DE USUÁRIO ====================
   const submitCadastro = useCallback(async () => {
     try {
-      await api.post('/petrocarga/auth/completarCadastro', data);
+      await api.post('/auth/completarCadastro', data);
 
       await refreshUser();
 
@@ -214,7 +214,7 @@ export function OnboardingProvider({
             : { cnpjProprietario }),
         };
 
-        await api.post(`/petrocarga/veiculos/${user?.id}`, payload);
+        await api.post(`/veiculos/${user?.id}`, payload);
 
         await refreshUser();
 

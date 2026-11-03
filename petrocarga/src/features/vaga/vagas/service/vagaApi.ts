@@ -18,7 +18,7 @@ import { buildSearchParams } from '@/services/utils/buildSearchParams';
 // ----------------------
 
 export async function criarVaga(payload: VagaPayload): Promise<VagaResponse> {
-  const response = await clientApi('/petrocarga/vagas', {
+  const response = await clientApi('/vagas', {
     method: 'POST',
     json: payload,
   });
@@ -31,7 +31,7 @@ export async function criarVaga(payload: VagaPayload): Promise<VagaResponse> {
 // ----------------------
 
 export async function deleteVaga(id: string): Promise<void> {
-  await clientApi(`/petrocarga/vagas/${id}`, {
+  await clientApi(`/vagas/${id}`, {
     method: 'DELETE',
   });
 }
@@ -44,7 +44,7 @@ export async function atualizarVaga(
   vagaId: string,
   payload: VagaPayload,
 ): Promise<void> {
-  await clientApi(`/petrocarga/vagas/${vagaId}`, {
+  await clientApi(`/vagas/${vagaId}`, {
     method: 'PATCH',
     json: payload,
   });
@@ -60,7 +60,7 @@ export async function getVagas(params: FiltrosVaga): Promise<VagaResponse[]> {
   });
 
   const response = await clientApi(
-    `/petrocarga/vagas/all${searchParams.toString()}`,
+    `/vagas/all${searchParams.toString()}`,
   );
   return response.json();
 }
@@ -76,7 +76,7 @@ export async function getVagasPorMapa(
     ...params,
   });
   const response = await clientApi(
-    `/petrocarga/vagas/mapa?${searchParams.toString()}`,
+    `/vagas/mapa?${searchParams.toString()}`,
   );
   return response.json();
 }
@@ -93,7 +93,7 @@ export async function getVagasFiltradas(
   });
 
   const response = await clientApi(
-    `/petrocarga/vagas?${searchParams.toString()}`,
+    `/vagas?${searchParams.toString()}`,
   );
 
   return response.json();
@@ -104,6 +104,6 @@ export async function getVagasFiltradas(
 // ----------------------
 
 export async function getVagaById(id: string): Promise<VagaResponse> {
-  const response = await clientApi(`/petrocarga/vagas/${id}`);
+  const response = await clientApi(`/vagas/${id}`);
   return response.json();
 }

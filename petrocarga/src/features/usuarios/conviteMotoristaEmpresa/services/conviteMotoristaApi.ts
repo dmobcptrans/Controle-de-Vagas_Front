@@ -19,7 +19,7 @@ export async function gerarConviteMotoristaEmpresa(
 ): Promise<ConviteMotoristaEmpresaResult> {
   try {
     const res = await clientApi(
-      `/petrocarga/convite-motorista-empresa/${encodeURIComponent(empresaId)}`,
+      `/convite-motorista-empresa/${encodeURIComponent(empresaId)}`,
       {
         method: 'POST',
         json: payload,
@@ -62,7 +62,7 @@ export async function buscarConviteMotoristaEmpresaPorToken(
   conviteToken: string,
 ): Promise<ConviteMotoristaEmpresaPorToken> {
   const res = await clientApi(
-    `/petrocarga/convite-motorista-empresa/byToken/${encodeURIComponent(
+    `/convite-motorista-empresa/byToken/${encodeURIComponent(
       conviteToken,
     )}`,
     {
@@ -98,7 +98,7 @@ export async function responderConviteMotoristaEmpresa(
 ): Promise<ConviteMotoristaEmpresaResult> {
   try {
     const res = await clientApi(
-      '/petrocarga/convite-motorista-empresa/responder',
+      '/convite-motorista-empresa/responder',
       {
         method: 'PATCH',
         json: payload,
@@ -140,7 +140,7 @@ export async function responderConviteMotoristaExistenteEmpresa(
 ): Promise<ConviteMotoristaEmpresaResult> {
   try {
     const res = await clientApi(
-      `/petrocarga/convite-motorista-empresa/responder/${motoristaId}`,
+      `/convite-motorista-empresa/responder/${motoristaId}`,
       {
         method: 'PATCH',
         json: payload,
@@ -207,7 +207,7 @@ export async function listarConvitesMotoristaEmpresaPorEmpresa(
   searchParams.append('ordem', params.ordem ?? 'DESC');
 
   const res = await clientApi(
-    `/petrocarga/convite-motorista-empresa/byEmpresa/${encodeURIComponent(
+    `/convite-motorista-empresa/byEmpresa/${encodeURIComponent(
       empresaId,
     )}?${searchParams.toString()}`,
     {
@@ -260,7 +260,7 @@ export async function listarConvitesMotoristaEmpresaPorMotorista(
   searchParams.append('ordem', params.ordem ?? 'DESC');
 
   const res = await clientApi(
-    `/petrocarga/convite-motorista-empresa/byMotorista/${encodeURIComponent(
+    `/convite-motorista-empresa/byMotorista/${encodeURIComponent(
       motoristaId,
     )}?${searchParams.toString()}`,
     {
@@ -294,7 +294,7 @@ export async function cancelarConviteMotoristaEmpresa(
   searchParams.append('conviteId', conviteId);
 
   const res = await clientApi(
-    `/petrocarga/convite-motorista-empresa/cancelar/${encodeURIComponent(
+    `/convite-motorista-empresa/cancelar/${encodeURIComponent(
       empresaId,
     )}?${searchParams.toString()}`,
     {

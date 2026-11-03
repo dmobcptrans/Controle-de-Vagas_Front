@@ -4,7 +4,7 @@ import { agentePaginadoResponse, agenteParams, agentePayload, agenteResponse, at
 
 
 export async function CriarAgente(payload: agentePayload): Promise<agenteResponse> {
-    const response = await clientApi('/petrocarga/agentes', {
+    const response = await clientApi('/agentes', {
         method: 'POST',
         json: payload
     });
@@ -12,7 +12,7 @@ export async function CriarAgente(payload: agentePayload): Promise<agenteRespons
 }
 
 export async function AtualizarAgente(agenteId: string, payload: atualizarAgente): Promise<agenteResponse> {
-    const response = await clientApi(`/petrocarga/agentes/${agenteId}`, {
+    const response = await clientApi(`/agentes/${agenteId}`, {
         method: 'PATCH',
         json: payload
     })
@@ -20,14 +20,14 @@ export async function AtualizarAgente(agenteId: string, payload: atualizarAgente
 }
 
 export async function DeletarAgente(agenteId: string) {
-    const response = await clientApi(`/petrocarga/agentes/${agenteId}`, {
+    const response = await clientApi(`/agentes/${agenteId}`, {
         method: 'DELETE'
     })
     return response.json();
 }
 
 export async function getAgentePorId(agenteId: string): Promise<agenteResponse> {
-    const response = await clientApi(`/petrocarga/agentes/${agenteId}`)
+    const response = await clientApi(`/agentes/${agenteId}`)
     return response.json();
 }
 
@@ -35,7 +35,7 @@ export async function getAgentes(params: agenteParams): Promise<agentePaginadoRe
     const searchParams = buildSearchParams({
         ...params
     })
-    const response = await clientApi(`/petrocarga/agentes?${searchParams.toString()}`)
+    const response = await clientApi(`/agentes?${searchParams.toString()}`)
     return response.json();
 }
 
