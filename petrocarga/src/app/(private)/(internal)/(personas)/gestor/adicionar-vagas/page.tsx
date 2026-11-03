@@ -118,10 +118,10 @@ export default function Cadastro() {
 
     const payload: VagaPayload = {
       endereco: {
-        codigoPmp: formData.get('codigo') as string,
         logradouro: formData.get('logradouro') as string,
         bairro: formData.get('bairro') as string,
       },
+      codigoPmp: formData.get('codigo') as string,
       area: (formData.get('area') as string).toUpperCase() as AreaVaga,
       numeroEndereco: formData.get('numeroEndereco') as string,
       referenciaEndereco: formData.get('descricao') as string,
