@@ -9,7 +9,7 @@ import {
   VincularMotoristaAoVeiculoResponse,
 } from '../types/veiculoMotoristaEmpresa';
 
-const URL_BASE = `/petrocarga/veiculoEmpresaMotorista`;
+const URL_BASE = `/veiculoEmpresaMotorista`;
 
 export async function VincularMotoristaAoVeiculo(
   params: MotoristaAoVeiculoPayload,

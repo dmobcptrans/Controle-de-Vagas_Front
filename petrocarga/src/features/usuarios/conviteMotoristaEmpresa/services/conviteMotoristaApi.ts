@@ -10,6 +10,8 @@ import type {
   ListarConvitesMotoristaEmpresaPorMotoristaParams,
 } from '../types/conviteMotoristaEmpresa';
 
+const BASE_URL = '/convite-motorista-empresa'
+
 /**
  * Gera um convite para um motorista.
  */
@@ -20,7 +22,7 @@ export async function gerarConviteMotoristaEmpresa(
 ): Promise<ConviteMotoristaEmpresaResult> {
   try {
     await clientApi(
-      `/petrocarga/convite-motorista-empresa/${encodeURIComponent(empresaId)}`,
+      `${BASE_URL}/${encodeURIComponent(empresaId)}`,
       {
         method: 'POST',
         json: payload,
@@ -53,7 +55,7 @@ export async function buscarConviteMotoristaEmpresaPorToken(
   conviteToken: string,
 ): Promise<ConviteMotoristaEmpresaPorToken> {
   const res = await clientApi(
-    `/petrocarga/convite-motorista-empresa/byToken/${encodeURIComponent(
+    `${BASE_URL}/byToken/${encodeURIComponent(
       conviteToken,
     )}`,
     {
@@ -89,7 +91,7 @@ export async function responderConviteMotoristaEmpresa(
 ): Promise<ConviteMotoristaEmpresaResult> {
   try {
     const res = await clientApi(
-      '/petrocarga/convite-motorista-empresa/responder',
+      `${BASE_URL}/responder`,
       {
         method: 'PATCH',
         json: payload,
@@ -131,7 +133,7 @@ export async function responderConviteMotoristaExistenteEmpresa(
 ): Promise<ConviteMotoristaEmpresaResult> {
   try {
     const res = await clientApi(
-      `/petrocarga/convite-motorista-empresa/responder/${motoristaId}`,
+      `${BASE_URL}/responder/${motoristaId}`,
       {
         method: 'PATCH',
         json: payload,
@@ -198,7 +200,7 @@ export async function listarConvitesMotoristaEmpresaPorEmpresa(
   searchParams.append('ordem', params.ordem ?? 'DESC');
 
   const res = await clientApi(
-    `/petrocarga/convite-motorista-empresa/byEmpresa/${encodeURIComponent(
+    `${BASE_URL}/byEmpresa/${encodeURIComponent(
       empresaId,
     )}?${searchParams.toString()}`,
     {
@@ -251,7 +253,7 @@ export async function listarConvitesMotoristaEmpresaPorMotorista(
   searchParams.append('ordem', params.ordem ?? 'DESC');
 
   const res = await clientApi(
-    `/petrocarga/convite-motorista-empresa/byMotorista/${encodeURIComponent(
+    `${BASE_URL}/byMotorista/${encodeURIComponent(
       motoristaId,
     )}?${searchParams.toString()}`,
     {
@@ -285,7 +287,7 @@ export async function cancelarConviteMotoristaEmpresa(
   searchParams.append('conviteId', conviteId);
 
   const res = await clientApi(
-    `/petrocarga/convite-motorista-empresa/cancelar/${encodeURIComponent(
+    `${BASE_URL}/cancelar/${encodeURIComponent(
       empresaId,
     )}?${searchParams.toString()}`,
     {

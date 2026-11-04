@@ -8,6 +8,7 @@ import {
   VeiculoResponse,
 } from '../types/veiculo';
 
+const BASE_URL = "/veiculos"
 /**
  * Cria um veículo para determinado usuário.
  */
@@ -15,7 +16,7 @@ export async function criarVeiculo(
   usuarioId: string,
   payload: VeiculoPayload,
 ): Promise<VeiculoResponse> {
-  const response = await clientApi(`/petrocarga/veiculos/${usuarioId}`, {
+  const response = await clientApi(`${BASE_URL}/${usuarioId}`, {
     method: 'POST',
     json: payload,
   });
@@ -32,7 +33,7 @@ export async function atualizarVeiculo(
   usuarioId: string,
   payload: VeiculoPayload,
 ): Promise<void> {
-  await clientApi(`/petrocarga/veiculos/${veiculoId}/${usuarioId}`, {
+  await clientApi(`${BASE_URL}/${veiculoId}/${usuarioId}`, {
     method: 'PATCH',
     json: payload,
   });
@@ -43,7 +44,7 @@ export async function atualizarVeiculo(
  */
 
 export async function deletarVeiculo(veiculoId: string): Promise<void> {
-  await clientApi(`/petrocarga/veiculos/${veiculoId}`, {
+  await clientApi(`${BASE_URL}/${veiculoId}`, {
     method: 'DELETE',
   });
 }
@@ -63,7 +64,7 @@ export async function getVeiculosPorUsuario(
   });
 
   const response = await clientApi(
-    `/petrocarga/veiculos/usuario/${usuarioId}?${searchParams.toString()}`,
+    `${BASE_URL}/usuario/${usuarioId}?${searchParams.toString()}`,
   );
 
   return response.json();
@@ -75,7 +76,7 @@ export async function getVeiculosPorUsuario(
 export async function getVeiculoPorId(
   veiculoId: string,
 ): Promise<VeiculoResponse> {
-  const response = await clientApi(`/petrocarga/veiculos/${veiculoId}`);
+  const response = await clientApi(`${BASE_URL}/${veiculoId}`);
 
   return response.json();
 }

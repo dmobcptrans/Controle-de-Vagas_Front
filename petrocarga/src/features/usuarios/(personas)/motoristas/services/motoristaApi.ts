@@ -2,7 +2,7 @@ import { clientApi } from "@/services/clientApi";
 import { buildSearchParams } from "@/services/utils/buildSearchParams";
 import { AtualizarMotoristaPayload, MotoristaParams, MotoristaPayload1, MotoristaResponse1, MotoristaResumidoPaginadoResponse } from "../types/motorista";
 
-const BASE_URL = '/petrocarga/motoristas'
+const BASE_URL = '/motoristas'
 
 export async function CriarMotorista(payload: MotoristaPayload1): Promise<MotoristaResponse1> {
     const response = await clientApi(`${BASE_URL}/cadastro`, {

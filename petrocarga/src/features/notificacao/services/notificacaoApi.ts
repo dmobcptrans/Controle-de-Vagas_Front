@@ -13,6 +13,8 @@ import {
 import { buildSearchParams } from '@/services/utils/buildSearchParams';
 import { Permissao } from '@/lib/types/personas/user2';
 
+const BASE_URL = '/notificacoes';
+
 // ----------------------
 // Enviar Notificação Para um Usuário
 // ----------------------
@@ -22,7 +24,7 @@ export async function EnviarNotificacaoParaUsuario(
   usuarioId: string,
 ): Promise<NotificacaoResponse> {
   const response = await clientApi(
-    `/petrocarga/notificacoes/sendNotification/toUsuario/${usuarioId}`,
+    `${BASE_URL}/sendNotification/toUsuario/${usuarioId}`,
     {
       method: 'POST',
       json: payload,
@@ -41,7 +43,7 @@ export async function EnviarNotificacaoPorPermissao(
   permissao: Permissao,
 ): Promise<NotificacaoResponse> {
   const response = await clientApi(
-    `/petrocarga/notificacoes/sendNotification/byPermissao/${permissao}`,
+    `${BASE_URL}/sendNotification/byPermissao/${permissao}`,
     {
       method: 'POST',
       json: payload,
@@ -57,7 +59,7 @@ export async function EnviarNotificacaoPorPermissao(
 export async function RegistrarPushToken(
   payload: PushTokenPayload,
 ): Promise<PushTokenResponse> {
-  const response = await clientApi('/petrocarga/notificacao/pushToken', {
+  const response = await clientApi(`${BASE_URL}/pushToken`, {
     method: 'POST',
     json: payload,
   });
@@ -73,7 +75,7 @@ export async function AtualizarPushToken(
   usuarioId: string,
 ): Promise<PushTokenResponse> {
   const response = await clientApi(
-    `/petrocarga/notificacoes/pushToken/${usuarioId}`,
+    `${BASE_URL}/pushToken/${usuarioId}`,
     {
       method: 'PATCH',
       json: payload,
@@ -97,7 +99,7 @@ export async function MarcarVariasNotificacoesComoLidas(
   });
 
   const response = await clientApi(
-    `/petrocarga/notificacoes/marcarSelecionadasComoLida/${usuarioId}?${params.toString()}`,
+    `${BASE_URL}/marcarSelecionadasComoLida/${usuarioId}?${params.toString()}`,
     {
       method: 'PATCH',
     },
@@ -114,7 +116,7 @@ export async function MarcarUmaNotificacaoComoLida(
   notificacaoId: string,
 ): Promise<NotificacaoResponse> {
   const response = await clientApi(
-    `/petrocarga/notificacoes/lida/${notificacaoId}`,
+    `${BASE_URL}/lida/${notificacaoId}`,
     {
       method: 'PATCH',
     },
@@ -129,7 +131,7 @@ export async function MarcarUmaNotificacaoComoLida(
 export async function getNotificacaoPorId(
   notificacaoId: string,
 ): Promise<NotificacaoResponse> {
-  const response = await clientApi(`/petrocarga/notificacoes/${notificacaoId}`);
+  const response = await clientApi(`${BASE_URL}/${notificacaoId}`);
   return response.json();
 }
 
@@ -140,7 +142,7 @@ export async function getNotificacaoPorId(
 export async function getNotificacaoStream(
   signal?: AbortSignal,
 ): Promise<Response> {
-  return clientApi(`/petrocarga/notificacoes/stream`, {
+  return clientApi(`${BASE_URL}/stream`, {
     method: 'GET',
     signal,
     headers: { Accept: 'text/event-stream' },
@@ -153,7 +155,7 @@ export async function getNotificacaoStream(
 
 export async function getPushTokensDoUsuario(): Promise<PushTokenResponse[]> {
   const response = await clientApi(
-    `/petrocarga/notificacoes/pushToken/byUsuarioId`,
+    `${BASE_URL}/pushToken/byUsuarioId`,
   );
   return response.json();
 }
@@ -166,7 +168,7 @@ export async function getPushTokenPorId(
   pushTokenId: string,
 ): Promise<PushTokenResponse> {
   const response = await clientApi(
-    `/petrocarga/notificacoes/pushToken/byToken?token=${pushTokenId}`,
+    `${BASE_URL}/pushToken/byToken?token=${pushTokenId}`,
   );
   return response.json();
 }
@@ -185,7 +187,7 @@ export async function getNotificacoesDoUsuario(
     tamanhoPagina: params.tamanhoPagina ?? 10,
   });
   const response = await clientApi(
-    `/petrocarga/notificacoes/byUsuario/${usuarioId}?${searchParams.toString()}`,
+    `${BASE_URL}/byUsuario/${usuarioId}?${searchParams.toString()}`,
   );
   return response.json();
 }
@@ -195,7 +197,7 @@ export async function deleteNotificacao(
   usuarioId: string,
 ): Promise<void> {
   const response = await clientApi(
-    `/petrocarga/notificacoes/${usuarioId}/${notificacaoId}`,
+    `${BASE_URL}/${usuarioId}/${notificacaoId}`,
     {
       method: 'DELETE',
     },
@@ -220,7 +222,7 @@ export async function deleteVariasNotificacoes(
   });
 
   const response = await clientApi(
-    `/petrocarga/notificacoes/deletarSelecionadas/${usuarioId}?${params.toString()}`,
+    `${BASE_URL}/deletarSelecionadas/${usuarioId}?${params.toString()}`,
     {
       method: 'DELETE',
     },

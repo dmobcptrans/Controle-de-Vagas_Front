@@ -8,10 +8,12 @@ import {
   atualizarAgente,
 } from '../types/agente';
 
+const BASE_URL = '/agentes';
+
 export async function CriarAgente(
   payload: agentePayload,
 ): Promise<agenteResponse> {
-  const response = await clientApi('/petrocarga/agentes', {
+  const response = await clientApi(`${BASE_URL}`, {
     method: 'POST',
     json: payload,
   });
@@ -22,7 +24,7 @@ export async function AtualizarAgente(
   agenteId: string,
   payload: atualizarAgente,
 ): Promise<agenteResponse> {
-  const response = await clientApi(`/petrocarga/agentes/${agenteId}`, {
+  const response = await clientApi(`${BASE_URL}/${agenteId}`, {
     method: 'PATCH',
     json: payload,
   });
@@ -30,7 +32,7 @@ export async function AtualizarAgente(
 }
 
 export async function DeletarAgente(agenteId: string) {
-  await clientApi(`/petrocarga/agentes/${agenteId}`, {
+  await clientApi(`${BASE_URL}/${agenteId}`, {
     method: 'DELETE',
   });
 }
@@ -38,7 +40,7 @@ export async function DeletarAgente(agenteId: string) {
 export async function getAgentePorId(
   agenteId: string,
 ): Promise<agenteResponse> {
-  const response = await clientApi(`/petrocarga/agentes/${agenteId}`);
+  const response = await clientApi(`${BASE_URL}/${agenteId}`);
   return response.json();
 }
 
@@ -49,7 +51,7 @@ export async function getAgentes(
     ...params,
   });
   const response = await clientApi(
-    `/petrocarga/agentes?${searchParams.toString()}`,
+    `${BASE_URL}?${searchParams.toString()}`,
   );
   return response.json();
 }

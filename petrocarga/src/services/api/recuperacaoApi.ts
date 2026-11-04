@@ -68,6 +68,9 @@ function extractMessage(error: unknown): string {
  * await solicitarRecuperacaoSenha('12345678900');
  * ```
  */
+
+const BASE_URL = '/auth';
+
 export async function solicitarRecuperacaoSenha(
   identificador: string,
 ): Promise<void> {
@@ -97,7 +100,7 @@ export async function solicitarRecuperacaoSenha(
       throw new Error('CPF deve conter 11 dígitos ou CNPJ deve conter 14 dígitos');
     }
 
-    const res = await clientApi('/petrocarga/auth/forgot-password', {
+    const res = await clientApi(`${BASE_URL}/forgot-password`, {
       method: 'POST',
       json: jsonBody,
     });
@@ -170,7 +173,7 @@ export async function reenviarCodigoAtivacao(
       body.cpf = documentoLimpo;
     }
 
-    const res = await clientApi('/petrocarga/auth/resend-code', {
+    const res = await clientApi(`${BASE_URL}/resend-code`, {
       method: 'POST',
       json: body,
     });
@@ -224,7 +227,7 @@ export async function redefinirSenhaComCodigo(
   novaSenha: string,
 ): Promise<{ message: string; code: number }> {
   try {
-    const res = await clientApi('/petrocarga/auth/reset-password', {
+    const res = await clientApi(`${BASE_URL}/reset-password`, {
       method: 'POST',
       json: {
         email: email.trim(),
@@ -306,7 +309,7 @@ export async function ativarConta(
       body.cpf = documentoLimpo;
     }
 
-    const res = await clientApi('/petrocarga/auth/activate', {
+    const res = await clientApi(`${BASE_URL}/activate`, {
       method: 'POST',
       json: body,
     });
@@ -330,7 +333,7 @@ export async function reativarUsuario(usuarioId: string): Promise<void> {
     throw new Error('ID do usuário é obrigatório');
   }
 
-  const res = await clientApi(`/petrocarga/usuarios/reativar/${usuarioId}`, {
+  const res = await clientApi(`/usuarios/reativar/${usuarioId}`, {
     method: 'PATCH',
   });
 

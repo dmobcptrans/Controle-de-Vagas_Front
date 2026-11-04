@@ -11,6 +11,8 @@ import type { LoginFormData } from '../utils/loginUtils';
 import { prepareLoginData } from '../utils/loginUtils';
 import { normalizeUserData } from '../utils/normalizeUser';
 
+const BASE_URL = '/auth'
+
 type LoginResponse = {
   token?: string;
 };
@@ -21,7 +23,7 @@ export async function login(
   const payload: LoginPayload = prepareLoginData(data);
 
   const response = await api.post<LoginResponse>(
-    '/petrocarga/auth/login',
+    `${BASE_URL}/login`,
     payload,
   );
 
@@ -38,7 +40,7 @@ export async function loginWithGoogle(
   data: LoginWithGooglePayload,
 ): Promise<AuthMeResponse> {
   const response = await api.post<LoginResponse>(
-    '/petrocarga/auth/loginWithGoogle',
+    `${BASE_URL}/loginWithGoogle`,
     data,
   );
 
@@ -53,7 +55,7 @@ export async function loginWithGoogle(
 
 export async function getCurrentUser(): Promise<AuthMeResponse> {
   const response = await api.get(
-    '/petrocarga/auth/me',
+    `${BASE_URL}/me`,
   );
 
   return normalizeUserData(response.data);
@@ -61,7 +63,7 @@ export async function getCurrentUser(): Promise<AuthMeResponse> {
 
 export async function logout(): Promise<void> {
   try {
-    await api.post('/petrocarga/auth/logout');
+    await api.post(`${BASE_URL}/logout`);
   } finally {
     localStorage.removeItem(TOKEN_KEY);
   }

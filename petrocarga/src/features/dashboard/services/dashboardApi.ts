@@ -66,6 +66,9 @@ import { DashboardKPIs, DashboardSummary } from '../types/dashboard';
  * console.log(summary.stayDurationStats); // Tempo de permanência
  * ```
  */
+
+const BASE_URL = '/api/v1';
+
 export async function RelatorioSumario(
   startDate?: string,
   endDate?: string,
@@ -85,7 +88,7 @@ export async function RelatorioSumario(
 
   // Requisição à API
   const res = await clientApi(
-    `/petrocarga/api/v1/dashboard/summary${queryString}`,
+    `${BASE_URL}/dashboard/summary${queryString}`,
     {
       method: 'GET',
     },
@@ -152,7 +155,7 @@ export async function RelatorioKpis(
 
   // Requisição à API
   const res = await clientApi(
-    `/petrocarga/api/v1/dashboard/kpis${queryString}`,
+    `${BASE_URL}/dashboard/kpis${queryString}`,
     {
       method: 'GET',
     },
