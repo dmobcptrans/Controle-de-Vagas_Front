@@ -51,7 +51,7 @@ const deletar = async (gestorId: string): Promise<boolean> => {
     await DeleteGestor(gestorId);
     return true;
   } catch (err) {
-    console.error('Erro real no delete:', err);
+    console.error(err);
     return false;
   }
 };

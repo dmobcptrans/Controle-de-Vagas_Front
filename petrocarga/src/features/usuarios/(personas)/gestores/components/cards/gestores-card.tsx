@@ -188,6 +188,7 @@ import toast from 'react-hot-toast';
 import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
 import { gestorResponse } from '../../types/gestor';
 import { useGestorMutation } from '../../hooks/useGestorMutation';
+import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
 
 interface GestorCardProps {
   gestor: gestorResponse;
@@ -265,7 +266,7 @@ export default function GestorCard({
   gestor,
   onStatusChange,
 }: GestorCardProps) {
-  const {deletar, error, loading,limparError} = useGestorMutation();
+  const { deletar, error, loading, limparError } = useGestorMutation();
   const [modalExcluirAberto, setModalExcluirAberto] = useState(false);
   const [modalAtivarAberto, setModalAtivarAberto] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -283,12 +284,17 @@ export default function GestorCard({
    * 3. Se erro: exibe toast de erro
    */
   const handleExcluir = async () => {
-    if (isUpdating) return;
+    if (isUpdating || loading) return;
 
     setIsUpdating(true);
+    limparError();
 
     try {
-      await deletar(gestor.id);
+      const sucesso = await deletar(gestor.id);
+
+      if (!sucesso) {
+        throw new Error(error ?? 'Erro ao desativar gestor. Tente novamente.');
+      }
 
       setModalExcluirAberto(false);
       toast.success('Gestor desativado com sucesso!');
@@ -319,7 +325,7 @@ export default function GestorCard({
    * 3. Se erro: exibe toast de erro
    */
   const handleAtivar = async () => {
-    if (isUpdating) return;
+    if (isUpdating || loading) return;
 
     setIsUpdating(true);
 
@@ -329,16 +335,11 @@ export default function GestorCard({
       setModalAtivarAberto(false);
       toast.success('Gestor ativado com sucesso!');
 
-      if (onStatusChange) {
-        await onStatusChange();
-      }
+      await onStatusChange?.();
     } catch (err) {
       console.error(err);
-
       toast.error(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao ativar gestor. Tente novamente.',
+        getApiErrorMessage(err, 'Erro ao ativar gestor. Tente novamente.'),
       );
     } finally {
       setIsUpdating(false);

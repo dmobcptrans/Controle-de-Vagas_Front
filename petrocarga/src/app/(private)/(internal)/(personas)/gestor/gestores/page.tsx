@@ -49,7 +49,7 @@ export default function GestoresPage() {
 
   // buscarAutomaticamente: false -> a página decide quando buscar,
   // porque o hook só busca sozinho uma vez, na montagem.
-  const { gestores, loading, error, totalPaginas, totalElementos, buscar } =
+  const { gestores, loading, error, totalPaginas, totalElementos, buscar, recarregar } =
     useGestores({ buscarAutomaticamente: false });
 
   const [busca, setBusca] = useState('');
@@ -374,7 +374,7 @@ export default function GestoresPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {gestores.map((gestor) => (
                 <div key={gestor.usuario.id} className="h-full">
-                  <GestorCard gestor={gestor} />
+                  <GestorCard gestor={gestor} onStatusChange={recarregar} />
                 </div>
               ))}
             </div>
