@@ -19,6 +19,7 @@ import {
 } from '@/features/vaga/vagas/types/vaga';
 import CardMapEdit from '@/features/map/components/cardMapEdit';
 import { useVagaMutation } from '@/features/vaga/vagas/hooks/useVagaMutation';
+import LogradouroAutocomplete from '@/components/form/logradouro-autocomplete';
 
 /**
  * @component EditarVaga
@@ -63,6 +64,7 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
   const { loading, error, atualizar, limparError } = useVagaMutation();
   const [horariosValidos, setHorariosValidos] = useState(true);
   const [useMap, setUseMap] = useState(true);
+  const [bairro, setBairro] = useState(vaga.endereco.bairro);
   const [geoState, setGeoState] = useState({
     latitudeInicio: vaga.latitudeInicio,
     longitudeInicio: vaga.longitudeInicio,
@@ -101,10 +103,10 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
 
     const payload: VagaPayload = {
       endereco: {
-        codigoPmp: formData.get('codigoPmp') as string,
         logradouro: formData.get('logradouro') as string,
         bairro: formData.get('bairro') as string,
       },
+      codigoPmp: formData.get('codigoPmp') as string,
       area: (formData.get('area') as string).toUpperCase() as AreaVaga,
       numeroEndereco: formData.get('numeroEndereco') as string,
       referenciaEndereco: formData.get('descricao') as string,
@@ -149,7 +151,7 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
             {/* Código PMP */}
             <FormItem
               name="Código"
-              description="Ponha o código PMP da rua. Exemplo: Md-1234"
+              description="Ponha o código PMP da vaga. Exemplo: Md-1234"
             >
               <Input
                 className="rounded-sm border-gray-400 text-sm md:text-base"
@@ -157,21 +159,19 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
                 name="codigoPmp"
                 maxLength={30}
                 placeholder="Md-1234"
-                defaultValue={vaga.endereco.codigoPmp}
+                defaultValue={vaga.codigoPmp}
               />
             </FormItem>
 
             {/* Nome da rua */}
             <FormItem
               name="Nome da rua"
-              description="Exemplo: Rua do Imperador"
+              description="Digite o nome da rua ou selecione uma já cadastrada"
             >
-              <Input
-                className="rounded-sm border-gray-400 text-sm md:text-base"
-                id="logradouro"
-                name="logradouro"
-                placeholder="Rua do Imperador"
-                defaultValue={vaga.endereco.logradouro}
+              <LogradouroAutocomplete
+                initialValue={vaga.endereco.logradouro}
+                onSelect={(item) => setBairro(item.bairro)}
+                onChange={() => setBairro('')}
               />
             </FormItem>
 
@@ -244,7 +244,8 @@ export default function EditarVaga({ vaga }: { vaga: VagaResponse }) {
                 id="bairro"
                 name="bairro"
                 placeholder="Centro"
-                defaultValue={vaga.endereco.bairro}
+                value={bairro}
+                onChange={(e) => setBairro(e.target.value)}
               />
             </FormItem>
 

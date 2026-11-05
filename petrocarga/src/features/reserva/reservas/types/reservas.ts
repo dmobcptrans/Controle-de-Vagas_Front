@@ -96,6 +96,7 @@ export type ReservaPorUsuarioResponse = {
 
 export type ReservaResponse = {
   id: string;
+  codigoPmp: string;
   vagaId: string;
   areaVaga: AreaVaga;
   motoristaId: string;

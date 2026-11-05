@@ -26,6 +26,7 @@ import {
   TipoVaga,
   VagaPayload,
 } from '@/features/vaga/vagas/types/vaga';
+import LogradouroAutocomplete from '@/components/form/logradouro-autocomplete';
 
 /**
  * @component Cadastro
@@ -83,6 +84,7 @@ export default function Cadastro() {
   const [area, setArea] = useState('');
   const [tipo, setTipo] = useState('');
   const [useMap, setUseMap] = useState(true);
+  const [bairro, setBairro] = useState('');
 
   const [geoState, setGeoState] = useState({
     latitudeInicio: -22.505,
@@ -118,10 +120,10 @@ export default function Cadastro() {
 
     const payload: VagaPayload = {
       endereco: {
-        codigoPmp: formData.get('codigo') as string,
         logradouro: formData.get('logradouro') as string,
         bairro: formData.get('bairro') as string,
       },
+      codigoPmp: formData.get('codigo') as string,
       area: (formData.get('area') as string).toUpperCase() as AreaVaga,
       numeroEndereco: formData.get('numeroEndereco') as string,
       referenciaEndereco: formData.get('descricao') as string,
@@ -196,7 +198,7 @@ export default function Cadastro() {
             {/* Campo 1: Código PMP */}
             <FormItem
               name="Código"
-              description="Ponha o código PMP da rua. Exemplo: Md-1234"
+              description="Ponha o código PMP da vaga. Exemplo: Md-1234"
             >
               <Input
                 className="rounded-sm border-gray-400 text-sm md:text-base"
@@ -210,13 +212,11 @@ export default function Cadastro() {
             {/* Campo 2: Logradouro (nome da rua) */}
             <FormItem
               name="Nome da rua"
-              description="Exemplo: Rua do Imperador"
+              description="Digite o nome da rua ou selecione uma já cadastrada"
             >
-              <Input
-                className="rounded-sm border-gray-400 text-sm md:text-base"
-                id="logradouro"
-                name="logradouro"
-                placeholder="Rua do Imperador"
+              <LogradouroAutocomplete
+                onSelect={(item) => setBairro(item.bairro)}
+                onChange={() => setBairro('')}
               />
             </FormItem>
 
@@ -272,6 +272,8 @@ export default function Cadastro() {
                 id="bairro"
                 name="bairro"
                 placeholder="Centro"
+                value={bairro}
+                onChange={(e) => setBairro(e.target.value)}
               />
             </FormItem>
 

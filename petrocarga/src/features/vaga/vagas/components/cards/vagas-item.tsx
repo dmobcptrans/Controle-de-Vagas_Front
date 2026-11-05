@@ -129,7 +129,7 @@ export default function VagaItem({ vaga }: VagaItemProp) {
           {operacao && (
             <span className="flex items-center gap-1">
               <ScanBarcodeIcon className="w-4 h-4 text-gray-400" />
-              {vaga?.endereco?.codigoPmp?.toUpperCase()}
+              {vaga?.codigoPmp?.toUpperCase()}
             </span>
           )}
           <span className="flex items-center gap-1">

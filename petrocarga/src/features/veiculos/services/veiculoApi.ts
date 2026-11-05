@@ -16,7 +16,7 @@ export async function criarVeiculo(
   usuarioId: string,
   payload: VeiculoPayload,
 ): Promise<VeiculoResponse> {
-  const response = await clientApi(`${BASE_URL}/${usuarioId}`, {
+  const response = await clientApi(`/veiculos/${usuarioId}`, {
     method: 'POST',
     json: payload,
   });
@@ -33,7 +33,7 @@ export async function atualizarVeiculo(
   usuarioId: string,
   payload: VeiculoPayload,
 ): Promise<void> {
-  await clientApi(`${BASE_URL}/${veiculoId}/${usuarioId}`, {
+  await clientApi(`/veiculos/${veiculoId}/${usuarioId}`, {
     method: 'PATCH',
     json: payload,
   });
@@ -44,7 +44,7 @@ export async function atualizarVeiculo(
  */
 
 export async function deletarVeiculo(veiculoId: string): Promise<void> {
-  await clientApi(`${BASE_URL}/${veiculoId}`, {
+  await clientApi(`/veiculos/${veiculoId}`, {
     method: 'DELETE',
   });
 }
@@ -64,7 +64,7 @@ export async function getVeiculosPorUsuario(
   });
 
   const response = await clientApi(
-    `${BASE_URL}/usuario/${usuarioId}?${searchParams.toString()}`,
+    `/veiculos/usuario/${usuarioId}?${searchParams.toString()}`,
   );
 
   return response.json();
@@ -76,7 +76,7 @@ export async function getVeiculosPorUsuario(
 export async function getVeiculoPorId(
   veiculoId: string,
 ): Promise<VeiculoResponse> {
-  const response = await clientApi(`${BASE_URL}/${veiculoId}`);
+  const response = await clientApi(`/veiculos/${veiculoId}`);
 
   return response.json();
 }

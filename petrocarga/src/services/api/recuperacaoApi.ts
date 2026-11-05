@@ -100,7 +100,7 @@ export async function solicitarRecuperacaoSenha(
       throw new Error('CPF deve conter 11 dígitos ou CNPJ deve conter 14 dígitos');
     }
 
-    const res = await clientApi(`${BASE_URL}/forgot-password`, {
+    const res = await clientApi('/auth/forgot-password', {
       method: 'POST',
       json: jsonBody,
     });
@@ -173,7 +173,7 @@ export async function reenviarCodigoAtivacao(
       body.cpf = documentoLimpo;
     }
 
-    const res = await clientApi(`${BASE_URL}/resend-code`, {
+    const res = await clientApi('/auth/resend-code', {
       method: 'POST',
       json: body,
     });
@@ -227,7 +227,7 @@ export async function redefinirSenhaComCodigo(
   novaSenha: string,
 ): Promise<{ message: string; code: number }> {
   try {
-    const res = await clientApi(`${BASE_URL}/reset-password`, {
+    const res = await clientApi('/auth/reset-password', {
       method: 'POST',
       json: {
         email: email.trim(),
@@ -309,7 +309,7 @@ export async function ativarConta(
       body.cpf = documentoLimpo;
     }
 
-    const res = await clientApi(`${BASE_URL}/activate`, {
+    const res = await clientApi('/auth/activate', {
       method: 'POST',
       json: body,
     });
@@ -333,9 +333,16 @@ export async function reativarUsuario(usuarioId: string): Promise<void> {
     throw new Error('ID do usuário é obrigatório');
   }
 
-  const res = await clientApi(`/usuarios/reativar/${usuarioId}`, {
-    method: 'PATCH',
-  });
+  const res = await clientApi(
+    `/usuarios/reativar/${usuarioId}`,
+    {
+      method: 'POST',
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error('Não foi possível reativar o usuário.');
+  }
 
   // Se existir corpo, lê. Se não existir (204), simplesmente retorna.
   const text = await res.text();

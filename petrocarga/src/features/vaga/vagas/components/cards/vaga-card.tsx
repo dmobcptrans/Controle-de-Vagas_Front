@@ -231,7 +231,7 @@ export default function VagaDetalhes({ vaga }: VagaDetalhesProps) {
       {/* ==================== METADADOS ==================== */}
       <section className="border-t pt-4 text-xs text-gray-500 space-y-1">
         <p>
-          <strong>Código PMP:</strong> {vaga.endereco.codigoPmp}
+          <strong>Código PMP:</strong> {vaga.codigoPmp}
         </p>
         <p>
           <strong>ID da vaga:</strong> {vaga.id}
