@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -12,10 +13,9 @@ import {
 } from '@/features/vaga/vagas/types/vaga';
 
 import { useMapbox } from '../hooks/useMapbox';
-
 import {
   addClusterMarkerReserva,
-  addVagaMarkersReserva,
+  addVagaMarkersGestor,
 } from '../utils/markerUtils';
 
 interface MapboxFeature {
@@ -43,6 +43,8 @@ export function ViewMap({
   firstCoord,
   filtro,
 }: MapProps) {
+  const router = useRouter();
+
   const mapContainer = useRef<HTMLDivElement>(null);
 
   const markersRef = useRef<mapboxgl.Marker[]>([]);
@@ -105,10 +107,6 @@ export function ViewMap({
   /**
    * Busca as vagas do viewport sempre que o mapa
    * terminar de se mover.
-   *
-   * IMPORTANTE:
-   * Aqui estamos mantendo a lógica de busca que já
-   * existia no seu componente.
    */
   useEffect(() => {
     if (!map || !mapLoaded) {
@@ -142,9 +140,8 @@ export function ViewMap({
 
   /**
    * Atualiza os markers quando a resposta da API muda.
-   *
-   * Agora utiliza EXATAMENTE os mesmos markers
-   * utilizados pelo MapReserva.
+   * Clicar em uma vaga abre um popup ancorado nela,
+   * com o botão "Ver mais" levando para a página da vaga.
    */
   useEffect(() => {
     if (!map || !mapLoaded) {
@@ -177,12 +174,14 @@ export function ViewMap({
 
     if (
       vagasMap.tipo === 'VAGAS' &&
-      vagasMap.vagas && vagasMap.vagas.length && vagasMap.vagas.length > 0
+      vagasMap.vagas &&
+      vagasMap.vagas.length > 0
     ) {
-      addVagaMarkersReserva(
+      addVagaMarkersGestor(
         map,
         vagasMap.vagas,
-        markersRef
+        markersRef,
+        (vaga) => router.push(`/gestor/visualizar-vagas/${vaga.id}`)
       );
     }
 
@@ -190,7 +189,7 @@ export function ViewMap({
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
     };
-  }, [vagasMap, map, mapLoaded]);
+  }, [vagasMap, map, mapLoaded, router]);
 
   /**
    * Move o mapa para o local selecionado na pesquisa.
