@@ -173,3 +173,35 @@
     @apply bg-[#f5f5f0] text-foreground;
   }
 }
+
+
+/* Popup das vagas */
+.vaga-popup .mapboxgl-popup-content {
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+}
+
+.vaga-popup .mapboxgl-popup-close-button {
+  top: 7px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 17px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.vaga-popup .mapboxgl-popup-close-button:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.vaga-popup .mapboxgl-popup-tip {
+  border-top-color: #ffffff;
+  border-bottom-color: #ffffff;
+}
+

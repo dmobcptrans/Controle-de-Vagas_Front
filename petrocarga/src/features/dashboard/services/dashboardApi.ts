@@ -66,6 +66,9 @@ import { DashboardKPIs, DashboardSummary } from '../types/dashboard';
  * console.log(summary.stayDurationStats); // Tempo de permanência
  * ```
  */
+
+const BASE_URL = '/api/v1';
+
 export async function RelatorioSumario(
   startDate?: string,
   endDate?: string,

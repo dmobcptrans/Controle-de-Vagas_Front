@@ -142,6 +142,7 @@ export type VagasResumo = {
 export type VagasMapa = {
   id: string;
   area: AreaVaga;
+  codigoPmp: string;
   status: StatusVaga;
   latitudeInicio: number;
   latitudeFim: number;

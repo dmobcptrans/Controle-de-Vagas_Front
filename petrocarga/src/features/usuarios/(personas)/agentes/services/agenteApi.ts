@@ -1,7 +1,14 @@
 import { clientApi } from '@/services/clientApi';
 import { buildSearchParams } from '@/services/utils/buildSearchParams';
-import { agentePaginadoResponse, agenteParams, agentePayload, agenteResponse, atualizarAgente } from '../types/agente';
+import {
+  agentePaginadoResponse,
+  agenteParams,
+  agentePayload,
+  agenteResponse,
+  atualizarAgente,
+} from '../types/agente';
 
+const BASE_URL = '/agentes';
 
 export async function CriarAgente(payload: agentePayload): Promise<agenteResponse> {
     const response = await clientApi('/agentes', {
@@ -38,4 +45,3 @@ export async function getAgentes(params: agenteParams): Promise<agentePaginadoRe
     const response = await clientApi(`/agentes?${searchParams.toString()}`)
     return response.json();
 }
-

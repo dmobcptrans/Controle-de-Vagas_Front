@@ -12,6 +12,7 @@ import {
 } from '../types/vaga';
 import { buildSearchParams } from '@/services/utils/buildSearchParams';
 
+const BASE_URL = '/vagas'
 
 // ----------------------
 // Criar uma vaga

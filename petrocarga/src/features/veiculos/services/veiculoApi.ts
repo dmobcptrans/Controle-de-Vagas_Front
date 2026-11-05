@@ -8,6 +8,7 @@ import {
   VeiculoResponse,
 } from '../types/veiculo';
 
+const BASE_URL = "/veiculos"
 /**
  * Cria um veículo para determinado usuário.
  */

@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import ModalConfirmacaoExclusao from '@/features/reserva/reservas/components/modal/confirmacaoExclusao';
 
 import { agenteResponse } from '../../../agentes/types/agente';
+import { getApiErrorMessage } from '@/lib/types/response/getApiErrorMessage';
 
 interface AgenteCardProps {
   agente: agenteResponse;
@@ -109,36 +110,24 @@ export default function AgenteCard({
    * a função existente no recuperacaoApi.
    */
   const handleAtivar = async () => {
-    if (isUpdating || loading) return;
+  if (isUpdating || loading) return;
 
-    setIsUpdating(true);
+  setIsUpdating(true);
 
-    try {
-      await reativarUsuario(
-        agente.usuario.id,
-      );
+  try {
+    await reativarUsuario(agente.usuario.id);
 
-      setModalAtivarAberto(false);
+    setModalAtivarAberto(false);
+    toast.success('Agente ativado com sucesso!');
 
-      toast.success(
-        'Agente ativado com sucesso!',
-      );
-
-      if (onStatusChange) {
-        await onStatusChange();
-      }
-    } catch (err) {
-      console.error(err);
-
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao ativar agente. Tente novamente.',
-      );
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+    await onStatusChange?.();
+  } catch (err) {
+    console.error(err);
+    toast.error(getApiErrorMessage(err, 'Erro ao ativar agente. Tente novamente.'));
+  } finally {
+    setIsUpdating(false);
+  }
+};
 
   return (
     <>

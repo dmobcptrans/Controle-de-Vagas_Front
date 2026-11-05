@@ -11,6 +11,8 @@ import {
 } from '../types/denuncia';
 import { buildSearchParams } from '@/services/utils/buildSearchParams';
 
+const BASE_URL = "/denuncias";
+
 // ----------------------
 // POST DENUNCIA
 // ----------------------

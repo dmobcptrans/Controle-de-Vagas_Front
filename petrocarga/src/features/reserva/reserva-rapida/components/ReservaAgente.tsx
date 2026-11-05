@@ -12,6 +12,7 @@ import StepStatusVaga from './steps/StepStatusVaga';
 import StepHorario from './steps/StepHorario';
 import StepConfirmacao from './steps/StepConfirmacao';
 import StepFeedback from './steps/StepFeedback';
+import InfoVaga from '../../reservar-vaga/components/steps/InfoVaga';
 
 interface Props {
   selectedVaga: VagaResponse;
@@ -19,14 +20,17 @@ interface Props {
   onBack?: () => void;
 }
 
-const FLUXO = ['veiculo', 'status', 'fim', 'confirmacao', 'feedback'] as const;
+const FLUXO = ['info-vaga', 'veiculo', 'status', 'fim', 'confirmacao', 'feedback'] as const;
 type StepKey = (typeof FLUXO)[number];
 
-export default function ReservaAgente({ selectedVaga, onNewReservation }: Props) {
+export default function ReservaAgente({
+  selectedVaga,
+  onNewReservation,
+}: Props) {
   const r = useReservaRapida(selectedVaga);
   const { form, setField } = r;
 
-  const [stepKey, setStepKey] = useState<StepKey>('veiculo');
+  const [stepKey, setStepKey] = useState<StepKey>('info-vaga');
   const [resultado, setResultado] = useState<ConfirmResult | null>(null);
 
   const onNext = async () => {
@@ -46,7 +50,7 @@ export default function ReservaAgente({ selectedVaga, onNewReservation }: Props)
   const onNovaReserva = () => {
     r.novaReserva();
     setResultado(null);
-    setStepKey('veiculo');
+    setStepKey('info-vaga');
     onNewReservation?.();
   };
 
@@ -59,6 +63,11 @@ export default function ReservaAgente({ selectedVaga, onNewReservation }: Props)
       )}
 
       <div className="flex-1 flex flex-col overflow-y-auto pb-4">
+
+        {stepKey === 'info-vaga' && (
+          <InfoVaga vaga={selectedVaga} onNext={() => setStepKey('veiculo')} />
+        )}
+
         {stepKey === 'veiculo' && (
           <StepVeiculo
             tipoVeiculo={form.tipoVeiculo ?? null}
@@ -101,18 +110,21 @@ export default function ReservaAgente({ selectedVaga, onNewReservation }: Props)
           />
         )}
 
-        {stepKey === 'confirmacao' && form.day && form.startHour && form.endHour && (
-          <StepConfirmacao
-            selectedDay={form.day}
-            startHour={form.startHour}
-            endHour={form.endHour}
-            selectedVaga={selectedVaga}
-            tipoVeiculo={form.tipoVeiculo ?? null}
-            placa={form.placa}
-            onConfirm={onConfirm}
-            onBack={() => setStepKey('fim')}
-          />
-        )}
+        {stepKey === 'confirmacao' &&
+          form.day &&
+          form.startHour &&
+          form.endHour && (
+            <StepConfirmacao
+              selectedDay={form.day}
+              startHour={form.startHour}
+              endHour={form.endHour}
+              selectedVaga={selectedVaga}
+              tipoVeiculo={form.tipoVeiculo ?? null}
+              placa={form.placa}
+              onConfirm={onConfirm}
+              onBack={() => setStepKey('fim')}
+            />
+          )}
 
         {stepKey === 'feedback' && resultado && (
           <div className="flex-1 flex items-center justify-center w-full animate-in fade-in zoom-in duration-300">

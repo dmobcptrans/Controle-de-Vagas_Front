@@ -11,6 +11,8 @@ import type { LoginFormData } from '../utils/loginUtils';
 import { prepareLoginData } from '../utils/loginUtils';
 import { normalizeUserData } from '../utils/normalizeUser';
 
+const BASE_URL = '/auth'
+
 type LoginResponse = {
   token?: string;
 };

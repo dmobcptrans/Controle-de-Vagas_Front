@@ -68,6 +68,9 @@ function extractMessage(error: unknown): string {
  * await solicitarRecuperacaoSenha('12345678900');
  * ```
  */
+
+const BASE_URL = '/auth';
+
 export async function solicitarRecuperacaoSenha(
   identificador: string,
 ): Promise<void> {
@@ -341,10 +344,8 @@ export async function reativarUsuario(usuarioId: string): Promise<void> {
     throw new Error('Não foi possível reativar o usuário.');
   }
 
-  // Se existir corpo, lê.
-  // Se não existir (204), simplesmente retorna.
+  // Se existir corpo, lê. Se não existir (204), simplesmente retorna.
   const text = await res.text();
-
   if (!text) return;
 
   const data = JSON.parse(text);

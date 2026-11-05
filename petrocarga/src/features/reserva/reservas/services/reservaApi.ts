@@ -22,6 +22,7 @@ import {
 //                      RESERVAS DE MOTORISTAS
 // =================================================================
 
+const BASE_URL = '/reservas';
 // ----------------------
 // POST RESERVA MOTORISTA
 // ----------------------

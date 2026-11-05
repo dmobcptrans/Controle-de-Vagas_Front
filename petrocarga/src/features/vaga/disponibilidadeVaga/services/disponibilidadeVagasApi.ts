@@ -10,6 +10,7 @@ import {
   DisponibilidadeVagasPayload,
 } from '../types/disponibilidadeVaga';
 
+const BASE_URL = '/disponibilidade-vagas'
 // ----------------------
 // POST DISPONIBILIDADE VAGAS (MULTIPLAS)
 // ----------------------

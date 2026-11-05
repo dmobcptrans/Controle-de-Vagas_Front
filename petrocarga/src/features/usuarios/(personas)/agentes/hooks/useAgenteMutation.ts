@@ -31,9 +31,14 @@ export function useAgenteMutation(): UseAgenteMutationReturn {
     }
 
     const deletar = async (agenteId: string): Promise<boolean> => {
-        const response = await execute(() => DeletarAgente(agenteId));
-
-        return response !== null;
+        try {
+ await execute(() => DeletarAgente(agenteId));
+ return true;
+        }
+       catch (err) {
+        console.error(err);
+        return false;
+       }
     }
 
     return {

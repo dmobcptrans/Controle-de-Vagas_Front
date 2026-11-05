@@ -8,6 +8,7 @@ interface DaySelectionProps {
   onSelect: (day: Date) => void;
   availableDays: Date[];
   onMonthChange: (month: Date) => void;
+  onBack?: () => void;
   /** Quando true, exibe skeleton (pulse) nos dias de hoje em diante */
   loading?: boolean;
 }
@@ -101,6 +102,7 @@ export default function DaySelection({
   availableDays,
   onMonthChange,
   loading = false,
+  onBack,
 }: DaySelectionProps) {
   const today = new Date();
 
@@ -183,32 +185,43 @@ export default function DaySelection({
     );
   };
 
-  return (
-    <div className="flex justify-center items-center">
-      <div>
-        <DayPicker
-          mode="single"
-          locale={ptBR}
-          navLayout="around"
-          animate
-          selected={selected}
-          onDayClick={onSelect}
-          onMonthChange={onMonthChange}
-          className="mx-auto"
-          disabled={isDisabled}
-          components={{ DayButton: CustomDayButton }}
-          modifiersClassNames={{
-            selected: 'bg-blue-800 text-white',
-            disabled: 'text-gray-400 opacity-50 cursor-not-allowed',
-            today: 'bg-gray-100 font-bold',
-          }}
-          modifiersStyles={{
-            disabled: {
-              backgroundColor: '#f9fafb',
-            },
-          }}
-        />
-      </div>
+ return (
+  <div className="flex flex-col gap-3 sm:gap-4 justify-center w-full max-w-xl mx-auto px-2 sm:px-0">
+    <div className="flex justify-center">
+      <DayPicker
+        mode="single"
+        locale={ptBR}
+        navLayout="around"
+        animate
+        selected={selected}
+        onDayClick={onSelect}
+        onMonthChange={onMonthChange}
+        className="mx-auto"
+        disabled={isDisabled}
+        components={{ DayButton: CustomDayButton }}
+        modifiersClassNames={{
+          selected: 'bg-blue-800 text-white',
+          disabled: 'text-gray-400 opacity-50 cursor-not-allowed',
+          today: 'bg-gray-100 font-bold',
+        }}
+        modifiersStyles={{
+          disabled: {
+            backgroundColor: '#f9fafb',
+          },
+        }}
+      />
     </div>
-  );
+
+    {/* ==================== BOTÕES ==================== */}
+      {onBack && (
+        <button
+          type="button"
+          className="w-full cursor-pointer rounded-xl bg-gray-200 px-4 py-3 text-sm hover:bg-gray-300 sm:w-auto sm:text-base"
+          onClick={onBack}
+        >
+          Voltar
+        </button>
+      )}
+  </div>
+);
 }

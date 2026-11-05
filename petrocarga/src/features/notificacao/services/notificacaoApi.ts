@@ -13,6 +13,8 @@ import {
 import { buildSearchParams } from '@/services/utils/buildSearchParams';
 import { Permissao } from '@/lib/types/personas/user2';
 
+const BASE_URL = '/notificacoes';
+
 // ----------------------
 // Enviar Notificação Para um Usuário
 // ----------------------

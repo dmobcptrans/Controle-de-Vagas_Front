@@ -17,6 +17,7 @@ import ResultadoReserva from './steps/ResultadoReserva';
 import { useReserva } from '../hooks/useReserva';
 import { toMinutes } from '../hooks/reservaHelpers';
 import type { Persona } from '../hooks/reservaPayload';
+import InfoVaga from './steps/InfoVaga';
 
 /**
  * Cada persona tem seu fluxo. A posição no array = número da etapa (1-based),
@@ -24,6 +25,7 @@ import type { Persona } from '../hooks/reservaPayload';
  * 'veiculo' para AGENTE será o formulário de tipo/placa (TODO: rota rápida).
  */
 type StepKey =
+  | 'info-vaga'
   | 'dia'
   | 'motorista'
   | 'veiculo'
@@ -33,8 +35,17 @@ type StepKey =
   | 'feedback';
 
 const FLUXOS: Record<Persona, StepKey[]> = {
-  MOTORISTA: ['dia', 'veiculo', 'inicio', 'fim', 'confirmacao', 'feedback'],
+  MOTORISTA: [
+    'info-vaga',
+    'dia',
+    'veiculo',
+    'inicio',
+    'fim',
+    'confirmacao',
+    'feedback',
+  ],
   EMPRESA: [
+    'info-vaga',
     'dia',
     'motorista',
     'veiculo',
@@ -43,7 +54,15 @@ const FLUXOS: Record<Persona, StepKey[]> = {
     'confirmacao',
     'feedback',
   ],
-  AGENTE: ['dia', 'veiculo', 'inicio', 'fim', 'confirmacao', 'feedback'],
+  AGENTE: [
+    'info-vaga',
+    'dia',
+    'veiculo',
+    'inicio',
+    'fim',
+    'confirmacao',
+    'feedback',
+  ],
 };
 
 interface Props {
@@ -93,6 +112,10 @@ export default function ReservaComponent({ selectedVaga, empresaId }: Props) {
       )}
 
       <div className="flex flex-1 justify-center">
+        {stepKey === 'info-vaga' && (
+          <InfoVaga vaga={selectedVaga} onNext={() => irPara('dia')} />
+        )}
+
         {stepKey === 'dia' && (
           <DaySelection
             selected={form.day}
@@ -103,6 +126,7 @@ export default function ReservaComponent({ selectedVaga, empresaId }: Props) {
             onMonthChange={r.fetchDias}
             availableDays={r.availableDates}
             loading={r.loadingDias}
+            onBack={voltar}
           />
         )}
 

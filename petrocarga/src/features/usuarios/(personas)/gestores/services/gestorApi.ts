@@ -27,10 +27,9 @@ export async function getGestorPorId(gestorId: string): Promise<gestorResponse> 
 }
 
 export async function DeleteGestor(gestorId: string) {
-    const response = await clientApi(`${BASE_URL}/${gestorId}`, {
+    await clientApi(`${BASE_URL}/${gestorId}`, {
         method: 'DELETE'
-    })
-    return response.json();
+    });
 }
 
 export async function AtualizarGestor(gestorId: string, payload: atualizarGestorPayload): Promise<gestorResponse> {
