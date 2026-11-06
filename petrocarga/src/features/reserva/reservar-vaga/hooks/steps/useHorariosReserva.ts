@@ -12,6 +12,7 @@ import {
   adicionarDia,
   calcularFimBloqueado,
   calcularHorarios,
+  excedeLimiteReserva,
   expandirBloqueios,
   getOperacoesDia,
   toDateKey,
@@ -90,12 +91,7 @@ export function useHorariosReserva({
       };
     }
 
-    return calcularHorarios(
-      day,
-      vaga,
-      atual.bloqueios ?? [],
-      intervalo,
-    );
+    return calcularHorarios(day, vaga, atual.bloqueios ?? [], intervalo);
   }, [vaga, day, tipoVeiculo, atual.bloqueios, intervalo]);
 
   const horariosSeguinte = useMemo(() => {
@@ -113,45 +109,37 @@ export function useHorariosReserva({
       seguinte.bloqueios ?? [],
       intervalo,
     );
-  }, [
-    vaga,
-    diaSeguinte,
-    tipoVeiculo,
-    seguinte.bloqueios,
-    intervalo,
-  ]);
+  }, [vaga, diaSeguinte, tipoVeiculo, seguinte.bloqueios, intervalo]);
 
   const podeContinuarNoDiaSeguinte = useMemo(() => {
-  if (!vaga || !day || !diaSeguinte) return false;
+    if (!vaga || !day || !diaSeguinte) return false;
 
-  const operacoesAtuais = getOperacoesDia(day, vaga);
-  const operacoesSeguintes = getOperacoesDia(diaSeguinte, vaga);
+    // Último dia permitido: atravessar para o dia seguinte passaria do limite
+    if (excedeLimiteReserva(diaSeguinte, '00:00')) return false;
 
-  if (!operacoesAtuais.length || !operacoesSeguintes.length) {
-    return false;
-  }
+    const operacoesAtuais = getOperacoesDia(day, vaga);
+    const operacoesSeguintes = getOperacoesDia(diaSeguinte, vaga);
 
-  const ultimaOperacao = [...operacoesAtuais].sort(
-    (a, b) =>
-      toMinutes(b.horaFim) - toMinutes(a.horaFim),
-  )[0];
+    if (!operacoesAtuais.length || !operacoesSeguintes.length) {
+      return false;
+    }
 
-  const primeiraOperacao = [...operacoesSeguintes].sort(
-    (a, b) =>
-      toMinutes(a.horaInicio) - toMinutes(b.horaInicio),
-  )[0];
+    const ultimaOperacao = [...operacoesAtuais].sort(
+      (a, b) => toMinutes(b.horaFim) - toMinutes(a.horaFim),
+    )[0];
 
-  const fimAtual = ultimaOperacao.horaFim.slice(0, 5);
-  const inicioSeguinte = primeiraOperacao.horaInicio.slice(0, 5);
+    const primeiraOperacao = [...operacoesSeguintes].sort(
+      (a, b) => toMinutes(a.horaInicio) - toMinutes(b.horaInicio),
+    )[0];
 
-  return fimAtual === '23:59' && inicioSeguinte === '00:00';
-}, [vaga, day, diaSeguinte]);
+    const fimAtual = ultimaOperacao.horaFim.slice(0, 5);
+    const inicioSeguinte = primeiraOperacao.horaInicio.slice(0, 5);
+
+    return fimAtual === '23:59' && inicioSeguinte === '00:00';
+  }, [vaga, day, diaSeguinte]);
 
   const reservedEndBase = useMemo(() => {
-    const bloqueiosAtuais = expandirBloqueios(
-      atual.bloqueios ?? [],
-      intervalo,
-    );
+    const bloqueiosAtuais = expandirBloqueios(atual.bloqueios ?? [], intervalo);
 
     const bloqueiosSeguintes = expandirBloqueios(
       seguinte.bloqueios ?? [],
@@ -169,13 +157,13 @@ export function useHorariosReserva({
       horarios.availableTimes,
       vaga.area,
       reservedEndBase,
-      podeContinuarNoDiaSeguinte
-        ? horariosSeguinte.availableTimes
-        : [],
+      podeContinuarNoDiaSeguinte ? horariosSeguinte.availableTimes : [],
+      day,
     );
   }, [
     startHour,
     vaga,
+    day,
     horarios,
     horariosSeguinte.availableTimes,
     reservedEndBase,

@@ -28,6 +28,9 @@ export const LIMITE_HORAS_POR_AREA: Record<string, number> = {
   BRANCA: 6,
 };
 
+/** O FIM da reserva não pode passar de agora + 2 dias. */
+export const LIMITE_DIAS_RESERVA = 2;
+
 const MINUTOS_DIA = 24 * 60;
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -53,15 +56,32 @@ export const adicionarDia = (day: Date, quantidade = 1) => {
   return result;
 };
 
-/** Dia + HH:mm -> ISO string. */
-export const formatDateTime = (day: Date, hhmm: string) => {
-  const [h, m] = hhmm.split(':').map(Number);
+/** Dia + HH:mm -> Date. */
+const toDateTime = (day: Date, hhmm: string) => {
+  const [h, m] = hhmm.slice(0, 5).split(':').map(Number);
   const date = new Date(day);
   date.setHours(h, m, 0, 0);
-  return date.toISOString();
+  return date;
 };
 
+/** Dia + HH:mm -> ISO string. */
+export const formatDateTime = (day: Date, hhmm: string) =>
+  toDateTime(day, hhmm).toISOString();
+
 const isMesmoDia = (a: Date, b: Date) => toDateKey(a) === toDateKey(b);
+
+// ---------- limite de reserva ----------
+
+/** Momento máximo permitido para o FIM da reserva. */
+export const getLimiteReserva = (agora = new Date()) =>
+  adicionarDia(agora, LIMITE_DIAS_RESERVA);
+
+/** true se o dia + horário passa do limite. */
+export const excedeLimiteReserva = (
+  day: Date,
+  hhmm: string,
+  agora = new Date(),
+) => toDateTime(day, hhmm) > getLimiteReserva(agora);
 
 // ---------- operação / grade de horários ----------
 
@@ -72,6 +92,7 @@ export const getOperacoesDia = (
   (vaga.operacoesVaga ?? []).filter(
     (op) => op.diaSemanaAsEnum === DIAS_SEMANA[day.getDay()],
   );
+
 /**
  * Gera os horários da operação do dia.
  * A grade considera operações que terminam até 23:59.
@@ -163,10 +184,16 @@ export const calcularHorarios = (
     };
   }
 
+  const agora = new Date();
+
   const availableTimes = removerHorariosPassados(
     day,
     gerarHorariosDia(operacoes, intervalo),
-  ).filter((hora) => !reservedStart.includes(hora));
+    agora,
+  )
+    .filter((hora) => !reservedStart.includes(hora))
+    // horário acima do limite (agora + 2 dias) não pode ser escolhido
+    .filter((hora) => !excedeLimiteReserva(day, hora, agora));
 
   return {
     availableTimes,
@@ -178,6 +205,7 @@ export const calcularHorarios = (
 /**
  * Converte horários para uma linha do tempo contínua.
  * Horários do dia seguinte devem receber +1440 minutos.
+ * Quando `day` é informado, fins acima do limite de reserva também são bloqueados.
  */
 export const calcularFimBloqueado = (
   inicio: string,
@@ -185,10 +213,14 @@ export const calcularFimBloqueado = (
   area: string,
   reservedEndBase: string[],
   horariosDiaSeguinte: string[] = [],
+  day?: Date,
 ) => {
   const inicioMinutos = toMinutes(inicio);
 
   const limite = inicioMinutos + (LIMITE_HORAS_POR_AREA[area] ?? 1) * 60;
+
+  const agora = new Date();
+  const diaSeguinte = day ? adicionarDia(day) : undefined;
 
   const candidatos = [
     ...availableTimes.map((hora) => ({
@@ -196,24 +228,30 @@ export const calcularFimBloqueado = (
       minutos: toMinutes(hora),
       chave: hora,
       diaSeguinte: false,
+      excede: day ? excedeLimiteReserva(day, hora, agora) : false,
     })),
     ...horariosDiaSeguinte.map((hora) => ({
       hora,
       minutos: MINUTOS_DIA + toMinutes(hora),
       chave: `D+1 ${hora}`,
       diaSeguinte: true,
+      excede: diaSeguinte
+        ? excedeLimiteReserva(diaSeguinte, hora, agora)
+        : false,
     })),
   ];
 
   return candidatos
-    .filter(({ minutos, chave }) => {
+    .filter(({ minutos, chave, excede }) => {
       const depoisDoInicio = minutos > inicioMinutos;
       const dentroDoLimite = minutos <= limite;
       const reservado = reservedEndBase.includes(chave);
 
-      return depoisDoInicio && (!dentroDoLimite || reservado);
+      return depoisDoInicio && (!dentroDoLimite || reservado || excede);
     })
-    .map(({ hora, diaSeguinte }) => (diaSeguinte ? `D+1 ${hora}` : hora));
+    .map(({ hora, diaSeguinte: ehDiaSeguinte }) =>
+      ehDiaSeguinte ? `D+1 ${hora}` : hora,
+    );
 };
 
 // ---------- dias disponíveis ----------
@@ -226,6 +264,8 @@ export const calcularDiasDisponiveis = (
   const hoje = new Date(agora);
   hoje.setHours(0, 0, 0, 0);
 
+  const limite = getLimiteReserva(agora);
+
   const datas = new Map<string, Date>();
 
   for (const disponibilidade of disponibilidades) {
@@ -237,6 +277,9 @@ export const calcularDiasDisponiveis = (
 
     for (; cur <= fim; cur.setDate(cur.getDate() + 1)) {
       if (cur < hoje) continue;
+
+      // dia inteiro fora do limite
+      if (toDateTime(cur, '00:00') > limite) continue;
 
       const operacoes = getOperacoesDia(cur, vaga);
 
@@ -251,6 +294,13 @@ export const calcularDiasDisponiveis = (
 
         if (!aindaTemHorario) continue;
       }
+
+      // dia-limite: precisa ter ao menos um início dentro do limite
+      const temHorarioNoLimite = operacoes.some(
+        (operacao) => toDateTime(cur, operacao.horaInicio) <= limite,
+      );
+
+      if (!temHorarioNoLimite) continue;
 
       datas.set(toDateKey(cur), new Date(cur));
     }

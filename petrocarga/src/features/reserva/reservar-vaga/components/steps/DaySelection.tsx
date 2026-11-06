@@ -9,92 +9,8 @@ interface DaySelectionProps {
   availableDays: Date[];
   onMonthChange: (month: Date) => void;
   onBack?: () => void;
-  /** Quando true, exibe skeleton (pulse) nos dias de hoje em diante */
   loading?: boolean;
 }
-
-/**
- * @component DaySelection
- * @version 1.2.0
- *
- * @description Componente de seleção de dia utilizando react-day-picker.
- * Exibe calendário com dias disponíveis destacados e desabilita dias indisponíveis.
- * Quando `loading` é true, os dias a partir de hoje (inclusive) exibem um
- * skeleton com animação de pulse no lugar do número, enquanto dias passados
- * continuam sendo exibidos normalmente (mesmo que desabilitados).
- *
- * ----------------------------------------------------------------------------
- * 📋 PROPRIEDADES:
- * ----------------------------------------------------------------------------
- *
- * @property {Date} [selected] - Data atualmente selecionada
- * @property {(day: Date) => void} onSelect - Callback ao selecionar um dia
- * @property {Date[]} availableDays - Lista de dias disponíveis para reserva
- * @property {boolean} [loading] - Exibe skeleton nos dias (hoje em diante) enquanto carrega
- *
- * ----------------------------------------------------------------------------
- * 🎨 COMPORTAMENTO:
- * ----------------------------------------------------------------------------
- *
- * 1. DIAS DISPONÍVEIS:
- *    - Definidos pelo array availableDays
- *    - Dias com disponibilidade podem ser selecionados
- *
- * 2. DIAS DESABILITADOS:
- *    - Dias anteriores ao dia atual (isBeforeToday)
- *    - Dias não presentes no Set de availableDays
- *    - Estilo: texto cinza, opacidade reduzida, cursor not-allowed
- *
- * 3. DIA SELECIONADO:
- *    - Fundo azul (bg-blue-800)
- *    - Texto branco
- *    - Formato circular (rounded-full)
- *
- * 4. DIA ATUAL:
- *    - Fundo cinza claro (bg-gray-100)
- *    - Texto semibold
- *
- * 5. ESTADO DE LOADING:
- *    - Quando loading=true, os dias de hoje em diante (exceto dias "outside",
- *      ou seja fora do mês atual) exibem um círculo com animação de pulse
- *      no lugar do número, mantendo o layout do calendário intacto.
- *    - Dias passados continuam exibindo o número normalmente.
- *    - Dias já selecionados não recebem skeleton (evita conflito visual
- *      entre o fundo azul de "selected" e o pulse).
- *    - Todos os botões ficam desabilitados durante o loading.
- *    - Um texto para leitores de tela (sr-only, aria-live) anuncia o
- *      carregamento sem poluir a navegação com 30+ anúncios individuais.
- *
- * ----------------------------------------------------------------------------
- * 🧠 DECISÕES TÉCNICAS:
- * ----------------------------------------------------------------------------
- *
- * - useMemo: Cria Set de availableDays para comparação O(1)
- * - NORMALIZAÇÃO: Remove horas/minutos/segundos para comparação de datas
- * - LOCALE: ptBR para português do Brasil
- * - MODIFIERS: Classes customizadas para selected, disabled, today
- * - SKELETON: Implementado via components.DayButton (customização oficial
- *   do react-day-picker), o que permite decidir por dia se mostra o
- *   número ou o skeleton, sem duplicar a grade do calendário.
- *
- * ----------------------------------------------------------------------------
- * 🔗 COMPONENTES RELACIONADOS:
- * ----------------------------------------------------------------------------
- *
- * - TimeSelection: Seleção de horários
- * - StepIndicator: Indicador de progresso
- *
- * @example
- * ```tsx
- * <DaySelection
- *   selected={selectedDay}
- *   onSelect={setSelectedDay}
- *   availableDays={availableDates}
- *   onMonthChange={(month) => reserva.fetchDiasDisponiveis(month)}
- *   loading={reserva.loadingDias}
- * />
- * ```
- */
 
 export default function DaySelection({
   selected,
@@ -106,122 +22,187 @@ export default function DaySelection({
 }: DaySelectionProps) {
   const today = new Date();
 
-  /**
-   * @function normalizeDate
-   * @description Remove horas/minutos/segundos de uma data para comparação
-   */
   const normalizeDate = (date: Date) =>
     new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-  /**
-   * @function isBeforeToday
-   * @description Verifica se a data é anterior ao dia atual
-   */
-  const isBeforeToday = (date: Date) => {
-    return normalizeDate(date) < normalizeDate(today);
-  };
+  // Limite: hoje + 2 dias
+  const maxSelectableDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() + 2,
+  );
 
-  /**
-   * @function isTodayOrFuture
-   * @description Verifica se a data é hoje ou uma data futura
-   */
-  const isTodayOrFuture = (date: Date) => {
-    return normalizeDate(date) >= normalizeDate(today);
-  };
-
-  /**
-   * Cria um Set com os dias disponíveis normalizados
-   * Usa useMemo para evitar recriação desnecessária
-   */
   const availableDaysSet = useMemo(() => {
-    return new Set(availableDays.map((d) => normalizeDate(d).toISOString()));
+    return new Set(
+      availableDays.map((date) => {
+        const normalized = normalizeDate(date);
+
+        return `${normalized.getFullYear()}-${normalized.getMonth()}-${normalized.getDate()}`;
+      }),
+    );
   }, [availableDays]);
 
-  /**
-   * @function isDisabled
-   * @description Determina se uma data deve estar desabilitada
-   * - Datas anteriores ao dia atual
-   * - Datas não disponíveis no Set
-   */
-  const isDisabled = (date: Date) => {
-    const normalized = normalizeDate(date).toISOString();
-    return !availableDaysSet.has(normalized) || isBeforeToday(date);
+  const getDateKey = (date: Date) => {
+    const normalized = normalizeDate(date);
+
+    return `${normalized.getFullYear()}-${normalized.getMonth()}-${normalized.getDate()}`;
   };
 
-  /**
-   * @function CustomDayButton
-   * @description Botão de cada dia do calendário.
-   * Durante o loading, dias de hoje em diante mostram um skeleton
-   * (círculo com pulse) no lugar do número. Dias passados e dias
-   * "outside" (fora do mês exibido) continuam normais.
-   */
+  const isAvailable = (date: Date) =>
+    availableDaysSet.has(getDateKey(date));
+
+  const isDisabled = (date: Date) => {
+    const normalized = normalizeDate(date);
+
+    return (
+      normalized < normalizeDate(today) ||
+      normalized > maxSelectableDate ||
+      !isAvailable(date)
+    );
+  };
+
+  const isBeyondLimit = (date: Date) =>
+    normalizeDate(date) > maxSelectableDate;
+
+  const isTodayOrFuture = (date: Date) =>
+    normalizeDate(date) >= normalizeDate(today);
 
   const getSkeletonDelay = (date: Date) => {
     const seed =
       date.getDate() + date.getMonth() * 31 + date.getFullYear() * 365;
+
     return -((seed * 137) % 1200);
   };
+
   const CustomDayButton = (props: DayButtonProps) => {
     const { day, modifiers, ...buttonProps } = props;
+
     const date = day.date;
-    const showSkeleton = loading && isTodayOrFuture(date) && !modifiers.outside;
-    const skeletonDelay = getSkeletonDelay(date);
+
+    const showSkeleton =
+      loading && isTodayOrFuture(date) && !modifiers.outside;
+
+    const beyondLimit = isBeyondLimit(date);
+
     return (
       <button
         {...buttonProps}
         disabled={loading || modifiers.disabled}
-        className={`relative flex h-12 w-12 items-center justify-center rounded-full transition-colors ${modifiers.selected ? 'bg-blue-800 text-white' : ''} ${modifiers.today && !modifiers.selected ? 'bg-gray-100 font-bold' : ''} ${modifiers.disabled ? 'text-gray-400 opacity-50 cursor-not-allowed' : ''}`}
+        className={`
+          relative flex h-12 w-12 items-center justify-center
+          rounded-full transition-all duration-200
+
+          ${
+            modifiers.selected
+              ? 'bg-blue-800 text-white shadow-sm'
+              : ''
+          }
+
+          ${
+            modifiers.today && !modifiers.selected
+              ? 'bg-blue-50 font-bold text-blue-800'
+              : ''
+          }
+
+          ${
+            beyondLimit
+              ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+              : ''
+          }
+
+          ${
+            modifiers.disabled && !beyondLimit
+              ? 'text-gray-400 opacity-50 cursor-not-allowed'
+              : ''
+          }
+
+          ${
+            !modifiers.disabled && !modifiers.selected
+              ? 'hover:bg-blue-100'
+              : ''
+          }
+        `}
+        title={
+          beyondLimit
+            ? 'Disponível somente nos próximos dias'
+            : undefined
+        }
       >
         {showSkeleton ? (
           <span
-            className="z-1 h-10 w-10 animate-pulse rounded-2xl bg-blue-800"
-            style={{ animationDelay: `${skeletonDelay}ms` }}
+            className="z-1 h-10 w-10 animate-pulse rounded-full bg-blue-800"
+            style={{
+              animationDelay: `${getSkeletonDelay(date)}ms`,
+            }}
             aria-hidden="true"
           />
         ) : (
           date.getDate()
-        )}{' '}
+        )}
       </button>
     );
   };
 
- return (
-  <div className="flex flex-col gap-3 sm:gap-4 justify-center w-full max-w-xl mx-auto px-2 sm:px-0">
-    <div className="flex justify-center">
-      <DayPicker
-        mode="single"
-        locale={ptBR}
-        navLayout="around"
-        animate
-        selected={selected}
-        onDayClick={onSelect}
-        onMonthChange={onMonthChange}
-        className="mx-auto"
-        disabled={isDisabled}
-        components={{ DayButton: CustomDayButton }}
-        modifiersClassNames={{
-          selected: 'bg-blue-800 text-white',
-          disabled: 'text-gray-400 opacity-50 cursor-not-allowed',
-          today: 'bg-gray-100 font-bold',
-        }}
-        modifiersStyles={{
-          disabled: {
-            backgroundColor: '#f9fafb',
-          },
-        }}
-      />
-    </div>
+  return (
+    <div className="flex flex-col gap-3 justify-center w-full max-w-xl mx-auto px-2 sm:px-0">
+      <div className="flex justify-center">
+        <DayPicker
+          mode="single"
+          locale={ptBR}
+          navLayout="around"
+          animate
+          selected={selected}
+          onDayClick={(day) => {
+            if (!isDisabled(day)) {
+              onSelect(day);
+            }
+          }}
+          onMonthChange={onMonthChange}
+          className="mx-auto"
+          disabled={isDisabled}
+          components={{
+            DayButton: CustomDayButton,
+          }}
+          modifiersClassNames={{
+            selected: 'bg-blue-800 text-white',
+            disabled: 'cursor-not-allowed',
+            today: 'bg-blue-50 font-bold',
+          }}
+          modifiersStyles={{
+            disabled: {
+              cursor: 'not-allowed',
+            },
+          }}
+        />
+      </div>
 
-    {/* ==================== BOTÕES ==================== */}
+      {/* Legenda */}
+      <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded-full bg-blue-800" />
+          <span>Selecionado</span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded-full bg-blue-50 border border-blue-200" />
+          <span>Hoje</span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <span className="h-3 w-3 rounded-full bg-gray-200" />
+          <span>Fora do período</span>
+        </div>
+      </div>
+
       {onBack && (
         <button
           type="button"
-          className="w-full cursor-pointer rounded-xl bg-gray-200 px-4 py-3 text-sm hover:bg-gray-300 sm:w-auto sm:text-base"
+          className="w-full cursor-pointer rounded-xl bg-gray-200 px-4 py-3 text-sm hover:bg-gray-300 sm:w-auto"
           onClick={onBack}
         >
           Voltar
         </button>
       )}
-  </div>
-);
+    </div>
+  );
 }
